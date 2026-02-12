@@ -43,7 +43,7 @@ const ProductsSidebarTree = ({
               <IconButton
                 size="small"
                 onClick={(e) => { e.stopPropagation(); handlePrintById(product._id); }}
-                title="Print/Mint"
+                title="Generate QR code"
               >
                 <PrintIcon fontSize="small" />
               </IconButton>
@@ -144,7 +144,7 @@ const ProductsSidebarTree = ({
                       <IconButton
                         size="small"
                         onClick={(e) => { e.stopPropagation(); handlePrintById(product._id); }}
-                        title="Print/Mint"
+                        title="Generate QR code"
                       >
                         <PrintIcon fontSize="small" />
                       </IconButton>

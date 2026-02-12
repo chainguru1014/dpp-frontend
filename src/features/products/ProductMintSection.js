@@ -24,7 +24,7 @@ const ProductMintSection = ({
   return (
     <Box>
       <Box>
-        <Typography>Mint</Typography>
+        <Typography>Generate QR code</Typography>
         <br />
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <TextField
@@ -37,7 +37,7 @@ const ProductMintSection = ({
           />
           &nbsp;
           <Button variant="outlined" onClick={batchMintHandler}>
-            Mint
+            Generate QR code
           </Button>
           &nbsp;
           {isMinting && (
