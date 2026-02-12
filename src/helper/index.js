@@ -232,11 +232,19 @@ export const uploadFile = async (body) => {
 
 export const uploadFiles = async (body) => {
     try {
-        const res = await axios.post(`${Backend_URL}upload/multiple`, body);
+        const res = await axios.post(`${Backend_URL}upload/multiple`, body, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         const files = res.data?.files;
-        return Array.isArray(files) ? files : (files ? [files] : []);
+        // Backend returns array of filenames (strings)
+        if (Array.isArray(files)) {
+            return files;
+        }
+        return files ? [files] : [];
     } catch (error) {
-        console.log(error);
+        console.error('Upload files error:', error.response?.data || error.message);
         return [];
     }
 }
