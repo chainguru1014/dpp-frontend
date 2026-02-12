@@ -225,9 +225,17 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                       boxShadow: 4,
                     },
                   }}
-                  onClick={onNavigateToUsers}
+                  onClick={() => {
+                    console.log('Users card clicked');
+                    if (onNavigateToUsers) {
+                      onNavigateToUsers();
+                    }
+                  }}
                 >
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
+                  <CardContent 
+                    sx={{ textAlign: 'center', py: 3 }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <PeopleIcon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Users
@@ -248,9 +256,17 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                       boxShadow: 4,
                     },
                   }}
-                  onClick={onNavigateToUsers}
+                  onClick={() => {
+                    console.log('Companies card clicked');
+                    if (onNavigateToUsers) {
+                      onNavigateToUsers();
+                    }
+                  }}
                 >
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
+                  <CardContent 
+                    sx={{ textAlign: 'center', py: 3 }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <BusinessIcon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Companies
@@ -271,9 +287,17 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                       boxShadow: 4,
                     },
                   }}
-                  onClick={onNavigateToProducts}
+                  onClick={() => {
+                    console.log('Products card clicked');
+                    if (onNavigateToProducts) {
+                      onNavigateToProducts();
+                    }
+                  }}
                 >
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
+                  <CardContent 
+                    sx={{ textAlign: 'center', py: 3 }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <Inventory2Icon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Products
