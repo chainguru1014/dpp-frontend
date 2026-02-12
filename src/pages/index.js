@@ -82,7 +82,7 @@ const InnerPage = () => {
   const [productName, setProductName] = useState('');
   const [productModel, setProductModel] = useState('');
   const [productDetail, setProductDetail] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  // selectedProduct is initialized above with localStorage
   const [mintAmount, setMintAmount] = useState(0);
   const [qrcodes, setQrCodes] = useState([]);
   const [productImages, setProductImages] = useState([]);
@@ -163,10 +163,50 @@ const InnerPage = () => {
   const [openOwnerDialog, setOpenOwnerDialog] = useState(false);
   const [ownerInfo, setOwnerInfo] = useState(null);
 
-  const [activePage, setActivePage] = useState('dashboard'); // dashboard | products | newProduct | users | profile
-  const [previousPage, setPreviousPage] = useState('dashboard'); // Track previous page for navigation
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Load state from localStorage
+  const loadStateFromStorage = (key, defaultValue) => {
+    try {
+      const stored = localStorage.getItem(`dpp_${key}`);
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error(`Error loading ${key} from storage:`, error);
+    }
+    return defaultValue;
+  };
+
+  // Save state to localStorage
+  const saveStateToStorage = (key, value) => {
+    try {
+      localStorage.setItem(`dpp_${key}`, JSON.stringify(value));
+    } catch (error) {
+      console.error(`Error saving ${key} to storage:`, error);
+    }
+  };
+
+  const [activePage, setActivePage] = useState(() => loadStateFromStorage('activePage', 'dashboard'));
+  const [previousPage, setPreviousPage] = useState(() => loadStateFromStorage('previousPage', 'dashboard'));
+  const [selectedProduct, setSelectedProduct] = useState(() => loadStateFromStorage('selectedProduct', null));
+  const [sidebarOpen, setSidebarOpen] = useState(() => loadStateFromStorage('sidebarOpen', true));
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    saveStateToStorage('activePage', activePage);
+  }, [activePage]);
+
+  useEffect(() => {
+    saveStateToStorage('previousPage', previousPage);
+  }, [previousPage]);
+
+  useEffect(() => {
+    saveStateToStorage('selectedProduct', selectedProduct);
+  }, [selectedProduct]);
+
+  useEffect(() => {
+    saveStateToStorage('sidebarOpen', sidebarOpen);
+  }, [sidebarOpen]);
 
   productImageInputRefs.current = productImageInputs.map(
     (_, i) => productImageInputRefs.current[i] ?? React.createRef(),

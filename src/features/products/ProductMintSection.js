@@ -36,7 +36,11 @@ const ProductMintSection = ({
             onChange={(e) => setMintAmount(e.target.value)}
           />
           &nbsp;
-          <Button variant="outlined" onClick={batchMintHandler}>
+          <Button 
+            variant="outlined" 
+            onClick={batchMintHandler}
+            disabled={!selectedProduct || !mintAmount || mintAmount <= 0}
+          >
             Generate QR code
           </Button>
           &nbsp;
@@ -45,11 +49,12 @@ const ProductMintSection = ({
           )}
         </Box>
       </Box>
-      <Box sx={{ pt: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-          <Typography>
-            Qr Codes for Selected Product (Count: {totalAmount})
-          </Typography>
+      {selectedProduct ? (
+        <Box sx={{ pt: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+            <Typography>
+              Qr Codes for Selected Product (Count: {totalAmount})
+            </Typography>
           <Button
             variant="outlined"
             size="small"
