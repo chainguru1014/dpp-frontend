@@ -279,24 +279,53 @@ const InnerPage = () => {
   };
 
   const registerHandler = async () => {
-    let location = '';
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          location = await getAddressFromCoordinates(latitude, longitude);
+    // Validate required fields
+    if (!name || !password || !email) {
+      alert('Please fill in all required fields');
+      return;
+    }
 
-          const res = await registerCompany({
-            name,
-            password,
-            email,
-            location,
-          });
+    let location = '';
+    
+    // Try to get location, but don't block registration if it fails
+    if (navigator.geolocation) {
+      try {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            location = await getAddressFromCoordinates(latitude, longitude);
+            await performRegistration(location);
+          },
+          async () => {
+            // Location denied or failed - register without location
+            await performRegistration('');
+          },
+        );
+      } catch (error) {
+        // Geolocation error - register without location
+        await performRegistration('');
+      }
+    } else {
+      // Geolocation not available - register without location
+      await performRegistration('');
+    }
+
+    async function performRegistration(loc) {
+      try {
+        const res = await registerCompany({
+          name,
+          password,
+          email,
+          location: loc,
+        });
+        
+        if (res) {
           setCompany(res);
           setActivePage('dashboard');
-        },
-        () => {},
-      );
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+      }
     }
   };
 

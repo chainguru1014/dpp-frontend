@@ -52,12 +52,18 @@ export const login = async (data) => {
 export const registerCompany = async (data) => {
     try {
         const res = await axios.post(`${Backend_URL}company`, data);
-        alert('successfully registered');
-        // updateCompanyStatus(res.data.data.doc);
-        return res.data.data.data;
+        if (res.data.status === 'success') {
+            alert('Successfully registered');
+            // Return the company document from response
+            return res.data.data.doc || res.data.data;
+        } else {
+            alert('Registration failed: ' + (res.data.message || 'Unknown error'));
+            return null;
+        }
     } catch (err) {
-        console.log(err.response);
-        alert("Failed: " + err.response.data.message);
+        console.error('Registration error:', err);
+        const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
+        alert("Failed: " + errorMessage);
         return null;
     }
 }
