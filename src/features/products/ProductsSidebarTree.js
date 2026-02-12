@@ -33,7 +33,12 @@ const ProductsSidebarTree = ({
                     textDecoration: 'underline',
                     cursor: 'pointer',
                   }}
-                  onClick={() => onOwnerClick && onOwnerClick(product)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent product selection when clicking owner
+                    if (onOwnerClick) {
+                      onOwnerClick(product);
+                    }
+                  }}
                 >
                   {product.company_id.name}
                 </span>

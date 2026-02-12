@@ -536,6 +536,7 @@ const InnerPage = () => {
       setOwnerInfo(null);
     }
     // Show preview dialog when product is selected in products page
+    // But only if not clicking on owner (owner click is handled separately)
     if (activePage === 'products') {
       setOpenPreviewModal(true);
     }

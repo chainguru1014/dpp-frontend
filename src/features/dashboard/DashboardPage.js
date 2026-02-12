@@ -216,7 +216,17 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
           {isAdmin ? (
             <>
               <Grid item xs={12} sm={6} md={4}>
-                <Card>
+                <Card
+                  sx={{
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 4,
+                    },
+                  }}
+                  onClick={onNavigateToUsers}
+                >
                   <CardContent sx={{ textAlign: 'center', py: 3 }}>
                     <PeopleIcon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
@@ -229,7 +239,17 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                 </Card>
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
-                <Card>
+                <Card
+                  sx={{
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 4,
+                    },
+                  }}
+                  onClick={onNavigateToUsers}
+                >
                   <CardContent sx={{ textAlign: 'center', py: 3 }}>
                     <BusinessIcon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
@@ -242,7 +262,17 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                 </Card>
               </Grid>
               <Grid item xs={12} sm={6} md={4}>
-                <Card>
+                <Card
+                  sx={{
+                    cursor: 'pointer',
+                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    '&:hover': {
+                      transform: 'translateY(-4px)',
+                      boxShadow: 4,
+                    },
+                  }}
+                  onClick={onNavigateToProducts}
+                >
                   <CardContent sx={{ textAlign: 'center', py: 3 }}>
                     <Inventory2Icon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
