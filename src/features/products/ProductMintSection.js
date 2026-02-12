@@ -117,7 +117,14 @@ const ProductMintSection = ({
             </Box>
           </>
         )}
-      </Box>
+        </Box>
+      ) : (
+        <Box sx={{ pt: 2 }}>
+          <Typography color="text.secondary" sx={{ fontStyle: 'italic' }}>
+            Please select a product to generate QR codes
+          </Typography>
+        </Box>
+      )}
     </Box>
   );
 };
