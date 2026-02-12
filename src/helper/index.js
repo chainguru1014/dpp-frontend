@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // const Backend_URL = 'http://shearnode.com/api/v1/';
-const Backend_URL = 'http://localhost:5052/';
+const Backend_URL = 'http://82.165.217.122:5052/';
 export const FILE_BASE_URL = `${Backend_URL}files/`;
 
 export const getFileUrl = (filename) => {
@@ -243,7 +243,7 @@ export const uploadFiles = async (body) => {
 
 export const getAllCompanies = async() => {
     try {
-        const res = await axios.get(`${Backend_URL}/company`)
+        const res = await axios.get(`${Backend_URL}company`)
         return res.data.data.data.sort((a,b)=>a.isVerified - b.isVerified)
     }
     catch(err) {
@@ -253,7 +253,7 @@ export const getAllCompanies = async() => {
 
 export const verifyCompany = async(id) => {
     try {
-        const res = await axios.get(`${Backend_URL}/company/verify/${id}`)
+        const res = await axios.get(`${Backend_URL}company/verify/${id}`)
         return res.data
     }
     catch(err) {
