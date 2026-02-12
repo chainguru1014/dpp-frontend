@@ -19,12 +19,10 @@ const ProductMintSection = ({
 }) => {
   const [showQRCodes, setShowQRCodes] = useState(false);
 
-  if (!selectedProduct) return null;
-
   return (
     <Box>
       <Box>
-        <Typography>Generate QR code</Typography>
+        <Typography variant="h6" sx={{ mb: 1 }}>Generate QR code</Typography>
         <br />
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <TextField
