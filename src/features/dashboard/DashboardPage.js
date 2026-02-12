@@ -232,10 +232,7 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                     }
                   }}
                 >
-                  <CardContent 
-                    sx={{ textAlign: 'center', py: 3 }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
                     <PeopleIcon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Users
@@ -263,10 +260,7 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                     }
                   }}
                 >
-                  <CardContent 
-                    sx={{ textAlign: 'center', py: 3 }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
                     <BusinessIcon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Companies
@@ -294,10 +288,7 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                     }
                   }}
                 >
-                  <CardContent 
-                    sx={{ textAlign: 'center', py: 3 }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
+                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
                     <Inventory2Icon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Products
