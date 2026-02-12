@@ -1129,6 +1129,8 @@ const InnerPage = () => {
                   if (product.company_id) {
                     setOwnerInfo(product.company_id);
                     setOpenOwnerDialog(true);
+                    // Don't show product preview when clicking owner
+                    setOpenPreviewModal(false);
                   }
                 }}
               />
