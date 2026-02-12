@@ -3,6 +3,7 @@ import { Box, IconButton, Typography } from '@mui/material';
 import { TreeItem, SimpleTreeView } from '@mui/x-tree-view';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import PrintIcon from '@mui/icons-material/Print';
 
 const ProductsSidebarTree = ({
   products,
@@ -10,6 +11,7 @@ const ProductsSidebarTree = ({
   onEditProduct,
   onDeleteProduct,
   onOwnerClick,
+  onPrintProduct,
 }) => {
   const renderChildren = (parent) => {
     const children = products.filter((product) => product.parent === parent._id);
@@ -38,6 +40,13 @@ const ProductsSidebarTree = ({
               )}
             </Box>
             <Box sx={{ marginLeft: 'auto' }}>
+              <IconButton
+                size="small"
+                onClick={(e) => { e.stopPropagation(); handlePrintById(product._id); }}
+                title="Print/Mint"
+              >
+                <PrintIcon fontSize="small" />
+              </IconButton>
               <IconButton
                 size="small"
                 onClick={(e) => { e.stopPropagation(); handleEditById(product._id); }}
@@ -70,6 +79,12 @@ const ProductsSidebarTree = ({
     const index = products.findIndex((p) => p._id === id);
     if (index >= 0) {
       onDeleteProduct(index);
+    }
+  };
+
+  const handlePrintById = (id) => {
+    if (onPrintProduct) {
+      onPrintProduct(id);
     }
   };
 
@@ -128,13 +143,20 @@ const ProductsSidebarTree = ({
                     <Box sx={{ marginLeft: 'auto' }}>
                       <IconButton
                         size="small"
-                        onClick={() => handleEditById(product._id)}
+                        onClick={(e) => { e.stopPropagation(); handlePrintById(product._id); }}
+                        title="Print/Mint"
+                      >
+                        <PrintIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => { e.stopPropagation(); handleEditById(product._id); }}
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
                       <IconButton
                         size="small"
-                        onClick={() => handleDeleteById(product._id)}
+                        onClick={(e) => { e.stopPropagation(); handleDeleteById(product._id); }}
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>

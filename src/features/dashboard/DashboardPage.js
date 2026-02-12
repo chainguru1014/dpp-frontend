@@ -18,7 +18,7 @@ import Inventory2Icon from '@mui/icons-material/Inventory2';
 import PeopleIcon from '@mui/icons-material/People';
 import { getAdminUserData, getProductsByUser, getCompanyProducts, registerCompany } from '../../helper';
 
-const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct }) => {
+const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToUsers, onNavigateToProducts }) => {
   const [stats, setStats] = useState({
     users: 0,
     companies: 0,
@@ -257,7 +257,17 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct }) => {
             </>
           ) : (
             <Grid item xs={12} sm={6} md={4}>
-              <Card>
+              <Card
+                sx={{
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4,
+                  },
+                }}
+                onClick={onNavigateToProducts}
+              >
                 <CardContent sx={{ textAlign: 'center', py: 3 }}>
                   <Inventory2Icon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
                   <Typography variant="h6" sx={{ mb: 1 }}>

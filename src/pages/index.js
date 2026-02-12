@@ -164,6 +164,7 @@ const InnerPage = () => {
   const [ownerInfo, setOwnerInfo] = useState(null);
 
   const [activePage, setActivePage] = useState('dashboard'); // dashboard | products | newProduct | users | profile
+  const [previousPage, setPreviousPage] = useState('dashboard'); // Track previous page for navigation
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
 
@@ -356,6 +357,8 @@ const InnerPage = () => {
     });
     await loadProductsForCurrentCompany();
     resetFields();
+    // Redirect to previous page (dashboard or products)
+    setActivePage(previousPage);
   };
 
   const updateProductHandler = async () => {
@@ -491,6 +494,10 @@ const InnerPage = () => {
       setOwnerInfo(data.company_id);
     } else {
       setOwnerInfo(null);
+    }
+    // Show preview dialog when product is selected in products page
+    if (activePage === 'products') {
+      setOpenPreviewModal(true);
     }
   };
 
@@ -1007,8 +1014,11 @@ const InnerPage = () => {
               company={company}
               onNavigateToNewProduct={() => {
                 resetFields();
+                setPreviousPage(activePage); // Save current page before navigating
                 setActivePage('newProduct');
               }}
+              onNavigateToUsers={() => setActivePage('users')}
+              onNavigateToProducts={() => setActivePage('products')}
             />
           )}
 
@@ -1045,7 +1055,10 @@ const InnerPage = () => {
                 <Typography variant="h6">Products</Typography>
                 <Button
                   variant="contained"
-                  onClick={() => setActivePage('newProduct')}
+                  onClick={() => {
+                    setPreviousPage(activePage);
+                    setActivePage('newProduct');
+                  }}
                 >
                   New Product
                 </Button>
@@ -1055,6 +1068,22 @@ const InnerPage = () => {
                 onSelectProduct={productSelectHandler}
                 onEditProduct={(index) => editProductHandler(index)}
                 onDeleteProduct={(index) => deleteProductHandler(index)}
+                onPrintProduct={(productId) => {
+                  const index = products.findIndex((p) => p._id === productId);
+                  if (index >= 0) {
+                    editProductHandler(index);
+                    setPreviousPage(activePage);
+                    setActivePage('newProduct');
+                    // Focus on mint amount input after a short delay
+                    setTimeout(() => {
+                      const mintInput = document.querySelector('input[type="number"][label="amount"]');
+                      if (mintInput) {
+                        mintInput.focus();
+                        mintInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }
+                    }, 100);
+                  }
+                }}
                 onOwnerClick={(product) => {
                   if (product.company_id) {
                     setOwnerInfo(product.company_id);
@@ -1702,42 +1731,48 @@ const InnerPage = () => {
         <PreviewModal
           open={openPreviewModal}
           setOpen={setOpenPreviewModal}
-          productInfo={{
-            name: productName,
-            model: productModel,
-            detail: productDetail,
-            company_id: company._id,
-            images: productImages,
-            files: productFiles,
-            videos: productVideos,
-            materialSize,
-            maintenance,
-            disposal,
-            traceabilityEsg,
-            warrantyAndGuarantee: {
-              images: wgImages,
-              files: wgFiles,
-              videos: wgVideos,
-              warranty: {
-                period: warrantyPeriod,
-                unit: warrantyUnit,
-                notime: noWarranty,
-                lifetime: lifetimeWarranty,
-              },
-              guarantee: {
-                period: guaranteePeriod,
-                unit: guaranteeUnit,
-                notime: noGuarantee,
-                lifetime: lifetimeGuarantee,
-              },
-            },
-            manualsAndCerts: {
-              images: mcImages,
-              files: mcFiles,
-              videos: mcVideos,
-              ...manualsAndCerts,
-            },
-          }}
+          productInfo={
+            // If selectedProduct exists and we're viewing from products page, use it
+            // Otherwise use form data
+            selectedProduct && activePage === 'products'
+              ? selectedProduct
+              : {
+                  name: productName,
+                  model: productModel,
+                  detail: productDetail,
+                  company_id: company._id,
+                  images: productImages,
+                  files: productFiles,
+                  videos: productVideos,
+                  materialSize,
+                  maintenance,
+                  disposal,
+                  traceabilityEsg,
+                  warrantyAndGuarantee: {
+                    images: wgImages,
+                    files: wgFiles,
+                    videos: wgVideos,
+                    warranty: {
+                      period: warrantyPeriod,
+                      unit: warrantyUnit,
+                      notime: noWarranty,
+                      lifetime: lifetimeWarranty,
+                    },
+                    guarantee: {
+                      period: guaranteePeriod,
+                      unit: guaranteeUnit,
+                      notime: noGuarantee,
+                      lifetime: lifetimeGuarantee,
+                    },
+                  },
+                  manualsAndCerts: {
+                    images: mcImages,
+                    files: mcFiles,
+                    videos: mcVideos,
+                    ...manualsAndCerts,
+                  },
+                }
+          }
         />
       )}
     </Box>
