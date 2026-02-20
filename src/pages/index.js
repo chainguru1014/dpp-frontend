@@ -254,7 +254,13 @@ const InnerPage = () => {
       const selectedProductData = await getSelectedProductData(
         selectedProduct._id,
       );
-      setTotalAmount(selectedProductData.total_minted_amount);
+      if (selectedProductData) {
+        setTotalAmount(selectedProductData.total_minted_amount || 0);
+      } else {
+        // Product was deleted or not found
+        setSelectedProduct(null);
+        setTotalAmount(0);
+      }
       const res = await getProductQRcodes(selectedProduct._id, 1);
       setQrCodes(res);
       const identiferRes = await getProductIdentifiers(selectedProduct._id, 1);
@@ -570,8 +576,14 @@ const InnerPage = () => {
   };
 
   const deleteProductHandler = async (index) => {
-    await removeProduct(products[index]._id);
+    const deletedProductId = products[index]._id;
+    await removeProduct(deletedProductId);
     await loadProductsForCurrentCompany();
+    // Clear selected product if it was the deleted one
+    if (selectedProduct && selectedProduct._id === deletedProductId) {
+      setSelectedProduct(null);
+      setTotalAmount(0);
+    }
     resetFields();
   };
 

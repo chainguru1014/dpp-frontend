@@ -204,6 +204,10 @@ const PublicProductPage = ({ qrcodeKey, onBack }) => {
                       objectFit: 'contain',
                       display: 'block',
                     }}
+                    onError={(e) => {
+                      console.error('Image load error:', image, getFileUrl(image));
+                      e.target.style.display = 'none';
+                    }}
                   />
                 </Box>
               ))}
