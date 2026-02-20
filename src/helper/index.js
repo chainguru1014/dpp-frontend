@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Backend URL configuration - Use VPS IP address
+// Backend URL configuration - Use VPS IP address for production
 // Can be overridden with REACT_APP_BACKEND_URL environment variable
 export const Backend_URL = process.env.REACT_APP_BACKEND_URL || 'http://82.165.217.122:5052/';
 export const FILE_BASE_URL = `${Backend_URL}files/`;
