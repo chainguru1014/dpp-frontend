@@ -1,20 +1,20 @@
 module.exports = function override(config, env) {
-  // Find and modify the source-map-loader rule to ignore pdfjs-dist
+  // Find and modify the source-map-loader rule to ignore problematic packages
   const sourceMapLoaderRule = config.module.rules.find(
     rule => rule.enforce === 'pre' && rule.use && rule.use.some(use => use.loader && use.loader.includes('source-map-loader'))
   );
 
   if (sourceMapLoaderRule) {
-    // Add exclude for pdfjs-dist
-    if (!sourceMapLoaderRule.exclude) {
-      sourceMapLoaderRule.exclude = [];
-    }
-    if (Array.isArray(sourceMapLoaderRule.exclude)) {
-      sourceMapLoaderRule.exclude.push(/node_modules\/pdfjs-dist/);
-    } else {
-      sourceMapLoaderRule.exclude = [sourceMapLoaderRule.exclude, /node_modules\/pdfjs-dist/];
-    }
+    // Exclude all node_modules from source-map-loader to avoid ENOENT errors
+    // This is safe because we don't need source maps for third-party code in production
+    sourceMapLoaderRule.exclude = /node_modules/;
   }
+
+  // Also disable source-map-loader warnings/errors
+  config.ignoreWarnings = [
+    /Failed to parse source map/,
+    /ENOENT: no such file or directory/,
+  ];
 
   return config;
 };
