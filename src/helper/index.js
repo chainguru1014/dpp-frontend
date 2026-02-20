@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // const Backend_URL = 'http://shearnode.com/api/v1/';
-const Backend_URL = 'http://82.165.217.122:5052/';
+// Use localhost for development
+export const Backend_URL = 'http://localhost:5052/';
 export const FILE_BASE_URL = `${Backend_URL}files/`;
 
 export const getFileUrl = (filename) => {
@@ -109,11 +110,24 @@ export const printProductQRCodes = async (id, count) => {
 
 export const getCompanyProducts = async (data) => {
     try {
+        console.log('getCompanyProducts request data:', data);
+        console.log('getCompanyProducts API URL:', `${Backend_URL}product/filter`);
         const res = await axios.post(`${Backend_URL}product/filter`, data);
-        // console.log(res);
-        return res.data.data.data;
+        console.log('getCompanyProducts full response:', res);
+        console.log('getCompanyProducts response data:', res.data);
+        // Handle different response structures
+        if (res.data && res.data.data) {
+            const products = Array.isArray(res.data.data.data) ? res.data.data.data : 
+                           Array.isArray(res.data.data) ? res.data.data : [];
+            console.log('getCompanyProducts extracted products:', products.length);
+            return products;
+        }
+        console.warn('getCompanyProducts: No products in response structure');
+        return [];
     } catch (err) {
-        console.log(err);
+        console.error('Error in getCompanyProducts:', err);
+        console.error('Error response:', err.response?.data);
+        console.error('Error status:', err.response?.status);
         return [];
     }
 }
@@ -123,9 +137,16 @@ export const getProductsByUser = async (userId) => {
         const res = await axios.get(`${Backend_URL}product/by-user`, {
             params: { userId },
         });
-        return res.data.data.data;
+        console.log('getProductsByUser response:', res.data);
+        // Handle different response structures
+        if (res.data && res.data.data) {
+            return Array.isArray(res.data.data.data) ? res.data.data.data : 
+                   Array.isArray(res.data.data) ? res.data.data : [];
+        }
+        return [];
     } catch (err) {
-        console.log(err);
+        console.error('Error in getProductsByUser:', err);
+        console.error('Error response:', err.response?.data);
         return [];
     }
 };
@@ -220,6 +241,35 @@ export const getProductIdentifiers = async(product_id, page = 0, from = 0, to = 
     try {
         const res = await axios.post(`${Backend_URL}qrcode/serials`, { product_id, page, from, to });
         return res.data.data;
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+}
+
+// Security QR Code functions
+export const generateSecurityQRCodes = async (product_id, amount, company_id) => {
+    try {
+        const res = await axios.post(`${Backend_URL}qrcode/security/generate`, { 
+            product_id, 
+            amount, 
+            company_id 
+        });
+        return res.data.data;
+    } catch (err) {
+        console.log(err);
+        alert(err.response?.data?.message || 'Failed to generate Security QR codes');
+        return [];
+    }
+}
+
+export const getSecurityQRCodes = async (product_id, page = 1) => {
+    try {
+        const res = await axios.post(`${Backend_URL}qrcode/security/product`, { 
+            product_id, 
+            page 
+        });
+        return res.data.data || [];
     } catch (err) {
         console.log(err);
         return [];
@@ -337,14 +387,31 @@ export const CalculateRemainPeriod = (start, data) => {
 }
 
 export const getAddressFromCoordinates = async (lat, lng) => {
-  const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`;
+  try {
+    const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`;
 
-  const res = await fetch(nominatimUrl);
-  const data = await res.json();
-  if (data && data.address) {
-    const { road, city, state, postcode, country } = data.address;
-    const fullAddress = `${city || ''}, ${state || ''}, ${postcode || ''}, ${country || ''}`;
-    return fullAddress;
+    const res = await fetch(nominatimUrl, {
+      headers: {
+        'User-Agent': 'DPP-Application/1.0' // Required by Nominatim
+      }
+    });
+    
+    if (!res.ok) {
+      console.warn('Failed to fetch address from Nominatim:', res.status);
+      return '';
+    }
+    
+    const data = await res.json();
+    if (data && data.address) {
+      const { road, city, state, postcode, country } = data.address;
+      const fullAddress = `${city || ''}, ${state || ''}, ${postcode || ''}, ${country || ''}`;
+      return fullAddress;
+    }
+    return '';
+  } catch (error) {
+    console.warn('Error getting address from coordinates:', error);
+    // Return empty string instead of throwing error
+    // This allows registration to continue without location
+    return '';
   }
-  return '';
 };

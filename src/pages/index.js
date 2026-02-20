@@ -54,6 +54,8 @@ import {
   uploadFile,
   uploadFiles,
   updateCompanyAvatar,
+  generateSecurityQRCodes,
+  getSecurityQRCodes,
 } from '../helper';
 import QRCode from '../components/displayQRCode';
 import PrintModal from '../components/printModal';
@@ -85,6 +87,7 @@ const InnerPage = () => {
   // selectedProduct is initialized above with localStorage
   const [mintAmount, setMintAmount] = useState(0);
   const [qrcodes, setQrCodes] = useState([]);
+  const [securityQRCodes, setSecurityQRCodes] = useState([]);
   const [productImages, setProductImages] = useState([]);
   const [wgImages, setWGImages] = useState([]);
   const [mcImages, setMCImages] = useState([]);
@@ -292,17 +295,29 @@ const InnerPage = () => {
       try {
         navigator.geolocation.getCurrentPosition(
           async (position) => {
-            const { latitude, longitude } = position.coords;
-            location = await getAddressFromCoordinates(latitude, longitude);
+            try {
+              const { latitude, longitude } = position.coords;
+              location = await getAddressFromCoordinates(latitude, longitude);
+              // If address fetch fails, location will be empty string, which is fine
+            } catch (error) {
+              console.warn('Error getting address:', error);
+              location = '';
+            }
             await performRegistration(location);
           },
-          async () => {
+          async (error) => {
             // Location denied or failed - register without location
+            console.warn('Geolocation error:', error);
             await performRegistration('');
           },
+          {
+            timeout: 5000, // 5 second timeout
+            enableHighAccuracy: false // Don't require high accuracy
+          }
         );
       } catch (error) {
         // Geolocation error - register without location
+        console.warn('Geolocation exception:', error);
         await performRegistration('');
       }
     } else {
@@ -480,7 +495,11 @@ const InnerPage = () => {
   };
 
   useEffect(() => {
-    if (!company) return;
+    if (!company) {
+      console.log('useEffect: No company, skipping product load');
+      return;
+    }
+    console.log('useEffect: Company found, loading products. Company:', company);
     (async () => {
       await loadProductsForCurrentCompany();
     })();
@@ -589,23 +608,93 @@ const InnerPage = () => {
     setIsMinting(false);
   };
 
-  const loadProductsForCurrentCompany = async () => {
-    if (!company) return;
+  const generateSecurityQRHandler = async () => {
+    if (!selectedProduct || !mintAmount || mintAmount <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+    
+    if (!company || !company._id) {
+      alert('Company information not available');
+      return;
+    }
 
-    if (company.role === 'admin' || company.name === 'admin') {
-      const res = await getProductsByUser();
-      const ptmp = res.map((p, i) => ({
-        id: i + 1,
-        ...p,
-      }));
-      setProducts(ptmp);
-    } else {
-      const res = await getCompanyProducts({ company_id: company._id });
-      const ptmp = res.map((p, i) => ({
-        id: i + 1,
-        ...p,
-      }));
-      setProducts(ptmp);
+    try {
+      setIsMinting(true);
+      setMintingProgress(0);
+      
+      // Generate security QR codes independently
+      const companyId = company._id || company.id;
+      const encryptedKeys = await generateSecurityQRCodes(
+        selectedProduct._id,
+        parseInt(mintAmount, 10),
+        companyId
+      );
+      
+      if (encryptedKeys && encryptedKeys.length > 0) {
+        // Load security QR codes for current page
+        const res = await getSecurityQRCodes(selectedProduct._id, 1);
+        setSecurityQRCodes(res);
+        alert(`Successfully generated ${encryptedKeys.length} Security QR code(s)`);
+      }
+      
+      setIsMinting(false);
+      setMintingProgress(0);
+    } catch (error) {
+      console.error('Error generating security QR codes:', error);
+      setIsMinting(false);
+      setMintingProgress(0);
+    }
+  };
+
+  const loadProductsForCurrentCompany = async () => {
+    if (!company) {
+      console.log('No company found, cannot load products');
+      return;
+    }
+
+    try {
+      console.log('Loading products for company:', company);
+      console.log('Company _id:', company._id);
+      console.log('Company name:', company.name);
+      let res = [];
+      
+      if (company.role === 'admin' || company.name === 'admin') {
+        res = await getProductsByUser();
+        console.log('Admin products loaded:', res);
+      } else {
+        // Use _id or id field from company
+        const companyId = company._id || company.id;
+        if (!companyId) {
+          console.error('Company object missing _id or id field:', company);
+          setProducts([]);
+          return;
+        }
+        const filterData = { company_id: companyId };
+        console.log('Filtering products with:', filterData);
+        console.log('Company ID type:', typeof companyId, 'Value:', companyId);
+        res = await getCompanyProducts(filterData);
+        console.log('Company products loaded:', res);
+        console.log('Number of products:', res?.length || 0);
+      }
+      
+      if (Array.isArray(res) && res.length > 0) {
+        const ptmp = res.map((p, i) => ({
+          id: i + 1,
+          ...p,
+        }));
+        setProducts(ptmp);
+        console.log('Products set successfully:', ptmp.length);
+        console.log('First product:', ptmp[0]?.name);
+      } else {
+        console.log('No products returned or empty array');
+        console.log('Response was:', res);
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+      console.error('Error details:', error.message, error.stack);
+      setProducts([]);
     }
   };
 
@@ -614,6 +703,9 @@ const InnerPage = () => {
     (async () => {
       const res = await getProductQRcodes(selectedProduct._id, 1);
       setQrCodes(res);
+      // Load security QR codes for the selected product
+      const securityRes = await getSecurityQRCodes(selectedProduct._id, 1);
+      setSecurityQRCodes(securityRes || []);
       const identiferRes = await getProductIdentifiers(selectedProduct._id, 1);
       setIdentifiers(identiferRes);
       setPage(1);
@@ -625,6 +717,7 @@ const InnerPage = () => {
     (async () => {
       const res = await getProductQRcodes(selectedProduct._id, page);
       setQrCodes(res);
+      // Security QR codes are managed separately, no need to update here
       const identiferRes = await getProductIdentifiers(selectedProduct._id, 1);
       setIdentifiers(identiferRes);
     })();
@@ -1304,6 +1397,9 @@ const InnerPage = () => {
                       qrcodes={qrcodes}
                       identifiers={identifiers}
                       onOpenPrint={() => setOpenPrintModal(true)}
+                      securityQRCodes={securityQRCodes}
+                      onGenerateSecurityQR={generateSecurityQRHandler}
+                      onOpenSecurityDialog={() => {}}
                     />
                   </Box>
                 )}

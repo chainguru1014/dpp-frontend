@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Box, Button, Typography, TextField } from '@mui/material';
 import CircularProgressWithLabel from '../../components/CircularProgressBar';
 import QRCode from '../../components/displayQRCode';
+import SecurityQRCodeDialog from '../../components/SecurityQRCodeDialog';
 
 const ProductMintSection = ({
   selectedProduct,
@@ -16,36 +17,57 @@ const ProductMintSection = ({
   qrcodes,
   identifiers,
   onOpenPrint,
+  securityQRCodes,
+  onGenerateSecurityQR,
+  onOpenSecurityDialog,
 }) => {
   const [showQRCodes, setShowQRCodes] = useState(false);
+  const [securityDialogOpen, setSecurityDialogOpen] = useState(false);
 
   return (
     <Box>
-      <Box>
-        <Typography variant="h6" sx={{ mb: 1 }}>Generate QR code</Typography>
-        <br />
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Generate QR Codes</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
           <TextField
             type="number"
-            label="amount"
+            label="Amount"
             variant="outlined"
             size="small"
             value={mintAmount}
             onChange={(e) => setMintAmount(e.target.value)}
+            sx={{ minWidth: 120 }}
+            helperText={!selectedProduct ? "Select a product first" : ""}
+            error={!selectedProduct}
           />
-          &nbsp;
           <Button 
             variant="outlined" 
             onClick={batchMintHandler}
             disabled={!selectedProduct || !mintAmount || mintAmount <= 0}
+            size="medium"
+            sx={{ minWidth: 150 }}
           >
             Generate QR code
           </Button>
-          &nbsp;
+          <Button 
+            variant="contained" 
+            color="primary"
+            onClick={onGenerateSecurityQR}
+            disabled={!selectedProduct || !mintAmount || mintAmount <= 0}
+            size="medium"
+            sx={{ minWidth: 180 }}
+          >
+            Generate Security QR code
+          </Button>
           {isMinting && (
             <CircularProgressWithLabel value={mintingProgress} />
           )}
         </Box>
+        {!selectedProduct && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, fontStyle: 'italic' }}>
+            Please select a product from the sidebar to generate QR codes
+          </Typography>
+        )}
       </Box>
       {selectedProduct ? (
         <Box sx={{ pt: 2 }}>
@@ -53,14 +75,25 @@ const ProductMintSection = ({
             <Typography>
               Qr Codes for Selected Product (Count: {totalAmount})
             </Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => setShowQRCodes((prev) => !prev)}
-          >
-            {showQRCodes ? 'Hide' : 'Show'}
-          </Button>
-        </Box>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setShowQRCodes((prev) => !prev)}
+            >
+              {showQRCodes ? 'Hide' : 'Show'}
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                setSecurityDialogOpen(true);
+                if (onOpenSecurityDialog) onOpenSecurityDialog();
+              }}
+              disabled={!securityQRCodes || securityQRCodes.length === 0}
+            >
+              Show Security QR Codes
+            </Button>
+          </Box>
         {showQRCodes && (
           <>
             {totalAmount > 0 && (
@@ -106,15 +139,17 @@ const ProductMintSection = ({
               Print
             </Button>
             <br />
-            <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-              {qrcodes.map((item, index) => (
-                <QRCode
-                  key={index}
-                  data={item}
-                  identifer={identifiers[index] || []}
-                />
-              ))}
-            </Box>
+            {showQRCodes && (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                {qrcodes.map((item, index) => (
+                  <QRCode
+                    key={index}
+                    data={item}
+                    identifer={identifiers[index] || []}
+                  />
+                ))}
+              </Box>
+            )}
           </>
         )}
         </Box>
@@ -125,6 +160,12 @@ const ProductMintSection = ({
           </Typography>
         </Box>
       )}
+      <SecurityQRCodeDialog
+        open={securityDialogOpen}
+        onClose={() => setSecurityDialogOpen(false)}
+        securityQRCodes={securityQRCodes}
+        identifiers={identifiers}
+      />
     </Box>
   );
 };

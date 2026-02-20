@@ -1,6 +1,7 @@
 import react, { useEffect, useState } from 'react';
 import qrcode from 'qrcode';
 
+const FRONTEND_BASE_URL = process.env.REACT_APP_PUBLIC_URL || window.location.origin;
 
 const QRCode = ({data,identifer}) => {
 
@@ -8,7 +9,9 @@ const QRCode = ({data,identifer}) => {
     
     useEffect(() => {
         (async () => {
-            const code = await qrcode.toDataURL('https://4dveritaspublic.com?qrcode=' + data);
+            // Use frontend URL for normal QR codes: ?qrcode={encryptedKey}
+            const qrUrl = `${FRONTEND_BASE_URL}?qrcode=${encodeURIComponent(data)}`;
+            const code = await qrcode.toDataURL(qrUrl);
             setQRcodeImage(code);
         })()
     }, [data]);
