@@ -1,8 +1,18 @@
 import axios from 'axios';
 
-// const Backend_URL = 'http://shearnode.com/api/v1/';
-// Use localhost for development
-export const Backend_URL = 'http://localhost:5052/';
+// Backend URL configuration
+// Use environment variable if available, otherwise use VPS URL for production
+// For local development, set REACT_APP_BACKEND_URL=http://localhost:5052/ in .env file
+const getBackendUrl = () => {
+  // Check if we're in development (localhost)
+  if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return process.env.REACT_APP_BACKEND_URL || 'http://localhost:5052/';
+  }
+  // Production - use VPS URL
+  return process.env.REACT_APP_BACKEND_URL || 'http://82.165.217.122:5052/';
+};
+
+export const Backend_URL = getBackendUrl();
 export const FILE_BASE_URL = `${Backend_URL}files/`;
 
 export const getFileUrl = (filename) => {
