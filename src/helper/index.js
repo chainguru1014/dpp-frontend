@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Backend URL configuration - Use localhost for local development
-// Can be overridden with REACT_APP_BACKEND_URL environment variable
-export const Backend_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5052/';
+// Backend URL configuration.
+// In hosting, set REACT_APP_BACKEND_URL to your public backend URL.
+export const Backend_URL = process.env.REACT_APP_BACKEND_URL || 'http://82.165.217.122:5052/';
 export const FILE_BASE_URL = `${Backend_URL}files/`;
 
 export const getFileUrl = (filename) => {
