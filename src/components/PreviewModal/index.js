@@ -4,9 +4,11 @@ import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import Link from '@mui/material/Link';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
 import { useState } from 'react';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Slide } from 'react-slideshow-image';
 import 'react-slideshow-image/dist/styles.css';
 import YouTube from 'react-youtube';
@@ -17,8 +19,6 @@ import { CareSymbol } from '../CareSymbols';
 import { Worker, Viewer } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
 import '@react-pdf-viewer/default-layout/lib/styles/index.css';
-
-const TAB_LABELS = ['Product', 'Material/Size', 'Maintenance', 'Dispose', 'Traceability/ESG'];
 
 const style = {
   position: 'absolute',
@@ -47,23 +47,11 @@ const modalStyle = {
   height: '60vh',
 };
 
-function TabPanel({ children, value, index }) {
-  return (
-    <div role="tabpanel" hidden={value !== index}>
-      {value === index && <Box sx={{ p: 2, overflow: 'auto', maxHeight: 320 }}>{children}</Box>}
-    </div>
-  );
-}
-
 export default function PreviewModal({ open, setOpen, productInfo }) {
-  const [tabValue, setTabValue] = useState(0);
+  const [expandedSection, setExpandedSection] = useState('product');
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [viewPDF, setViewPDF] = useState(false);
   const [currentPDF, setCurrentPDF] = useState(null);
-
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
-  };
 
   const getYoutubeVideoIDFromUrl = (url) => {
     const videoid = url && url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
@@ -107,7 +95,16 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
           <Typography sx={{ fontSize: 18, fontWeight: 600, color: '#1976d2' }}>Yometel</Typography>
         </Box>
 
-        {/* Center: slidable image */}
+        <Box sx={{ px: 2.5, pt: 1.5, pb: 1, textAlign: 'center' }}>
+          <Typography sx={{ fontSize: 28, fontWeight: 500, color: '#3c5b92', lineHeight: 1.2 }}>
+            {info.name || '—'}
+          </Typography>
+          <Typography sx={{ fontSize: 22, color: '#666', lineHeight: 1.2 }}>
+            {info.model || '—'}
+          </Typography>
+        </Box>
+
+        {/* Image slider */}
         <Box sx={{ position: 'relative', width: '100%', minHeight: 280, bgcolor: '#e8eef2' }}>
           {images.length > 0 ? (
             <Slide transitionDuration={200} autoplay={false} onChange={(_, next) => setCurrentSlideIndex(next)}>
@@ -132,19 +129,13 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
           )}
         </Box>
 
-        {/* Tabs */}
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto" allowScrollButtonsMobile aria-label="DPP preview tabs">
-            {TAB_LABELS.map((label, i) => (
-              <Tab key={i} label={label} id={`preview-tab-${i}`} aria-controls={`preview-tabpanel-${i}`} sx={{ fontSize: 12, minHeight: 44 }} />
-            ))}
-          </Tabs>
-        </Box>
-
-        {/* Tab content */}
+        {/* Accordion sections to match ResultScreen style */}
         <Box sx={{ flex: 1, overflow: 'auto', bgcolor: '#fafafa' }}>
-          <TabPanel value={tabValue} index={0}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: 2, p: 2 }}>
+          <Accordion expanded={expandedSection === 'product'} onChange={() => setExpandedSection(expandedSection === 'product' ? '' : 'product')} disableGutters>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#3c5b92', color: '#fff' }}>
+              <Typography sx={{ fontWeight: 600 }}>Product Details</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ bgcolor: '#fff' }}>
               <Typography sx={{ fontSize: 16, fontWeight: 600, color: '#1976d2', mb: 0.5 }}>{info.name || '—'}</Typography>
               <Typography sx={{ fontSize: 14, color: 'text.secondary', mb: 0.5 }}>{info.model || '—'}</Typography>
               {info._id && <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1 }}>Product ID: {info._id}</Typography>}
@@ -173,11 +164,14 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
                   ))}
                 </Box>
               )}
-            </Box>
-          </TabPanel>
+            </AccordionDetails>
+          </Accordion>
 
-          <TabPanel value={tabValue} index={1}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: 2, p: 2 }}>
+          <Accordion expanded={expandedSection === 'material'} onChange={() => setExpandedSection(expandedSection === 'material' ? '' : 'material')} disableGutters>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#3c5b92', color: '#fff' }}>
+              <Typography sx={{ fontWeight: 600 }}>Materials</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ bgcolor: '#fff' }}>
               {images[0] && (
                 <Box sx={{ mb: 2, textAlign: 'center' }}>
                   <img src={getFileUrl(images[0])} alt="" style={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain', background: '#eee', borderRadius: 1 }} />
@@ -189,11 +183,14 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
               {(materialSize.materials || []).map((row, i) => (
                 <Typography key={i} sx={{ fontSize: 13 }}>{row.material || '—'} {row.percent != null ? `${row.percent}%` : ''}</Typography>
               ))}
-            </Box>
-          </TabPanel>
+            </AccordionDetails>
+          </Accordion>
 
-          <TabPanel value={tabValue} index={2}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: 2, p: 2 }}>
+          <Accordion expanded={expandedSection === 'maintenance'} onChange={() => setExpandedSection(expandedSection === 'maintenance' ? '' : 'maintenance')} disableGutters>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#3c5b92', color: '#fff' }}>
+              <Typography sx={{ fontWeight: 600 }}>Care Label</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ bgcolor: '#fff' }}>
               <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#1976d2', mb: 1 }}>Maintenance</Typography>
               <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1 }}>Selected care symbols</Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -212,11 +209,14 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
                 <Typography sx={{ fontSize: 12 }}>More punchy product information</Typography>
                 <Typography sx={{ fontSize: 12 }}>Contributing to Supply Chain & Sustainability</Typography>
               </Box>
-            </Box>
-          </TabPanel>
+            </AccordionDetails>
+          </Accordion>
 
-          <TabPanel value={tabValue} index={3}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: 2, p: 2 }}>
+          <Accordion expanded={expandedSection === 'dispose'} onChange={() => setExpandedSection(expandedSection === 'dispose' ? '' : 'dispose')} disableGutters>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#3c5b92', color: '#fff' }}>
+              <Typography sx={{ fontWeight: 600 }}>Dispose</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ bgcolor: '#fff' }}>
               <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#1976d2', mb: 1 }}>URL</Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 {disposal.repairUrl && <Box><Typography component="span" sx={{ fontSize: 12, color: 'text.secondary' }}>Repair </Typography><Link href={disposal.repairUrl} target="_blank" rel="noopener noreferrer" sx={{ fontSize: 13 }}>Repair</Link></Box>}
@@ -230,11 +230,14 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
               </Box>
               <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 2 }}>Inquiry</Typography>
               <Link href="https://www.Yometel.com" target="_blank" rel="noopener noreferrer" sx={{ fontSize: 13 }}>https://www.Yometel.com</Link>
-            </Box>
-          </TabPanel>
+            </AccordionDetails>
+          </Accordion>
 
-          <TabPanel value={tabValue} index={4}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: 2, p: 2 }}>
+          <Accordion expanded={expandedSection === 'traceability'} onChange={() => setExpandedSection(expandedSection === 'traceability' ? '' : 'traceability')} disableGutters>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#3c5b92', color: '#fff' }}>
+              <Typography sx={{ fontWeight: 600 }}>Traceability/ESG</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ bgcolor: '#fff' }}>
               <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#1976d2', mb: 1 }}>Made in</Typography>
               <Typography sx={{ fontSize: 13, mb: 1 }}>{traceabilityEsg.madeIn || '—'}</Typography>
               <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#1976d2', mb: 0.5 }}>Material origins</Typography>
@@ -249,8 +252,8 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
               <Typography sx={{ fontSize: 13 }}>{traceabilityEsg.co2Production || '—'}</Typography>
               <Typography sx={{ fontSize: 14, fontWeight: 600, color: '#1976d2', mt: 1, mb: 0.5 }}>CO2 by Transportation</Typography>
               <Typography sx={{ fontSize: 13 }}>{traceabilityEsg.co2Transportation || '—'}</Typography>
-            </Box>
-          </TabPanel>
+            </AccordionDetails>
+          </Accordion>
         </Box>
       </Box>
     </Modal>

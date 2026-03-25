@@ -40,15 +40,13 @@ import io from 'socket.io-client';
 
 import {
   addProduct,
-  getAddressFromCoordinates,
   getCompanyProducts,
   getProductsByUser,
   getProductIdentifiers,
   getProductQRcodes,
   getSelectedProductData,
-  login,
   productMint,
-  registerCompany,
+  registerAgentUser,
   removeProduct,
   updateProduct,
   uploadFile,
@@ -56,6 +54,7 @@ import {
   updateCompanyAvatar,
   generateSecurityQRCodes,
   getSecurityQRCodes,
+  checkUsernameExists,
 } from '../helper';
 import QRCode from '../components/displayQRCode';
 import PrintModal from '../components/printModal';
@@ -77,8 +76,20 @@ const InnerPage = () => {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [isRegister, setIsRegister] = useState(false);
-  const [email, setEmail] = useState('');
-  const { company, setCompany, login, isAdmin } = useAuth();
+  const [registerData, setRegisterData] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
+    addressStreet: '',
+    addressCity: '',
+    addressState: '',
+    addressZipCode: '',
+    addressCountry: '',
+    phoneNumber: '',
+    gender: 'male',
+    dateOfBirth: '',
+  });
+  const { company, setCompany, login, isAdmin, logout } = useAuth();
 
   const [products, setProducts] = useState([]);
   const [productName, setProductName] = useState('');
@@ -240,7 +251,8 @@ const InnerPage = () => {
   useEffect(() => {
     if (!selectedProduct || !company) return;
 
-    const socket = io('http://52.44.234.165:5050/');
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5050/';
+    const socket = io(socketUrl);
 
     socket.on('connect', () => {
       // connected
@@ -287,66 +299,56 @@ const InnerPage = () => {
     setActivePage('dashboard');
   };
 
-  const registerHandler = async () => {
-    // Validate required fields
-    if (!name || !password || !email) {
+  const registerHandler = async (data) => {
+    const normalizedName = (name || '').trim();
+    if (
+      !normalizedName ||
+      !password ||
+      !data?.email ||
+      !data?.firstName ||
+      !data?.lastName ||
+      !data?.addressStreet ||
+      !data?.addressCity ||
+      !data?.addressState ||
+      !data?.addressZipCode ||
+      !data?.addressCountry ||
+      !data?.phoneNumber ||
+      !data?.gender ||
+      !data?.dateOfBirth
+    ) {
       alert('Please fill in all required fields');
       return;
     }
 
-    let location = '';
-    
-    // Try to get location, but don't block registration if it fails
-    if (navigator.geolocation) {
-      try {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            try {
-              const { latitude, longitude } = position.coords;
-              location = await getAddressFromCoordinates(latitude, longitude);
-              // If address fetch fails, location will be empty string, which is fine
-            } catch (error) {
-              console.warn('Error getting address:', error);
-              location = '';
-            }
-            await performRegistration(location);
-          },
-          async (error) => {
-            // Location denied or failed - register without location
-            console.warn('Geolocation error:', error);
-            await performRegistration('');
-          },
-          {
-            timeout: 5000, // 5 second timeout
-            enableHighAccuracy: false // Don't require high accuracy
-          }
-        );
-      } catch (error) {
-        // Geolocation error - register without location
-        console.warn('Geolocation exception:', error);
-        await performRegistration('');
+    try {
+      const usernameExists = await checkUsernameExists(normalizedName);
+      if (usernameExists) {
+        alert('Username already exists. Please choose a different username.');
+        return;
       }
-    } else {
-      // Geolocation not available - register without location
-      await performRegistration('');
-    }
 
-    async function performRegistration(loc) {
-      try {
-        const res = await registerCompany({
-          name,
-          password,
-          email,
-          location: loc,
-        });
-        
-        if (res) {
-          setCompany(res);
-          setActivePage('dashboard');
-        }
-      } catch (error) {
-        console.error('Registration error:', error);
+      const res = await registerAgentUser({
+        name: normalizedName,
+        password,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        addressStreet: data.addressStreet,
+        addressCity: data.addressCity,
+        addressState: data.addressState,
+        addressZipCode: data.addressZipCode,
+        addressCountry: data.addressCountry,
+        phoneNumber: data.phoneNumber,
+        gender: data.gender,
+        dateOfBirth: data.dateOfBirth,
+      });
+
+      if (res) {
+        setCompany(res);
+        setActivePage('dashboard');
       }
+    } catch (error) {
+      console.error('Registration error:', error);
     }
   };
 
@@ -515,6 +517,9 @@ const InnerPage = () => {
     if (typeof index !== 'number' || index < 0 || index >= products.length) return;
     const prod = products[index];
     if (!prod) return;
+    setSelectedProduct(prod);
+    setTotalAmount(prod.total_minted_amount || 0);
+    setPage(1);
     const wg = prod.warrantyAndGuarantee || {};
     const w = wg.warranty || {};
     const g = wg.guarantee || {};
@@ -713,6 +718,12 @@ const InnerPage = () => {
   useEffect(() => {
     if (!selectedProduct) return;
     (async () => {
+      const selectedProductData = await getSelectedProductData(selectedProduct._id);
+      if (selectedProductData) {
+        setTotalAmount(selectedProductData.total_minted_amount || 0);
+      } else {
+        setTotalAmount(0);
+      }
       const res = await getProductQRcodes(selectedProduct._id, 1);
       setQrCodes(res);
       // Load security QR codes for the selected product
@@ -1039,7 +1050,8 @@ const InnerPage = () => {
   };
 
   const handleLogout = () => {
-    setCompany(null);
+    // Clear the persisted session so auth state survives reload correctly.
+    logout();
     setSelectedProduct(null);
     setActivePage('dashboard');
   };
@@ -1048,15 +1060,15 @@ const InnerPage = () => {
 
   if (!company) {
     return (
-      <Box sx={{ p: 0 }}>
+      <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
         <AuthPage
           isRegister={isRegister}
           name={name}
           setName={setName}
-          email={email}
-          setEmail={setEmail}
           password={password}
           setPassword={setPassword}
+          registerData={registerData}
+          setRegisterData={setRegisterData}
           onLogin={loginHandler}
           onRegister={registerHandler}
           setIsRegister={setIsRegister}

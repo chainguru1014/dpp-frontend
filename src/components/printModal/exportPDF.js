@@ -21,7 +21,8 @@ const QRCode = ({data,identifer}) => {
     
     useEffect(() => {
         (async () => {
-            const code = await qrcode.toDataURL('https://4dveritaspublic.com?qrcode=' + data);
+            // Backend returns direct public URL: http://localhost:3001/product/:productId/:qrcodeId
+            const code = await qrcode.toDataURL(String(data || ''));
             setQRcodeImage(code);
         })()
     }, [data]);

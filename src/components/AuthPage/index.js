@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Button, TextField, Typography } from '@mui/material';
+import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
 import bgImage from '../../assets/bg.jpg';
 // TODO: Replace this path/name with your actual Yometel logo file in src/assets
 import yometelLogo from '../../assets/yometel-logo.png';
@@ -8,10 +8,10 @@ const AuthPage = ({
   isRegister,
   name,
   setName,
-  email,
-  setEmail,
   password,
   setPassword,
+  registerData,
+  setRegisterData,
   onLogin,
   onRegister,
   setIsRegister,
@@ -19,7 +19,7 @@ const AuthPage = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isRegister) {
-      onRegister();
+      onRegister(registerData);
     } else {
       onLogin();
     }
@@ -32,8 +32,7 @@ const AuthPage = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        // backgroundImage: `url(${bgImage})`,
-        backgroundColor: 'white',
+        backgroundImage: `url(${bgImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         position: 'relative',
@@ -113,15 +112,125 @@ const AuthPage = ({
           />
 
           {isRegister && (
-            <TextField
-              label="Email"
-              type="email"
-              size="small"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              fullWidth
-            />
+            <>
+              <TextField
+                label="Email"
+                type="email"
+                size="small"
+                value={registerData.email}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, email: e.target.value }))
+                }
+                required
+                fullWidth
+              />
+              <TextField
+                label="First Name"
+                size="small"
+                value={registerData.firstName}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, firstName: e.target.value }))
+                }
+                required
+                fullWidth
+              />
+              <TextField
+                label="Last Name"
+                size="small"
+                value={registerData.lastName}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, lastName: e.target.value }))
+                }
+                required
+                fullWidth
+              />
+              <TextField
+                label="Street"
+                size="small"
+                value={registerData.addressStreet}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, addressStreet: e.target.value }))
+                }
+                required
+                fullWidth
+              />
+              <TextField
+                label="City"
+                size="small"
+                value={registerData.addressCity}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, addressCity: e.target.value }))
+                }
+                required
+                fullWidth
+              />
+              <TextField
+                label="State"
+                size="small"
+                value={registerData.addressState}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, addressState: e.target.value }))
+                }
+                required
+                fullWidth
+              />
+              <TextField
+                label="Zip Code"
+                size="small"
+                value={registerData.addressZipCode}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, addressZipCode: e.target.value }))
+                }
+                required
+                fullWidth
+              />
+              <TextField
+                label="Country"
+                size="small"
+                value={registerData.addressCountry}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, addressCountry: e.target.value }))
+                }
+                required
+                fullWidth
+              />
+              <TextField
+                label="Phone Number"
+                size="small"
+                value={registerData.phoneNumber}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, phoneNumber: e.target.value }))
+                }
+                required
+                fullWidth
+              />
+              <TextField
+                select
+                label="Gender"
+                size="small"
+                value={registerData.gender}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, gender: e.target.value }))
+                }
+                required
+                fullWidth
+              >
+                <MenuItem value="male">Male</MenuItem>
+                <MenuItem value="female">Female</MenuItem>
+              </TextField>
+              <TextField
+                label="Date of Birth"
+                type="date"
+                size="small"
+                value={registerData.dateOfBirth}
+                onChange={(e) =>
+                  setRegisterData((prev) => ({ ...prev, dateOfBirth: e.target.value }))
+                }
+                required
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+              />
+            </>
           )}
 
           <TextField

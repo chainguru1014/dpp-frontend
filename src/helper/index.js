@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Backend URL configuration - Use VPS IP address for production
+// Backend URL configuration - Use localhost for local development
 // Can be overridden with REACT_APP_BACKEND_URL environment variable
-export const Backend_URL = process.env.REACT_APP_BACKEND_URL || 'http://82.165.217.122:5052/';
+export const Backend_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5052/';
 export const FILE_BASE_URL = `${Backend_URL}files/`;
 
 export const getFileUrl = (filename) => {
@@ -65,6 +65,48 @@ export const registerCompany = async (data) => {
         console.error('Registration error:', err);
         const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
         alert("Failed: " + errorMessage);
+        return null;
+    }
+}
+
+export const registerAgentUser = async (data) => {
+    try {
+        const payload = { ...data, userType: 'agent' };
+        const res = await axios.post(`${Backend_URL}user/register`, payload);
+        if (res.data.status === 'success') {
+            alert('Successfully registered');
+            return res.data.user || res.data.data || null;
+        }
+        alert('Registration failed: ' + (res.data.message || 'Unknown error'));
+        return null;
+    } catch (err) {
+        console.error('Agent registration error:', err);
+        const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
+        alert('Failed: ' + errorMessage);
+        return null;
+    }
+}
+
+export const checkUsernameExists = async (name) => {
+    try {
+        const username = (name || '').trim();
+        if (!username) return false;
+        const res = await axios.post(`${Backend_URL}user/check-username`, { name: username });
+        return !!res.data?.exists;
+    } catch (err) {
+        console.error('Username check error:', err);
+        return false;
+    }
+}
+
+export const loginUser = async (data) => {
+    try {
+        const res = await axios.post(`${Backend_URL}user/login`, data);
+        return res?.data?.user || null;
+    } catch (err) {
+        console.log(err);
+        const message = err.response?.data?.message;
+        alert(message || err.message || 'Login failed');
         return null;
     }
 }

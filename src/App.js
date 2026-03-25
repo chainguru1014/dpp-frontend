@@ -9,6 +9,11 @@ function PublicProductRoute() {
   const qrcodeKey = searchParams.get('qrcode');
   
   if (qrcodeKey) {
+    // Backward compatibility: qrcode can be a full URL, extract /product/:id/:qrcodeId if present.
+    const match = String(qrcodeKey).match(/\/product\/([^/?#]+)\/([^/?#]+)/i);
+    if (match) {
+      return <Navigate to={`/product/${encodeURIComponent(match[1])}/${encodeURIComponent(match[2])}`} replace />;
+    }
     return <PublicProductPage qrcodeKey={qrcodeKey} />;
   }
   
@@ -17,8 +22,8 @@ function PublicProductRoute() {
 }
 
 function PublicProductPageWrapper() {
-  const { key } = useParams();
-  return <PublicProductPage qrcodeKey={key} />;
+  const { productId, qrcodeId } = useParams();
+  return <PublicProductPage productId={productId} qrcodeId={qrcodeId} />;
 }
 
 function App() {
@@ -27,7 +32,7 @@ function App() {
       <StyledEngineProvider injectFirst>
         <BrowserRouter>
           <Routes>
-            <Route path="/product/:key" element={<PublicProductPageWrapper />} />
+            <Route path="/product/:productId/:qrcodeId" element={<PublicProductPageWrapper />} />
             <Route path="/" element={<PublicProductRoute />} />
             <Route path="/admin/*" element={<Page />} />
           </Routes>

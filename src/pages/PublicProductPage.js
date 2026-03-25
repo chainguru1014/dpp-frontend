@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Container, IconButton } from '@mui/material';
+import { Box, Typography, Container, IconButton, Avatar } from '@mui/material';
 import { Slide } from 'react-slideshow-image';
 import 'react-slideshow-image/dist/styles.css';
 import { Backend_URL, getFileUrl } from '../helper';
@@ -8,15 +8,43 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import yometelLogo from '../assets/yometel-logo.png';
 import appStoreBadge from '../assets/app-store-badge.png';
 import googlePlayBadge from '../assets/google-play-badge.png';
+import QrCodeIcon from '@mui/icons-material/QrCode';
 
-const PublicProductPage = ({ qrcodeKey, onBack }) => {
+// Sound wave icon component
+const SoundWaveIcon = () => (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      height: '20px',
+      justifyContent: 'center',
+      gap: '3px',
+    }}
+  >
+    {[8, 12, 16, 12, 8].map((height, index) => (
+      <Box
+        key={index}
+        sx={{
+          width: '3px',
+          height: `${height}px`,
+          backgroundColor: '#1565C0',
+          borderRadius: '2px',
+        }}
+      />
+    ))}
+  </Box>
+);
+
+const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchProduct = async () => {
-      if (!qrcodeKey) {
+      const hasProductIds = !!productId && qrcodeId != null;
+      const hasLegacyKey = !!qrcodeKey;
+      if (!hasProductIds && !hasLegacyKey) {
         setError('Product key is missing');
         setLoading(false);
         return;
@@ -24,8 +52,13 @@ const PublicProductPage = ({ qrcodeKey, onBack }) => {
 
       try {
         setLoading(true);
-        // Decrypt and get product info from backend
-        const response = await fetch(`${Backend_URL}qrcode/product/${encodeURIComponent(qrcodeKey)}`);
+        let response;
+        if (hasProductIds) {
+          response = await fetch(`${Backend_URL}qrcode/public/${encodeURIComponent(String(productId))}/${encodeURIComponent(String(qrcodeId))}`);
+        } else {
+          // Backward-compatible support for old encrypted key links.
+          response = await fetch(`${Backend_URL}qrcode/product/${encodeURIComponent(qrcodeKey)}`);
+        }
         const data = await response.json();
 
         if (response.ok && data.status === 'success') {
@@ -42,7 +75,7 @@ const PublicProductPage = ({ qrcodeKey, onBack }) => {
     };
 
     fetchProduct();
-  }, [qrcodeKey]);
+  }, [qrcodeKey, productId, qrcodeId]);
 
   const slideProperties = {
     prevArrow: (
@@ -75,169 +108,358 @@ const PublicProductPage = ({ qrcodeKey, onBack }) => {
     autoplay: false,
   };
 
-  if (loading) {
+  // Show mobile app design when loading or no product
+  if (loading || error || !product) {
     return (
       <Box
         sx={{
           minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: '#f5f5f5',
-        }}
-      >
-        <Typography>Loading product information...</Typography>
-      </Box>
-    );
-  }
-
-  if (error || !product) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          bgcolor: '#f5f5f5',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        <Typography variant="h6" color="error">
-          {error || 'Product not found'}
-        </Typography>
-        {onBack && (
-          <button onClick={onBack} style={{ padding: '10px 20px', cursor: 'pointer' }}>
-            Go Back
-          </button>
-        )}
-      </Box>
-    );
-  }
-
-  const appStoreUrl = process.env.REACT_APP_APP_STORE_URL || '#';
-  const playStoreUrl = process.env.REACT_APP_PLAY_STORE_URL || '#';
-
-  return (
-    <Box
-      sx={{
-        height: '100vh',
-        bgcolor: '#f5f5f5',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}
-    >
-      <Container 
-        maxWidth="md" 
-        sx={{ 
-          height: '100%',
+          bgcolor: '#E3F2FD', // Light pastel blue background
           display: 'flex',
           flexDirection: 'column',
-          py: { xs: 1, sm: 2 },
-          px: { xs: 1, sm: 2 },
         }}
       >
-        {/* Yometel Logo at Top Center */}
+        {/* Header */}
         <Box
           sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '15px 20px',
+            backgroundColor: 'transparent',
+          }}
+        >
+          {/* QR Code Icon */}
+          <Box
+            sx={{
+              width: '48px',
+              height: '48px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '8px',
+            }}
+          >
+            <QrCodeIcon sx={{ fontSize: 32, color: '#1565C0' }} />
+          </Box>
+
+          {/* Yometel Logo with Sound Wave */}
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography
+              sx={{
+                fontSize: '20px',
+                fontWeight: 'bold',
+                color: '#1565C0',
+                marginRight: '8px',
+              }}
+            >
+              Yometel
+            </Typography>
+            <SoundWaveIcon />
+          </Box>
+
+          {/* Avatar */}
+          <Box
+            sx={{
+              width: '48px',
+              height: '48px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Avatar
+              sx={{
+                width: 36,
+                height: 36,
+                bgcolor: '#1976d2',
+                fontSize: '16px',
+                fontWeight: 600,
+              }}
+            >
+              K
+            </Avatar>
+          </Box>
+        </Box>
+
+        {/* Main Content - QR Code Scanner Card */}
+        <Box
+          sx={{
+            flex: 1,
+            backgroundColor: '#E3F2FD',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            mb: { xs: 1, sm: 2 },
-            flexShrink: 0,
-            margin: '20px !important',
+            padding: '40px 20px',
           }}
         >
           <Box
-            component="img"
-            src={yometelLogo}
-            alt="Yometel Logo"
             sx={{
-              height: { xs: '40px', sm: '50px', md: '60px' },
-              width: 'auto',
-              maxWidth: '100%',
-            }}
-          />
-        </Box>
-        
-        {/* Image Carousel - 3/8 of viewport height */}
-        {product.images && product.images.length > 0 && (
-          <Box
-            sx={{
-              borderRadius: 2,
-              overflow: 'hidden',
-              boxShadow: 3,
-              bgcolor: 'white',
-              flexShrink: 0,
-              mb: { xs: 1, sm: 1.5 },
-              height: '37.5vh',
-              minHeight: '37.5vh',
-              maxHeight: '37.5vh',
+              width: '90%',
+              maxWidth: '350px',
+              aspectRatio: '1 / 1',
+              backgroundColor: '#fff',
+              borderRadius: '16px',
               position: 'relative',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
-            <Slide {...slideProperties}>
-              {product.images.map((image, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    width: '100%',
-                    height: '37.5vh',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: '#fafafa',
-                    padding: { xs: 1, sm: 2 },
-                    boxSizing: 'border-box',
-                  }}
-                >
-                  <img
-                    src={getFileUrl(image)}
-                    alt={`${product.name || 'Product'} - Image ${index + 1}`}
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      width: 'auto',
-                      height: 'auto',
-                      objectFit: 'contain',
-                      display: 'block',
-                    }}
-                    onError={(e) => {
-                      console.error('Image load error:', image, getFileUrl(image));
-                      e.target.style.display = 'none';
-                    }}
-                  />
-                </Box>
-              ))}
-            </Slide>
-          </Box>
-        )}
+            {/* Four quadrants */}
+            <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
+              <Box sx={{ flex: 1 }} />
+              <Box
+                sx={{
+                  flex: 1,
+                  borderLeft: '1px solid #E0E0E0',
+                }}
+              />
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
+              <Box
+                sx={{
+                  flex: 1,
+                  borderTop: '1px solid #E0E0E0',
+                }}
+              />
+              <Box
+                sx={{
+                  flex: 1,
+                  borderTop: '1px solid #E0E0E0',
+                  borderLeft: '1px solid #E0E0E0',
+                }}
+              />
+            </Box>
 
-        {/* Product Details - Flexible to fill remaining space */}
+            {/* Text overlay */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '20px',
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: '16px',
+                  color: '#999',
+                  textAlign: 'center',
+                  fontWeight: 400,
+                }}
+              >
+                Scan QR code to view product
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Footer */}
         <Box
           sx={{
-            bgcolor: 'white',
-            borderRadius: 2,
-            p: { xs: 1.5, sm: 2, md: 3 },
-            boxShadow: 3,
-            mb: { xs: 1, sm: 2 },
-            flex: '1 1 auto',
-            overflowY: 'auto',
+            backgroundColor: 'transparent',
+            padding: '20px',
             display: 'flex',
             flexDirection: 'column',
+            alignItems: 'flex-end',
           }}
         >
+          <Typography
+            sx={{
+              fontSize: '12px',
+              color: '#999',
+              lineHeight: '16px',
+            }}
+          >
+            Digital
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '12px',
+              color: '#999',
+              lineHeight: '16px',
+            }}
+          >
+            Product
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '12px',
+              color: '#999',
+              lineHeight: '16px',
+            }}
+          >
+            Passport
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
+
+  // When product is loaded, still show mobile app design layout
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: '#E3F2FD', // Light pastel blue background
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '15px 20px',
+          backgroundColor: 'transparent',
+        }}
+      >
+        {/* QR Code Icon */}
+        <Box
+          sx={{
+            width: '48px',
+            height: '48px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '8px',
+          }}
+        >
+          <QrCodeIcon sx={{ fontSize: 32, color: '#1565C0' }} />
+        </Box>
+
+        {/* Yometel Logo with Sound Wave */}
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '20px',
+              fontWeight: 'bold',
+              color: '#1565C0',
+              marginRight: '8px',
+            }}
+          >
+            Yometel
+          </Typography>
+          <SoundWaveIcon />
+        </Box>
+
+        {/* Avatar */}
+        <Box
+          sx={{
+            width: '48px',
+            height: '48px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Avatar
+            sx={{
+              width: 36,
+              height: 36,
+              bgcolor: '#1976d2',
+              fontSize: '16px',
+              fontWeight: 600,
+            }}
+          >
+            K
+          </Avatar>
+        </Box>
+      </Box>
+
+      {/* Main Content - Product Display Card */}
+      <Box
+        sx={{
+          flex: 1,
+          backgroundColor: '#E3F2FD',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '40px 20px',
+        }}
+      >
+        <Box
+          sx={{
+            width: '90%',
+            maxWidth: '350px',
+            backgroundColor: '#fff',
+            borderRadius: '16px',
+            padding: '20px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          }}
+        >
+          {/* Product Images */}
+          {product.images && product.images.length > 0 && (
+            <Box
+              sx={{
+                borderRadius: 2,
+                overflow: 'hidden',
+                mb: 2,
+                maxHeight: '300px',
+              }}
+            >
+              <Slide {...slideProperties}>
+                {product.images.map((image, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: '#fafafa',
+                      padding: 2,
+                    }}
+                  >
+                    <img
+                      src={getFileUrl(image)}
+                      alt={`${product.name || 'Product'} - Image ${index + 1}`}
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '300px',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
+                      }}
+                    />
+                  </Box>
+                ))}
+              </Slide>
+            </Box>
+          )}
+
+          {/* Product Details */}
           {product.name && (
             <Typography
-              variant="h4"
-              component="h1"
               sx={{
+                fontSize: '18px',
                 fontWeight: 600,
-                mb: { xs: 0.5, sm: 1 },
-                fontSize: { xs: '1.1rem', sm: '1.3rem', md: '1.5rem' },
-                flexShrink: 0,
+                mb: 1,
+                color: '#333',
               }}
             >
               {product.name}
@@ -246,12 +468,10 @@ const PublicProductPage = ({ qrcodeKey, onBack }) => {
 
           {product.model && (
             <Typography
-              variant="h6"
-              color="text.secondary"
               sx={{
-                mb: { xs: 0.5, sm: 1 },
-                fontSize: { xs: '0.85rem', sm: '0.95rem', md: '1rem' },
-                flexShrink: 0,
+                fontSize: '14px',
+                color: '#666',
+                mb: 1,
               }}
             >
               Model: {product.model}
@@ -260,12 +480,10 @@ const PublicProductPage = ({ qrcodeKey, onBack }) => {
 
           {product.company_id && product.company_id.name && (
             <Typography
-              variant="body1"
               sx={{
-                mb: { xs: 0.5, sm: 1 },
-                fontSize: { xs: '0.8rem', sm: '0.85rem', md: '0.9rem' },
-                color: 'text.secondary',
-                flexShrink: 0,
+                fontSize: '14px',
+                color: '#666',
+                mb: 1,
               }}
             >
               Brand: {product.company_id.name}
@@ -274,111 +492,58 @@ const PublicProductPage = ({ qrcodeKey, onBack }) => {
 
           {product.detail && (
             <Typography
-              variant="body1"
               sx={{
+                fontSize: '14px',
+                color: '#666',
                 lineHeight: 1.6,
-                fontSize: { xs: '0.85rem', sm: '0.9rem', md: '0.95rem' },
                 whiteSpace: 'pre-wrap',
-                flex: '1 1 auto',
-                overflowY: 'auto',
+                mt: 1,
               }}
             >
               {product.detail}
             </Typography>
           )}
         </Box>
+      </Box>
 
-        {/* App Store Buttons - Fixed at bottom */}
-        <Box
+      {/* Footer */}
+      <Box
+        sx={{
+          backgroundColor: 'transparent',
+          padding: '20px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+        }}
+      >
+        <Typography
           sx={{
-            display: 'flex',
-            flexDirection: 'row',
-            gap: { xs: 1, sm: 2 },
-            justifyContent: 'center',
-            alignItems: 'center',
-            flexShrink: 0,
-            pb: { xs: 1, sm: 2 },
+            fontSize: '12px',
+            color: '#999',
+            lineHeight: '16px',
           }}
         >
-          <a
-            href={appStoreUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              textDecoration: 'none',
-              display: 'inline-block',
-            }}
-          >
-            <Box
-              sx={{
-                bgcolor: 'white',
-                borderRadius: 1.5,
-                p: { xs: 1, sm: 1.5 },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                minWidth: { xs: '160px', sm: '180px' },
-                '&:hover': {
-                  borderColor: '#757575',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                },
-              }}
-            >
-              <Box
-                component="img"
-                src={appStoreBadge}
-                alt="Download on the App Store"
-                sx={{
-                  height: { xs: '45px', sm: '55px', md: '65px' },
-                  width: 'auto',
-                  display: 'block',
-                }}
-              />
-            </Box>
-          </a>
-
-          <a
-            href={playStoreUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              textDecoration: 'none',
-              display: 'inline-block',
-            }}
-          >
-            <Box
-              sx={{
-                bgcolor: 'white',
-                borderRadius: 1.5,
-                p: { xs: 1, sm: 1.5 },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                minWidth: { xs: '160px', sm: '180px' },
-                '&:hover': {
-                  borderColor: '#757575',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                },
-              }}
-            >
-              <Box
-                component="img"
-                src={googlePlayBadge}
-                alt="Get it on Google Play"
-                sx={{
-                  height: { xs: '55px', sm: '65px', md: '75px' },
-                  width: 'auto',
-                  display: 'block',
-                }}
-              />
-            </Box>
-          </a>
-        </Box>
-      </Container>
+          Digital
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: '12px',
+            color: '#999',
+            lineHeight: '16px',
+          }}
+        >
+          Product
+        </Typography>
+        <Typography
+          sx={{
+            fontSize: '12px',
+            color: '#999',
+            lineHeight: '16px',
+          }}
+        >
+          Passport
+        </Typography>
+      </Box>
     </Box>
   );
 };
