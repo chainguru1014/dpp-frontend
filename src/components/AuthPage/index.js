@@ -42,7 +42,7 @@ const AuthPage = ({
           xs: `url(${mobileBgImage})`,
           md: `url(${desktopBgImage})`,
         },
-        backgroundSize: 'cover',
+        backgroundSize: '100vw 100dvh',
         backgroundPosition: {
           xs: 'center center',
           md: 'left center',
@@ -63,13 +63,13 @@ const AuthPage = ({
         }}
       >
         {/* Logo */}
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
+        {/* <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
           <img
             src={yometelLogo}
             alt="Yometel"
             style={{ maxWidth: '75%', height: 'auto' }}
           />
-        </Box>
+        </Box> */}
 
         <Typography
           variant="h6"
