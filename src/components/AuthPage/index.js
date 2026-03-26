@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
-import bgImage from '../../assets/bg.jpg';
-// TODO: Replace this path/name with your actual Yometel logo file in src/assets
+import desktopBgImage from '../../assets/background.png';
+import mobileBgImage from '../../assets/background-mobile.png';
 import yometelLogo from '../../assets/yometel-logo.png';
 
 const AuthPage = ({
@@ -31,43 +31,23 @@ const AuthPage = ({
         minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        backgroundImage: `url(${bgImage})`,
+        justifyContent: { xs: 'center', md: 'flex-end' },
+        pr: { xs: 0, md: '10vw', lg: '14vw' },
+        backgroundImage: {
+          xs: `url(${mobileBgImage})`,
+          md: `url(${desktopBgImage})`,
+        },
         backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        position: 'relative',
-        overflow: 'hidden',
+        backgroundPosition: {
+          xs: 'center center',
+          md: 'left center',
+        },
+        backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* Left green accent similar to reference UI */}
-      <Box
-        sx={{
-          position: 'absolute',
-          left: '-10%',
-          top: 0,
-          bottom: 0,
-          width: '40%',
-          background:
-            'linear-gradient(135deg, #00c48c 0%, #00b07d 40%, #00a16f 100%)',
-          clipPath: 'polygon(0 0, 100% 0, 60% 100%, 0% 100%)',
-          opacity: 0.95,
-        }}
-      />
-
-      {/* Semi-transparent dark overlay on background */}
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          bgcolor: 'rgba(0,0,0,0.45)',
-        }}
-      />
-
       {/* Auth card */}
       <Box
         sx={{
-          position: 'relative',
-          zIndex: 1,
           width: 380,
           maxWidth: '90vw',
           bgcolor: 'rgba(255,255,255,0.98)',
