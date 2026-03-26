@@ -28,11 +28,16 @@ const AuthPage = ({
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        width: '100vw',
+        maxWidth: '100vw',
+        height: '100dvh',
+        minHeight: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: { xs: 'center', md: 'flex-end' },
         pr: { xs: 0, md: '10vw', lg: '14vw' },
+        boxSizing: 'border-box',
+        overflow: 'hidden',
         backgroundImage: {
           xs: `url(${mobileBgImage})`,
           md: `url(${desktopBgImage})`,
