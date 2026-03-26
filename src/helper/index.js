@@ -2,8 +2,21 @@ import axios from 'axios';
 
 // Backend URL configuration.
 // In hosting, set REACT_APP_BACKEND_URL to your public backend URL.
-export const Backend_URL = process.env.REACT_APP_BACKEND_URL || 'http://82.165.217.122:5052/';
-export const FILE_BASE_URL = `${Backend_URL}files/`;
+const normalizeBaseUrl = (url) => {
+    if (!url) return '';
+    return url.endsWith('/') ? url : `${url}/`;
+};
+
+const buildUrl = (base, path) => {
+    const safeBase = normalizeBaseUrl(base);
+    const safePath = (path || '').replace(/^\/+/, '');
+    return `${safeBase}${safePath}`;
+};
+
+export const Backend_URL = normalizeBaseUrl(
+    process.env.REACT_APP_BACKEND_URL || 'http://82.165.217.122:5052/'
+);
+export const FILE_BASE_URL = buildUrl(Backend_URL, 'files/');
 
 export const getFileUrl = (filename) => {
     if (!filename) return '';
@@ -11,7 +24,11 @@ export const getFileUrl = (filename) => {
     if (/^https?:\/\//i.test(filename)) {
         return filename;
     }
-    return `${FILE_BASE_URL}${filename}`;
+    const cleanFilename = String(filename).replace(/^\/+/, '');
+    if (cleanFilename.startsWith('files/')) {
+        return buildUrl(Backend_URL, cleanFilename);
+    }
+    return buildUrl(FILE_BASE_URL, encodeURIComponent(cleanFilename));
 };
 
 export const getCompanyInfo = async (wallet) => {
