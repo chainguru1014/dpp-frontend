@@ -26,17 +26,11 @@ const SecurityQRCodeDialog = ({ open, onClose, securityQRCodes, identifiers }) =
       }}
     >
       <DialogTitle>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
             Security QR Codes
           </Typography>
-          <IconButton
-            aria-label="close"
-            onClick={onClose}
-            sx={{
-              color: (theme) => theme.palette.grey[500],
-            }}
-          >
+          <IconButton aria-label="close" onClick={onClose} size="small" sx={{ color: '#fff' }}>
             <CloseIcon />
           </IconButton>
         </Box>

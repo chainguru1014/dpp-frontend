@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginUser as loginApi } from '../../helper';
+import { loginUser as loginUserApi, loginCompany as loginCompanyApi } from '../../helper';
 
 const AuthContext = createContext(null);
 
@@ -89,7 +89,9 @@ export const AuthProvider = ({ children }) => {
   }, [company]);
 
   const login = async ({ name, password }) => {
-    const res = await loginApi({ name, password });
+    // Admin + brand accounts live in the companies collection; fall back to user login.
+    let res = await loginCompanyApi({ name, password });
+    if (!res) res = await loginUserApi({ name, password });
     if (!res) return null;
     const isAdmin = res?.name === 'admin';
     const companyWithRole = isAdmin ? { ...res, role: 'admin' } : res;

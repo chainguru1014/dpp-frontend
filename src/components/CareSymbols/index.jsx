@@ -2,23 +2,40 @@ import React from 'react';
 import Box from '@mui/material/Box';
 
 /**
- * Standard laundry care symbol icons (GINETEX-style).
+ * Standard laundry care symbol icons (GINETEX / ISO 3758 style).
  * Each icon is an inline SVG for reliability without external assets.
  */
 const size = 32;
-const stroke = 1.8;
+const stroke = 1.7;
+
+const ACTIVE = '#1976d2';
+const IDLE = '#5b6b8c';
+
+const common = {
+  fill: 'none',
+  strokeWidth: stroke,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+};
+
+// Evenly spread N filled dots across the symbol (heat / temperature level).
+function dotPositions(count) {
+  if (count <= 1) return [16];
+  if (count === 2) return [13, 19];
+  return [11, 16, 21];
+}
 
 function WashIcon({ temp, selected }) {
+  const color = selected ? ACTIVE : IDLE;
   return (
     <Box component="svg" viewBox="0 0 32 32" width={size} height={size} sx={{ display: 'block' }}>
+      <path {...common} stroke={color} d="M6 12.5 q2.5 -2.6 5 0 t5 0 t5 0 t5 0" />
       <path
-        fill="none"
-        stroke={selected ? '#1976d2' : '#333'}
-        strokeWidth={stroke}
-        d="M6 10c0-2 2-4 6-4h8c4 0 6 2 6 4v14H6V10z"
+        {...common}
+        stroke={color}
+        d="M6 12.5 L7.6 23.4 Q7.9 26 10.3 26 L21.7 26 Q24.1 26 24.4 23.4 L26 12.5"
       />
-      <path fill="none" stroke={selected ? '#1976d2' : '#333'} strokeWidth={stroke} d="M6 16h20" />
-      <text x="16" y="14" textAnchor="middle" fontSize="8" fill={selected ? '#1976d2' : '#333'} fontWeight="bold">
+      <text x="16" y="22" textAnchor="middle" fontSize="9" fill={color} fontWeight="bold">
         {temp}
       </text>
     </Box>
@@ -26,10 +43,11 @@ function WashIcon({ temp, selected }) {
 }
 
 function DryCleanIcon({ letter, selected }) {
+  const color = selected ? ACTIVE : IDLE;
   return (
     <Box component="svg" viewBox="0 0 32 32" width={size} height={size} sx={{ display: 'block' }}>
-      <circle cx="16" cy="16" r="12" fill="none" stroke={selected ? '#1976d2' : '#333'} strokeWidth={stroke} />
-      <text x="16" y="20" textAnchor="middle" fontSize="12" fill={selected ? '#1976d2' : '#333'} fontWeight="bold">
+      <circle cx="16" cy="16" r="11.5" {...common} stroke={color} />
+      <text x="16" y="20.5" textAnchor="middle" fontSize="13" fill={color} fontWeight="bold">
         {letter}
       </text>
     </Box>
@@ -37,58 +55,42 @@ function DryCleanIcon({ letter, selected }) {
 }
 
 function IronIcon({ dots, selected }) {
+  const color = selected ? ACTIVE : IDLE;
   return (
     <Box component="svg" viewBox="0 0 32 32" width={size} height={size} sx={{ display: 'block' }}>
       <path
-        fill="none"
-        stroke={selected ? '#1976d2' : '#333'}
-        strokeWidth={stroke}
-        d="M8 6h16l-4 20H12L8 6z"
+        {...common}
+        stroke={color}
+        d="M6 20.5 L25.5 20.5 L25.5 17 C25.5 13.5 22.5 11.5 18.5 11.5 L12 11.5 C9 11.5 6.8 13.8 6 17 Z"
       />
-      <path fill="none" stroke={selected ? '#1976d2' : '#333'} strokeWidth={stroke} d="M8 12h16" />
-      {[1, 2, 3].slice(0, dots).map((_, i) => (
-        <circle key={i} cx={12 + i * 8} cy="22" r="2.5" fill={selected ? '#1976d2' : '#333'} />
+      <path {...common} stroke={color} d="M12.5 11.5 C13.5 9.2 16.9 9.2 18 11.5" />
+      {dotPositions(dots).map((cx, i) => (
+        <circle key={i} cx={cx} cy="17" r="1.6" fill={color} />
       ))}
     </Box>
   );
 }
 
 function BleachIcon({ allowed, selected }) {
+  const color = selected ? ACTIVE : IDLE;
   return (
     <Box component="svg" viewBox="0 0 32 32" width={size} height={size} sx={{ display: 'block' }}>
-      <path
-        fill="none"
-        stroke={selected ? '#1976d2' : '#333'}
-        strokeWidth={stroke}
-        d="M16 4l12 24H4L16 4z"
-      />
+      <path {...common} stroke={color} d="M16 5 L27 25 L5 25 Z" />
       {!allowed && (
-        <path
-          stroke={selected ? '#1976d2' : '#333'}
-          strokeWidth={stroke}
-          d="M8 8l16 16M24 8L8 24"
-        />
+        <path {...common} stroke={color} strokeWidth={stroke * 1.3} d="M9.5 12 L22.5 23 M22.5 12 L9.5 23" />
       )}
     </Box>
   );
 }
 
 function TumbleDryIcon({ dots, selected }) {
+  const color = selected ? ACTIVE : IDLE;
   return (
     <Box component="svg" viewBox="0 0 32 32" width={size} height={size} sx={{ display: 'block' }}>
-      <rect
-        x="4"
-        y="4"
-        width="24"
-        height="24"
-        rx="2"
-        fill="none"
-        stroke={selected ? '#1976d2' : '#333'}
-        strokeWidth={stroke}
-      />
-      <circle cx="16" cy="16" r="6" fill="none" stroke={selected ? '#1976d2' : '#333'} strokeWidth={stroke} />
-      {[1, 2].slice(0, dots).map((_, i) => (
-        <circle key={i} cx={14 + i * 4} cy="22" r="1.5" fill={selected ? '#1976d2' : '#333'} />
+      <rect x="4" y="4" width="24" height="24" rx="3.5" {...common} stroke={color} />
+      <circle cx="16" cy="16" r="6.5" {...common} stroke={color} />
+      {dotPositions(Math.min(dots, 2)).map((cx, i) => (
+        <circle key={i} cx={cx} cy="16" r="1.5" fill={color} />
       ))}
     </Box>
   );

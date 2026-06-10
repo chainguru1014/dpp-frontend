@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
 import desktopBgImage from '../../assets/background.png';
 import mobileBgImage from '../../assets/background-mobile.png';
-import yometelLogo from '../../assets/yometel-logo.png';
+import logoShield from '../../assets/logo-shield.png';
 
 const AuthPage = ({
   isRegister,
@@ -62,18 +62,28 @@ const AuthPage = ({
           py: 4,
         }}
       >
-        {/* Logo */}
-        {/* <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <img
-            src={yometelLogo}
-            alt="Yometel"
-            style={{ maxWidth: '75%', height: 'auto' }}
-          />
-        </Box> */}
+        {/* Logo lockup */}
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <img src={logoShield} alt="Yometel" style={{ width: 76, height: 76 }} />
+          <Typography sx={{ mt: 0.5, fontWeight: 800, fontSize: 22, color: 'primary.dark', lineHeight: 1.1 }}>
+            Yometel
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 1.5,
+              textTransform: 'uppercase',
+              color: 'text.secondary',
+            }}
+          >
+            Digital Product Passport
+          </Typography>
+        </Box>
 
         <Typography
           variant="h6"
-          sx={{ fontWeight: 600, mb: 2, textAlign: 'left' }}
+          sx={{ fontWeight: 700, mb: 2, textAlign: 'left' }}
         >
           {isRegister ? 'Create Account' : 'Sign In'}
         </Typography>

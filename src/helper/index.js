@@ -128,6 +128,95 @@ export const loginUser = async (data) => {
     }
 }
 
+// Quiet company login (no alert) — used by the admin panel auth flow.
+// The admin account and brand accounts live in the companies collection.
+export const loginCompany = async (data) => {
+    try {
+        const res = await axios.post(`${Backend_URL}company/auth`, data);
+        return res?.data?.data?.doc ?? null;
+    } catch (err) {
+        return null;
+    }
+}
+
+// Admin scan-history feed (filters + search + pagination).
+export const getScanHistory = async (params) => {
+    try {
+        const res = await axios.get(`${Backend_URL}qrcode/scan/history`, { params });
+        return res?.data || { data: [], total: 0 };
+    } catch (err) {
+        console.log(err);
+        return { data: [], total: 0 };
+    }
+}
+
+// Ownership-transfer history for a single product (per-product history dialog).
+export const getProductTransfers = async (productId) => {
+    try {
+        const res = await axios.get(`${Backend_URL}transfer/product/${productId}`);
+        return res?.data || { data: [], total: 0 };
+    } catch (err) {
+        console.log(err);
+        return { data: [], total: 0 };
+    }
+}
+
+// All ownership transfers (filters + pagination) for the admin Trace page.
+export const getAllTransfers = async (params) => {
+    try {
+        const res = await axios.get(`${Backend_URL}transfer/list`, { params });
+        return res?.data || { data: [], total: 0 };
+    } catch (err) {
+        console.log(err);
+        return { data: [], total: 0 };
+    }
+}
+
+// Check whether a recipient email already belongs to a registered user.
+export const lookupRecipient = async (email) => {
+    try {
+        const res = await axios.get(`${Backend_URL}transfer/recipient`, { params: { email } });
+        return res?.data || { exists: false, user: null };
+    } catch (err) {
+        console.log(err);
+        return { exists: false, user: null };
+    }
+}
+
+// How many units the acting party can transfer for a product (drives input max).
+export const getTransferAvailable = async (productId, actor) => {
+    try {
+        const res = await axios.get(`${Backend_URL}transfer/available`, {
+            params: { product_id: productId, actor_kind: actor?.kind, actor_id: actor?.id },
+        });
+        return res?.data || { available: 0, total_minted: 0 };
+    } catch (err) {
+        console.log(err);
+        return { available: 0, total_minted: 0 };
+    }
+}
+
+// Owner-initiated ownership transfer (quantity + receiver email + method).
+export const ownerTransfer = async (payload) => {
+    try {
+        const res = await axios.post(`${Backend_URL}transfer/owner-initiate`, payload);
+        return res?.data || null;
+    } catch (err) {
+        return { status: 'fail', message: err?.response?.data?.message || 'Transfer failed' };
+    }
+}
+
+// Dashboard analytics (totals, series, breakdowns, top lists).
+export const getAnalytics = async () => {
+    try {
+        const res = await axios.get(`${Backend_URL}qrcode/analytics`);
+        return res?.data?.data || null;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+}
+
 export const addProduct = async (data) => {
     try {
         await axios.post(`${Backend_URL}product`, data);

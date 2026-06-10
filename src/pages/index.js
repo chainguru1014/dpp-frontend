@@ -24,10 +24,8 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import Tabs from '@mui/joy/Tabs';
-import TabList from '@mui/joy/TabList';
-import Tab from '@mui/joy/Tab';
-import TabPanel from '@mui/joy/TabPanel';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
 import { TreeItem, SimpleTreeView } from '@mui/x-tree-view';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -35,6 +33,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import PeopleIcon from '@mui/icons-material/People';
+import HistoryIcon from '@mui/icons-material/History';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import CloseIcon from '@mui/icons-material/Close';
 import Webcam from 'react-webcam';
 import io from 'socket.io-client';
 
@@ -62,15 +63,26 @@ import PreviewModal from '../components/PreviewModal';
 import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
 import AuthPage from '../components/AuthPage';
+import logoShield from '../assets/logo-shield.png';
 import ProfilePage from '../features/profile/ProfilePage';
-import ProductsSidebarTree from '../features/products/ProductsSidebarTree';
+import ProductsTable from '../features/products/ProductsTable';
 import ProductMintSection from '../features/products/ProductMintSection';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import DashboardPage from '../features/dashboard/DashboardPage';
+import HistoryPage from '../features/history/HistoryPage';
+import TracePage from '../features/trace/TracePage';
+import ProductHistoryDialog from '../features/products/ProductHistoryDialog';
+import ProductTransferDialog from '../features/products/ProductTransferDialog';
 import { getFileUrl } from '../helper';
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
 
 const serialTypes = [{ label: 'Serial Number', value: 'serial' }];
+const DEFAULT_BRAND_NAME = 'Yometel';
+// Single source of truth for the left bar width — shared by the Drawer and the
+// logo container so the logo is always centered over the bar at every breakpoint.
+const DRAWER_WIDTH = { xs: 76, md: 280 };
+const DEFAULT_BRAND_DETAIL = 'Developing innovative "real-time and automatic" digital twins IoT /RFID technologies';
+const DEFAULT_BRAND_WEBSITE = 'https://www.yometel.jp/';
 
 const InnerPage = () => {
   const [name, setName] = useState('');
@@ -92,9 +104,17 @@ const InnerPage = () => {
   const { company, setCompany, login, isAdmin, logout } = useAuth();
 
   const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(false);
   const [productName, setProductName] = useState('');
   const [productModel, setProductModel] = useState('');
   const [productDetail, setProductDetail] = useState('');
+  const [brandInfo, setBrandInfo] = useState({
+    name: DEFAULT_BRAND_NAME,
+    detail: DEFAULT_BRAND_DETAIL,
+    websiteUrl: DEFAULT_BRAND_WEBSITE,
+    logoUrl: '',
+  });
+  const [isUploadingBrandLogo, setIsUploadingBrandLogo] = useState(false);
   // selectedProduct is initialized above with localStorage
   const [mintAmount, setMintAmount] = useState(0);
   const [qrcodes, setQrCodes] = useState([]);
@@ -176,6 +196,10 @@ const InnerPage = () => {
   const [openPreviewModal, setOpenPreviewModal] = useState(false);
   const [openOwnerDialog, setOpenOwnerDialog] = useState(false);
   const [ownerInfo, setOwnerInfo] = useState(null);
+  const [openProductHistory, setOpenProductHistory] = useState(false);
+  const [historyProduct, setHistoryProduct] = useState(null);
+  const [openTransferDialog, setOpenTransferDialog] = useState(false);
+  const [transferProduct, setTransferProduct] = useState(null);
 
   // Load state from localStorage
   const loadStateFromStorage = (key, defaultValue) => {
@@ -202,6 +226,9 @@ const InnerPage = () => {
   const [activePage, setActivePage] = useState(() => loadStateFromStorage('activePage', 'dashboard'));
   const [previousPage, setPreviousPage] = useState(() => loadStateFromStorage('previousPage', 'dashboard'));
   const [selectedProduct, setSelectedProduct] = useState(() => loadStateFromStorage('selectedProduct', null));
+  const [detailTab, setDetailTab] = useState(0);
+  // Which product panel to show: 'edit' (product form) or 'print' (QR generate/print).
+  const [productPanelMode, setProductPanelMode] = useState('edit');
   const [sidebarOpen, setSidebarOpen] = useState(() => loadStateFromStorage('sidebarOpen', true));
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
 
@@ -356,6 +383,13 @@ const InnerPage = () => {
     setProductName('');
     setProductModel('');
     setProductDetail('');
+    setBrandInfo({
+      name: DEFAULT_BRAND_NAME,
+      detail: DEFAULT_BRAND_DETAIL,
+      websiteUrl: DEFAULT_BRAND_WEBSITE,
+      logoUrl: '',
+    });
+    setIsUploadingBrandLogo(false);
     setProductImages([]);
     setWGImages([]);
     setMCImages([]);
@@ -403,15 +437,47 @@ const InnerPage = () => {
     });
   };
 
+  const handleBrandLogoChange = async (event) => {
+    event.stopPropagation();
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingBrandLogo(true);
+      const body = new FormData();
+      body.append('file', file);
+      const uploadedUrl = await uploadFile(body);
+      if (uploadedUrl) {
+        setBrandInfo((prev) => ({ ...prev, logoUrl: uploadedUrl }));
+      } else {
+        alert('Failed to upload brand logo');
+      }
+    } catch (error) {
+      console.error('Brand logo upload failed:', error);
+      alert('Failed to upload brand logo');
+    } finally {
+      setIsUploadingBrandLogo(false);
+      event.target.value = '';
+    }
+  };
+
   const addProductHandler = async () => {
-    if (productName === '' || productDetail === '' || productImages.length === 0) {
-      alert('please fill all fields and upload an image');
+    if (
+      productName === ''
+      || productDetail === ''
+      || productImages.length === 0
+      || !brandInfo.name.trim()
+      || !brandInfo.detail.trim()
+      || !brandInfo.websiteUrl.trim()
+      || !brandInfo.logoUrl.trim()
+    ) {
+      alert('Please fill all required fields including brand information and upload brand logo');
       return;
     }
     await addProduct({
       name: productName,
       model: productModel,
       detail: productDetail,
+      brandInfo,
       company_id: company._id,
       images: productImages,
       files: productFiles,
@@ -454,8 +520,16 @@ const InnerPage = () => {
   };
 
   const updateProductHandler = async () => {
-    if (productName === '' || productDetail === '' || productImages.length === 0) {
-      alert('please fill all fields and upload an image');
+    if (
+      productName === ''
+      || productDetail === ''
+      || productImages.length === 0
+      || !brandInfo.name.trim()
+      || !brandInfo.detail.trim()
+      || !brandInfo.websiteUrl.trim()
+      || !brandInfo.logoUrl.trim()
+    ) {
+      alert('Please fill all required fields including brand information and upload brand logo');
       return;
     }
     await updateProduct({
@@ -463,6 +537,7 @@ const InnerPage = () => {
       name: productName,
       model: productModel,
       detail: productDetail,
+      brandInfo,
       company_id: company._id,
       images: productImages,
       files: productFiles,
@@ -528,6 +603,12 @@ const InnerPage = () => {
     setProductName(prod.name || '');
     setProductModel(prod.model || '');
     setProductDetail(prod.detail || '');
+    setBrandInfo({
+      name: prod.brandInfo?.name || DEFAULT_BRAND_NAME,
+      detail: prod.brandInfo?.detail || DEFAULT_BRAND_DETAIL,
+      websiteUrl: prod.brandInfo?.websiteUrl || DEFAULT_BRAND_WEBSITE,
+      logoUrl: prod.brandInfo?.logoUrl || '',
+    });
     setProductImages(Array.isArray(prod.images) ? prod.images : []);
     setWGImages(Array.isArray(wg.images) ? wg.images : []);
     setMCImages(Array.isArray(mc.images) ? mc.images : []);
@@ -581,7 +662,10 @@ const InnerPage = () => {
   };
 
   const deleteProductHandler = async (index) => {
-    const deletedProductId = products[index]._id;
+    const target = products[index];
+    if (!target) return;
+    if (!window.confirm(`Remove "${target.name || 'this product'}"? This cannot be undone.`)) return;
+    const deletedProductId = target._id;
     await removeProduct(deletedProductId);
     await loadProductsForCurrentCompany();
     // Clear selected product if it was the deleted one
@@ -670,6 +754,7 @@ const InnerPage = () => {
       return;
     }
 
+    setProductsLoading(true);
     try {
       console.log('Loading products for company:', company);
       console.log('Company _id:', company._id);
@@ -712,6 +797,8 @@ const InnerPage = () => {
       console.error('Error loading products:', error);
       console.error('Error details:', error.message, error.stack);
       setProducts([]);
+    } finally {
+      setProductsLoading(false);
     }
   };
 
@@ -1079,19 +1166,30 @@ const InnerPage = () => {
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="fixed" sx={{ backgroundColor: '#1abc9c' }}>
-        <Toolbar>
-          <IconButton
-            edge="start"
-            color="inherit"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            sx={{ mr: 2 }}
+      <AppBar
+        position="fixed"
+        sx={{
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          backgroundImage: 'linear-gradient(120deg, #1f3361 0%, #3d5c93 100%)',
+        }}
+      >
+        <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 } }}>
+          <Box
+            sx={{
+              width: DRAWER_WIDTH,
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Yometel
-          </Typography>
+            <Box
+              component="img"
+              src={logoShield}
+              alt="Yometel"
+              sx={{ width: 42, height: 42, display: 'block' }}
+            />
+          </Box>
           <Box sx={{ flexGrow: 1 }} />
           <Typography variant="body2" sx={{ mr: 2 }}>
             {company.name}
@@ -1133,17 +1231,37 @@ const InnerPage = () => {
 
       <Box sx={{ display: 'flex', flexGrow: 1, pt: 8 }}>
         <Drawer
-          variant="persistent"
-          open={sidebarOpen}
+          variant="permanent"
           sx={{
-            width: 240,
+            width: DRAWER_WIDTH,
             flexShrink: 0,
             '& .MuiDrawer-paper': {
-              width: 240,
+              width: DRAWER_WIDTH,
               boxSizing: 'border-box',
-              backgroundColor: '#2c3e50',
-              color: '#ecf0f1',
+              backgroundImage: 'linear-gradient(180deg, #1f3361 0%, #2a3f6b 100%)',
+              color: '#e8eef7',
+              borderRight: 'none',
+              overflowX: 'hidden',
             },
+            '& .MuiListItemButton-root': {
+              borderRadius: 12,
+              mx: { xs: 0.5, md: 1.25 },
+              my: 0.5,
+              py: 1.25,
+              px: { xs: 1, md: 2 },
+              justifyContent: { xs: 'center', md: 'flex-start' },
+            },
+            '& .MuiListItemIcon-root': {
+              color: 'rgba(255,255,255,0.85)',
+              minWidth: { xs: 0, md: 44 },
+              justifyContent: 'center',
+            },
+            '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 26 },
+            '& .MuiListItemText-root': { display: { xs: 'none', md: 'block' } },
+            '& .MuiListItemText-primary': { fontSize: '1.05rem', fontWeight: 600 },
+            '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
+            '& .MuiListItemButton-root.Mui-selected': { backgroundColor: 'rgba(255,255,255,0.16)' },
+            '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.24)' },
           }}
         >
           <Toolbar />
@@ -1184,13 +1302,40 @@ const InnerPage = () => {
                 </ListItemButton>
               </ListItem>
             )}
+            {(company.role === 'admin' || company.name === 'admin') && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={activePage === 'history'}
+                  onClick={() => setActivePage('history')}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}>
+                    <HistoryIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="History" />
+                </ListItemButton>
+              </ListItem>
+            )}
+            {(company.role === 'admin' || company.name === 'admin') && (
+              <ListItem disablePadding>
+                <ListItemButton
+                  selected={activePage === 'trace'}
+                  onClick={() => setActivePage('trace')}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}>
+                    <TimelineIcon />
+                  </ListItemIcon>
+                  <ListItemText primary="Trace" />
+                </ListItemButton>
+              </ListItem>
+            )}
           </List>
         </Drawer>
 
         <Box
           sx={{
             flexGrow: 1,
-            p: 3,
+            minWidth: 0,
+            p: { xs: 1.5, md: 3 },
             bgcolor: '#f5f6fa',
             overflow: 'auto',
           }}
@@ -1210,6 +1355,10 @@ const InnerPage = () => {
           )}
 
           {activePage === 'profile' && <ProfilePage />}
+
+          {activePage === 'history' && isAdmin && <HistoryPage />}
+
+          {activePage === 'trace' && isAdmin && <TracePage />}
 
           {activePage === 'users' && isAdmin && (
             <Box>
@@ -1243,6 +1392,8 @@ const InnerPage = () => {
                 <Button
                   variant="contained"
                   onClick={() => {
+                    resetFields();
+                    setProductPanelMode('edit');
                     setPreviousPage(activePage);
                     setActivePage('newProduct');
                   }}
@@ -1250,25 +1401,22 @@ const InnerPage = () => {
                   New Product
                 </Button>
               </Box>
-              <ProductsSidebarTree
+              <ProductsTable
                 products={products}
+                loading={productsLoading}
                 onSelectProduct={productSelectHandler}
-                onEditProduct={(index) => editProductHandler(index)}
+                onEditProduct={(index) => {
+                  setProductPanelMode('edit');
+                  setPreviousPage('products');
+                  editProductHandler(index);
+                }}
                 onDeleteProduct={(index) => deleteProductHandler(index)}
                 onPrintProduct={(productId) => {
                   const index = products.findIndex((p) => p._id === productId);
                   if (index >= 0) {
+                    setProductPanelMode('print');
+                    setPreviousPage('products');
                     editProductHandler(index);
-                    setPreviousPage(activePage);
-                    setActivePage('newProduct');
-                    // Focus on mint amount input after a short delay
-                    setTimeout(() => {
-                      const mintInput = document.querySelector('input[type="number"][label="amount"]');
-                      if (mintInput) {
-                        mintInput.focus();
-                        mintInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                      }
-                    }, 100);
                   }
                 }}
                 onOwnerClick={(product) => {
@@ -1279,16 +1427,39 @@ const InnerPage = () => {
                     setOpenPreviewModal(false);
                   }
                 }}
+                onHistoryClick={(product) => {
+                  setHistoryProduct(product);
+                  setOpenProductHistory(true);
+                }}
+                onTransferClick={(product) => {
+                  setTransferProduct(product);
+                  setOpenTransferDialog(true);
+                }}
               />
             </Box>
           )}
 
-          {activePage === 'newProduct' && (
-            <>
-              <Box sx={{ pb: 2 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  New / Edit Product
-                </Typography>
+          <Dialog
+            open={activePage === 'newProduct'}
+            onClose={() => setActivePage('products')}
+            fullWidth
+            maxWidth="md"
+            scroll="paper"
+          >
+            <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
+              {productPanelMode === 'print'
+                ? 'Generate & Print QR Codes'
+                : isEditing
+                ? 'Edit Product'
+                : 'New Product'}
+              <IconButton onClick={() => setActivePage('products')} size="small" color="inherit" aria-label="Close">
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent dividers>
+              <Box sx={{ pb: 1 }}>
+                {productPanelMode === 'edit' && (
+                <>
 
                 <Box
                   sx={{
@@ -1364,7 +1535,11 @@ const InnerPage = () => {
                       !(
                         productName !== '' &&
                         productDetail !== '' &&
-                        productImages.length > 0
+                        productImages.length > 0 &&
+                        brandInfo.name.trim() !== '' &&
+                        brandInfo.detail.trim() !== '' &&
+                        brandInfo.websiteUrl.trim() !== '' &&
+                        brandInfo.logoUrl.trim() !== ''
                       )
                     }
                   >
@@ -1378,7 +1553,11 @@ const InnerPage = () => {
                         !(
                           productName !== '' &&
                           productDetail !== '' &&
-                          productImages.length > 0
+                          productImages.length > 0 &&
+                          brandInfo.name.trim() !== '' &&
+                          brandInfo.detail.trim() !== '' &&
+                          brandInfo.websiteUrl.trim() !== '' &&
+                          brandInfo.logoUrl.trim() !== ''
                         )
                       }
                     >
@@ -1400,8 +1579,10 @@ const InnerPage = () => {
                     </Button>
                   )}
                 </Box>
+                </>
+                )}
 
-                {selectedProduct && (
+                {selectedProduct && productPanelMode === 'print' && (
                   <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
                     <ProductOwnerSection
                       company={company}
@@ -1428,15 +1609,24 @@ const InnerPage = () => {
                   </Box>
                 )}
 
-                <Tabs aria-label="Product detail tabs" defaultValue={0}>
-                  <TabList>
-                    <Tab>Product</Tab>
-                    <Tab>Material/Size</Tab>
-                    <Tab>Maintenance</Tab>
-                    <Tab>Dispose</Tab>
-                    <Tab>Traceability/ESG</Tab>
-                  </TabList>
-                  <TabPanel value={0}>
+                {productPanelMode === 'edit' && (
+                <>
+                <Tabs
+                  value={detailTab}
+                  onChange={(e, v) => setDetailTab(v)}
+                  aria-label="Product detail tabs"
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
+                >
+                  <Tab label="Product" />
+                  <Tab label="Material/Size" />
+                  <Tab label="Maintenance" />
+                  <Tab label="Dispose" />
+                  <Tab label="Traceability/ESG" />
+                </Tabs>
+                {detailTab === 0 && (
+                  <Box>
                     <Typography sx={{ mb: 1 }}>Brand Name</Typography>
                     <TextField
                       label="Brand Name"
@@ -1470,6 +1660,61 @@ const InnerPage = () => {
                       multiline
                       sx={{ mb: 2 }}
                     />
+                    <Typography sx={{ mb: 1 }}>Brand Name (Required)</Typography>
+                    <TextField
+                      label="Brand Name"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      required
+                      value={brandInfo.name}
+                      onChange={(e) => setBrandInfo((prev) => ({ ...prev, name: e.target.value }))}
+                      sx={{ mb: 2 }}
+                    />
+                    <Typography sx={{ mb: 1 }}>Brand Detail (Required)</Typography>
+                    <TextField
+                      label="Brand Detail"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      required
+                      multiline
+                      value={brandInfo.detail}
+                      onChange={(e) => setBrandInfo((prev) => ({ ...prev, detail: e.target.value }))}
+                      sx={{ mb: 2 }}
+                    />
+                    <Typography sx={{ mb: 1 }}>Brand Website URL (Required)</Typography>
+                    <TextField
+                      label="Brand Website URL"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      required
+                      value={brandInfo.websiteUrl}
+                      onChange={(e) => setBrandInfo((prev) => ({ ...prev, websiteUrl: e.target.value }))}
+                      sx={{ mb: 2 }}
+                    />
+                    <Typography sx={{ mb: 1 }}>Brand Logo (Required)</Typography>
+                    <Button variant="outlined" component="label" disabled={isUploadingBrandLogo}>
+                      {isUploadingBrandLogo ? 'Uploading...' : 'Upload Brand Logo'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        hidden
+                        onChange={handleBrandLogoChange}
+                      />
+                    </Button>
+                    <Typography sx={{ mt: 1, mb: 2, color: 'text.secondary' }}>
+                      {brandInfo.logoUrl ? `Uploaded: ${brandInfo.logoUrl}` : 'No brand logo uploaded'}
+                    </Typography>
+                    {brandInfo.logoUrl ? (
+                      <Box
+                        component="img"
+                        src={getFileUrl(brandInfo.logoUrl)}
+                        alt="Brand logo"
+                        sx={{ width: 92, height: 92, objectFit: 'contain', border: '1px solid #ccc', borderRadius: 1, mb: 2 }}
+                      />
+                    ) : null}
                     <Typography sx={{ mb: 1 }}>Images</Typography>
                     <Typography sx={{ ml: 2, display: 'inline-block' }}>
                       Select images:
@@ -1668,8 +1913,10 @@ const InnerPage = () => {
                     ))}
                     <br />
                     <br />
-                  </TabPanel>
-                  <TabPanel value={1}>
+                  </Box>
+                )}
+                {detailTab === 1 && (
+                  <Box>
                     <Typography sx={{ mb: 1 }}>Size</Typography>
                     <TextField
                       label="Size"
@@ -1727,8 +1974,10 @@ const InnerPage = () => {
                         />
                       </Box>
                     ))}
-                  </TabPanel>
-                  <TabPanel value={2}>
+                  </Box>
+                )}
+                {detailTab === 2 && (
+                  <Box>
                     <Typography sx={{ mb: 1 }}>Maintenance icons (multi-select)</Typography>
                     <CareSymbols
                       selectedIds={maintenance.iconIds}
@@ -1750,8 +1999,10 @@ const InnerPage = () => {
                       value={maintenance.description}
                       onChange={(e) => setMaintenance((prev) => ({ ...prev, description: e.target.value }))}
                     />
-                  </TabPanel>
-                  <TabPanel value={3}>
+                  </Box>
+                )}
+                {detailTab === 3 && (
+                  <Box>
                     <Typography sx={{ mb: 1 }}>Disposal URLs</Typography>
                     <TextField
                       label="Repair URL"
@@ -1788,8 +2039,10 @@ const InnerPage = () => {
                       value={disposal.disposeUrl}
                       onChange={(e) => setDisposal((prev) => ({ ...prev, disposeUrl: e.target.value }))}
                     />
-                  </TabPanel>
-                  <TabPanel value={4}>
+                  </Box>
+                )}
+                {detailTab === 4 && (
+                  <Box>
                     <Typography sx={{ mb: 1 }}>Made in</Typography>
                     <TextField
                       label="Made in"
@@ -1885,11 +2138,13 @@ const InnerPage = () => {
                       value={traceabilityEsg.co2Transportation}
                       onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Transportation: e.target.value }))}
                     />
-                  </TabPanel>
-                </Tabs>
+                  </Box>
+                )}
+                </>
+                )}
               </Box>
-            </>
-          )}
+            </DialogContent>
+          </Dialog>
         </Box>
       </Box>
 
@@ -1919,6 +2174,21 @@ const InnerPage = () => {
           </DialogActions>
         </Dialog>
       )}
+      <ProductHistoryDialog
+        open={openProductHistory}
+        onClose={() => setOpenProductHistory(false)}
+        product={historyProduct}
+      />
+      <ProductTransferDialog
+        open={openTransferDialog}
+        onClose={() => setOpenTransferDialog(false)}
+        product={transferProduct}
+        actor={company ? { kind: 'Company', id: company._id } : null}
+        onTransferred={(msg) => {
+          alert(msg);
+          loadProductsForCurrentCompany();
+        }}
+      />
       {company && (
         <PreviewModal
           open={openPreviewModal}
@@ -1932,6 +2202,7 @@ const InnerPage = () => {
                   name: productName,
                   model: productModel,
                   detail: productDetail,
+                  brandInfo,
                   company_id: company._id,
                   images: productImages,
                   files: productFiles,

@@ -13,6 +13,7 @@ import {
   Button,
   TextField,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { CheckCircle, Delete, Edit, RemoveRedEye } from '@mui/icons-material';
@@ -27,7 +28,28 @@ import {
   removeCompany,
 } from '../../helper';
 
-const CompanyUsersTable = ({ companies, onApprove, onView, onEdit, onRemove }) => {
+const AdminLoadingOverlay = () => (
+  <Box
+    sx={{
+      width: '100%',
+      height: '100%',
+      minHeight: 180,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      bgcolor: 'rgba(255,255,255,0.7)',
+    }}
+  >
+    <CircularProgress />
+    <Typography variant="body2" color="text.secondary">
+      Loading users…
+    </Typography>
+  </Box>
+);
+
+const CompanyUsersTable = ({ companies, loading, onApprove, onView, onEdit, onRemove }) => {
   const columns = [
     {
       field: 'name',
@@ -38,7 +60,28 @@ const CompanyUsersTable = ({ companies, onApprove, onView, onEdit, onRemove }) =
       ),
     },
     { field: 'email', headerName: 'Email', width: 200 },
-    { field: 'location', headerName: 'Location', width: 200 },
+    { field: 'location', headerName: 'Location', width: 180 },
+    {
+      field: 'productCount',
+      headerName: 'Products',
+      width: 100,
+      type: 'number',
+      valueGetter: (p) => p.row.productCount || 0,
+    },
+    {
+      field: 'scanCount',
+      headerName: 'Scans',
+      width: 90,
+      type: 'number',
+      valueGetter: (p) => p.row.scanCount || 0,
+    },
+    {
+      field: 'uniqueScannerCount',
+      headerName: 'Scanned by',
+      width: 110,
+      type: 'number',
+      valueGetter: (p) => p.row.uniqueScannerCount || 0,
+    },
     {
       field: 'isVerified',
       headerName: 'Status',
@@ -76,6 +119,8 @@ const CompanyUsersTable = ({ companies, onApprove, onView, onEdit, onRemove }) =
 
   return (
     <DataGrid
+      loading={loading}
+      slots={{ loadingOverlay: AdminLoadingOverlay }}
       columns={columns}
       rows={companies}
       initialState={{
@@ -84,13 +129,14 @@ const CompanyUsersTable = ({ companies, onApprove, onView, onEdit, onRemove }) =
         },
       }}
       pageSizeOptions={[5, 10]}
-      sx={{}}
+      autoHeight
+      sx={{ minHeight: 260, '& .MuiDataGrid-overlayWrapper': { minHeight: 180 } }}
       getRowId={(data) => data._id}
     />
   );
 };
 
-const NormalUsersTable = ({ users, onEdit, onApprove, onRemove }) => {
+const NormalUsersTable = ({ users, loading, onEdit, onApprove, onRemove }) => {
   const columns = [
     { field: 'name', headerName: 'Name', width: 150 },
     { field: 'email', headerName: 'Email', width: 200 },
@@ -131,6 +177,8 @@ const NormalUsersTable = ({ users, onEdit, onApprove, onRemove }) => {
 
   return (
     <DataGrid
+      loading={loading}
+      slots={{ loadingOverlay: AdminLoadingOverlay }}
       columns={columns}
       rows={users}
       initialState={{
@@ -139,7 +187,8 @@ const NormalUsersTable = ({ users, onEdit, onApprove, onRemove }) => {
         },
       }}
       pageSizeOptions={[5, 10]}
-      sx={{}}
+      autoHeight
+      sx={{ minHeight: 260, '& .MuiDataGrid-overlayWrapper': { minHeight: 180 } }}
       getRowId={(data) => data._id}
     />
   );
@@ -214,18 +263,22 @@ const AdminUsersPage = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [editingUser, setEditingUser] = useState(null);
   const [editingCompany, setEditingCompany] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const reloadAdminData = () => {
-    getAdminUserData(statusFilter).then((data) => {
-      const sortedCompanies = (data.companies || []).sort((a, b) =>
-        b.isVerified === a.isVerified ? 0 : b.isVerified ? 1 : -1,
-      );
-      const sortedUsers = (data.users || []).sort((a, b) =>
-        b.isApproved === a.isApproved ? 0 : b.isApproved ? 1 : -1,
-      );
-      setCompanies(sortedCompanies);
-      setUsers(sortedUsers);
-    });
+    setLoading(true);
+    getAdminUserData(statusFilter)
+      .then((data) => {
+        const sortedCompanies = (data.companies || []).sort((a, b) =>
+          b.isVerified === a.isVerified ? 0 : b.isVerified ? 1 : -1,
+        );
+        const sortedUsers = (data.users || []).sort((a, b) =>
+          b.isApproved === a.isApproved ? 0 : b.isApproved ? 1 : -1,
+        );
+        setCompanies(sortedCompanies);
+        setUsers(sortedUsers);
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -280,12 +333,14 @@ const AdminUsersPage = () => {
       </Box>
       <CompanyUsersTable
         companies={companies}
+        loading={loading}
         onApprove={handleApproveCompany}
         onView={(id) =>
           setCompany(companies.find((item) => item._id === id))
         }
         onEdit={(company) => setEditingCompany(company)}
         onRemove={async (id) => {
+          if (!window.confirm('Remove this company? This cannot be undone.')) return;
           await removeCompany(id);
           reloadAdminData();
         }}
@@ -296,12 +351,14 @@ const AdminUsersPage = () => {
         </Typography>
         <NormalUsersTable
           users={users}
+          loading={loading}
           onEdit={(user) => setEditingUser(user)}
           onApprove={async (id) => {
             await approveUser(id);
             reloadAdminData();
           }}
           onRemove={async (id) => {
+            if (!window.confirm('Remove this user? This cannot be undone.')) return;
             await removeUser(id);
             reloadAdminData();
           }}

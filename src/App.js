@@ -1,6 +1,8 @@
 import './App.css';
 import { BrowserRouter, Routes, Route, useParams, useSearchParams, Navigate } from 'react-router-dom';
-import { StyledEngineProvider } from '@mui/material/styles';
+import { StyledEngineProvider, ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import theme from './theme';
 import Page from './pages';
 import PublicProductPage from './pages/PublicProductPage';
 
@@ -30,13 +32,16 @@ function App() {
   return (
     <div className="App">
       <StyledEngineProvider injectFirst>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/product/:productId/:qrcodeId" element={<PublicProductPageWrapper />} />
-            <Route path="/" element={<PublicProductRoute />} />
-            <Route path="/admin/*" element={<Page />} />
-          </Routes>
-        </BrowserRouter>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/product/:productId/:qrcodeId" element={<PublicProductPageWrapper />} />
+              <Route path="/" element={<PublicProductRoute />} />
+              <Route path="/admin/*" element={<Page />} />
+            </Routes>
+          </BrowserRouter>
+        </ThemeProvider>
       </StyledEngineProvider>
     </div>
   );

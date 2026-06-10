@@ -11,12 +11,14 @@ import {
   DialogActions,
   TextField,
   Grid,
+  CircularProgress,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import BusinessIcon from '@mui/icons-material/Business';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import PeopleIcon from '@mui/icons-material/People';
 import { getAdminUserData, getProductsByUser, getCompanyProducts, registerCompany } from '../../helper';
+import DashboardAnalytics from './DashboardAnalytics';
 
 const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToUsers, onNavigateToProducts }) => {
   const [stats, setStats] = useState({
@@ -103,110 +105,6 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
         Dashboard
       </Typography>
 
-      {/* Getting Started Section */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h6" sx={{ mb: 2, color: 'text.secondary' }}>
-          Getting Started
-        </Typography>
-        <Grid container spacing={2}>
-          {isAdmin ? (
-            <>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 4,
-                    },
-                  }}
-                >
-                  <CardContent sx={{ flexGrow: 1, textAlign: 'center', py: 3 }}>
-                    <Inventory2Icon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                    <Typography variant="h6" sx={{ mb: 2 }}>
-                      Add a Product
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={onNavigateToNewProduct}
-                      sx={{ mt: 1 }}
-                    >
-                      Create
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 4,
-                    },
-                  }}
-                >
-                  <CardContent sx={{ flexGrow: 1, textAlign: 'center', py: 3 }}>
-                    <BusinessIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                    <Typography variant="h6" sx={{ mb: 2 }}>
-                      Add a Company
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => setOpenCompanyDialog(true)}
-                      sx={{ mt: 1 }}
-                    >
-                      Create
-                    </Button>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </>
-          ) : (
-            <Grid item xs={12} sm={6} md={4}>
-              <Card
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4,
-                  },
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1, textAlign: 'center', py: 3 }}>
-                  <Inventory2Icon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    Add a Product
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={onNavigateToNewProduct}
-                    sx={{ mt: 1 }}
-                  >
-                    Start
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-        </Grid>
-      </Box>
-
       {/* Usage Statistics Section */}
       <Box>
         <Typography variant="h6" sx={{ mb: 2, color: 'text.secondary' }}>
@@ -233,12 +131,12 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                   }}
                 >
                   <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <PeopleIcon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
+                    <PeopleIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Users
                     </Typography>
-                    <Typography variant="h4" sx={{ color: '#1abc9c', fontWeight: 'bold' }}>
-                      {loading ? '...' : stats.users}
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                      {loading ? <CircularProgress size={22} thickness={5} /> : stats.users}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -261,12 +159,12 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                   }}
                 >
                   <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <BusinessIcon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
+                    <BusinessIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Companies
                     </Typography>
-                    <Typography variant="h4" sx={{ color: '#1abc9c', fontWeight: 'bold' }}>
-                      {loading ? '...' : stats.companies}
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                      {loading ? <CircularProgress size={22} thickness={5} /> : stats.companies}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -289,12 +187,12 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                   }}
                 >
                   <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <Inventory2Icon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
+                    <Inventory2Icon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Products
                     </Typography>
-                    <Typography variant="h4" sx={{ color: '#1abc9c', fontWeight: 'bold' }}>
-                      {loading ? '...' : formatNumber(stats.products)}
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                      {loading ? <CircularProgress size={22} thickness={5} /> : formatNumber(stats.products)}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -314,12 +212,12 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
                 onClick={onNavigateToProducts}
               >
                 <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                  <Inventory2Icon sx={{ fontSize: 48, color: '#1abc9c', mb: 2 }} />
+                  <Inventory2Icon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
                   <Typography variant="h6" sx={{ mb: 1 }}>
                     Products
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#1abc9c', fontWeight: 'bold' }}>
-                    {loading ? '...' : stats.products}
+                  <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                    {loading ? <CircularProgress size={22} thickness={5} /> : stats.products}
                   </Typography>
                 </CardContent>
               </Card>
@@ -327,6 +225,8 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
           )}
         </Grid>
       </Box>
+
+      {isAdmin && <DashboardAnalytics />}
 
       {/* Create Company Dialog */}
       <Dialog

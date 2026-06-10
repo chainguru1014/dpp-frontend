@@ -4,6 +4,42 @@ import { TreeItem, SimpleTreeView } from '@mui/x-tree-view';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PrintIcon from '@mui/icons-material/Print';
+import ImageIcon from '@mui/icons-material/Image';
+import { getFileUrl } from '../../helper';
+
+// First-image thumbnail for a product row (placeholder when no image).
+const Thumb = ({ product }) => {
+  const img = Array.isArray(product?.images) && product.images.length > 0 ? product.images[0] : null;
+  return (
+    <Box
+      sx={{
+        width: 38,
+        height: 38,
+        borderRadius: 1,
+        mr: 1.5,
+        flexShrink: 0,
+        overflow: 'hidden',
+        bgcolor: '#eef1f6',
+        border: '1px solid',
+        borderColor: 'divider',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {img ? (
+        <Box
+          component="img"
+          src={getFileUrl(img)}
+          alt=""
+          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+      ) : (
+        <ImageIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
+      )}
+    </Box>
+  );
+};
 
 const ProductsSidebarTree = ({
   products,
@@ -23,6 +59,7 @@ const ProductsSidebarTree = ({
         itemId={product._id}
         label={
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Thumb product={product} />
             <Box sx={{ display: 'flex', flexDirection: 'column' }}>
               <span>{product.name}</span>
               {product.company_id?.name && (
@@ -130,6 +167,7 @@ const ProductsSidebarTree = ({
                 itemId={product._id}
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Thumb product={product} />
                     <span>{product.name}</span>
                     {product.company_id?.name && (
                       <span
