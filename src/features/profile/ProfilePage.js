@@ -176,9 +176,9 @@ const ProfilePage = () => {
           <input ref={coverInputRef} type="file" accept="image/*" hidden onChange={(e) => handleImage('cover', e)} />
         </Box>
 
-        <CardContent sx={{ pt: 0 }}>
-          <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 2, mt: -6, flexWrap: 'wrap' }}>
-            <Box sx={{ position: 'relative' }}>
+        <CardContent sx={{ pt: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ position: 'relative', mt: -7 }}>
               <Avatar
                 src={getFileUrl(form.avatar)}
                 sx={{ width: 96, height: 96, border: '4px solid #fff', boxShadow: 2, bgcolor: '#cfd8e6' }}
@@ -194,8 +194,8 @@ const ProfilePage = () => {
               </Tooltip>
               <input ref={avatarInputRef} type="file" accept="image/*" hidden onChange={(e) => handleImage('avatar', e)} />
             </Box>
-            <Box sx={{ pb: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                 <Typography variant="h6" sx={{ fontWeight: 700 }}>
                   {form.name || 'Company'}
                 </Typography>
