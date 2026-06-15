@@ -136,7 +136,7 @@ export default function TracePage() {
   return (
     <Box>
       <Typography variant="h5" sx={{ mb: 2 }}>
-        Trace — Ownership Transfers
+        LCA
       </Typography>
 
       <Paper sx={{ p: 2, mb: 2 }}>

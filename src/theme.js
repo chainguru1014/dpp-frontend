@@ -1,17 +1,16 @@
 import { createTheme } from '@mui/material/styles';
 
 // Shared visual language with the Yometel DPP mobile app:
-// navy -> blue palette on a soft light-blue canvas, rounded cards, soft navy shadows.
-// Restricted palette: dark blue, gray, white only.
-const navy = '#1f3361';     // dark blue (primary)
-const blue = '#3d5c93';     // mid dark blue (hover / accents)
+// bright-blue palette on a soft light-blue canvas, rounded cards, soft blue shadows.
+const navy = '#1f63ad';     // bright blue (primary)
+const blue = '#2f7bc9';     // lighter blue (hover / accents)
 const gray = '#6b7a93';     // gray (secondary)
 const bg = '#f5f7fa';       // near-white / light gray canvas
 const border = '#e6eaf0';
 
 const theme = createTheme({
   palette: {
-    primary: { main: navy, dark: '#16244a', light: blue, contrastText: '#ffffff' },
+    primary: { main: navy, dark: '#184f88', light: blue, contrastText: '#ffffff' },
     secondary: { main: gray, dark: '#55657f', contrastText: '#ffffff' },
     info: { main: gray, contrastText: '#ffffff' },
     success: { main: '#2e7d32' },

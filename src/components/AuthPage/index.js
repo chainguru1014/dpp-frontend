@@ -2,7 +2,29 @@ import React from 'react';
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
 import desktopBgImage from '../../assets/background.png';
 import mobileBgImage from '../../assets/background-mobile.png';
-import logoShield from '../../assets/logo-shield.png';
+import yometelLogo from '../../assets/yometel-logo.png';
+
+// Multi-color Google "G" mark (rendered inline so no extra asset is needed).
+const GoogleIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
+    <path
+      fill="#EA4335"
+      d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+    />
+    <path
+      fill="#4285F4"
+      d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+    />
+    <path
+      fill="#34A853"
+      d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+    />
+  </svg>
+);
 
 const AuthPage = ({
   isRegister,
@@ -15,6 +37,7 @@ const AuthPage = ({
   onLogin,
   onRegister,
   setIsRegister,
+  onGoogleLogin,
 }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -53,40 +76,32 @@ const AuthPage = ({
       {/* Auth card */}
       <Box
         sx={{
-          width: 380,
+          width: 360,
           maxWidth: '90vw',
-          bgcolor: 'rgba(255,255,255,0.98)',
-          borderRadius: 2,
-          boxShadow: '0 24px 60px rgba(0,0,0,0.35)',
-          px: 5,
-          py: 4,
+          // Cap the card height so the long Sign Up form scrolls inside it while
+          // the logo (top) and the action buttons (bottom) stay pinned.
+          maxHeight: '70vh',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          bgcolor: '#f3f4f6',
+          border: '1px solid',
+          borderColor: 'primary.main',
+          borderRadius: 3,
+          boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
+          px: 4,
+          py: 4.5,
         }}
       >
-        {/* Logo lockup */}
-        <Box sx={{ textAlign: 'center', mb: 3 }}>
-          <img src={logoShield} alt="Yometel" style={{ width: 76, height: 76 }} />
-          <Typography sx={{ mt: 0.5, fontWeight: 800, fontSize: 22, color: 'primary.dark', lineHeight: 1.1 }}>
-            Yometel
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: 1.5,
-              textTransform: 'uppercase',
-              color: 'text.secondary',
-            }}
-          >
-            Digital Product Passport
-          </Typography>
+        {/* Yometel wordmark (pinned) */}
+        <Box sx={{ textAlign: 'center', mb: 4, flexShrink: 0 }}>
+          <Box
+            component="img"
+            src={yometelLogo}
+            alt="Yometel"
+            sx={{ width: 150, maxWidth: '70%', height: 'auto', display: 'inline-block' }}
+          />
         </Box>
-
-        <Typography
-          variant="h6"
-          sx={{ fontWeight: 700, mb: 2, textAlign: 'left' }}
-        >
-          {isRegister ? 'Create Account' : 'Sign In'}
-        </Typography>
 
         <Box
           component="form"
@@ -94,121 +109,134 @@ const AuthPage = ({
           sx={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 2.5,
+            flex: 1,
+            minHeight: 0,
           }}
         >
+          {/* Scrollable field area */}
+          <Box
+            sx={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              pr: 0.5,
+            }}
+          >
           <TextField
-            label="Username"
-            size="small"
+            placeholder="Username"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
             fullWidth
+            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
 
           {isRegister && (
             <>
               <TextField
-                label="Email"
+                placeholder="Email"
                 type="email"
-                size="small"
                 value={registerData.email}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, email: e.target.value }))
                 }
                 required
                 fullWidth
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
               <TextField
-                label="First Name"
-                size="small"
+                placeholder="First Name"
                 value={registerData.firstName}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, firstName: e.target.value }))
                 }
                 required
                 fullWidth
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
               <TextField
-                label="Last Name"
-                size="small"
+                placeholder="Last Name"
                 value={registerData.lastName}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, lastName: e.target.value }))
                 }
                 required
                 fullWidth
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
               <TextField
-                label="Street"
-                size="small"
+                placeholder="Street"
                 value={registerData.addressStreet}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, addressStreet: e.target.value }))
                 }
                 required
                 fullWidth
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
               <TextField
-                label="City"
-                size="small"
+                placeholder="City"
                 value={registerData.addressCity}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, addressCity: e.target.value }))
                 }
                 required
                 fullWidth
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
               <TextField
-                label="State"
-                size="small"
+                placeholder="State"
                 value={registerData.addressState}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, addressState: e.target.value }))
                 }
                 required
                 fullWidth
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
               <TextField
-                label="Zip Code"
-                size="small"
+                placeholder="Zip Code"
                 value={registerData.addressZipCode}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, addressZipCode: e.target.value }))
                 }
                 required
                 fullWidth
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
               <TextField
-                label="Country"
-                size="small"
+                placeholder="Country"
                 value={registerData.addressCountry}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, addressCountry: e.target.value }))
                 }
                 required
                 fullWidth
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
               <TextField
-                label="Phone Number"
-                size="small"
+                placeholder="Phone Number"
                 value={registerData.phoneNumber}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, phoneNumber: e.target.value }))
                 }
                 required
                 fullWidth
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
               <TextField
                 select
                 label="Gender"
-                size="small"
                 value={registerData.gender}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, gender: e.target.value }))
                 }
                 required
                 fullWidth
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               >
                 <MenuItem value="male">Male</MenuItem>
                 <MenuItem value="female">Female</MenuItem>
@@ -216,7 +244,6 @@ const AuthPage = ({
               <TextField
                 label="Date of Birth"
                 type="date"
-                size="small"
                 value={registerData.dateOfBirth}
                 onChange={(e) =>
                   setRegisterData((prev) => ({ ...prev, dateOfBirth: e.target.value }))
@@ -224,78 +251,87 @@ const AuthPage = ({
                 required
                 fullWidth
                 InputLabelProps={{ shrink: true }}
+                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
               />
             </>
           )}
 
           <TextField
-            label="Password"
+            placeholder="Password"
             type="password"
-            size="small"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             fullWidth
+            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
           />
+          </Box>
 
-          {!isRegister && (
-            <Typography
-              variant="body2"
-              sx={{
-                mt: 0.5,
-                mb: 0,
-                color: 'primary.main',
-                cursor: 'pointer',
-                width: 'fit-content',
-              }}
-            >
-              Forgot your password?
-            </Typography>
-          )}
-
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
+          {/* Pinned action area — always visible below the scrolling fields */}
+          <Box
             sx={{
-              mt: 2,
-              textTransform: 'none',
-              fontWeight: 600,
-              py: 1,
-              borderRadius: 1,
+              flexShrink: 0,
+              pt: 2.5,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.5,
             }}
           >
-            {isRegister ? 'Sign Up' : 'Sign In'}
-          </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              sx={{
+                textTransform: 'none',
+                fontWeight: 700,
+                py: 1.1,
+                borderRadius: 2,
+              }}
+            >
+              {isRegister ? 'Sign Up' : 'Sign in'}
+            </Button>
 
-          <Button
-            variant="text"
-            fullWidth
-            onClick={() => setIsRegister(!isRegister)}
-            sx={{ textTransform: 'none', mt: 1 }}
-          >
-            {isRegister
-              ? 'Already have an account? Sign in'
-              : "Don't have an account? Sign up"}
-          </Button>
+            <Button
+              variant="outlined"
+              fullWidth
+              startIcon={<GoogleIcon />}
+              onClick={onGoogleLogin}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                py: 1.1,
+                borderRadius: 2,
+                bgcolor: '#fff',
+                color: 'text.primary',
+                borderColor: '#d9dce1',
+                '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
+              }}
+            >
+              Continue with Google
+            </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 1 }}>
+              <Typography
+                component="span"
+                onClick={() => setIsRegister(!isRegister)}
+                sx={{
+                  color: 'primary.main',
+                  fontWeight: 700,
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  '&:hover': { textDecoration: 'underline' },
+                }}
+              >
+                {isRegister
+                  ? 'Already have an account ? Sign in'
+                  : "Don't have an account ? Sign Up"}
+              </Typography>
+            </Box>
+          </Box>
         </Box>
-
-        <Typography
-          variant="caption"
-          sx={{
-            display: 'block',
-            textAlign: 'center',
-            mt: 3,
-            color: 'text.secondary',
-          }}
-        >
-          Copyright © {new Date().getFullYear()} Yometel. All rights
-          reserved.
-        </Typography>
       </Box>
     </Box>
   );
 };
 
 export default AuthPage;
-

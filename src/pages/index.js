@@ -5,7 +5,6 @@ import {
   Box,
   Button,
   Checkbox,
-  Divider,
   Drawer,
   IconButton,
   List,
@@ -63,7 +62,7 @@ import PreviewModal from '../components/PreviewModal';
 import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
 import AuthPage from '../components/AuthPage';
-import logoShield from '../assets/logo-shield.png';
+import yometelLogoWhite from '../assets/yometel-logo-white.png';
 import ProfilePage from '../features/profile/ProfilePage';
 import ProductsTable from '../features/products/ProductsTable';
 import ProductMintSection from '../features/products/ProductMintSection';
@@ -1170,7 +1169,7 @@ const InnerPage = () => {
         position="fixed"
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          backgroundImage: 'linear-gradient(120deg, #1f3361 0%, #3d5c93 100%)',
+          backgroundImage: 'linear-gradient(120deg, #1f63ad 0%, #2f7bc9 100%)',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 } }}>
@@ -1181,13 +1180,15 @@ const InnerPage = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              px: 1.5,
             }}
           >
+            {/* White wordmark on a transparent background — sits directly on the blue bar. */}
             <Box
               component="img"
-              src={logoShield}
+              src={yometelLogoWhite}
               alt="Yometel"
-              sx={{ width: 42, height: 42, display: 'block' }}
+              sx={{ width: 130, maxWidth: '90%', height: 'auto', display: 'block' }}
             />
           </Box>
           <Box sx={{ flexGrow: 1 }} />
@@ -1238,34 +1239,39 @@ const InnerPage = () => {
             '& .MuiDrawer-paper': {
               width: DRAWER_WIDTH,
               boxSizing: 'border-box',
-              backgroundImage: 'linear-gradient(180deg, #1f3361 0%, #2a3f6b 100%)',
-              color: '#e8eef7',
+              backgroundImage: 'linear-gradient(180deg, #2569b2 0%, #2f7bc9 100%)',
+              color: '#ffffff',
               borderRight: 'none',
               overflowX: 'hidden',
             },
+            // Pill-shaped nav buttons with a soft outline, matching the brand layout.
             '& .MuiListItemButton-root': {
-              borderRadius: 12,
-              mx: { xs: 0.5, md: 1.25 },
-              my: 0.5,
-              py: 1.25,
+              borderRadius: 999,
+              border: '1px solid rgba(255,255,255,0.55)',
+              mx: { xs: 0.5, md: 1.5 },
+              my: 0.75,
+              py: 1,
               px: { xs: 1, md: 2 },
               justifyContent: { xs: 'center', md: 'flex-start' },
             },
             '& .MuiListItemIcon-root': {
-              color: 'rgba(255,255,255,0.85)',
-              minWidth: { xs: 0, md: 44 },
+              color: '#ffffff',
+              minWidth: { xs: 0, md: 40 },
               justifyContent: 'center',
             },
-            '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 26 },
+            '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 24 },
             '& .MuiListItemText-root': { display: { xs: 'none', md: 'block' } },
-            '& .MuiListItemText-primary': { fontSize: '1.05rem', fontWeight: 600 },
-            '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-            '& .MuiListItemButton-root.Mui-selected': { backgroundColor: 'rgba(255,255,255,0.16)' },
-            '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.24)' },
+            '& .MuiListItemText-primary': { fontSize: '1.02rem', fontWeight: 600 },
+            '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.14)' },
+            '& .MuiListItemButton-root.Mui-selected': {
+              backgroundColor: 'rgba(255,255,255,0.22)',
+              borderColor: '#ffffff',
+            },
+            '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.3)' },
           }}
         >
           <Toolbar />
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+          <Box sx={{ height: 8 }} />
           <List>
             <ListItem disablePadding>
               <ListItemButton
@@ -1311,7 +1317,7 @@ const InnerPage = () => {
                   <ListItemIcon sx={{ color: 'inherit' }}>
                     <HistoryIcon />
                   </ListItemIcon>
-                  <ListItemText primary="History" />
+                  <ListItemText primary="ESG" />
                 </ListItemButton>
               </ListItem>
             )}
@@ -1324,7 +1330,7 @@ const InnerPage = () => {
                   <ListItemIcon sx={{ color: 'inherit' }}>
                     <TimelineIcon />
                   </ListItemIcon>
-                  <ListItemText primary="Trace" />
+                  <ListItemText primary="LCA" />
                 </ListItemButton>
               </ListItem>
             )}

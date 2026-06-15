@@ -204,7 +204,7 @@ export default function HistoryPage() {
   return (
     <Box>
       <Typography variant="h5" sx={{ mb: 2 }}>
-        Scan History
+        ESG
       </Typography>
 
       <Paper sx={{ p: 2, mb: 2 }}>
