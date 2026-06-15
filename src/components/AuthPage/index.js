@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
 import desktopBgImage from '../../assets/background.png';
 import mobileBgImage from '../../assets/background-mobile.png';
-import yometelLogo from '../../assets/yometel-logo.png';
+import yometelLogo from '../../assets/yometel-logo-trans.png';
 
 // Multi-color Google "G" mark (rendered inline so no extra asset is needed).
 const GoogleIcon = () => (
