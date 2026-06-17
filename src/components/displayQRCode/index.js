@@ -3,7 +3,7 @@ import qrcode from 'qrcode';
 
 // If backend returns a full URL (often localhost in dev),
 // rewrite it to the configured public web base URL before encoding into QR.
-const WEB_BASE_URL = process.env.REACT_APP_WEB_BASE_URL || 'http://82.165.217.122:3001';
+const WEB_BASE_URL = process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com';
 
 const normalizeQrPayload = (raw) => {
     const value = String(raw || '').trim();

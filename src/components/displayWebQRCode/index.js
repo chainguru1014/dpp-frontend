@@ -6,7 +6,7 @@ import qrcode from 'qrcode';
 // You can set REACT_APP_WEB_BASE_URL in your .env file
 // For development: http://82.165.217.122:3001
 // For production: https://yourdomain.com
-const WEB_BASE_URL = process.env.REACT_APP_WEB_BASE_URL || 'http://82.165.217.122:3001';
+const WEB_BASE_URL = process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com';
 
 const WebQRCode = ({data, identifer}) => {
     const [qrcodeImage, setQRcodeImage] = useState('');

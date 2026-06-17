@@ -14,7 +14,7 @@ const buildUrl = (base, path) => {
 };
 
 export const Backend_URL = normalizeBaseUrl(
-    process.env.REACT_APP_BACKEND_URL || 'http://82.165.217.122:5052/'
+    process.env.REACT_APP_BACKEND_URL || 'https://api.innosynch.com/'
 );
 export const FILE_BASE_URL = buildUrl(Backend_URL, 'files/');
 

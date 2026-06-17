@@ -7,7 +7,7 @@ import qrcode from 'qrcode';
 // For development: http://82.165.217.122:3001
 // For production: http://82.165.217.122:3001 (or your VPS IP/domain)
 // Default to VPS URL for production use
-const SECURITY_BASE_URL = process.env.REACT_APP_SECURITY_BASE_URL || process.env.REACT_APP_WEB_BASE_URL || 'http://82.165.217.122:3001';
+const SECURITY_BASE_URL = process.env.REACT_APP_SECURITY_BASE_URL || process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com';
 
 const SecurityQRCode = ({data, identifer}) => {
     const [qrcodeImage, setQRcodeImage] = useState('');

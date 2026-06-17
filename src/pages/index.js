@@ -286,7 +286,7 @@ const InnerPage = () => {
   useEffect(() => {
     if (!selectedProduct || !company) return;
 
-    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5052/';
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'https://api.innosynch.com/';
     const socket = io(socketUrl);
 
     socket.on('connect', () => {
