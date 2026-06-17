@@ -283,7 +283,7 @@ const AuthPage = ({
               fullWidth
               sx={{
                 textTransform: 'none',
-                fontWeight: 700,
+                fontWeight: 400,
                 py: 1.1,
                 borderRadius: 2,
               }}
@@ -298,7 +298,7 @@ const AuthPage = ({
               onClick={onGoogleLogin}
               sx={{
                 textTransform: 'none',
-                fontWeight: 600,
+                fontWeight: 400,
                 py: 1.1,
                 borderRadius: 2,
                 bgcolor: '#fff',
@@ -316,7 +316,7 @@ const AuthPage = ({
                 onClick={() => setIsRegister(!isRegister)}
                 sx={{
                   color: 'primary.main',
-                  fontWeight: 700,
+                  fontWeight: 400,
                   fontSize: '0.95rem',
                   cursor: 'pointer',
                   '&:hover': { textDecoration: 'underline' },

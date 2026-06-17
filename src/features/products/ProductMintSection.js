@@ -70,7 +70,7 @@ const ProductMintSection = ({
     <Box>
       {canGenerate && (
       <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Generate QR Codes</Typography>
+        <Typography variant="h6" sx={{ mb: 2, fontWeight: 400 }}>Generate QR Codes</Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
           <TextField
             type="number"

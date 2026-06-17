@@ -131,9 +131,9 @@ export default function ProductTransferDialog({ open, onClose, product, actor, o
         <DialogTitle>Transfer ownership — {product?.name || ''}</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Minted units: <strong>{minted}</strong>
+            Minted units: <span>{minted}</span>
             {' · '}Available to transfer:{' '}
-            <strong>{availLoading ? '…' : (available != null ? available : minted)}</strong>.
+            <span>{availLoading ? '…' : (available != null ? available : minted)}</span>.
             Choose how many units to transfer, the business method, and the receiver's email.
           </Typography>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -183,7 +183,7 @@ export default function ProductTransferDialog({ open, onClose, product, actor, o
         <DialogTitle>Confirm recipient email</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2">
-            <strong>{email}</strong> is not registered yet. Please confirm this email is correct.
+            <span>{email}</span> is not registered yet. Please confirm this email is correct.
             We'll assign ownership to this email and send them an invitation to register and claim it.
           </Typography>
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}

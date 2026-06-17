@@ -149,7 +149,7 @@ const ProfilePage = () => {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2, fontWeight: 700 }}>
+      <Typography variant="h5" sx={{ mb: 2, fontWeight: 400 }}>
         Profile
       </Typography>
 
@@ -196,7 +196,7 @@ const ProfilePage = () => {
             </Box>
             <Box sx={{ minWidth: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                <Typography variant="h6" sx={{ fontWeight: 400 }}>
                   {form.name || 'Company'}
                 </Typography>
                 {company.isVerified && (
@@ -216,7 +216,7 @@ const ProfilePage = () => {
         <Grid item xs={12} md={7}>
           <Card sx={{ borderRadius: 2, height: '100%' }}>
             <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 400, mb: 2 }}>
                 Company Information
               </Typography>
               <Grid container spacing={2}>
@@ -249,7 +249,7 @@ const ProfilePage = () => {
         <Grid item xs={12} md={5}>
           <Card sx={{ borderRadius: 2, mb: 2 }}>
             <CardContent>
-              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 400, mb: 2 }}>
                 Change Password
               </Typography>
               <TextField
@@ -284,7 +284,7 @@ const ProfilePage = () => {
           {company.qrcode && (
             <Card sx={{ borderRadius: 2 }}>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 400, mb: 1 }}>
                   Company QR
                 </Typography>
                 <Box

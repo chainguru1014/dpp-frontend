@@ -97,7 +97,7 @@ export default function ProductsTable({
       width: 200,
       renderCell: (p) => (
         <Box sx={{ py: 0.5, cursor: 'pointer' }} onClick={() => onSelectProduct && onSelectProduct(p.row)}>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          <Typography variant="body2" sx={{ fontWeight: 400 }}>
             {p.row.name || '—'}
           </Typography>
           {p.row.model && (
@@ -145,7 +145,7 @@ export default function ProductsTable({
             sx={{ py: 0.5, cursor: c ? 'pointer' : 'default' }}
             onClick={() => c && onOwnerClick && onOwnerClick(p.row)}
           >
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>{name}</Typography>
+            <Typography variant="body2" sx={{ fontWeight: 400 }}>{name}</Typography>
             {c?.email && (
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                 {c.email}

@@ -37,7 +37,7 @@ const Stat = ({ label, value, highlight }) => (
             bgcolor: highlight ? 'rgba(31,51,97,0.06)' : 'background.default',
         }}
     >
-        <Typography sx={{ fontWeight: 700, fontSize: 22, lineHeight: 1.2, color: highlight ? 'primary.main' : 'text.primary' }}>
+        <Typography sx={{ fontWeight: 400, fontSize: 22, lineHeight: 1.2, color: highlight ? 'primary.main' : 'text.primary' }}>
             {value}
         </Typography>
         <Typography variant="caption" color="text.secondary">
@@ -125,7 +125,7 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
                         color: '#fff',
                     }}
                 >
-                    <Typography sx={{ fontWeight: 600, fontSize: 18 }}>Print QR Codes</Typography>
+                    <Typography sx={{ fontWeight: 400, fontSize: 18 }}>Print QR Codes</Typography>
                     <IconButton size="small" onClick={() => setOpen(false)} sx={{ color: '#fff' }} aria-label="Close">
                         <CloseIcon fontSize="small" />
                     </IconButton>

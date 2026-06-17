@@ -9,7 +9,7 @@ const COLORS = ['#1f63ad', '#2f7bc9', '#5b9bd8', '#8aa0c4', '#6b7a93', '#aab6c8'
 const Section = ({ title, children }) => (
   <Card sx={{ height: '100%' }}>
     <CardContent>
-      <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 600 }}>
+      <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 400 }}>
         {title}
       </Typography>
       {children}
@@ -20,7 +20,7 @@ const Section = ({ title, children }) => (
 const Kpi = ({ label, value, sub }) => (
   <Card sx={{ height: '100%' }}>
     <CardContent sx={{ textAlign: 'center', py: 2.5 }}>
-      <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>
+      <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
         {value}
       </Typography>
       <Typography variant="body2" color="text.secondary">
@@ -86,7 +86,7 @@ const HBars = ({ items }) => {
             <Typography variant="body2" noWrap sx={{ maxWidth: '75%' }}>
               {it.name}
             </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            <Typography variant="body2" sx={{ fontWeight: 400 }}>
               {it.count}
             </Typography>
           </Box>
@@ -117,7 +117,7 @@ const Breakdown = ({ segments }) => {
           <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
             <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: s.color }} />
             <Typography variant="caption" color="text.secondary">
-              {s.label}: <b>{s.value}</b>
+              {s.label}: <span>{s.value}</span>
             </Typography>
           </Box>
         ))}
@@ -189,7 +189,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
               ]}
             />
             <Divider sx={{ my: 2 }} />
-            <Typography variant="subtitle2" sx={{ mb: 0.5, fontWeight: 600 }}>
+            <Typography variant="subtitle2" sx={{ mb: 0.5, fontWeight: 400 }}>
               Audience
             </Typography>
             <Breakdown

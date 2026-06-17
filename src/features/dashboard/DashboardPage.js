@@ -140,7 +140,7 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Users
                     </Typography>
-                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
                       {loading ? <CircularProgress size={22} thickness={5} /> : stats.users}
                     </Typography>
                   </CardContent>
@@ -168,7 +168,7 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Companies
                     </Typography>
-                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
                       {loading ? <CircularProgress size={22} thickness={5} /> : stats.companies}
                     </Typography>
                   </CardContent>
@@ -196,7 +196,7 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                     <Typography variant="h6" sx={{ mb: 1 }}>
                       Products
                     </Typography>
-                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
                       {loading ? <CircularProgress size={22} thickness={5} /> : formatNumber(stats.products)}
                     </Typography>
                   </CardContent>
@@ -221,7 +221,7 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                   <Typography variant="h6" sx={{ mb: 1 }}>
                     Products
                   </Typography>
-                  <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>
+                  <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
                     {loading ? <CircularProgress size={22} thickness={5} /> : stats.products}
                   </Typography>
                 </CardContent>

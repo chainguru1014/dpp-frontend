@@ -20,7 +20,7 @@ import { getFileUrl, getTransferByCode, confirmTransfer, rejectTransfer } from '
 const Detail = ({ label, value }) =>
   value ? (
     <Box sx={{ display: 'flex', py: 0.75, borderTop: '1px solid', borderColor: 'divider' }}>
-      <Typography variant="body2" sx={{ width: 110, color: 'text.secondary', fontWeight: 600 }}>
+      <Typography variant="body2" sx={{ width: 110, color: 'text.secondary', fontWeight: 400 }}>
         {label}
       </Typography>
       <Typography variant="body2" sx={{ flex: 1 }}>
@@ -91,7 +91,7 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
 
       {isTransfer ? (
         <DialogContent sx={{ pt: 4 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, pr: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 400, mb: 2, pr: 3 }}>
             Ownership transfer request
           </Typography>
           {loading ? (
@@ -109,7 +109,7 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
                     sx={{ width: 150, height: 180, objectFit: 'contain', borderRadius: 2, bgcolor: '#fff', border: '1px solid', borderColor: 'divider' }}
                   />
                 ) : null}
-                <Typography variant="subtitle1" sx={{ fontWeight: 800, mt: 1 }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 400, mt: 1 }}>
                   {snap.name || d.productName || 'Product'}
                 </Typography>
                 {!!(snap.brandName || d.brandName) && (
@@ -131,19 +131,19 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
                   mb: 2,
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: 400 }}>
                   Transfer amount
                 </Typography>
-                <Typography variant="h6" color="primary" sx={{ fontWeight: 800 }}>
+                <Typography variant="h6" color="primary" sx={{ fontWeight: 400 }}>
                   {transfer?.quantity ?? d.quantity ?? 1}
                 </Typography>
               </Box>
 
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 400, mb: 0.5 }}>
                 Requested by
               </Typography>
               <Box sx={{ bgcolor: 'background.default', borderRadius: 2, px: 2, py: 1, mb: 2 }}>
-                <Typography variant="body2" sx={{ fontWeight: 800, py: 0.75 }}>
+                <Typography variant="body2" sx={{ fontWeight: 400, py: 0.75 }}>
                   {buyer.name || d.buyerName || '—'}
                 </Typography>
                 <Detail label="Email" value={buyer.email || d.buyerEmail} />
@@ -153,7 +153,7 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
               </Box>
 
               {resultMsg ? (
-                <Typography align="center" color="primary" sx={{ fontWeight: 700, py: 1 }}>
+                <Typography align="center" color="primary" sx={{ fontWeight: 400, py: 1 }}>
                   {resultMsg}
                 </Typography>
               ) : !isPending ? (
@@ -164,7 +164,7 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
         </DialogContent>
       ) : (
         <DialogContent sx={{ pt: 4 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1.5, pr: 3 }}>
+          <Typography variant="h6" sx={{ fontWeight: 400, mb: 1.5, pr: 3 }}>
             {notification.title}
           </Typography>
           {maxSteps > 0 && (

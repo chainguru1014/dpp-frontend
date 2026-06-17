@@ -83,7 +83,7 @@ const AllNotificationsPage = () => {
   return (
     <Box sx={{ p: { xs: 1, md: 2 } }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+        <Typography variant="h5" sx={{ fontWeight: 400 }}>
           Notifications
         </Typography>
         {items.some((n) => !n.read) && (
@@ -122,7 +122,7 @@ const AllNotificationsPage = () => {
                     </ListItemAvatar>
                     <ListItemText
                       primary={
-                        <Typography variant="body1" sx={{ fontWeight: n.read ? 500 : 700 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 400 }}>
                           {n.title}
                         </Typography>
                       }

@@ -25,15 +25,15 @@ const theme = createTheme({
     fontFamily: '"Poppins","Segoe UI",system-ui,-apple-system,Roboto,sans-serif',
     // Larger, highly readable base size for field use (UI principle 1).
     fontSize: 15,
-    fontWeightBold: 600,
-    h4: { fontWeight: 600 },
-    h5: { fontWeight: 600 },
-    h6: { fontWeight: 600, fontSize: '1.2rem' },
-    subtitle1: { fontWeight: 600, fontSize: '1.02rem' },
-    subtitle2: { fontWeight: 500, fontSize: '0.95rem' },
+    fontWeightBold: 400,
+    h4: { fontWeight: 400 },
+    h5: { fontWeight: 400 },
+    h6: { fontWeight: 400, fontSize: '1.2rem' },
+    subtitle1: { fontWeight: 400, fontSize: '1.02rem' },
+    subtitle2: { fontWeight: 400, fontSize: '0.95rem' },
     body1: { fontWeight: 400, fontSize: '1rem' },
     body2: { fontWeight: 400, fontSize: '0.95rem' },
-    button: { textTransform: 'none', fontWeight: 600, fontSize: '0.95rem' },
+    button: { textTransform: 'none', fontWeight: 400, fontSize: '0.95rem' },
   },
   components: {
     MuiButton: {
@@ -43,7 +43,7 @@ const theme = createTheme({
         root: {
           borderRadius: 10,
           textTransform: 'none',
-          fontWeight: 600,
+          fontWeight: 400,
           minHeight: 44,
           paddingInline: 22,
           paddingBlock: 8,
@@ -53,7 +53,7 @@ const theme = createTheme({
     },
     MuiTab: {
       styleOverrides: {
-        root: { textTransform: 'none', fontSize: '0.95rem', fontWeight: 600, minHeight: 48 },
+        root: { textTransform: 'none', fontSize: '0.95rem', fontWeight: 400, minHeight: 48 },
       },
     },
     MuiIconButton: {
@@ -81,7 +81,7 @@ const theme = createTheme({
       },
     },
     MuiOutlinedInput: { styleOverrides: { root: { borderRadius: 10 } } },
-    MuiChip: { styleOverrides: { root: { fontWeight: 600 } } },
+    MuiChip: { styleOverrides: { root: { fontWeight: 400 } } },
     MuiTooltip: {
       styleOverrides: { tooltip: { backgroundColor: navy, fontSize: 12, borderRadius: 8 } },
     },
@@ -96,7 +96,7 @@ const theme = createTheme({
         root: {
           backgroundImage: `linear-gradient(120deg, ${navy} 0%, ${blue} 100%)`,
           color: '#ffffff',
-          fontWeight: 600,
+          fontWeight: 400,
           fontSize: 18,
           padding: '16px 24px',
           display: 'flex',

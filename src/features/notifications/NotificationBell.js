@@ -129,7 +129,7 @@ const NotificationBell = ({ onShowAll }) => {
         PaperProps={{ sx: { width: 380, maxWidth: '92vw', maxHeight: 480, borderRadius: 2, overflow: 'hidden' } }}
       >
         <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', bgcolor: 'background.paper' }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 400 }}>
             Notifications
           </Typography>
           {items.length > 0 && (
@@ -173,7 +173,7 @@ const NotificationBell = ({ onShowAll }) => {
                     </ListItemAvatar>
                     <ListItemText
                       primary={
-                        <Typography variant="body2" sx={{ fontWeight: n.read ? 500 : 700 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 400 }}>
                           {n.title}
                         </Typography>
                       }

@@ -156,7 +156,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
             <Typography
               sx={{
                 fontSize: '20px',
-                fontWeight: 'bold',
+                fontWeight: 400,
                 color: '#1565C0',
                 marginRight: '8px',
               }}
@@ -182,7 +182,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
                 height: 36,
                 bgcolor: '#1976d2',
                 fontSize: '16px',
-                fontWeight: 600,
+                fontWeight: 400,
               }}
             >
               K
@@ -357,7 +357,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
           <Typography
             sx={{
               fontSize: '20px',
-              fontWeight: 'bold',
+              fontWeight: 400,
               color: '#1565C0',
               marginRight: '8px',
             }}
@@ -383,7 +383,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
               height: 36,
               bgcolor: '#1976d2',
               fontSize: '16px',
-              fontWeight: 600,
+              fontWeight: 400,
             }}
           >
             K
@@ -457,7 +457,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
             <Typography
               sx={{
                 fontSize: '18px',
-                fontWeight: 600,
+                fontWeight: 400,
                 mb: 1,
                 color: '#333',
               }}

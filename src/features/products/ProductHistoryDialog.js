@@ -70,7 +70,7 @@ export default function ProductHistoryDialog({ open, onClose, product }) {
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth PaperProps={{ sx: { minHeight: '55vh' } }}>
       <DialogTitle>
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography variant="h6" sx={{ fontWeight: 400 }}>
             Ownership History — {product?.name || ''}
           </Typography>
           <IconButton aria-label="close" onClick={onClose} size="small">

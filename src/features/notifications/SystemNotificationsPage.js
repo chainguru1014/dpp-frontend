@@ -178,7 +178,7 @@ const SystemNotificationsPage = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <CampaignIcon color="primary" sx={{ fontSize: 30 }} />
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 700 }}>
+            <Typography variant="h5" sx={{ fontWeight: 400 }}>
               System Notifications
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -195,7 +195,7 @@ const SystemNotificationsPage = () => {
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ '& th': { fontWeight: 700, bgcolor: 'background.default' } }}>
+              <TableRow sx={{ '& th': { fontWeight: 400, bgcolor: 'background.default' } }}>
                 <TableCell>Title</TableCell>
                 <TableCell>Message</TableCell>
                 <TableCell>Level</TableCell>
@@ -223,7 +223,7 @@ const SystemNotificationsPage = () => {
                   const meta = levelMeta(row.level);
                   return (
                     <TableRow key={row._id} hover>
-                      <TableCell sx={{ fontWeight: 600, maxWidth: 200 }}>{row.title}</TableCell>
+                      <TableCell sx={{ fontWeight: 400, maxWidth: 200 }}>{row.title}</TableCell>
                       <TableCell sx={{ maxWidth: 320, color: 'text.secondary' }}>
                         <Typography variant="body2" noWrap title={row.message}>
                           {row.message}

@@ -1292,7 +1292,7 @@ const InnerPage = () => {
             },
             '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 24 },
             '& .MuiListItemText-root': { display: { xs: 'none', md: 'block' } },
-            '& .MuiListItemText-primary': { fontSize: '1.02rem', fontWeight: 600 },
+            '& .MuiListItemText-primary': { fontSize: '1.02rem', fontWeight: 400 },
             '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.14)' },
             '& .MuiListItemButton-root.Mui-selected': {
               backgroundColor: 'rgba(255,255,255,0.22)',
@@ -2220,12 +2220,12 @@ const InnerPage = () => {
         <Dialog open={openOwnerDialog} onClose={() => setOpenOwnerDialog(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Owner Information</DialogTitle>
           <DialogContent dividers>
-            <Typography><strong>Name:</strong> {ownerInfo.name}</Typography>
-            {ownerInfo.email && <Typography><strong>Email:</strong> {ownerInfo.email}</Typography>}
-            {ownerInfo.location && <Typography><strong>Location:</strong> {ownerInfo.location}</Typography>}
-            {ownerInfo.company_name && <Typography><strong>Company Name:</strong> {ownerInfo.company_name}</Typography>}
+            <Typography><span>Name:</span> {ownerInfo.name}</Typography>
+            {ownerInfo.email && <Typography><span>Email:</span> {ownerInfo.email}</Typography>}
+            {ownerInfo.location && <Typography><span>Location:</span> {ownerInfo.location}</Typography>}
+            {ownerInfo.company_name && <Typography><span>Company Name:</span> {ownerInfo.company_name}</Typography>}
             {ownerInfo.company_detail && (
-              <Typography sx={{ mt: 1 }}><strong>Company Detail:</strong> {ownerInfo.company_detail}</Typography>
+              <Typography sx={{ mt: 1 }}><span>Company Detail:</span> {ownerInfo.company_detail}</Typography>
             )}
           </DialogContent>
           <DialogActions>
