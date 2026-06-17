@@ -72,6 +72,7 @@ export default function ProductsTable({
   products,
   loading,
   canManage = true,
+  canTransfer = true,
   onSelectProduct,
   onEditProduct,
   onDeleteProduct,
@@ -215,11 +216,13 @@ export default function ProductsTable({
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Transfer ownership">
-            <IconButton size="small" onClick={() => onTransferClick && onTransferClick(p.row)}>
-              <SwapHorizIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          {canTransfer && (
+            <Tooltip title="Transfer ownership">
+              <IconButton size="small" onClick={() => onTransferClick && onTransferClick(p.row)}>
+                <SwapHorizIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
           <Tooltip title="Ownership history">
             <IconButton size="small" onClick={() => onHistoryClick && onHistoryClick(p.row)}>
               <HistoryIcon fontSize="small" />

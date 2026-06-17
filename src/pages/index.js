@@ -1461,6 +1461,7 @@ const InnerPage = () => {
                 products={products}
                 loading={productsLoading}
                 canManage={canManageProducts}
+                canTransfer={!isAdmin}
                 onSelectProduct={productSelectHandler}
                 onEditProduct={(index) => {
                   setProductPanelMode('edit');
