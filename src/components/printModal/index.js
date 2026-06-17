@@ -6,8 +6,9 @@ import Modal from '@mui/material/Modal';
 import { TextField, Stack, IconButton, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { PDFDownloadLink } from '@react-pdf/renderer';
+import qrcode from 'qrcode';
 import MyDocument from './exportPDF';
-import { printProductQRCodes } from '../../helper';
+import { printProductQRCodes, getProductQRcodes, getProductIdentifiers } from '../../helper';
 
 const cardStyle = {
     position: 'absolute',
@@ -51,9 +52,34 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
     const [printMode, setPrintMode] = React.useState('print');
     const [apply, setApply] = React.useState(false);
     const [count, setCount] = React.useState(0);
+    const [preparing, setPreparing] = React.useState(false);
+    const [pdfItems, setPdfItems] = React.useState([]);
 
     const printed = product ? product.printed_amount : 0;
     const available = totalAmount - printed;
+
+    // Fetch the code URLs for the chosen range and pre-generate their QR images,
+    // so the PDF is built from ready images (never blank).
+    const handleApply = async () => {
+        if (!product?._id) return;
+        setPreparing(true);
+        try {
+            const fromN = printMode === 'print' ? printed + 1 : Number(from);
+            const toN = printMode === 'print' ? printed + Number(count) : Number(to);
+            const urls = await getProductQRcodes(product._id, 0, fromN, toN);
+            const idents = await getProductIdentifiers(product._id, 0, fromN, toN);
+            const items = await Promise.all(
+                (Array.isArray(urls) ? urls : []).map(async (url, i) => ({
+                    img: await qrcode.toDataURL(String(url || '')),
+                    identifiers: Array.isArray(idents?.[i]) ? idents[i] : [],
+                }))
+            );
+            setPdfItems(items);
+            setApply(true);
+        } finally {
+            setPreparing(false);
+        }
+    };
 
     const downloadPDFHandler = async () => {
         if (printMode === 'print') {
@@ -61,6 +87,7 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
             setProduct(productInfo);
         }
         setApply(false);
+        setPdfItems([]);
     };
 
     React.useEffect(() => {
@@ -78,6 +105,7 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
     // Reset the apply state whenever the mode changes.
     React.useEffect(() => {
         setApply(false);
+        setPdfItems([]);
     }, [printMode]);
 
     const applyDisabled = printMode === 'print' ? !(Number(count) > 0) : !(Number(to) >= Number(from) && Number(from) > 0);
@@ -179,22 +207,13 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
                             Cancel
                         </Button>
                         {!apply ? (
-                            <Button variant="contained" onClick={() => setApply(true)} disabled={applyDisabled}>
-                                Apply
+                            <Button variant="contained" onClick={handleApply} disabled={applyDisabled || preparing}>
+                                {preparing ? 'Preparing…' : 'Apply'}
                             </Button>
                         ) : (
                             <PDFDownloadLink
                                 style={{ textDecoration: 'none' }}
-                                document={
-                                    <MyDocument
-                                        product={product}
-                                        apply={apply}
-                                        printMode={printMode}
-                                        count={count}
-                                        from={from}
-                                        to={to}
-                                    />
-                                }
+                                document={<MyDocument items={pdfItems} />}
                                 onClick={downloadPDFHandler}
                                 fileName={`${product?.name}-${printMode}-${printMode === 'print' ? printed + 1 : from}-${printMode === 'print' ? printed + Number(count) : to}.pdf`}
                             >
