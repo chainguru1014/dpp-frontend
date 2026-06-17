@@ -207,9 +207,10 @@ export const ownerTransfer = async (payload) => {
 }
 
 // Dashboard analytics (totals, series, breakdowns, top lists).
-export const getAnalytics = async () => {
+export const getAnalytics = async (ownerKind, ownerId) => {
     try {
-        const res = await axios.get(`${Backend_URL}qrcode/analytics`);
+        const params = ownerKind && ownerId ? { owner_kind: ownerKind, owner_id: ownerId } : {};
+        const res = await axios.get(`${Backend_URL}qrcode/analytics`, { params });
         return res?.data?.data || null;
     } catch (err) {
         console.log(err);
@@ -561,5 +562,146 @@ export const getAddressFromCoordinates = async (lat, lng) => {
     // Return empty string instead of throwing error
     // This allows registration to continue without location
     return '';
+  }
+};
+
+// QR code URLs for the specific product items an owner holds (confirmed transfers).
+export const getOwnedItemCodes = async (productId, ownerId) => {
+  try {
+    const res = await axios.get(`${Backend_URL}transfer/owned-item-codes`, {
+      params: { product_id: productId, owner_id: ownerId },
+    });
+    return res?.data || { data: [], count: 0 };
+  } catch (err) {
+    console.log(err);
+    return { data: [], count: 0 };
+  }
+};
+
+// Products owned by an owner (User or Company), each with heldQuantity.
+export const getOwnedProducts = async (ownerKind, ownerId) => {
+  try {
+    const res = await axios.get(`${Backend_URL}transfer/owned`, {
+      params: { owner_kind: ownerKind, owner_id: ownerId },
+    });
+    return Array.isArray(res?.data?.data) ? res.data.data : [];
+  } catch (err) {
+    console.log(err);
+    return [];
+  }
+};
+
+// ----- Transfer (by code) for notification dialogs -----
+
+export const getTransferByCode = async (code) => {
+  try {
+    const res = await axios.get(`${Backend_URL}transfer/${code}`);
+    return res?.data?.data || null;
+  } catch (err) {
+    return null;
+  }
+};
+
+export const confirmTransfer = async (code, actor, method) => {
+  try {
+    const res = await axios.post(`${Backend_URL}transfer/${code}/confirm`, { actor, method });
+    return res?.data || null;
+  } catch (err) {
+    return { status: 'fail', message: err?.response?.data?.message || 'Failed to approve transfer' };
+  }
+};
+
+export const rejectTransfer = async (code, actor) => {
+  try {
+    const res = await axios.post(`${Backend_URL}transfer/${code}/reject`, { actor });
+    return res?.data || null;
+  } catch (err) {
+    return { status: 'fail', message: err?.response?.data?.message || 'Failed to decline transfer' };
+  }
+};
+
+// ----- Notifications -----
+
+// Notifications addressed to a reader (admin company sees transfer requests).
+export const getNotifications = async (recipientKind, recipientId, limit = 50) => {
+  try {
+    const res = await axios.get(`${Backend_URL}notification`, {
+      params: { recipient_kind: recipientKind, recipient_id: recipientId, limit },
+    });
+    return res?.data || { data: [], unreadCount: 0 };
+  } catch (err) {
+    console.log(err);
+    return { data: [], unreadCount: 0 };
+  }
+};
+
+export const getUnreadNotificationCount = async (recipientKind, recipientId) => {
+  try {
+    const res = await axios.get(`${Backend_URL}notification/unread-count`, {
+      params: { recipient_kind: recipientKind, recipient_id: recipientId },
+    });
+    return res?.data?.count || 0;
+  } catch (err) {
+    return 0;
+  }
+};
+
+export const markNotificationRead = async (id, recipientId) => {
+  try {
+    await axios.post(`${Backend_URL}notification/${id}/read`, { recipient_id: recipientId });
+    return true;
+  } catch (err) {
+    return false;
+  }
+};
+
+export const markAllNotificationsRead = async (recipientKind, recipientId) => {
+  try {
+    await axios.post(`${Backend_URL}notification/read-all`, {
+      recipient_kind: recipientKind,
+      recipient_id: recipientId,
+    });
+    return true;
+  } catch (err) {
+    return false;
+  }
+};
+
+// System (broadcast) notification management — super admin only.
+export const getSystemNotifications = async (params = {}) => {
+  try {
+    const res = await axios.get(`${Backend_URL}notification/system`, { params });
+    return res?.data || { data: [], total: 0 };
+  } catch (err) {
+    console.log(err);
+    return { data: [], total: 0 };
+  }
+};
+
+export const createSystemNotification = async (payload) => {
+  try {
+    const res = await axios.post(`${Backend_URL}notification/system`, payload);
+    return res?.data || null;
+  } catch (err) {
+    return { status: 'fail', message: err?.response?.data?.message || 'Failed to create notification' };
+  }
+};
+
+export const updateSystemNotification = async (id, payload) => {
+  try {
+    const res = await axios.put(`${Backend_URL}notification/system/${id}`, payload);
+    return res?.data || null;
+  } catch (err) {
+    return { status: 'fail', message: err?.response?.data?.message || 'Failed to update notification' };
+  }
+};
+
+export const deleteSystemNotification = async (id) => {
+  try {
+    await axios.delete(`${Backend_URL}notification/system/${id}`);
+    return true;
+  } catch (err) {
+    console.log(err);
+    return false;
   }
 };

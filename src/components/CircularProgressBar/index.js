@@ -5,9 +5,12 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 export default function CircularProgressWithLabel(props) {
+  // Sanitize the value so an unset/NaN value never renders as "NaN%".
+  const numeric = Number(props.value);
+  const value = Number.isFinite(numeric) ? Math.max(0, Math.min(100, numeric)) : 0;
   return (
     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-      <CircularProgress variant="determinate" {...props} />
+      <CircularProgress variant="determinate" {...props} value={value} />
       <Box
         sx={{
           top: 0,
@@ -21,7 +24,7 @@ export default function CircularProgressWithLabel(props) {
         }}
       >
         <Typography variant="caption" component="div" color="text.secondary">
-          {`${Math.round(props.value)}%`}
+          {`${Math.round(value)}%`}
         </Typography>
       </Box>
     </Box>

@@ -126,12 +126,13 @@ const Breakdown = ({ segments }) => {
   );
 };
 
-export default function DashboardAnalytics() {
+export default function DashboardAnalytics({ ownerKind = null, ownerId = null }) {
   const [a, setA] = useState(null);
 
   useEffect(() => {
-    getAnalytics().then(setA);
-  }, []);
+    setA(null);
+    getAnalytics(ownerKind, ownerId).then(setA);
+  }, [ownerKind, ownerId]);
 
   if (!a) {
     return (

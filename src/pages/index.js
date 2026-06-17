@@ -34,14 +34,16 @@ import Inventory2Icon from '@mui/icons-material/Inventory2';
 import PeopleIcon from '@mui/icons-material/People';
 import HistoryIcon from '@mui/icons-material/History';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import CloseIcon from '@mui/icons-material/Close';
 import Webcam from 'react-webcam';
 import io from 'socket.io-client';
 
 import {
   addProduct,
-  getCompanyProducts,
   getProductsByUser,
+  getOwnedProducts,
+  getOwnedItemCodes,
   getProductIdentifiers,
   getProductQRcodes,
   getSelectedProductData,
@@ -70,6 +72,9 @@ import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import HistoryPage from '../features/history/HistoryPage';
 import TracePage from '../features/trace/TracePage';
+import NotificationBell from '../features/notifications/NotificationBell';
+import SystemNotificationsPage from '../features/notifications/SystemNotificationsPage';
+import AllNotificationsPage from '../features/notifications/AllNotificationsPage';
 import ProductHistoryDialog from '../features/products/ProductHistoryDialog';
 import ProductTransferDialog from '../features/products/ProductTransferDialog';
 import { getFileUrl } from '../helper';
@@ -100,7 +105,11 @@ const InnerPage = () => {
     gender: 'male',
     dateOfBirth: '',
   });
-  const { company, setCompany, login, isAdmin, logout } = useAuth();
+  const { company, setCompany, login, isAdmin, isAppUser, canManageProducts, logout } = useAuth();
+  // Owner scope for non-super accounts (company / app user): their analytics,
+  // ESG and LCA feeds are restricted to the products they own.
+  const ownerScopeKind = isAppUser ? 'User' : 'Company';
+  const ownerScopeId = company?._id || company?.id;
 
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
@@ -277,7 +286,7 @@ const InnerPage = () => {
   useEffect(() => {
     if (!selectedProduct || !company) return;
 
-    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5050/';
+    const socketUrl = process.env.REACT_APP_SOCKET_URL || 'http://localhost:5052/';
     const socket = io(socketUrl);
 
     socket.on('connect', () => {
@@ -312,10 +321,12 @@ const InnerPage = () => {
   }, [selectedProduct, company]);
 
   useEffect(() => {
-    if (isMinting && mintAmount > 0) {
-      setMintingProgress(
-        Math.ceil(((totalAmount - startAmount) * 100) / mintAmount),
-      );
+    const amount = Number(mintAmount);
+    if (isMinting && amount > 0) {
+      const minted = (Number(totalAmount) || 0) - (Number(startAmount) || 0);
+      const pct = Math.ceil((minted * 100) / amount);
+      // Guard against NaN/Infinity (e.g. when totalAmount isn't loaded yet) and clamp 0–100.
+      setMintingProgress(Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 0);
     }
   }, [totalAmount, isMinting, mintAmount, startAmount]);
 
@@ -759,37 +770,40 @@ const InnerPage = () => {
       console.log('Company _id:', company._id);
       console.log('Company name:', company.name);
       let res = [];
-      
-      if (company.role === 'admin' || company.name === 'admin') {
-        res = await getProductsByUser();
-        console.log('Admin products loaded:', res);
+      const ownerId = company._id || company.id;
+
+      if (isAdmin) {
+        // Admin sees the whole catalog; annotate each with the admin's owned qty.
+        const all = await getProductsByUser();
+        const owned = ownerId ? await getOwnedProducts('Company', ownerId) : [];
+        const ownedMap = {};
+        owned.forEach((p) => { ownedMap[String(p._id)] = p.heldQuantity || 0; });
+        res = (Array.isArray(all) ? all : []).map((p) => ({
+          ...p,
+          ownedQuantity: ownedMap[String(p._id)] || 0,
+        }));
+      } else if (!ownerId) {
+        console.error('Account object missing _id or id field:', company);
+        setProducts([]);
+        return;
       } else {
-        // Use _id or id field from company
-        const companyId = company._id || company.id;
-        if (!companyId) {
-          console.error('Company object missing _id or id field:', company);
-          setProducts([]);
-          return;
-        }
-        const filterData = { company_id: companyId };
-        console.log('Filtering products with:', filterData);
-        console.log('Company ID type:', typeof companyId, 'Value:', companyId);
-        res = await getCompanyProducts(filterData);
-        console.log('Company products loaded:', res);
-        console.log('Number of products:', res?.length || 0);
+        // A logged-in app user or brand company sees the products they OWN
+        // (held units in the ownership ledger), with their owned count.
+        const ownerKind = isAppUser ? 'User' : 'Company';
+        const owned = await getOwnedProducts(ownerKind, ownerId);
+        res = (Array.isArray(owned) ? owned : []).map((p) => ({
+          ...p,
+          ownedQuantity: p.heldQuantity || 0,
+        }));
       }
-      
+
       if (Array.isArray(res) && res.length > 0) {
         const ptmp = res.map((p, i) => ({
           id: i + 1,
           ...p,
         }));
         setProducts(ptmp);
-        console.log('Products set successfully:', ptmp.length);
-        console.log('First product:', ptmp[0]?.name);
       } else {
-        console.log('No products returned or empty array');
-        console.log('Response was:', res);
         setProducts([]);
       }
     } catch (error) {
@@ -804,6 +818,18 @@ const InnerPage = () => {
   useEffect(() => {
     if (!selectedProduct) return;
     (async () => {
+      // Normal users see only the QR codes of the items they actually own.
+      if (!canManageProducts) {
+        const ownerId = company?._id || company?.id;
+        const owned = ownerId ? await getOwnedItemCodes(selectedProduct._id, ownerId) : { data: [] };
+        const urls = Array.isArray(owned?.data) ? owned.data : [];
+        setQrCodes(urls);
+        setIdentifiers([]);
+        setSecurityQRCodes([]);
+        setTotalAmount(urls.length);
+        setPage(1);
+        return;
+      }
       const selectedProductData = await getSelectedProductData(selectedProduct._id);
       if (selectedProductData) {
         setTotalAmount(selectedProductData.total_minted_amount || 0);
@@ -819,10 +845,13 @@ const InnerPage = () => {
       setIdentifiers(identiferRes);
       setPage(1);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedProduct]);
 
   useEffect(() => {
     if (!selectedProduct) return;
+    // Normal users already have all their owned codes loaded above (no backend paging).
+    if (!canManageProducts) return;
     (async () => {
       const res = await getProductQRcodes(selectedProduct._id, page);
       setQrCodes(res);
@@ -830,6 +859,7 @@ const InnerPage = () => {
       const identiferRes = await getProductIdentifiers(selectedProduct._id, 1);
       setIdentifiers(identiferRes);
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, selectedProduct]);
 
   const base64ToFile = (base64String, filename) => {
@@ -1192,6 +1222,7 @@ const InnerPage = () => {
             />
           </Box>
           <Box sx={{ flexGrow: 1 }} />
+          <NotificationBell onShowAll={() => setActivePage('allNotifications')} />
           <Typography variant="body2" sx={{ mr: 2 }}>
             {company.name}
           </Typography>
@@ -1295,7 +1326,7 @@ const InnerPage = () => {
                 <ListItemText primary="Products" />
               </ListItemButton>
             </ListItem>
-            {(company.role === 'admin' || company.name === 'admin') && (
+            {isAdmin && (
               <ListItem disablePadding>
                 <ListItemButton
                   selected={activePage === 'users'}
@@ -1308,32 +1339,39 @@ const InnerPage = () => {
                 </ListItemButton>
               </ListItem>
             )}
-            {(company.role === 'admin' || company.name === 'admin') && (
-              <ListItem disablePadding>
-                <ListItemButton
-                  selected={activePage === 'history'}
-                  onClick={() => setActivePage('history')}
-                >
-                  <ListItemIcon sx={{ color: 'inherit' }}>
-                    <HistoryIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="ESG" />
-                </ListItemButton>
-              </ListItem>
-            )}
-            {(company.role === 'admin' || company.name === 'admin') && (
-              <ListItem disablePadding>
-                <ListItemButton
-                  selected={activePage === 'trace'}
-                  onClick={() => setActivePage('trace')}
-                >
-                  <ListItemIcon sx={{ color: 'inherit' }}>
-                    <TimelineIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="LCA" />
-                </ListItemButton>
-              </ListItem>
-            )}
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={activePage === 'history'}
+                onClick={() => setActivePage('history')}
+              >
+                <ListItemIcon sx={{ color: 'inherit' }}>
+                  <HistoryIcon />
+                </ListItemIcon>
+                <ListItemText primary="ESG" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={activePage === 'trace'}
+                onClick={() => setActivePage('trace')}
+              >
+                <ListItemIcon sx={{ color: 'inherit' }}>
+                  <TimelineIcon />
+                </ListItemIcon>
+                <ListItemText primary="LCA" />
+              </ListItemButton>
+            </ListItem>
+            <ListItem disablePadding>
+              <ListItemButton
+                selected={activePage === 'notifications' || activePage === 'allNotifications'}
+                onClick={() => setActivePage(isAdmin ? 'notifications' : 'allNotifications')}
+              >
+                <ListItemIcon sx={{ color: 'inherit' }}>
+                  <CampaignIcon />
+                </ListItemIcon>
+                <ListItemText primary="Notifications" />
+              </ListItemButton>
+            </ListItem>
           </List>
         </Drawer>
 
@@ -1349,6 +1387,7 @@ const InnerPage = () => {
           {activePage === 'dashboard' && (
             <DashboardPage
               isAdmin={isAdmin}
+              isAppUser={isAppUser}
               company={company}
               onNavigateToNewProduct={() => {
                 resetFields();
@@ -1362,9 +1401,18 @@ const InnerPage = () => {
 
           {activePage === 'profile' && <ProfilePage />}
 
-          {activePage === 'history' && isAdmin && <HistoryPage />}
+          {/* ESG / LCA: super admin sees everything; company/user are scoped to owned products. */}
+          {activePage === 'history' && (
+            <HistoryPage ownerKind={isAdmin ? null : ownerScopeKind} ownerId={isAdmin ? null : ownerScopeId} />
+          )}
 
-          {activePage === 'trace' && isAdmin && <TracePage />}
+          {activePage === 'trace' && (
+            <TracePage ownerKind={isAdmin ? null : ownerScopeKind} ownerId={isAdmin ? null : ownerScopeId} />
+          )}
+
+          {activePage === 'notifications' && isAdmin && <SystemNotificationsPage />}
+
+          {activePage === 'allNotifications' && <AllNotificationsPage />}
 
           {activePage === 'users' && isAdmin && (
             <Box>
@@ -1395,21 +1443,24 @@ const InnerPage = () => {
                 }}
               >
                 <Typography variant="h6">Products</Typography>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    resetFields();
-                    setProductPanelMode('edit');
-                    setPreviousPage(activePage);
-                    setActivePage('newProduct');
-                  }}
-                >
-                  New Product
-                </Button>
+                {canManageProducts && (
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      resetFields();
+                      setProductPanelMode('edit');
+                      setPreviousPage(activePage);
+                      setActivePage('newProduct');
+                    }}
+                  >
+                    New Product
+                  </Button>
+                )}
               </Box>
               <ProductsTable
                 products={products}
                 loading={productsLoading}
+                canManage={canManageProducts}
                 onSelectProduct={productSelectHandler}
                 onEditProduct={(index) => {
                   setProductPanelMode('edit');
@@ -1611,6 +1662,7 @@ const InnerPage = () => {
                       securityQRCodes={securityQRCodes}
                       onGenerateSecurityQR={generateSecurityQRHandler}
                       onOpenSecurityDialog={() => {}}
+                      canGenerate={canManageProducts}
                     />
                   </Box>
                 )}

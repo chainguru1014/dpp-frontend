@@ -93,10 +93,12 @@ export const AuthProvider = ({ children }) => {
     let res = await loginCompanyApi({ name, password });
     if (!res) res = await loginUserApi({ name, password });
     if (!res) return null;
-    const isAdmin = res?.name === 'admin';
-    const companyWithRole = isAdmin ? { ...res, role: 'admin' } : res;
-    setCompany(companyWithRole);
-    return companyWithRole;
+    // The built-in "admin" account is the super admin. Back-compat: if it predates
+    // the role field, treat it as 'super'. Otherwise keep the role from the backend
+    // ('super' | 'company' for companies, 'User' for app users).
+    const normalized = res?.name === 'admin' && !res?.role ? { ...res, role: 'super' } : res;
+    setCompany(normalized);
+    return normalized;
   };
 
   const logout = () => {
@@ -108,8 +110,14 @@ export const AuthProvider = ({ children }) => {
     if (typeof localStorage !== 'undefined') safeStorageRemove(localStorage, STORAGE_KEY);
   };
 
+  // Super admin (built-in "admin" account). Kept as `isAdmin` for back-compat with
+  // existing gating throughout the app.
   const isAdmin =
-    !!company && (company.role === 'admin' || company.name === 'admin');
+    !!company && (company.role === 'super' || company.role === 'admin' || company.name === 'admin');
+  // A logged-in app user (owns products) vs a brand company.
+  const isAppUser = !!company && (company.role === 'User' || !!company.userType);
+  // Can create/edit/delete/print products: super admins and brand companies, not app users.
+  const canManageProducts = !!company && !isAppUser;
 
   return (
     <AuthContext.Provider
@@ -119,6 +127,8 @@ export const AuthProvider = ({ children }) => {
         login,
         logout,
         isAdmin,
+        isAppUser,
+        canManageProducts,
       }}
     >
       {children}

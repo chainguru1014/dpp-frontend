@@ -63,7 +63,7 @@ const OwnerCell = ({ owner }) => (
   </Box>
 );
 
-export default function TracePage() {
+export default function TracePage({ ownerKind = null, ownerId = null }) {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -83,6 +83,10 @@ export default function TracePage() {
     Object.entries(filters).forEach(([k, v]) => {
       if (v) params[k] = v;
     });
+    if (ownerKind && ownerId) {
+      params.owner_kind = ownerKind;
+      params.owner_id = ownerId;
+    }
     const res = await getAllTransfers(params);
     setRows((res.data || []).map((r) => ({ id: r._id, ...r })));
     setTotal(res.total || 0);

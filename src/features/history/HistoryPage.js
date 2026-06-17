@@ -45,7 +45,7 @@ function Mark({ on, label }) {
   );
 }
 
-export default function HistoryPage() {
+export default function HistoryPage({ ownerKind = null, ownerId = null }) {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -73,6 +73,10 @@ export default function HistoryPage() {
     Object.entries(filters).forEach(([k, v]) => {
       if (v) params[k] = v;
     });
+    if (ownerKind && ownerId) {
+      params.owner_kind = ownerKind;
+      params.owner_id = ownerId;
+    }
     const res = await getScanHistory(params);
     setRows((res.data || []).map((r) => ({ id: r._id, ...r })));
     setTotal(res.total || 0);

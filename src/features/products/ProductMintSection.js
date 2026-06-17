@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Box, Button, Typography, TextField } from '@mui/material';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Button, Typography, TextField, Pagination } from '@mui/material';
 import CircularProgressWithLabel from '../../components/CircularProgressBar';
 import QRCode from '../../components/displayQRCode';
 import SecurityQRCodeDialog from '../../components/SecurityQRCodeDialog';
@@ -20,12 +20,55 @@ const ProductMintSection = ({
   securityQRCodes,
   onGenerateSecurityQR,
   onOpenSecurityDialog,
+  canGenerate = true,
 }) => {
-  const [showQRCodes, setShowQRCodes] = useState(false);
+  // Normal users (can't generate) see the QR codes expanded by default.
+  const [showQRCodes, setShowQRCodes] = useState(!canGenerate);
   const [securityDialogOpen, setSecurityDialogOpen] = useState(false);
+  const prevTotalRef = useRef(totalAmount);
+  const prevProductRef = useRef(selectedProduct?._id);
+
+  // Auto-reveal the QR code list right after new codes are generated, so the
+  // newly minted codes appear at the bottom of the dialog without needing to
+  // click "Show". Only react to a count increase for the same product — a
+  // product switch just re-baselines the count and never auto-reveals.
+  useEffect(() => {
+    const productId = selectedProduct?._id;
+    if (productId === prevProductRef.current && totalAmount > prevTotalRef.current) {
+      setShowQRCodes(true);
+    }
+    prevProductRef.current = productId;
+    prevTotalRef.current = totalAmount;
+  }, [totalAmount, selectedProduct]);
+
+  // Show 10 QR codes per page. The backend serves codes in batches of 100
+  // (controlled by the parent's `page`/`setPage`), so a 10-per-page display
+  // page maps to one of those batches plus an in-batch offset.
+  const PAGE_SIZE = 10;
+  const BACKEND_SIZE = 100;
+  const total = Number(totalAmount) || 0;
+  const [displayPage, setDisplayPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  // Reset to the first page whenever the product or its code count changes.
+  useEffect(() => {
+    setDisplayPage(1);
+  }, [selectedProduct?._id, totalAmount]);
+
+  // Keep the parent on the backend batch that holds the current display page.
+  const backendPageFor = Math.floor(((displayPage - 1) * PAGE_SIZE) / BACKEND_SIZE) + 1;
+  useEffect(() => {
+    if (backendPageFor !== page) setPage(backendPageFor);
+  }, [backendPageFor, page, setPage]);
+
+  const offsetInBackend = ((displayPage - 1) * PAGE_SIZE) % BACKEND_SIZE;
+  const pageCodes = (qrcodes || []).slice(offsetInBackend, offsetInBackend + PAGE_SIZE);
+  const startItem = total === 0 ? 0 : (displayPage - 1) * PAGE_SIZE + 1;
+  const endItem = Math.min(displayPage * PAGE_SIZE, total);
 
   return (
     <Box>
+      {canGenerate && (
       <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
         <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>Generate QR Codes</Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
@@ -69,6 +112,7 @@ const ProductMintSection = ({
           </Typography>
         )}
       </Box>
+      )}
       {selectedProduct ? (
         <Box sx={{ pt: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
@@ -96,58 +140,67 @@ const ProductMintSection = ({
           </Box>
         {showQRCodes && (
           <>
-            {totalAmount > 0 && (
-              <>
-                <Typography component="span">Page:&nbsp;</Typography>
-                <a
-                  style={{
-                    cursor: 'pointer',
-                    color: 'blue',
-                    fontSize: 16,
-                  }}
-                  onClick={() => {
-                    if (page > 1) setPage(page - 1);
-                  }}
-                >
-                  {'<- Prev '}
-                </a>
-                &nbsp;&nbsp;{page}&nbsp;&nbsp;
-                <a
-                  style={{
-                    cursor: 'pointer',
-                    color: 'blue',
-                    fontSize: 16,
-                  }}
-                  onClick={() => {
-                    if (page < Math.ceil(totalAmount / 100)) setPage(page + 1);
-                  }}
-                >
-                  {'Next ->'}
-                </a>
-                <br />
-                <Typography>
-                  Items:{' '}
-                  {(page - 1) * 100 + 1} -{' '}
-                  {page === Math.ceil(totalAmount / 100) && totalAmount % 100
-                    ? totalAmount % 100 + (page - 1) * 100
-                    : page * 100}
-                </Typography>
-              </>
-            )}
-            <br />
-            <Button variant="outlined" onClick={onOpenPrint}>
-              Print
-            </Button>
-            <br />
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: 1.5,
+                my: 1.5,
+              }}
+            >
+              <Button variant="outlined" size="small" onClick={onOpenPrint}>
+                Print
+              </Button>
+              {total > 0 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Showing {startItem}–{endItem} of {total}
+                  </Typography>
+                  <Pagination
+                    count={totalPages}
+                    page={displayPage}
+                    onChange={(e, p) => setDisplayPage(p)}
+                    color="primary"
+                    shape="rounded"
+                    size="small"
+                    siblingCount={1}
+                    boundaryCount={1}
+                  />
+                </Box>
+              )}
+            </Box>
             {showQRCodes && (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-                {qrcodes.map((item, index) => (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                  gap: 1.5,
+                  mt: 1,
+                }}
+              >
+                {pageCodes.map((item, index) => (
                   <QRCode
-                    key={index}
+                    key={offsetInBackend + index}
                     data={item}
-                    identifer={identifiers[index] || []}
+                    identifer={identifiers[offsetInBackend + index] || []}
                   />
                 ))}
+              </Box>
+            )}
+            {total > PAGE_SIZE && (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Pagination
+                  count={totalPages}
+                  page={displayPage}
+                  onChange={(e, p) => setDisplayPage(p)}
+                  color="primary"
+                  shape="rounded"
+                  size="small"
+                  siblingCount={1}
+                  boundaryCount={1}
+                />
               </Box>
             )}
           </>

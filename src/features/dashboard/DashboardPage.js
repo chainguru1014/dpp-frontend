@@ -17,10 +17,13 @@ import AddIcon from '@mui/icons-material/Add';
 import BusinessIcon from '@mui/icons-material/Business';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import PeopleIcon from '@mui/icons-material/People';
-import { getAdminUserData, getProductsByUser, getCompanyProducts, registerCompany } from '../../helper';
+import { getAdminUserData, getProductsByUser, getOwnedProducts, registerCompany } from '../../helper';
 import DashboardAnalytics from './DashboardAnalytics';
 
-const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToUsers, onNavigateToProducts }) => {
+const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, onNavigateToUsers, onNavigateToProducts }) => {
+  // Non-super accounts see analytics scoped to the products they own.
+  const ownerKind = isAppUser ? 'User' : 'Company';
+  const ownerId = company?._id || company?.id;
   const [stats, setStats] = useState({
     users: 0,
     companies: 0,
@@ -58,12 +61,14 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
           products: allProducts?.length || 0,
         });
       } else {
-        // For company user: get only their products
-        const companyProducts = await getCompanyProducts({ company_id: company._id });
+        // For a logged-in app user or brand company: count the products they OWN.
+        const isAppUser = company.role === 'User' || !!company.userType;
+        const ownerKind = isAppUser ? 'User' : 'Company';
+        const owned = await getOwnedProducts(ownerKind, company._id);
         setStats({
           users: 0,
           companies: 0,
-          products: companyProducts?.length || 0,
+          products: Array.isArray(owned) ? owned.length : 0,
         });
       }
     } catch (error) {
@@ -226,7 +231,10 @@ const DashboardPage = ({ isAdmin, company, onNavigateToNewProduct, onNavigateToU
         </Grid>
       </Box>
 
-      {isAdmin && <DashboardAnalytics />}
+      <DashboardAnalytics
+        ownerKind={isAdmin ? null : ownerKind}
+        ownerId={isAdmin ? null : ownerId}
+      />
 
       {/* Create Company Dialog */}
       <Dialog

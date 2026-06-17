@@ -71,6 +71,7 @@ const ImageStrip = ({ images }) => {
 export default function ProductsTable({
   products,
   loading,
+  canManage = true,
   onSelectProduct,
   onEditProduct,
   onDeleteProduct,
@@ -180,7 +181,13 @@ export default function ProductsTable({
       headerName: 'Items',
       width: 90,
       type: 'number',
-      valueGetter: (p) => (Array.isArray(p.row.serials) ? p.row.serials.length : 0),
+      // Units the current account owns in the ownership ledger.
+      valueGetter: (p) =>
+        typeof p.row.ownedQuantity === 'number'
+          ? p.row.ownedQuantity
+          : Array.isArray(p.row.serials)
+          ? p.row.serials.length
+          : 0,
     },
     {
       field: 'minted',
@@ -218,33 +225,37 @@ export default function ProductsTable({
               <HistoryIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Generate QR / Mint">
+          <Tooltip title={canManage ? 'Generate QR / Mint' : 'View / Print QR codes'}>
             <IconButton size="small" onClick={() => onPrintProduct && onPrintProduct(p.row._id)}>
               <PrintIcon fontSize="small" />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Edit">
-            <IconButton
-              size="small"
-              onClick={() => {
-                const i = indexOf(p.row._id);
-                if (i >= 0 && onEditProduct) onEditProduct(i);
-              }}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton
-              size="small"
-              onClick={() => {
-                const i = indexOf(p.row._id);
-                if (i >= 0 && onDeleteProduct) onDeleteProduct(i);
-              }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          {canManage && (
+            <>
+              <Tooltip title="Edit">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    const i = indexOf(p.row._id);
+                    if (i >= 0 && onEditProduct) onEditProduct(i);
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Delete">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    const i = indexOf(p.row._id);
+                    if (i >= 0 && onDeleteProduct) onDeleteProduct(i);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
         </Box>
       ),
     },
