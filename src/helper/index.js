@@ -139,6 +139,23 @@ export const loginCompany = async (data) => {
     }
 }
 
+// Google OAuth login/signup. Sends the GIS access token to the backend,
+// which verifies it, finds-or-creates the user, and returns a user record
+// (including `profileCompleted`) plus a JWT.
+export const googleLogin = async (accessToken) => {
+    try {
+        const res = await axios.post(`${Backend_URL}user/google-login`, { accessToken });
+        if (res?.data?.status === 'success' && res.data.user) {
+            return { user: res.data.user, token: res.data.token || '' };
+        }
+        return null;
+    } catch (err) {
+        console.log(err);
+        alert(err.response?.data?.message || err.message || 'Google login failed');
+        return null;
+    }
+}
+
 // Admin scan-history feed (filters + search + pagination).
 export const getScanHistory = async (params) => {
     try {

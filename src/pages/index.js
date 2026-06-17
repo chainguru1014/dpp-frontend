@@ -79,6 +79,7 @@ import ProductHistoryDialog from '../features/products/ProductHistoryDialog';
 import ProductTransferDialog from '../features/products/ProductTransferDialog';
 import { getFileUrl } from '../helper';
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
+import { useGoogleAuth } from '../features/auth/useGoogleAuth';
 
 const serialTypes = [{ label: 'Serial Number', value: 'serial' }];
 const DEFAULT_BRAND_NAME = 'Yometel';
@@ -105,7 +106,8 @@ const InnerPage = () => {
     gender: 'male',
     dateOfBirth: '',
   });
-  const { company, setCompany, login, isAdmin, isAppUser, canManageProducts, logout } = useAuth();
+  const { company, setCompany, login, loginWithGoogle, isAdmin, isAppUser, canManageProducts, logout } = useAuth();
+  const { requestAccessToken: requestGoogleToken } = useGoogleAuth();
   // Owner scope for non-super accounts (company / app user): their analytics,
   // ESG and LCA feeds are restricted to the products they own.
   const ownerScopeKind = isAppUser ? 'User' : 'Company';
@@ -334,6 +336,19 @@ const InnerPage = () => {
     const res = await login({ name, password });
     if (!res) return;
     setActivePage('dashboard');
+  };
+
+  const googleLoginHandler = async () => {
+    try {
+      const accessToken = await requestGoogleToken();
+      const user = await loginWithGoogle(accessToken);
+      if (!user) return;
+      // Brand-new (or not-yet-completed) account -> profile edit so the user
+      // can fill in their info. Returning users go straight to the dashboard.
+      setActivePage(user.profileCompleted ? 'dashboard' : 'profile');
+    } catch (err) {
+      alert(err?.message || 'Google login failed');
+    }
   };
 
   const registerHandler = async (data) => {
@@ -1187,6 +1202,7 @@ const InnerPage = () => {
           setRegisterData={setRegisterData}
           onLogin={loginHandler}
           onRegister={registerHandler}
+          onGoogleLogin={googleLoginHandler}
           setIsRegister={setIsRegister}
         />
       </Box>

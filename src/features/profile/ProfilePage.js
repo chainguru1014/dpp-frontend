@@ -24,7 +24,7 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import DownloadIcon from '@mui/icons-material/Download';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { uploadFile, updateCompany, getFileUrl } from '../../helper';
+import { uploadFile, updateCompany, updateUserProfile, getFileUrl } from '../../helper';
 import { useAuth } from '../auth/AuthContext';
 
 const isValidEmail = (e) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e).trim());
@@ -51,6 +51,11 @@ const ProfilePage = () => {
 
   if (!company) return null;
 
+  // Google / app users live in the users collection; brands in companies.
+  const isAppUser = company.role === 'User' || !!company.userType;
+  const persist = (id, payload) =>
+    isAppUser ? updateUserProfile(id, payload) : updateCompany(id, payload);
+
   const notify = (msg, severity = 'success') => setToast({ open: true, msg, severity });
   const setField = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -70,7 +75,7 @@ const ProfilePage = () => {
       const key = kind === 'avatar' ? 'avatar' : 'background';
       setForm((f) => ({ ...f, [key]: url }));
       // Persist the image immediately so it survives even without a full save.
-      await updateCompany(company._id, { [key]: url });
+      await persist(company._id, { [key]: url });
       setCompany({ ...company, [key]: url });
       notify(kind === 'avatar' ? 'Avatar updated' : 'Cover image updated');
     } catch (err) {
@@ -96,7 +101,10 @@ const ProfilePage = () => {
         avatar: form.avatar,
         background: form.background,
       };
-      const ok = await updateCompany(company._id, payload);
+      // For app users (e.g. Google sign-ups), saving the profile marks it
+      // complete so future sign-ins route straight to the dashboard.
+      if (isAppUser) payload.profileCompleted = true;
+      const ok = await persist(company._id, payload);
       if (ok === false) {
         notify('Failed to save profile', 'error');
         return;
@@ -121,7 +129,7 @@ const ProfilePage = () => {
     }
     setSavingPwd(true);
     try {
-      const ok = await updateCompany(company._id, { password: pwd.next });
+      const ok = await persist(company._id, { password: pwd.next });
       if (ok === false) {
         notify('Failed to update password', 'error');
         return;

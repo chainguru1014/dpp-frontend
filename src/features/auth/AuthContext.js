@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginUser as loginUserApi, loginCompany as loginCompanyApi } from '../../helper';
+import { loginUser as loginUserApi, loginCompany as loginCompanyApi, googleLogin as googleLoginApi } from '../../helper';
 
 const AuthContext = createContext(null);
 
@@ -101,6 +101,15 @@ export const AuthProvider = ({ children }) => {
     return normalized;
   };
 
+  // Google sign-in / sign-up. Returns the user record (with `profileCompleted`)
+  // so the caller can route a brand-new account to profile completion.
+  const loginWithGoogle = async (accessToken) => {
+    const res = await googleLoginApi(accessToken);
+    if (!res || !res.user) return null;
+    setCompany(res.user);
+    return res.user;
+  };
+
   const logout = () => {
     setCompany(null);
     // Mirror cleanup for both session + local (backwards compat).
@@ -125,6 +134,7 @@ export const AuthProvider = ({ children }) => {
         company,
         setCompany,
         login,
+        loginWithGoogle,
         logout,
         isAdmin,
         isAppUser,
