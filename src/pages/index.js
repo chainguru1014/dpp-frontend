@@ -64,7 +64,7 @@ import PreviewModal from '../components/PreviewModal';
 import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
 import AuthPage from '../components/AuthPage';
-import yometelLogoWhite from '../assets/yometel-logo-white.png';
+import yometelLogoWhite from '../assets/logo-y-white.png';
 import ProfilePage from '../features/profile/ProfilePage';
 import ProductsTable from '../features/products/ProductsTable';
 import ProductMintSection from '../features/products/ProductMintSection';
@@ -1215,7 +1215,7 @@ const InnerPage = () => {
         position="fixed"
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          backgroundImage: 'linear-gradient(120deg, #1f63ad 0%, #2f7bc9 100%)',
+          backgroundImage: 'linear-gradient(120deg, #2f74c4 0%, #3e87d6 100%)',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 } }}>
@@ -1229,12 +1229,12 @@ const InnerPage = () => {
               px: 1.5,
             }}
           >
-            {/* White wordmark on a transparent background — sits directly on the blue bar. */}
+            {/* Y logo badge — white rounded square sits directly on the blue bar. */}
             <Box
               component="img"
               src={yometelLogoWhite}
               alt="Yometel"
-              sx={{ width: 130, maxWidth: '90%', height: 'auto', display: 'block' }}
+              sx={{ width: 42, height: 42, display: 'block' }}
             />
           </Box>
           <Box sx={{ flexGrow: 1 }} />
@@ -1286,7 +1286,7 @@ const InnerPage = () => {
             '& .MuiDrawer-paper': {
               width: DRAWER_WIDTH,
               boxSizing: 'border-box',
-              backgroundImage: 'linear-gradient(180deg, #2569b2 0%, #2f7bc9 100%)',
+              backgroundImage: 'linear-gradient(180deg, #2f74c4 0%, #3e87d6 100%)',
               color: '#ffffff',
               borderRight: 'none',
               overflowX: 'hidden',

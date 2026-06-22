@@ -5,7 +5,7 @@ import 'react-slideshow-image/dist/styles.css';
 import { Backend_URL, getFileUrl } from '../helper';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import yometelLogo from '../assets/yometel-logo.png';
+import yometelLogo from '../assets/logo-y.png';
 import appStoreBadge from '../assets/app-store-badge.png';
 import googlePlayBadge from '../assets/google-play-badge.png';
 import QrCodeIcon from '@mui/icons-material/QrCode';
@@ -153,17 +153,12 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
               justifyContent: 'center',
             }}
           >
-            <Typography
-              sx={{
-                fontSize: '20px',
-                fontWeight: 400,
-                color: '#1565C0',
-                marginRight: '8px',
-              }}
-            >
-              Yometel
-            </Typography>
-            <SoundWaveIcon />
+            <Box
+              component="img"
+              src={yometelLogo}
+              alt="Yometel"
+              sx={{ width: 40, height: 40, display: 'block' }}
+            />
           </Box>
 
           {/* Avatar */}
@@ -354,17 +349,12 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
             justifyContent: 'center',
           }}
         >
-          <Typography
-            sx={{
-              fontSize: '20px',
-              fontWeight: 400,
-              color: '#1565C0',
-              marginRight: '8px',
-            }}
-          >
-            Yometel
-          </Typography>
-          <SoundWaveIcon />
+          <Box
+            component="img"
+            src={yometelLogo}
+            alt="Yometel"
+            sx={{ width: 40, height: 40, display: 'block' }}
+          />
         </Box>
 
         {/* Avatar */}
