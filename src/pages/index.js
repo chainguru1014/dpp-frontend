@@ -1215,7 +1215,7 @@ const InnerPage = () => {
         position="fixed"
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          backgroundImage: 'linear-gradient(120deg, #2f74c4 0%, #3e87d6 100%)',
+          backgroundImage: 'linear-gradient(120deg, #2f80c8 0%, #4a96dd 100%)',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 } }}>
@@ -1286,7 +1286,7 @@ const InnerPage = () => {
             '& .MuiDrawer-paper': {
               width: DRAWER_WIDTH,
               boxSizing: 'border-box',
-              backgroundImage: 'linear-gradient(180deg, #2f74c4 0%, #3e87d6 100%)',
+              backgroundImage: 'linear-gradient(180deg, #2f80c8 0%, #4a96dd 100%)',
               color: '#ffffff',
               borderRight: 'none',
               overflowX: 'hidden',

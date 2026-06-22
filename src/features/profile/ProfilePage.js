@@ -169,7 +169,7 @@ const ProfilePage = () => {
             position: 'relative',
             background: coverUrl
               ? `url(${coverUrl}) center/cover no-repeat`
-              : 'linear-gradient(135deg,#2f74c4,#3e87d6)',
+              : 'linear-gradient(135deg,#2f80c8,#4a96dd)',
           }}
         >
           <Tooltip title="Change cover image">

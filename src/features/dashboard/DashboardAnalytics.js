@@ -4,7 +4,7 @@ import { getAnalytics } from '../../helper';
 import Loader from '../../components/Loader';
 
 // Blue / gray / white family only.
-const COLORS = ['#2f74c4', '#3e87d6', '#5b9bd8', '#8aa0c4', '#6b7a93', '#aab6c8'];
+const COLORS = ['#2f80c8', '#4a96dd', '#5b9bd8', '#8aa0c4', '#6b7a93', '#aab6c8'];
 
 const Section = ({ title, children }) => (
   <Card sx={{ height: '100%' }}>

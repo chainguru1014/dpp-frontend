@@ -121,7 +121,7 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        backgroundImage: 'linear-gradient(120deg, #2f74c4 0%, #3e87d6 100%)',
+                        backgroundImage: 'linear-gradient(120deg, #2f80c8 0%, #4a96dd 100%)',
                         color: '#fff',
                     }}
                 >

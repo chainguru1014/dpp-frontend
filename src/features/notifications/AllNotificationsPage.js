@@ -22,7 +22,7 @@ import { getNotifications, markAllNotificationsRead, markNotificationRead } from
 import NotificationDetailDialog from './NotificationDetailDialog';
 
 const LEVEL_COLOR = {
-  info: '#3e87d6',
+  info: '#4a96dd',
   success: '#2e7d32',
   warning: '#ed6c02',
   critical: '#d32f2f',
