@@ -1314,10 +1314,9 @@ const InnerPage = () => {
           backgroundImage: 'linear-gradient(120deg, #2f80c8 0%, #4a96dd 100%)',
         }}
       >
-        <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 1, md: 0 } }}>
+        <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
           <IconButton
             color="inherit"
-            edge="start"
             aria-label="Open navigation"
             onClick={() => setMobileNavOpen(true)}
             sx={{ display: { xs: 'inline-flex', md: 'none' }, mr: 0.5 }}
