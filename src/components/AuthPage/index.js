@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
 import desktopBgImage from '../../assets/background.png';
 import mobileBgImage from '../../assets/background-mobile.png';
-import yometelLogo from '../../assets/logo-y.png';
+import yometelLogo from '../../assets/yometel-logo-trans.png';
 
 // Multi-color Google "G" mark (rendered inline so no extra asset is needed).
 const GoogleIcon = () => (
@@ -99,7 +99,7 @@ const AuthPage = ({
             component="img"
             src={yometelLogo}
             alt="Yometel"
-            sx={{ width: { xs: 72, sm: 96 }, height: { xs: 72, sm: 96 }, display: 'inline-block' }}
+            sx={{ width: { xs: 150, sm: 190 }, height: 'auto', display: 'inline-block' }}
           />
         </Box>
 

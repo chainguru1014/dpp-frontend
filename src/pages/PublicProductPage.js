@@ -9,6 +9,9 @@ import yometelLogo from '../assets/logo-y.png';
 import appStoreBadge from '../assets/app-store-badge.png';
 import googlePlayBadge from '../assets/google-play-badge.png';
 import QrCodeIcon from '@mui/icons-material/QrCode';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import InstagramIcon from '@mui/icons-material/Instagram';
 
 // Sound wave icon component
 const SoundWaveIcon = () => (
@@ -493,6 +496,56 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
               {product.detail}
             </Typography>
           )}
+
+          {/* Social share — repost this product to X, LinkedIn or Instagram */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 2, pt: 1.5, borderTop: '1px solid #eee' }}>
+            <Typography sx={{ fontSize: '13px', color: '#666', mr: 0.5 }}>Share:</Typography>
+            <IconButton
+              size="small"
+              aria-label="Share on X"
+              sx={{ color: '#000' }}
+              onClick={() =>
+                window.open(
+                  `https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent((product?.name ? product.name + ' — ' : '') + 'Digital Product Passport')}`,
+                  '_blank',
+                  'noopener,width=600,height=600'
+                )
+              }
+            >
+              <TwitterIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              aria-label="Share on LinkedIn"
+              sx={{ color: '#0a66c2' }}
+              onClick={() =>
+                window.open(
+                  `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`,
+                  '_blank',
+                  'noopener,width=600,height=600'
+                )
+              }
+            >
+              <LinkedInIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              aria-label="Share on Instagram"
+              sx={{ color: '#e4405f' }}
+              onClick={() => {
+                // Instagram has no web post-intent; use the native share sheet on
+                // mobile (lets the user pick Instagram), else copy the link.
+                if (navigator.share) {
+                  navigator.share({ title: product?.name || 'Product', url: window.location.href }).catch(() => {});
+                } else {
+                  navigator.clipboard?.writeText(window.location.href);
+                  window.open('https://www.instagram.com/', '_blank', 'noopener');
+                }
+              }}
+            >
+              <InstagramIcon fontSize="small" />
+            </IconButton>
+          </Box>
         </Box>
       </Box>
 

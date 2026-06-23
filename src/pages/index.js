@@ -37,6 +37,8 @@ import PeopleIcon from '@mui/icons-material/People';
 import HistoryIcon from '@mui/icons-material/History';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import CampaignIcon from '@mui/icons-material/Campaign';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import Webcam from 'react-webcam';
 import io from 'socket.io-client';
@@ -66,7 +68,7 @@ import PreviewModal from '../components/PreviewModal';
 import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
 import AuthPage from '../components/AuthPage';
-import yometelLogoWhite from '../assets/logo-y-white.png';
+import yometelLogoWhite from '../assets/yometel-logo-white.png';
 import ProfilePage from '../features/profile/ProfilePage';
 import ProductsTable from '../features/products/ProductsTable';
 import ProductMintSection from '../features/products/ProductMintSection';
@@ -74,6 +76,8 @@ import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import HistoryPage from '../features/history/HistoryPage';
 import TracePage from '../features/trace/TracePage';
+import RecommendationsPage from '../features/recommendations/RecommendationsPage';
+import ChatPage from '../features/chat/ChatPage';
 import NotificationBell from '../features/notifications/NotificationBell';
 import SystemNotificationsPage from '../features/notifications/SystemNotificationsPage';
 import AllNotificationsPage from '../features/notifications/AllNotificationsPage';
@@ -1265,6 +1269,18 @@ const InnerPage = () => {
         </ListItem>
       )}
       <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'recommendations'} onClick={() => go('recommendations')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><AutoAwesomeIcon /></ListItemIcon>
+          <ListItemText primary="Recommendations" />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'chat'} onClick={() => go('chat')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><ChatBubbleOutlineIcon /></ListItemIcon>
+          <ListItemText primary="Chat" />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
         <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
           <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
           <ListItemText primary="ESG" />
@@ -1317,12 +1333,12 @@ const InnerPage = () => {
               px: 1.5,
             }}
           >
-            {/* Y logo badge — white rounded square sits directly on the blue bar. */}
+            {/* White Yometel wordmark sits directly on the blue bar. */}
             <Box
               component="img"
               src={yometelLogoWhite}
               alt="Yometel"
-              sx={{ width: 42, height: 42, display: 'block' }}
+              sx={{ height: { xs: 24, md: 30 }, width: 'auto', display: 'block' }}
             />
           </Box>
           <Box sx={{ flexGrow: 1 }} />
@@ -1423,6 +1439,12 @@ const InnerPage = () => {
           )}
 
           {activePage === 'profile' && <ProfilePage />}
+
+          {activePage === 'recommendations' && (
+            <RecommendationsPage company={company} isAdmin={isAdmin} />
+          )}
+
+          {activePage === 'chat' && <ChatPage company={company} />}
 
           {/* ESG / LCA: super admin sees everything; company/user are scoped to owned products. */}
           {activePage === 'history' && (

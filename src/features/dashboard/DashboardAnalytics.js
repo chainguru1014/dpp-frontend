@@ -8,8 +8,8 @@ const COLORS = ['#2f80c8', '#4a96dd', '#5b9bd8', '#8aa0c4', '#6b7a93', '#aab6c8'
 
 const Section = ({ title, children }) => (
   <Card sx={{ height: '100%' }}>
-    <CardContent>
-      <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 400 }}>
+    <CardContent sx={{ py: { xs: 2, md: 1.25 }, '&:last-child': { pb: { xs: 2, md: 1.25 } } }}>
+      <Typography variant="subtitle1" sx={{ mb: { xs: 1, md: 0.5 }, fontWeight: 400 }}>
         {title}
       </Typography>
       {children}
@@ -17,9 +17,19 @@ const Section = ({ title, children }) => (
   </Card>
 );
 
-const Kpi = ({ label, value, sub }) => (
-  <Card sx={{ height: '100%' }}>
-    <CardContent sx={{ textAlign: 'center', py: 2.5 }}>
+const Kpi = ({ label, value, sub, onClick }) => (
+  <Card
+    onClick={onClick}
+    sx={{
+      height: '100%',
+      ...(onClick && {
+        cursor: 'pointer',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': { transform: 'translateY(-3px)', boxShadow: 4 },
+      }),
+    }}
+  >
+    <CardContent sx={{ textAlign: 'center', py: { xs: 2, md: 1 } }}>
       <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
         {value}
       </Typography>
@@ -39,7 +49,7 @@ const Kpi = ({ label, value, sub }) => (
 const DayBars = ({ data }) => {
   const max = Math.max(1, ...data.map((d) => d.count));
   return (
-    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.75, height: { xs: 130, md: 170 }, mt: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.75, height: { xs: 130, md: 132 }, mt: 1 }}>
       {data.map((d, i) => (
         <Box
           key={i}
@@ -79,7 +89,7 @@ const HBars = ({ items }) => {
   }
   const max = Math.max(1, ...items.map((i) => i.count));
   return (
-    <Stack spacing={1.25} sx={{ mt: 1 }}>
+    <Stack spacing={{ xs: 1.25, md: 0.75 }} sx={{ mt: 1 }}>
       {items.map((it, i) => (
         <Box key={i}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.25 }}>
@@ -126,7 +136,7 @@ const Breakdown = ({ segments }) => {
   );
 };
 
-export default function DashboardAnalytics({ ownerKind = null, ownerId = null }) {
+export default function DashboardAnalytics({ ownerKind = null, ownerId = null, productsCount = null, onProductsClick = null }) {
   const [a, setA] = useState(null);
 
   useEffect(() => {
@@ -136,8 +146,8 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
 
   if (!a) {
     return (
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" sx={{ mb: 2, color: 'text.secondary' }}>
+      <Box sx={{ mt: { xs: 3, md: 1.5 } }}>
+        <Typography variant="subtitle1" sx={{ mb: { xs: 1.5, md: 0.75 }, color: 'text.secondary', fontWeight: 400 }}>
           Analytics
         </Typography>
         <Loader label="Loading analytics…" />
@@ -151,30 +161,35 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
   const verifiedRate = checked > 0 ? Math.round((sec.verified / checked) * 100) : null;
   const loggedInRate = t.scans ? Math.round((a.audience.loggedIn / t.scans) * 100) : 0;
 
+  // Equal-width KPI columns: 2-per-row on phones, all-in-one-row from md up
+  // (lets the normal-user dashboard fill the width instead of leaving a gap).
+  const kpiBoxSx = { flex: { xs: '1 1 45%', sm: '1 1 30%', md: '1 1 0' }, minWidth: 130 };
+
   return (
-    <Box sx={{ mt: 4 }}>
-      <Typography variant="h6" sx={{ mb: 2, color: 'text.secondary' }}>
+    <Box sx={{ mt: { xs: 3, md: 1.5 } }}>
+      <Typography variant="subtitle1" sx={{ mb: { xs: 1.5, md: 0.75 }, color: 'text.secondary', fontWeight: 400 }}>
         Analytics
       </Typography>
 
-      <Grid container spacing={2}>
-        <Grid item xs={6} md={3}>
-          <Kpi label="Total Scans" value={t.scans ?? 0} />
-        </Grid>
-        <Grid item xs={6} md={3}>
-          <Kpi label="Unique Scanners" value={t.uniqueScanners ?? 0} />
-        </Grid>
-        <Grid item xs={6} md={3}>
-          <Kpi label="Logged-in Scans" value={`${loggedInRate}%`} sub={`${a.audience.loggedIn} of ${t.scans}`} />
-        </Grid>
-        <Grid item xs={6} md={3}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 1.5, md: 1.5 }, mb: { xs: 1.5, md: 1.5 } }}>
+        {productsCount != null && (
+          <Box sx={kpiBoxSx}>
+            <Kpi label="Products" value={productsCount} onClick={onProductsClick} />
+          </Box>
+        )}
+        <Box sx={kpiBoxSx}><Kpi label="Total Scans" value={t.scans ?? 0} /></Box>
+        <Box sx={kpiBoxSx}><Kpi label="Unique Scanners" value={t.uniqueScanners ?? 0} /></Box>
+        <Box sx={kpiBoxSx}><Kpi label="Logged-in Scans" value={`${loggedInRate}%`} sub={`${a.audience.loggedIn} of ${t.scans}`} /></Box>
+        <Box sx={kpiBoxSx}>
           <Kpi
             label="Security Verified"
             value={verifiedRate == null ? '—' : `${verifiedRate}%`}
             sub={`${sec.verified} ✓ / ${sec.failed} ✗`}
           />
-        </Grid>
+        </Box>
+      </Box>
 
+      <Grid container spacing={{ xs: 1.5, md: 1.5 }}>
         <Grid item xs={12} md={8}>
           <Section title="Scans — last 14 days">
             <DayBars data={a.scansByDay || []} />

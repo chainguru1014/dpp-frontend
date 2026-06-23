@@ -106,16 +106,17 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 3 }}>
+      <Typography variant="h6" sx={{ mb: { xs: 2, md: 1 } }}>
         Dashboard
       </Typography>
 
-      {/* Usage Statistics Section */}
+      {/* Usage Statistics — admin only; normal users get a Products KPI inside Analytics. */}
+      {isAdmin && (
       <Box>
-        <Typography variant="h6" sx={{ mb: 2, color: 'text.secondary' }}>
+        <Typography variant="subtitle1" sx={{ mb: { xs: 1.5, md: 0.75 }, color: 'text.secondary', fontWeight: 400 }}>
           Usage Statistics
         </Typography>
-        <Grid container spacing={2}>
+        <Grid container spacing={{ xs: 1.5, md: 2 }}>
           {isAdmin ? (
             <>
               <Grid item xs={12} sm={6} md={4}>
@@ -135,9 +136,9 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                     }
                   }}
                 >
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <PeopleIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                    <Typography variant="h6" sx={{ mb: 1 }}>
+                  <CardContent sx={{ textAlign: 'center', py: { xs: 2.5, md: 1.25 } }}>
+                    <PeopleIcon sx={{ fontSize: { xs: 44, md: 32 }, color: 'primary.main', mb: { xs: 1.5, md: 0.5 } }} />
+                    <Typography variant="h6" sx={{ mb: 0.5 }}>
                       Users
                     </Typography>
                     <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
@@ -163,9 +164,9 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                     }
                   }}
                 >
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <BusinessIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                    <Typography variant="h6" sx={{ mb: 1 }}>
+                  <CardContent sx={{ textAlign: 'center', py: { xs: 2.5, md: 1.25 } }}>
+                    <BusinessIcon sx={{ fontSize: { xs: 44, md: 32 }, color: 'primary.main', mb: { xs: 1.5, md: 0.5 } }} />
+                    <Typography variant="h6" sx={{ mb: 0.5 }}>
                       Companies
                     </Typography>
                     <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
@@ -191,9 +192,9 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                     }
                   }}
                 >
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <Inventory2Icon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                    <Typography variant="h6" sx={{ mb: 1 }}>
+                  <CardContent sx={{ textAlign: 'center', py: { xs: 2.5, md: 1.25 } }}>
+                    <Inventory2Icon sx={{ fontSize: { xs: 44, md: 32 }, color: 'primary.main', mb: { xs: 1.5, md: 0.5 } }} />
+                    <Typography variant="h6" sx={{ mb: 0.5 }}>
                       Products
                     </Typography>
                     <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
@@ -216,9 +217,9 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                 }}
                 onClick={onNavigateToProducts}
               >
-                <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                  <Inventory2Icon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
-                  <Typography variant="h6" sx={{ mb: 1 }}>
+                <CardContent sx={{ textAlign: 'center', py: { xs: 2.5, md: 1.25 } }}>
+                  <Inventory2Icon sx={{ fontSize: { xs: 44, md: 32 }, color: 'primary.main', mb: { xs: 1.5, md: 0.5 } }} />
+                  <Typography variant="h6" sx={{ mb: 0.5 }}>
                     Products
                   </Typography>
                   <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
@@ -230,10 +231,13 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
           )}
         </Grid>
       </Box>
+      )}
 
       <DashboardAnalytics
         ownerKind={isAdmin ? null : ownerKind}
         ownerId={isAdmin ? null : ownerId}
+        productsCount={isAdmin ? null : stats.products}
+        onProductsClick={onNavigateToProducts}
       />
 
       {/* Create Company Dialog */}
