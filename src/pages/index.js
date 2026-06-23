@@ -1229,6 +1229,7 @@ const InnerPage = () => {
     color: '#ffffff',
     borderRight: 'none',
     overflowX: 'hidden',
+    overflowY: 'auto',
   };
   const navSx = {
     '& .MuiListItemButton-root': {
@@ -1269,18 +1270,6 @@ const InnerPage = () => {
         </ListItem>
       )}
       <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'recommendations'} onClick={() => go('recommendations')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><AutoAwesomeIcon /></ListItemIcon>
-          <ListItemText primary="Recommendations" />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'chat'} onClick={() => go('chat')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><ChatBubbleOutlineIcon /></ListItemIcon>
-          <ListItemText primary="Chat" />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
         <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
           <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
           <ListItemText primary="ESG" />
@@ -1290,6 +1279,18 @@ const InnerPage = () => {
         <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
           <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
           <ListItemText primary="LCA" />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'recommendations'} onClick={() => go('recommendations')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><AutoAwesomeIcon /></ListItemIcon>
+          <ListItemText primary="Recommendations" />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'chat'} onClick={() => go('chat')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><ChatBubbleOutlineIcon /></ListItemIcon>
+          <ListItemText primary="Chat" />
         </ListItemButton>
       </ListItem>
       <ListItem disablePadding>
@@ -1410,7 +1411,8 @@ const InnerPage = () => {
             ...navSx,
           }}
         >
-          <Box sx={{ height: 16 }} />
+          {/* Spacer matching the fixed AppBar height so the first item isn't clipped. */}
+          <Toolbar />
           {navList}
         </Drawer>
 
