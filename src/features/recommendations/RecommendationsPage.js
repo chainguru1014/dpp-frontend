@@ -160,6 +160,11 @@ export default function RecommendationsPage({ company, isAdmin }) {
                         {p.model}
                       </Typography>
                     )}
+                    {p.ai_reason && (
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, lineHeight: 1.35 }}>
+                        {p.ai_reason}
+                      </Typography>
+                    )}
                   </CardContent>
                 </Card>
               </Grid>
