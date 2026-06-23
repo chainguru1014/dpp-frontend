@@ -193,7 +193,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: '40px 20px',
+            padding: { xs: '16px 10px', sm: '40px 20px' },
           }}
         >
           <Box
@@ -389,7 +389,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: '40px 20px',
+          padding: { xs: '16px 10px', sm: '40px 20px' },
         }}
       >
         <Box

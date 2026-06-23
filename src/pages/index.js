@@ -22,6 +22,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -85,7 +87,6 @@ const serialTypes = [{ label: 'Serial Number', value: 'serial' }];
 const DEFAULT_BRAND_NAME = 'Yometel';
 // Single source of truth for the left bar width — shared by the Drawer and the
 // logo container so the logo is always centered over the bar at every breakpoint.
-const DRAWER_WIDTH = { xs: 76, md: 280 };
 const DEFAULT_BRAND_DETAIL = 'Developing innovative "real-time and automatic" digital twins IoT /RFID technologies';
 const DEFAULT_BRAND_WEBSITE = 'https://www.yometel.jp/';
 
@@ -241,6 +242,10 @@ const InnerPage = () => {
   const [productPanelMode, setProductPanelMode] = useState('edit');
   const [sidebarOpen, setSidebarOpen] = useState(() => loadStateFromStorage('sidebarOpen', true));
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
+  // Mobile/tablet: the left nav becomes a toggleable overlay drawer.
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -1209,6 +1214,80 @@ const InnerPage = () => {
     );
   }
 
+  const go = (page) => {
+    setActivePage(page);
+    setMobileNavOpen(false);
+  };
+
+  // Shared styling for both the desktop sidebar and the mobile overlay drawer.
+  const drawerPaperSx = {
+    backgroundImage: 'linear-gradient(180deg, #2f80c8 0%, #4a96dd 100%)',
+    color: '#ffffff',
+    borderRight: 'none',
+    overflowX: 'hidden',
+  };
+  const navSx = {
+    '& .MuiListItemButton-root': {
+      borderRadius: 999,
+      border: '1px solid rgba(255,255,255,0.55)',
+      mx: 1.5,
+      my: 0.75,
+      py: 1,
+      px: 2,
+    },
+    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 40, justifyContent: 'center' },
+    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 24 },
+    '& .MuiListItemText-primary': { fontSize: '1.02rem', fontWeight: 400 },
+    '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.14)' },
+    '& .MuiListItemButton-root.Mui-selected': { backgroundColor: 'rgba(255,255,255,0.22)', borderColor: '#ffffff' },
+    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.3)' },
+  };
+  const navList = (
+    <List>
+      <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'dashboard'} onClick={() => go('dashboard')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
+          <ListItemText primary="Dashboard" />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'products'} onClick={() => go('products')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><Inventory2Icon /></ListItemIcon>
+          <ListItemText primary="Products" />
+        </ListItemButton>
+      </ListItem>
+      {isAdmin && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'users'} onClick={() => go('users')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
+            <ListItemText primary="Users" />
+          </ListItemButton>
+        </ListItem>
+      )}
+      <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
+          <ListItemText primary="ESG" />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
+          <ListItemText primary="LCA" />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
+        <ListItemButton
+          selected={activePage === 'notifications' || activePage === 'allNotifications'}
+          onClick={() => go(isAdmin ? 'notifications' : 'allNotifications')}
+        >
+          <ListItemIcon sx={{ color: 'inherit' }}><CampaignIcon /></ListItemIcon>
+          <ListItemText primary="Notifications" />
+        </ListItemButton>
+      </ListItem>
+    </List>
+  );
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <AppBar
@@ -1218,10 +1297,19 @@ const InnerPage = () => {
           backgroundImage: 'linear-gradient(120deg, #2f80c8 0%, #4a96dd 100%)',
         }}
       >
-        <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 } }}>
+        <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 1, md: 0 } }}>
+          <IconButton
+            color="inherit"
+            edge="start"
+            aria-label="Open navigation"
+            onClick={() => setMobileNavOpen(true)}
+            sx={{ display: { xs: 'inline-flex', md: 'none' }, mr: 0.5 }}
+          >
+            <MenuIcon />
+          </IconButton>
           <Box
             sx={{
-              width: DRAWER_WIDTH,
+              width: { xs: 'auto', md: 280 },
               flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
@@ -1239,7 +1327,7 @@ const InnerPage = () => {
           </Box>
           <Box sx={{ flexGrow: 1 }} />
           <NotificationBell onShowAll={() => setActivePage('allNotifications')} />
-          <Typography variant="body2" sx={{ mr: 2 }}>
+          <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
             {company.name}
           </Typography>
           <IconButton
@@ -1278,117 +1366,36 @@ const InnerPage = () => {
       </AppBar>
 
       <Box sx={{ display: 'flex', flexGrow: 1, pt: 8 }}>
+        {/* Desktop sidebar (md and up) */}
         <Drawer
           variant="permanent"
           sx={{
-            width: DRAWER_WIDTH,
+            display: { xs: 'none', md: 'block' },
+            width: 280,
             flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: DRAWER_WIDTH,
-              boxSizing: 'border-box',
-              backgroundImage: 'linear-gradient(180deg, #2f80c8 0%, #4a96dd 100%)',
-              color: '#ffffff',
-              borderRight: 'none',
-              overflowX: 'hidden',
-            },
-            // Pill-shaped nav buttons with a soft outline, matching the brand layout.
-            '& .MuiListItemButton-root': {
-              borderRadius: 999,
-              border: '1px solid rgba(255,255,255,0.55)',
-              mx: { xs: 0.5, md: 1.5 },
-              my: 0.75,
-              py: 1,
-              px: { xs: 1, md: 2 },
-              justifyContent: { xs: 'center', md: 'flex-start' },
-            },
-            '& .MuiListItemIcon-root': {
-              color: '#ffffff',
-              minWidth: { xs: 0, md: 40 },
-              justifyContent: 'center',
-            },
-            '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 24 },
-            '& .MuiListItemText-root': { display: { xs: 'none', md: 'block' } },
-            '& .MuiListItemText-primary': { fontSize: '1.02rem', fontWeight: 400 },
-            '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.14)' },
-            '& .MuiListItemButton-root.Mui-selected': {
-              backgroundColor: 'rgba(255,255,255,0.22)',
-              borderColor: '#ffffff',
-            },
-            '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.3)' },
+            '& .MuiDrawer-paper': { width: 280, boxSizing: 'border-box', ...drawerPaperSx },
+            ...navSx,
           }}
         >
           <Toolbar />
           <Box sx={{ height: 8 }} />
-          <List>
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={activePage === 'dashboard'}
-                onClick={() => setActivePage('dashboard')}
-              >
-                <ListItemIcon sx={{ color: 'inherit' }}>
-                  <DashboardIcon />
-                </ListItemIcon>
-                <ListItemText primary="Dashboard" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={activePage === 'products'}
-                onClick={() => setActivePage('products')}
-              >
-                <ListItemIcon sx={{ color: 'inherit' }}>
-                  <Inventory2Icon />
-                </ListItemIcon>
-                <ListItemText primary="Products" />
-              </ListItemButton>
-            </ListItem>
-            {isAdmin && (
-              <ListItem disablePadding>
-                <ListItemButton
-                  selected={activePage === 'users'}
-                  onClick={() => setActivePage('users')}
-                >
-                  <ListItemIcon sx={{ color: 'inherit' }}>
-                    <PeopleIcon />
-                  </ListItemIcon>
-                  <ListItemText primary="Users" />
-                </ListItemButton>
-              </ListItem>
-            )}
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={activePage === 'history'}
-                onClick={() => setActivePage('history')}
-              >
-                <ListItemIcon sx={{ color: 'inherit' }}>
-                  <HistoryIcon />
-                </ListItemIcon>
-                <ListItemText primary="ESG" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={activePage === 'trace'}
-                onClick={() => setActivePage('trace')}
-              >
-                <ListItemIcon sx={{ color: 'inherit' }}>
-                  <TimelineIcon />
-                </ListItemIcon>
-                <ListItemText primary="LCA" />
-              </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-              <ListItemButton
-                selected={activePage === 'notifications' || activePage === 'allNotifications'}
-                onClick={() => setActivePage(isAdmin ? 'notifications' : 'allNotifications')}
-              >
-                <ListItemIcon sx={{ color: 'inherit' }}>
-                  <CampaignIcon />
-                </ListItemIcon>
-                <ListItemText primary="Notifications" />
-              </ListItemButton>
-            </ListItem>
-          </List>
+          {navList}
+        </Drawer>
+
+        {/* Mobile / tablet overlay drawer (below md) */}
+        <Drawer
+          variant="temporary"
+          open={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': { width: 264, boxSizing: 'border-box', ...drawerPaperSx },
+            ...navSx,
+          }}
+        >
+          <Box sx={{ height: 16 }} />
+          {navList}
         </Drawer>
 
         <Box
@@ -1518,6 +1525,7 @@ const InnerPage = () => {
             onClose={() => setActivePage('products')}
             fullWidth
             maxWidth="md"
+            fullScreen={isMobile}
             scroll="paper"
           >
             <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>

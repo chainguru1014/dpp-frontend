@@ -76,11 +76,11 @@ const AuthPage = ({
       {/* Auth card */}
       <Box
         sx={{
-          width: 360,
-          maxWidth: '90vw',
+          width: { xs: '100%', sm: 360 },
+          maxWidth: '92vw',
           // Cap the card height so the long Sign Up form scrolls inside it while
           // the logo (top) and the action buttons (bottom) stay pinned.
-          maxHeight: '70vh',
+          maxHeight: { xs: '88vh', sm: '70vh' },
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -89,8 +89,8 @@ const AuthPage = ({
           borderColor: 'primary.main',
           borderRadius: 3,
           boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
-          px: 4,
-          py: 4.5,
+          px: { xs: 2.5, sm: 4 },
+          py: { xs: 3, sm: 4.5 },
         }}
       >
         {/* Yometel wordmark (pinned) */}
@@ -99,7 +99,7 @@ const AuthPage = ({
             component="img"
             src={yometelLogo}
             alt="Yometel"
-            sx={{ width: 96, height: 96, display: 'inline-block' }}
+            sx={{ width: { xs: 72, sm: 96 }, height: { xs: 72, sm: 96 }, display: 'inline-block' }}
           />
         </Box>
 
@@ -121,7 +121,7 @@ const AuthPage = ({
               overflowY: 'auto',
               display: 'flex',
               flexDirection: 'column',
-              gap: 2,
+              gap: { xs: 1.5, sm: 2 },
               pr: 0.5,
             }}
           >

@@ -39,7 +39,7 @@ const Kpi = ({ label, value, sub }) => (
 const DayBars = ({ data }) => {
   const max = Math.max(1, ...data.map((d) => d.count));
   return (
-    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.75, height: 170, mt: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.75, height: { xs: 130, md: 170 }, mt: 1 }}>
       {data.map((d, i) => (
         <Box
           key={i}

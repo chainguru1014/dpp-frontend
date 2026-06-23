@@ -165,7 +165,7 @@ const ProfilePage = () => {
       <Card sx={{ borderRadius: 2, overflow: 'hidden', mb: 2 }}>
         <Box
           sx={{
-            height: 160,
+            height: { xs: 120, sm: 160 },
             position: 'relative',
             background: coverUrl
               ? `url(${coverUrl}) center/cover no-repeat`

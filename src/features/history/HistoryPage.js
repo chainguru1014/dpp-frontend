@@ -257,7 +257,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             placeholder="user, product, city, IP…"
             value={qInput}
             onChange={(e) => setQInput(e.target.value)}
-            sx={{ minWidth: 200, flexGrow: 1 }}
+            sx={{ minWidth: { xs: '100%', sm: 200 }, flexGrow: 1 }}
           />
           <Tooltip title="Refresh">
             <IconButton onClick={fetchData} color="primary">

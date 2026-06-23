@@ -223,8 +223,8 @@ const SystemNotificationsPage = () => {
                   const meta = levelMeta(row.level);
                   return (
                     <TableRow key={row._id} hover>
-                      <TableCell sx={{ fontWeight: 400, maxWidth: 200 }}>{row.title}</TableCell>
-                      <TableCell sx={{ maxWidth: 320, color: 'text.secondary' }}>
+                      <TableCell sx={{ fontWeight: 400, maxWidth: { xs: 120, md: 200 } }}>{row.title}</TableCell>
+                      <TableCell sx={{ maxWidth: { xs: 160, md: 320 }, color: 'text.secondary' }}>
                         <Typography variant="body2" noWrap title={row.message}>
                           {row.message}
                         </Typography>
