@@ -7,7 +7,7 @@ import { Backend_URL } from '../../helper';
 
 /**
  * Customer ⇄ brand chat. Questions are answered by an AI assistant
- * (Gemini / ChatGPT) via the backend `chat` endpoint. If that endpoint is not
+ * (OpenAI / ChatGPT) via the backend `chat` endpoint. If that endpoint is not
  * configured yet, the assistant replies with a friendly fallback so the UI
  * still works end-to-end.
  */
@@ -50,14 +50,20 @@ export default function ChatPage({ company }) {
         },
       ]);
     } catch (e) {
-      setMessages((m) => [
-        ...m,
-        {
-          role: 'assistant',
-          text:
-            'I’m not connected to the AI service yet. Once Gemini / ChatGPT is configured on the backend, I’ll answer product questions here instantly. In the meantime, your message has been noted.',
-        },
-      ]);
+      const status = e?.response?.status;
+      const serverMsg = e?.response?.data?.message;
+      let text;
+      if (status === 404) {
+        text =
+          'The /chat endpoint returned 404 — the backend AI route isn’t live yet. Rebuild (npm run build) and restart the ACTUAL running backend process, then try again.';
+      } else if (serverMsg) {
+        // e.g. "AI is not configured…" (503) or an OpenAI error detail (502).
+        text = `⚠️ ${serverMsg}`;
+      } else {
+        text =
+          'Could not reach the AI service. Check that the backend is running and reachable from this site.';
+      }
+      setMessages((m) => [...m, { role: 'assistant', text }]);
     } finally {
       setSending(false);
     }
@@ -77,7 +83,7 @@ export default function ChatPage({ company }) {
         <Typography variant="h6">Chat</Typography>
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-        Ask the brand anything — answered by AI (Gemini / ChatGPT).
+        Ask the brand anything — answered by AI, powered by OpenAI (ChatGPT).
       </Typography>
 
       <Paper

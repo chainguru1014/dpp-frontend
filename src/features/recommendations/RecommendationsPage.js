@@ -20,7 +20,7 @@ import { Backend_URL, getFileUrl, getProductsByUser, getOwnedProducts } from '..
  *
  * The catalogue (real products) is always shown as the candidate pool. Pressing
  * "Generate with AI" asks the backend to rank/personalise them; if the AI
- * provider (Gemini / ChatGPT) is not yet wired up the page degrades gracefully
+ * provider (OpenAI) is not yet wired up the page degrades gracefully
  * and keeps showing the catalogue with a short notice.
  */
 export default function RecommendationsPage({ company, isAdmin }) {
@@ -70,7 +70,7 @@ export default function RecommendationsPage({ company, isAdmin }) {
       // AI backend not configured — keep the page useful.
       setRecommended(products);
       setAiNote(
-        'AI personalization isn’t connected yet. Once your Gemini / ChatGPT key is configured on the backend, picks here will be tailored to each shopper.'
+        'AI personalization isn’t connected yet. Once your OpenAI key is configured on the backend, picks here will be tailored to each shopper.'
       );
     } finally {
       setGenerating(false);
@@ -106,7 +106,7 @@ export default function RecommendationsPage({ company, isAdmin }) {
                 AI personalization
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Generate recommendations powered by Gemini / ChatGPT.
+                Generate recommendations powered by OpenAI (ChatGPT).
               </Typography>
             </Box>
           </Box>
