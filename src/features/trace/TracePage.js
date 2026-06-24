@@ -9,10 +9,15 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  Link,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { DataGrid } from '@mui/x-data-grid';
 import { getAllTransfers } from '../../helper';
+import lcaBanner from '../../assets/leo-workwear-greenstory.png';
+
+const LCA_BANNER_URL =
+  'https://www.greenstory.io/blogs/how-leo-workwear-uses-verified-data-to-showcase-sustainability-with-green-story';
 
 const fmt = (d) => {
   if (!d) return '';
@@ -139,6 +144,31 @@ export default function TracePage({ ownerKind = null, ownerId = null }) {
 
   return (
     <Box>
+      <Box sx={{ mb: 2 }}>
+        <Box
+          component="a"
+          href={LCA_BANNER_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{ display: 'block' }}
+        >
+          <Box
+            component="img"
+            src={lcaBanner}
+            alt="How Leo Workwear Uses Verified Data to Showcase Sustainability with Green Story"
+            sx={{ width: '100%', height: 'auto', borderRadius: 1, display: 'block', cursor: 'pointer' }}
+          />
+        </Box>
+        <Link
+          href={LCA_BANNER_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          sx={{ display: 'inline-block', mt: 1, wordBreak: 'break-all' }}
+        >
+          {LCA_BANNER_URL}
+        </Link>
+      </Box>
+
       <Typography variant="h5" sx={{ mb: 2 }}>
         LCA
       </Typography>

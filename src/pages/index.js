@@ -1317,8 +1317,8 @@ const InnerPage = () => {
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
           <IconButton
             color="inherit"
-            aria-label="Open navigation"
-            onClick={() => setMobileNavOpen(true)}
+            aria-label="Toggle navigation"
+            onClick={() => setMobileNavOpen((open) => !open)}
             sx={{ display: { xs: 'inline-flex', md: 'none' }, mr: 0.5 }}
           >
             <MenuIcon />
@@ -1404,8 +1404,11 @@ const InnerPage = () => {
           open={mobileNavOpen}
           onClose={() => setMobileNavOpen(false)}
           ModalProps={{ keepMounted: true }}
+          // Sit just below the AppBar (drawer+1) so the hamburger stays clickable
+          // to toggle the drawer closed.
           sx={{
             display: { xs: 'block', md: 'none' },
+            zIndex: (theme) => theme.zIndex.drawer,
             '& .MuiDrawer-paper': { width: 264, boxSizing: 'border-box', ...drawerPaperSx },
             ...navSx,
           }}
