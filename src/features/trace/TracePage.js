@@ -14,7 +14,7 @@ import {
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { DataGrid } from '@mui/x-data-grid';
 import { getAllTransfers } from '../../helper';
-import lcaBanner from '../../assets/leo-workwear-greenstory.png';
+import lcaBanner from '../../assets/LCA.png';
 
 const LCA_BANNER_URL =
   'https://www.greenstory.io/blogs/how-leo-workwear-uses-verified-data-to-showcase-sustainability-with-green-story';

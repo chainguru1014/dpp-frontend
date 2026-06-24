@@ -14,7 +14,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { DataGrid } from '@mui/x-data-grid';
 import { getScanHistory } from '../../helper';
-import esgBanner from '../../assets/aiesg-analysis.png';
+import esgBanner from '../../assets/ESG.png';
 
 const fmt = (d) => {
   try {
