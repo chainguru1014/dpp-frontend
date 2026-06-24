@@ -212,7 +212,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
         component="img"
         src={esgBanner}
         alt="aiESG analysis"
-        sx={{ width: '100%', height: 'auto', borderRadius: 1, mb: 2, display: 'block' }}
+        sx={{ width: '50%', height: 'auto', borderRadius: 1, mb: 2, display: 'block', mx: 'auto' }}
       />
 
       <Typography variant="h5" sx={{ mb: 2 }}>

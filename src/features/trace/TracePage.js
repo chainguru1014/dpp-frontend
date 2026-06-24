@@ -144,7 +144,7 @@ export default function TracePage({ ownerKind = null, ownerId = null }) {
 
   return (
     <Box>
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ mb: 2, textAlign: 'center' }}>
         <Box
           component="a"
           href={LCA_BANNER_URL}
@@ -156,7 +156,7 @@ export default function TracePage({ ownerKind = null, ownerId = null }) {
             component="img"
             src={lcaBanner}
             alt="How Leo Workwear Uses Verified Data to Showcase Sustainability with Green Story"
-            sx={{ width: '100%', height: 'auto', borderRadius: 1, display: 'block', cursor: 'pointer' }}
+            sx={{ width: '50%', height: 'auto', borderRadius: 1, display: 'inline-block', cursor: 'pointer' }}
           />
         </Box>
         <Link
