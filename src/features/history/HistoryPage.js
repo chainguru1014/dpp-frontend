@@ -14,7 +14,6 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { DataGrid } from '@mui/x-data-grid';
 import { getScanHistory } from '../../helper';
-import esgBanner from '../../assets/ESG.png';
 
 const fmt = (d) => {
   try {
@@ -208,17 +207,6 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
 
   return (
     <Box>
-      <Box
-        component="img"
-        src={esgBanner}
-        alt="aiESG analysis"
-        sx={{ width: '50%', height: 'auto', borderRadius: 1, mb: 2, display: 'block', mx: 'auto' }}
-      />
-
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        ESG
-      </Typography>
-
       <Paper sx={{ p: 2, mb: 2 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} flexWrap="wrap" useFlexGap>
           <TextField

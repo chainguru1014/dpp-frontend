@@ -1,32 +1,7 @@
 import React from 'react';
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
 import yometelLogo from '../../assets/yometel-logo-trans.png';
-
-// Resolution-specific sign-in backgrounds (served from /public/background).
-// Each is tuned for a device aspect ratio: phone-portrait → widescreen desktop.
-const BACKGROUNDS = [
-  { ratio: 941 / 1672, src: '7d2bb8ac-763d-4922-a279-fdd5f670c9a3.png' }, // phone portrait
-  { ratio: 1086 / 1448, src: '46059330-a8ab-4f3e-a172-f1a9933479eb.png' }, // tablet portrait
-  { ratio: 1448 / 1086, src: 'b003a8f4-4e8e-46df-8de8-190af21d3fb9.png' }, // tablet landscape
-  { ratio: 1586 / 992, src: '815d23f7-3485-4ba9-aa32-e4efebbfcb44.png' }, // laptop
-  { ratio: 1672 / 941, src: '5f384065-55a9-4a12-9fca-c7330ce8841b.png' }, // widescreen desktop
-];
-
-// Choose the background whose aspect ratio best matches the current viewport.
-// A log-ratio distance weighs portrait and landscape symmetrically.
-const pickBackgroundSrc = (w, h) => {
-  const r = (w || 1) / (h || 1);
-  let best = BACKGROUNDS[0];
-  let bestDiff = Infinity;
-  for (const b of BACKGROUNDS) {
-    const diff = Math.abs(Math.log(b.ratio / r));
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      best = b;
-    }
-  }
-  return `${process.env.PUBLIC_URL || ''}/background/${best.src}`;
-};
+import background1 from '../../assets/background-1.jpg';
 
 // Multi-color Google "G" mark (rendered inline so no extra asset is needed).
 const GoogleIcon = () => (
@@ -72,25 +47,6 @@ const AuthPage = ({
     }
   };
 
-  // Detect the device resolution and keep the background matched to it
-  // (re-evaluates on resize / orientation change).
-  const [bgUrl, setBgUrl] = React.useState(() =>
-    pickBackgroundSrc(
-      typeof window !== 'undefined' ? window.innerWidth : 1440,
-      typeof window !== 'undefined' ? window.innerHeight : 900
-    )
-  );
-  React.useEffect(() => {
-    const update = () => setBgUrl(pickBackgroundSrc(window.innerWidth, window.innerHeight));
-    update();
-    window.addEventListener('resize', update);
-    window.addEventListener('orientationchange', update);
-    return () => {
-      window.removeEventListener('resize', update);
-      window.removeEventListener('orientationchange', update);
-    };
-  }, []);
-
   return (
     <Box
       sx={{
@@ -100,32 +56,57 @@ const AuthPage = ({
         minHeight: '100dvh',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: { xs: 'center', md: 'flex-end' },
-        pr: { xs: 0, md: '10vw', lg: '14vw' },
+        justifyContent: 'center',
+        gap: { xs: 0, md: 6 },
         boxSizing: 'border-box',
         overflow: 'hidden',
-        backgroundImage: `url(${bgUrl})`,
+        backgroundImage: `url(${background1})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
+        px: { xs: 2, md: 6 },
       }}
     >
+      {/* Left tagline */}
+      <Box
+        sx={{
+          display: { xs: 'none', md: 'flex' },
+          flexDirection: 'column',
+          color: '#fff',
+          textShadow: '0 2px 8px rgba(0,0,0,0.55)',
+          maxWidth: 340,
+          flexShrink: 0,
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.25 }}>
+          Digital Product
+          <br />
+          Passport
+        </Typography>
+        <Typography variant="h4" sx={{ fontStyle: 'italic', fontWeight: 400, lineHeight: 1.4 }}>
+          for
+        </Typography>
+        <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.25 }}>
+          Traceability
+          <br />
+          Environment
+        </Typography>
+      </Box>
+
       {/* Auth card */}
       <Box
         sx={{
           width: { xs: '100%', sm: 360 },
           maxWidth: '92vw',
-          // Cap the card height so the long Sign Up form scrolls inside it while
-          // the logo (top) and the action buttons (bottom) stay pinned.
           maxHeight: { xs: '88vh', sm: '70vh' },
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
           bgcolor: '#f3f4f6',
-          border: '1px solid',
-          borderColor: 'primary.main',
+          border: '2px solid',
+          borderColor: '#1B5E20',
           borderRadius: 3,
-          boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.28)',
           px: { xs: 2.5, sm: 4 },
           py: { xs: 3, sm: 4.5 },
         }}
