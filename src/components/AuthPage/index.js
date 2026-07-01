@@ -56,15 +56,15 @@ const AuthPage = ({
         minHeight: '100dvh',
         display: 'flex',
         alignItems: 'center',
-        justifyContent: { xs: 'center', md: 'space-between' },
-        gap: { xs: 0, md: 6 },
+        justifyContent: 'center',
+        gap: { xs: 0, md: 10 },
         boxSizing: 'border-box',
         overflow: 'hidden',
         backgroundImage: `url(${background1})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        px: { xs: 2, md: 10 },
+        px: { xs: 2, md: 6 },
       }}
     >
       {/* Left tagline */}
