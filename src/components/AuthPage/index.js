@@ -76,6 +76,7 @@ const AuthPage = ({
           textShadow: '0 2px 8px rgba(0,0,0,0.55)',
           maxWidth: 340,
           flexShrink: 0,
+          transform: 'translateX(-100px)',
         }}
       >
         <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.25 }}>
