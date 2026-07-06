@@ -442,6 +442,42 @@ export const getSecurityQRCodes = async (product_id, page = 1) => {
     }
 }
 
+// Product Identifier mapping: registers a barcode/GTIN/NFC tag/RFID tag
+// against a product ahead of time, so a scan of that identifier — by anyone,
+// not just through this platform's own minted QR codes — resolves to a
+// product and gets a PMC (see backend productIdentifierController/pmcController).
+export const registerProductIdentifier = async (product_id, company_id, source_type, raw_value, note = '') => {
+    try {
+        const res = await axios.post(`${Backend_URL}product-identifier`, {
+            product_id, company_id, source_type, raw_value, note
+        });
+        return res.data.data;
+    } catch (err) {
+        alert(err.response?.data?.message || 'Failed to register identifier');
+        return null;
+    }
+}
+
+export const listProductIdentifiers = async (product_id) => {
+    try {
+        const res = await axios.get(`${Backend_URL}product-identifier`, { params: { product_id } });
+        return res.data.data || [];
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+}
+
+export const deleteProductIdentifier = async (id) => {
+    try {
+        await axios.delete(`${Backend_URL}product-identifier/${id}`);
+        return true;
+    } catch (err) {
+        alert(err.response?.data?.message || 'Failed to remove identifier');
+        return false;
+    }
+}
+
 export const uploadFile = async (body) => {
     try {
         const res = await axios.post(`${Backend_URL}upload/single`, body);

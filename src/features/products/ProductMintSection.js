@@ -3,9 +3,11 @@ import { Box, Button, Typography, TextField, Pagination } from '@mui/material';
 import CircularProgressWithLabel from '../../components/CircularProgressBar';
 import QRCode from '../../components/displayQRCode';
 import SecurityQRCodeDialog from '../../components/SecurityQRCodeDialog';
+import RegisterIdentifierPanel from '../../components/RegisterIdentifierPanel';
 
 const ProductMintSection = ({
   selectedProduct,
+  companyId,
   mintAmount,
   setMintAmount,
   isMinting,
@@ -112,6 +114,9 @@ const ProductMintSection = ({
           </Typography>
         )}
       </Box>
+      )}
+      {canGenerate && selectedProduct && (
+        <RegisterIdentifierPanel productId={selectedProduct._id} companyId={companyId} />
       )}
       {selectedProduct ? (
         <Box sx={{ pt: 2 }}>

@@ -179,6 +179,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null, p
         )}
         <Box sx={kpiBoxSx}><Kpi label="Total Scans" value={t.scans ?? 0} /></Box>
         <Box sx={kpiBoxSx}><Kpi label="Unique Scanners" value={t.uniqueScanners ?? 0} /></Box>
+        <Box sx={kpiBoxSx}><Kpi label="Unique PMCs Scanned" value={t.uniquePmcs ?? 0} /></Box>
         <Box sx={kpiBoxSx}><Kpi label="Logged-in Scans" value={`${loggedInRate}%`} sub={`${a.audience.loggedIn} of ${t.scans}`} /></Box>
         <Box sx={kpiBoxSx}>
           <Kpi
@@ -234,6 +235,19 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null, p
                 { label: 'Verified', value: sec.verified, color: COLORS[1] },
                 { label: 'Failed', value: sec.failed, color: COLORS[4] },
                 { label: 'N/A', value: sec.na, color: '#dbe2ee' },
+              ]}
+            />
+          </Section>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Section title="Identifier type">
+            <Breakdown
+              segments={[
+                { label: 'QR (own)', value: a.identifierTypes?.qr ?? 0, color: COLORS[0] },
+                { label: 'Barcode', value: a.identifierTypes?.barcode ?? 0, color: COLORS[1] },
+                { label: 'NFC', value: a.identifierTypes?.nfc ?? 0, color: COLORS[2] },
+                { label: 'RFID', value: a.identifierTypes?.rfid ?? 0, color: COLORS[3] },
+                { label: 'GS1 Digital Link', value: a.identifierTypes?.gs1dl ?? 0, color: COLORS[5] },
               ]}
             />
           </Section>

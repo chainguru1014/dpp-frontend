@@ -151,6 +151,13 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
         ),
       },
       {
+        field: 'pmc_code',
+        headerName: 'PMC Code',
+        width: 140,
+        sortable: false,
+        valueGetter: (p) => p.row.pmc_code || '—',
+      },
+      {
         field: 'source',
         headerName: 'Source',
         width: 100,

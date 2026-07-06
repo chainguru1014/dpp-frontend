@@ -1699,6 +1699,7 @@ const InnerPage = () => {
                     />
                     <ProductMintSection
                       selectedProduct={selectedProduct}
+                      companyId={company?._id || company?.id}
                       mintAmount={mintAmount}
                       setMintAmount={setMintAmount}
                       isMinting={isMinting}
