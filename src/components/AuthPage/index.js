@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import AppleIcon from '@mui/icons-material/Apple';
@@ -49,9 +49,33 @@ const AuthPage = ({
   const [otpCode, setOtpCode] = useState('');
   const [otpBusy, setOtpBusy] = useState(false);
   const [otpNotice, setOtpNotice] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const { buttonContainerRef: googleButtonRef } = useGoogleAuth(onGoogleCredential);
   const { signIn: appleSignIn } = useAppleAuth();
+
+  // Counts the resend cooldown down to 0 once a code has been (re)sent.
+  useEffect(() => {
+    if (resendCooldown <= 0) return undefined;
+    const timer = setInterval(() => setResendCooldown((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  const RESEND_COOLDOWN_SECONDS = 30;
+
+  const sendOtp = async (email) => {
+    setOtpBusy(true);
+    setOtpNotice('');
+    const res = await onRequestOtp(email);
+    setOtpBusy(false);
+    if (res?.ok) {
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
+      setOtpNotice(res.message || 'Code sent — check your email.');
+    } else {
+      setOtpNotice(res?.message || 'Failed to send code. Please try again.');
+    }
+    return res;
+  };
 
   const handleAppleClick = async () => {
     try {
@@ -66,16 +90,13 @@ const AuthPage = ({
     e.preventDefault();
     const email = otpEmail.trim();
     if (!email) return;
-    setOtpBusy(true);
-    setOtpNotice('');
-    const res = await onRequestOtp(email);
-    setOtpBusy(false);
-    if (res?.ok) {
-      setEmailStep('code');
-      setOtpNotice(res.message || 'Code sent — check your email.');
-    } else {
-      setOtpNotice(res?.message || 'Failed to send code. Please try again.');
-    }
+    const res = await sendOtp(email);
+    if (res?.ok) setEmailStep('code');
+  };
+
+  const handleResendCode = async () => {
+    if (otpBusy || resendCooldown > 0) return;
+    await sendOtp(otpEmail.trim());
   };
 
   const handleVerifyCode = async (e) => {
@@ -390,7 +411,20 @@ const AuthPage = ({
                 >
                   {otpBusy ? 'Verifying…' : 'Verify'}
                 </Button>
-                <Box sx={{ textAlign: 'center' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+                  <Typography
+                    component="span"
+                    onClick={resendCooldown > 0 || otpBusy ? undefined : handleResendCode}
+                    sx={{
+                      color: resendCooldown > 0 || otpBusy ? 'text.disabled' : 'primary.main',
+                      fontWeight: 400,
+                      fontSize: '0.95rem',
+                      cursor: resendCooldown > 0 || otpBusy ? 'default' : 'pointer',
+                      '&:hover': resendCooldown > 0 || otpBusy ? undefined : { textDecoration: 'underline' },
+                    }}
+                  >
+                    {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : 'Resend code'}
+                  </Typography>
                   <Typography
                     component="span"
                     onClick={() => {
