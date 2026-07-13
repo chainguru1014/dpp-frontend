@@ -23,8 +23,8 @@ const theme = createTheme({
   shape: { borderRadius: 12 },
   typography: {
     fontFamily: '"Poppins","Segoe UI",system-ui,-apple-system,Roboto,sans-serif',
-    // Larger, highly readable base size for field use (UI principle 1).
-    fontSize: 15,
+    // MUI's own default base size (was 15 — a touch smaller reads better app-wide).
+    fontSize: 14,
     fontWeightBold: 400,
     h4: { fontWeight: 400 },
     h5: { fontWeight: 400 },

@@ -7,22 +7,51 @@ const GOOGLE_CLIENT_ID =
 
 const SCRIPT_ID = 'google-gsi-client';
 
-// Loads Google Identity Services once and exposes a promise-based
-// `requestAccessToken()` that opens the Google account chooser and resolves
-// with an OAuth access token (the backend exchanges it for user info).
-export const useGoogleAuth = () => {
+// ID-token flow (Google Identity Services). The backend now verifies a Google
+// ID token (a signed JWT) instead of exchanging an OAuth access token for
+// userinfo, so this hook uses `google.accounts.id` rather than the old
+// `accounts.oauth2` access-token client (`initTokenClient`/`requestAccessToken`).
+//
+// GIS only ever hands back an ID token from a genuine user click on Google's
+// own rendered button (or a One Tap prompt) — there is no `requestIdToken()`
+// you can call programmatically the way `requestAccessToken()` worked. To
+// keep the app's own custom-styled "Continue with Google" button, we render
+// Google's real (functional but invisible) button into a container that the
+// caller stacks exactly on top of the custom button, so a click on the
+// custom button actually clicks Google's button underneath. This is the
+// standard technique for a custom-skinned GIS button.
+//
+// Usage: const { ready, buttonContainerRef } = useGoogleAuth(idToken => ...);
+// then render <Box ref={buttonContainerRef} sx={{ position:'absolute', inset:0, opacity:0 }} />
+// positioned over the visible custom button.
+export const useGoogleAuth = (onCredential) => {
   const [ready, setReady] = useState(false);
-  const tokenClientRef = useRef(null);
+  const buttonContainerRef = useRef(null);
+  const onCredentialRef = useRef(onCredential);
+  onCredentialRef.current = onCredential;
 
   useEffect(() => {
     const init = () => {
-      if (!window.google?.accounts?.oauth2) return;
-      tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: 'openid email profile',
-        callback: () => {},
-      });
-      setReady(true);
+      if (!window.google?.accounts?.id || !buttonContainerRef.current) return;
+      try {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: (response) => {
+            if (response?.credential) onCredentialRef.current?.(response.credential);
+          },
+        });
+        // Rendered invisibly — see the positioning note above. Width is a
+        // fixed px value because GIS doesn't support percentage widths.
+        window.google.accounts.id.renderButton(buttonContainerRef.current, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          width: 300,
+        });
+        setReady(true);
+      } catch (err) {
+        console.error('Google Identity Services init failed:', err);
+      }
     };
 
     if (document.getElementById(SCRIPT_ID)) {
@@ -40,20 +69,5 @@ export const useGoogleAuth = () => {
     document.head.appendChild(script);
   }, []);
 
-  const requestAccessToken = () =>
-    new Promise((resolve, reject) => {
-      const client = tokenClientRef.current;
-      if (!client) {
-        reject(new Error('Google is not ready yet. Please try again in a moment.'));
-        return;
-      }
-      client.callback = (resp) => {
-        if (resp && resp.access_token) resolve(resp.access_token);
-        else reject(new Error('Google did not return an access token'));
-      };
-      client.error_callback = (err) => reject(new Error(err?.error || 'Google login failed'));
-      client.requestAccessToken({ prompt: 'consent' });
-    });
-
-  return { ready, requestAccessToken };
+  return { ready, buttonContainerRef };
 };

@@ -86,24 +86,6 @@ export const registerCompany = async (data) => {
     }
 }
 
-export const registerAgentUser = async (data) => {
-    try {
-        const payload = { ...data, userType: 'agent' };
-        const res = await axios.post(`${Backend_URL}user/register`, payload);
-        if (res.data.status === 'success') {
-            alert('Successfully registered');
-            return res.data.user || res.data.data || null;
-        }
-        alert('Registration failed: ' + (res.data.message || 'Unknown error'));
-        return null;
-    } catch (err) {
-        console.error('Agent registration error:', err);
-        const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
-        alert('Failed: ' + errorMessage);
-        return null;
-    }
-}
-
 export const checkUsernameExists = async (name) => {
     try {
         const username = (name || '').trim();
@@ -113,18 +95,6 @@ export const checkUsernameExists = async (name) => {
     } catch (err) {
         console.error('Username check error:', err);
         return false;
-    }
-}
-
-export const loginUser = async (data) => {
-    try {
-        const res = await axios.post(`${Backend_URL}user/login`, data);
-        return res?.data?.user || null;
-    } catch (err) {
-        console.log(err);
-        const message = err.response?.data?.message;
-        alert(message || err.message || 'Login failed');
-        return null;
     }
 }
 
@@ -139,19 +109,90 @@ export const loginCompany = async (data) => {
     }
 }
 
-// Google OAuth login/signup. Sends the GIS access token to the backend,
-// which verifies it, finds-or-creates the user, and returns a user record
-// (including `profileCompleted`) plus a JWT.
-export const googleLogin = async (accessToken) => {
+// ----- Passwordless auth (Google / Apple / email OTP) -----
+// All 4 auth-completing endpoints (google, apple, otp/verify, profile/complete)
+// return the same envelope shape as the legacy `/user/google-login` response
+// (see backend controllers/userController.ts `buildUserResponse`): a JWT
+// `token` plus a `user` record that now also carries `actorKind` ('User' |
+// 'Company') and `profileCompleted`.
+const normalizeAuthResponse = (res) => {
+    if (res?.data?.status === 'success' && res.data.user) {
+        return { user: res.data.user, token: res.data.token || '', message: res.data.message || '' };
+    }
+    return null;
+};
+
+// Sends the Google Identity Services ID token (the `credential` JWT from the
+// GIS callback) to the backend, which verifies it and finds-or-creates the user.
+export const googleLogin = async (idToken) => {
     try {
-        const res = await axios.post(`${Backend_URL}user/google-login`, { accessToken });
-        if (res?.data?.status === 'success' && res.data.user) {
-            return { user: res.data.user, token: res.data.token || '' };
-        }
-        return null;
+        const res = await axios.post(`${Backend_URL}auth/google`, { idToken });
+        return normalizeAuthResponse(res);
     } catch (err) {
         console.log(err);
         alert(err.response?.data?.message || err.message || 'Google login failed');
+        return null;
+    }
+}
+
+// Sends Apple's identity token (JWT) plus, on first-ever authorization only,
+// the name Apple handed back client-side (Apple never repeats it on later logins).
+export const appleLogin = async (identityToken, user) => {
+    try {
+        const payload = user ? { identityToken, user } : { identityToken };
+        const res = await axios.post(`${Backend_URL}auth/apple`, payload);
+        return normalizeAuthResponse(res);
+    } catch (err) {
+        console.log(err);
+        alert(err.response?.data?.message || err.message || 'Apple login failed');
+        return null;
+    }
+}
+
+// Requests a 6-digit email OTP. Unlike the other auth helpers this does NOT
+// alert() on failure — the OTP UI shows its own inline state (sending / sent /
+// rate-limited), so the caller needs the raw { ok, message } result to render.
+export const requestOtp = async (email) => {
+    try {
+        const res = await axios.post(`${Backend_URL}auth/otp/request`, { email });
+        return { ok: true, message: res?.data?.message || 'Code sent — check your email.' };
+    } catch (err) {
+        const message =
+            err.response?.data?.message ||
+            (err.response?.status === 429 ? 'Please wait before requesting another code' : null) ||
+            err.message ||
+            'Failed to send code';
+        return { ok: false, message };
+    }
+}
+
+// Verifies the 6-digit code. Also returns { ok, message } (rather than
+// throwing/alerting) so the inline OTP form can show "invalid/expired code"
+// without a blocking alert.
+export const verifyOtp = async (email, code) => {
+    try {
+        const res = await axios.post(`${Backend_URL}auth/otp/verify`, { email, code });
+        const normalized = normalizeAuthResponse(res);
+        if (!normalized) return { ok: false, message: res?.data?.message || 'Invalid or expired code' };
+        return { ok: true, ...normalized };
+    } catch (err) {
+        const message = err.response?.data?.message || err.message || 'Invalid or expired code';
+        return { ok: false, message };
+    }
+}
+
+// Completes the profile for a passwordless account whose `profileCompleted`
+// is still false. Requires the JWT issued by whichever auth step signed the
+// user in (google/apple/otp-verify).
+export const completeProfile = async (data, token) => {
+    try {
+        const res = await axios.post(`${Backend_URL}auth/profile/complete`, data, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return normalizeAuthResponse(res);
+    } catch (err) {
+        console.log(err);
+        alert(err.response?.data?.message || err.message || 'Failed to save profile');
         return null;
     }
 }

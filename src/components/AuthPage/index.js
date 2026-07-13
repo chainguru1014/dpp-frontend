@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import AppleIcon from '@mui/icons-material/Apple';
 import yometelLogo from '../../assets/yometel-logo-trans.png';
 import background1 from '../../assets/background-1.jpg';
+import { useGoogleAuth } from '../../features/auth/useGoogleAuth';
+import { useAppleAuth } from '../../features/auth/useAppleAuth';
 
 // Multi-color Google "G" mark (rendered inline so no extra asset is needed).
 const GoogleIcon = () => (
@@ -25,26 +29,71 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const fieldSx = { bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } };
+
 const AuthPage = ({
-  isRegister,
-  name,
-  setName,
-  password,
-  setPassword,
+  needsProfileCompletion,
   registerData,
   setRegisterData,
-  onLogin,
-  onRegister,
-  setIsRegister,
-  onGoogleLogin,
+  onCompleteProfile,
+  onCancelProfileCompletion,
+  onGoogleCredential,
+  onAppleCredential,
+  onRequestOtp,
+  onVerifyOtp,
 }) => {
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (isRegister) {
-      onRegister(registerData);
-    } else {
-      onLogin();
+  // OTP flow's own local UI state — nothing here needs to be lifted up, the
+  // parent only cares once verification actually succeeds.
+  const [emailStep, setEmailStep] = useState(null); // null | 'email' | 'code'
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpBusy, setOtpBusy] = useState(false);
+  const [otpNotice, setOtpNotice] = useState('');
+
+  const { buttonContainerRef: googleButtonRef } = useGoogleAuth(onGoogleCredential);
+  const { signIn: appleSignIn } = useAppleAuth();
+
+  const handleAppleClick = async () => {
+    try {
+      const { identityToken, user } = await appleSignIn();
+      onAppleCredential?.(identityToken, user);
+    } catch (err) {
+      alert(err?.message || 'Apple sign-in failed');
     }
+  };
+
+  const handleSendCode = async (e) => {
+    e.preventDefault();
+    const email = otpEmail.trim();
+    if (!email) return;
+    setOtpBusy(true);
+    setOtpNotice('');
+    const res = await onRequestOtp(email);
+    setOtpBusy(false);
+    if (res?.ok) {
+      setEmailStep('code');
+      setOtpNotice(res.message || 'Code sent — check your email.');
+    } else {
+      setOtpNotice(res?.message || 'Failed to send code. Please try again.');
+    }
+  };
+
+  const handleVerifyCode = async (e) => {
+    e.preventDefault();
+    const code = otpCode.trim();
+    if (code.length !== 6) return;
+    setOtpBusy(true);
+    setOtpNotice('');
+    const res = await onVerifyOtp(otpEmail.trim(), code);
+    setOtpBusy(false);
+    if (!res?.ok) {
+      setOtpNotice(res?.message || 'Invalid or expired code. Please try again.');
+    }
+  };
+
+  const handleProfileSubmit = (e) => {
+    e.preventDefault();
+    onCompleteProfile(registerData);
   };
 
   return (
@@ -84,7 +133,7 @@ const AuthPage = ({
           <br />
           Passport
         </Typography>
-        <Typography variant="h4" sx={{ fontStyle: 'italic', fontWeight: 400, lineHeight: 1.4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.4 }}>
           for
         </Typography>
         <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.25 }}>
@@ -99,11 +148,11 @@ const AuthPage = ({
         sx={{
           width: { xs: '100%', sm: 360 },
           maxWidth: '92vw',
-          maxHeight: { xs: '88vh', sm: '70vh' },
+          maxHeight: { xs: '94vh', sm: '82vh' },
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          bgcolor: '#f3f4f6',
+          bgcolor: alpha('#f3f4f6', 0.85),
           border: '2px solid',
           borderColor: '#1B5E20',
           borderRadius: 3,
@@ -122,140 +171,117 @@ const AuthPage = ({
           />
         </Box>
 
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            flex: 1,
-            minHeight: 0,
-          }}
-        >
-          {/* Scrollable field area */}
+        {needsProfileCompletion ? (
           <Box
-            sx={{
-              flex: 1,
-              minHeight: 0,
-              overflowY: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: { xs: 1.5, sm: 2 },
-              pr: 0.5,
-            }}
+            component="form"
+            onSubmit={handleProfileSubmit}
+            sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
           >
-          <TextField
-            placeholder="Username"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            fullWidth
-            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-          />
+            <Typography variant="body2" sx={{ mb: 1.5, flexShrink: 0, color: 'text.secondary' }}>
+              Just a few more details to finish setting up your account.
+            </Typography>
 
-          {isRegister && (
-            <>
+            {/* Scrollable field area */}
+            <Box
+              sx={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: { xs: 1.5, sm: 2 },
+                pr: 0.5,
+              }}
+            >
+              <TextField
+                placeholder="Username"
+                value={registerData.name}
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, name: e.target.value }))}
+                required
+                fullWidth
+                sx={fieldSx}
+              />
               <TextField
                 placeholder="Email"
                 type="email"
                 value={registerData.email}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, email: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, email: e.target.value }))}
                 required
                 fullWidth
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               />
               <TextField
                 placeholder="First Name"
                 value={registerData.firstName}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, firstName: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, firstName: e.target.value }))}
                 required
                 fullWidth
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               />
               <TextField
                 placeholder="Last Name"
                 value={registerData.lastName}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, lastName: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, lastName: e.target.value }))}
                 required
                 fullWidth
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               />
               <TextField
                 placeholder="Street"
                 value={registerData.addressStreet}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, addressStreet: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, addressStreet: e.target.value }))}
                 required
                 fullWidth
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               />
               <TextField
                 placeholder="City"
                 value={registerData.addressCity}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, addressCity: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, addressCity: e.target.value }))}
                 required
                 fullWidth
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               />
               <TextField
                 placeholder="State"
                 value={registerData.addressState}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, addressState: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, addressState: e.target.value }))}
                 required
                 fullWidth
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               />
               <TextField
                 placeholder="Zip Code"
                 value={registerData.addressZipCode}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, addressZipCode: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, addressZipCode: e.target.value }))}
                 required
                 fullWidth
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               />
               <TextField
                 placeholder="Country"
                 value={registerData.addressCountry}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, addressCountry: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, addressCountry: e.target.value }))}
                 required
                 fullWidth
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               />
               <TextField
                 placeholder="Phone Number"
                 value={registerData.phoneNumber}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, phoneNumber: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, phoneNumber: e.target.value }))}
                 required
                 fullWidth
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               />
               <TextField
                 select
                 label="Gender"
                 value={registerData.gender}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, gender: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, gender: e.target.value }))}
                 required
                 fullWidth
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               >
                 <MenuItem value="male">Male</MenuItem>
                 <MenuItem value="female">Female</MenuItem>
@@ -264,90 +290,230 @@ const AuthPage = ({
                 label="Date of Birth"
                 type="date"
                 value={registerData.dateOfBirth}
-                onChange={(e) =>
-                  setRegisterData((prev) => ({ ...prev, dateOfBirth: e.target.value }))
-                }
+                onChange={(e) => setRegisterData((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
                 required
                 fullWidth
                 InputLabelProps={{ shrink: true }}
-                sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={fieldSx}
               />
-            </>
-          )}
+            </Box>
 
-          <TextField
-            placeholder="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            fullWidth
-            sx={{ bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
-          />
-          </Box>
-
-          {/* Pinned action area — always visible below the scrolling fields */}
-          <Box
-            sx={{
-              flexShrink: 0,
-              pt: 2.5,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1.5,
-            }}
-          >
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              sx={{
-                textTransform: 'none',
-                fontWeight: 400,
-                py: 1.1,
-                borderRadius: 2,
-              }}
-            >
-              {isRegister ? 'Sign Up' : 'Sign in'}
-            </Button>
-
-            <Button
-              variant="outlined"
-              fullWidth
-              startIcon={<GoogleIcon />}
-              onClick={onGoogleLogin}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 400,
-                py: 1.1,
-                borderRadius: 2,
-                bgcolor: '#fff',
-                color: 'text.primary',
-                borderColor: '#d9dce1',
-                '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
-              }}
-            >
-              Continue with Google
-            </Button>
-
-            <Box sx={{ textAlign: 'center', mt: 1 }}>
-              <Typography
-                component="span"
-                onClick={() => setIsRegister(!isRegister)}
-                sx={{
-                  color: 'primary.main',
-                  fontWeight: 400,
-                  fontSize: '0.95rem',
-                  cursor: 'pointer',
-                  '&:hover': { textDecoration: 'underline' },
-                }}
+            {/* Pinned action area — always visible below the scrolling fields */}
+            <Box sx={{ flexShrink: 0, pt: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
               >
-                {isRegister
-                  ? 'Already have an account ? Sign in'
-                  : "Don't have an account ? Sign Up"}
-              </Typography>
+                Complete Profile
+              </Button>
+              {onCancelProfileCompletion && (
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography
+                    component="span"
+                    onClick={onCancelProfileCompletion}
+                    sx={{
+                      color: 'primary.main',
+                      fontWeight: 400,
+                      fontSize: '0.95rem',
+                      cursor: 'pointer',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    Not you? Sign out
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Box>
-        </Box>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, justifyContent: 'center', gap: 1.5 }}>
+            {/* Custom-styled Google button with the real GIS button invisibly
+                stacked on top (see useGoogleAuth for why). */}
+            <Box sx={{ position: 'relative', width: '100%' }}>
+              <Button
+                variant="outlined"
+                fullWidth
+                startIcon={<GoogleIcon />}
+                tabIndex={-1}
+                aria-hidden="true"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 400,
+                  py: 1.1,
+                  borderRadius: 2,
+                  bgcolor: '#fff',
+                  color: 'text.primary',
+                  borderColor: '#d9dce1',
+                  '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
+                }}
+              >
+                Continue with Google
+              </Button>
+              <Box
+                ref={googleButtonRef}
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 1,
+                  opacity: 0,
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                }}
+              />
+            </Box>
+
+            {/* Apple's HIG black pill button, built as a plain styled MUI Button. */}
+            <Button
+              fullWidth
+              onClick={handleAppleClick}
+              startIcon={<AppleIcon sx={{ fontSize: 20 }} />}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 400,
+                py: 1.1,
+                borderRadius: 2,
+                bgcolor: '#000',
+                color: '#fff',
+                border: '1px solid #000',
+                '&:hover': { bgcolor: '#1a1a1a', borderColor: '#1a1a1a' },
+              }}
+            >
+              Continue with Apple
+            </Button>
+
+            {emailStep === null && (
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={() => setEmailStep('email')}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 400,
+                  py: 1.1,
+                  borderRadius: 2,
+                  borderColor: '#d9dce1',
+                  color: 'text.primary',
+                  '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
+                }}
+              >
+                Continue with email code
+              </Button>
+            )}
+
+            {emailStep === 'email' && (
+              <Box
+                component="form"
+                onSubmit={handleSendCode}
+                sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
+              >
+                <TextField
+                  placeholder="Email"
+                  type="email"
+                  value={otpEmail}
+                  onChange={(e) => setOtpEmail(e.target.value)}
+                  required
+                  autoFocus
+                  fullWidth
+                  sx={fieldSx}
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  disabled={otpBusy}
+                  sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
+                >
+                  {otpBusy ? 'Sending…' : 'Send code'}
+                </Button>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography
+                    component="span"
+                    onClick={() => {
+                      setEmailStep(null);
+                      setOtpNotice('');
+                    }}
+                    sx={{
+                      color: 'primary.main',
+                      fontWeight: 400,
+                      fontSize: '0.95rem',
+                      cursor: 'pointer',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    Cancel
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
+            {emailStep === 'code' && (
+              <Box
+                component="form"
+                onSubmit={handleVerifyCode}
+                sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
+              >
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  Enter the 6-digit code sent to {otpEmail}
+                </Typography>
+                <TextField
+                  placeholder="123456"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  required
+                  autoFocus
+                  fullWidth
+                  inputProps={{
+                    inputMode: 'numeric',
+                    pattern: '[0-9]*',
+                    maxLength: 6,
+                    style: { letterSpacing: 8, textAlign: 'center', fontSize: '1.3rem' },
+                  }}
+                  sx={fieldSx}
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  disabled={otpBusy || otpCode.length !== 6}
+                  sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
+                >
+                  {otpBusy ? 'Verifying…' : 'Verify'}
+                </Button>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography
+                    component="span"
+                    onClick={() => {
+                      setEmailStep('email');
+                      setOtpCode('');
+                      setOtpNotice('');
+                    }}
+                    sx={{
+                      color: 'primary.main',
+                      fontWeight: 400,
+                      fontSize: '0.95rem',
+                      cursor: 'pointer',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    Use a different email
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
+            {otpNotice && (
+              <Typography
+                role="status"
+                variant="body2"
+                sx={{ textAlign: 'center', color: 'text.secondary' }}
+              >
+                {otpNotice}
+              </Typography>
+            )}
+          </Box>
+        )}
       </Box>
     </Box>
   );

@@ -52,7 +52,6 @@ import {
   getProductQRcodes,
   getSelectedProductData,
   productMint,
-  registerAgentUser,
   removeProduct,
   updateProduct,
   uploadFile,
@@ -85,7 +84,6 @@ import ProductHistoryDialog from '../features/products/ProductHistoryDialog';
 import ProductTransferDialog from '../features/products/ProductTransferDialog';
 import { getFileUrl } from '../helper';
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
-import { useGoogleAuth } from '../features/auth/useGoogleAuth';
 
 const serialTypes = [{ label: 'Serial Number', value: 'serial' }];
 const DEFAULT_BRAND_NAME = 'Yometel';
@@ -95,10 +93,8 @@ const DEFAULT_BRAND_DETAIL = 'Developing innovative "real-time and automatic" di
 const DEFAULT_BRAND_WEBSITE = 'https://www.yometel.jp/';
 
 const InnerPage = () => {
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [isRegister, setIsRegister] = useState(false);
   const [registerData, setRegisterData] = useState({
+    name: '',
     email: '',
     firstName: '',
     lastName: '',
@@ -111,8 +107,18 @@ const InnerPage = () => {
     gender: 'male',
     dateOfBirth: '',
   });
-  const { company, setCompany, login, loginWithGoogle, isAdmin, isAppUser, canManageProducts, logout } = useAuth();
-  const { requestAccessToken: requestGoogleToken } = useGoogleAuth();
+  const {
+    company,
+    loginWithGoogle,
+    loginWithApple,
+    requestOtp,
+    verifyOtp,
+    completeProfile,
+    isAdmin,
+    isAppUser,
+    canManageProducts,
+    logout,
+  } = useAuth();
   // Owner scope for non-super accounts (company / app user): their analytics,
   // ESG and LCA feeds are restricted to the products they own.
   const ownerScopeKind = isAppUser ? 'User' : 'Company';
@@ -341,30 +347,39 @@ const InnerPage = () => {
     }
   }, [totalAmount, isMinting, mintAmount, startAmount]);
 
-  const loginHandler = async () => {
-    const res = await login({ name, password });
-    if (!res) return;
+  // Shared by every passwordless auth method: once we have a signed-in actor,
+  // send them to the dashboard. If their profile isn't complete yet, the
+  // top-level gate below (`!company.profileCompleted`) shows the
+  // profile-completion form instead regardless of activePage.
+  const handleAuthSuccess = (user) => {
+    if (!user) return;
     setActivePage('dashboard');
   };
 
-  const googleLoginHandler = async () => {
-    try {
-      const accessToken = await requestGoogleToken();
-      const user = await loginWithGoogle(accessToken);
-      if (!user) return;
-      // Brand-new (or not-yet-completed) account -> profile edit so the user
-      // can fill in their info. Returning users go straight to the dashboard.
-      setActivePage(user.profileCompleted ? 'dashboard' : 'profile');
-    } catch (err) {
-      alert(err?.message || 'Google login failed');
-    }
+  const googleCredentialHandler = async (idToken) => {
+    const user = await loginWithGoogle(idToken);
+    handleAuthSuccess(user);
   };
 
-  const registerHandler = async (data) => {
-    const normalizedName = (name || '').trim();
+  const appleCredentialHandler = async (identityToken, appleUser) => {
+    const user = await loginWithApple(identityToken, appleUser);
+    handleAuthSuccess(user);
+  };
+
+  // Returns { ok, message } straight through so the AuthPage OTP UI can show
+  // inline state (sent / rate-limited / failed).
+  const requestOtpHandler = async (email) => requestOtp(email);
+
+  const verifyOtpHandler = async (email, code) => {
+    const res = await verifyOtp(email, code);
+    if (res?.ok) handleAuthSuccess(res.user);
+    return res;
+  };
+
+  const completeProfileHandler = async (data) => {
+    const normalizedName = (data?.name || '').trim();
     if (
       !normalizedName ||
-      !password ||
       !data?.email ||
       !data?.firstName ||
       !data?.lastName ||
@@ -388,9 +403,12 @@ const InnerPage = () => {
         return;
       }
 
-      const res = await registerAgentUser({
+      const user = await completeProfile({
         name: normalizedName,
-        password,
+        // The profile-completion form only collects the fields the backend's
+        // 'agent' branch requires; extend with a userType toggle if the
+        // client-only fields (age/country) ever need to be collected here too.
+        userType: 'agent',
         email: data.email,
         firstName: data.firstName,
         lastName: data.lastName,
@@ -404,12 +422,9 @@ const InnerPage = () => {
         dateOfBirth: data.dateOfBirth,
       });
 
-      if (res) {
-        setCompany(res);
-        setActivePage('dashboard');
-      }
+      handleAuthSuccess(user);
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Profile completion error:', error);
     }
   };
 
@@ -1198,21 +1213,22 @@ const InnerPage = () => {
 
   const isProfileMenuOpen = Boolean(profileMenuAnchor);
 
-  if (!company) {
+  // Not signed in, or signed in but the passwordless account still needs its
+  // profile filled out — either way, show the full-screen auth card instead
+  // of the dashboard shell.
+  if (!company || !company.profileCompleted) {
     return (
       <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
         <AuthPage
-          isRegister={isRegister}
-          name={name}
-          setName={setName}
-          password={password}
-          setPassword={setPassword}
+          needsProfileCompletion={!!company && !company.profileCompleted}
           registerData={registerData}
           setRegisterData={setRegisterData}
-          onLogin={loginHandler}
-          onRegister={registerHandler}
-          onGoogleLogin={googleLoginHandler}
-          setIsRegister={setIsRegister}
+          onCompleteProfile={completeProfileHandler}
+          onCancelProfileCompletion={company ? logout : undefined}
+          onGoogleCredential={googleCredentialHandler}
+          onAppleCredential={appleCredentialHandler}
+          onRequestOtp={requestOtpHandler}
+          onVerifyOtp={verifyOtpHandler}
         />
       </Box>
     );
