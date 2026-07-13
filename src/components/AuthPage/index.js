@@ -29,7 +29,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const fieldSx = { bgcolor: '#fff', '& .MuiOutlinedInput-root': { borderRadius: 2 } };
+const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff' } };
 
 const AuthPage = ({
   needsProfileCompletion,
@@ -44,7 +44,7 @@ const AuthPage = ({
 }) => {
   // OTP flow's own local UI state — nothing here needs to be lifted up, the
   // parent only cares once verification actually succeeds.
-  const [emailStep, setEmailStep] = useState(null); // null | 'email' | 'code'
+  const [emailStep, setEmailStep] = useState('email'); // 'email' | 'code'
   const [otpEmail, setOtpEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [otpBusy, setOtpBusy] = useState(false);
@@ -329,79 +329,6 @@ const AuthPage = ({
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, justifyContent: 'center', gap: 1.5 }}>
-            {/* Custom-styled Google button with the real GIS button invisibly
-                stacked on top (see useGoogleAuth for why). */}
-            <Box sx={{ position: 'relative', width: '100%' }}>
-              <Button
-                variant="outlined"
-                fullWidth
-                startIcon={<GoogleIcon />}
-                tabIndex={-1}
-                aria-hidden="true"
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 400,
-                  py: 1.1,
-                  borderRadius: 2,
-                  bgcolor: '#fff',
-                  color: 'text.primary',
-                  borderColor: '#d9dce1',
-                  '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
-                }}
-              >
-                Continue with Google
-              </Button>
-              <Box
-                ref={googleButtonRef}
-                sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  zIndex: 1,
-                  opacity: 0,
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                }}
-              />
-            </Box>
-
-            {/* Apple's HIG black pill button, built as a plain styled MUI Button. */}
-            <Button
-              fullWidth
-              onClick={handleAppleClick}
-              startIcon={<AppleIcon sx={{ fontSize: 20 }} />}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 400,
-                py: 1.1,
-                borderRadius: 2,
-                bgcolor: '#000',
-                color: '#fff',
-                border: '1px solid #000',
-                '&:hover': { bgcolor: '#1a1a1a', borderColor: '#1a1a1a' },
-              }}
-            >
-              Continue with Apple
-            </Button>
-
-            {emailStep === null && (
-              <Button
-                variant="outlined"
-                fullWidth
-                onClick={() => setEmailStep('email')}
-                sx={{
-                  textTransform: 'none',
-                  fontWeight: 400,
-                  py: 1.1,
-                  borderRadius: 2,
-                  borderColor: '#d9dce1',
-                  color: 'text.primary',
-                  '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
-                }}
-              >
-                Continue with email code
-              </Button>
-            )}
-
             {emailStep === 'email' && (
               <Box
                 component="form"
@@ -427,24 +354,6 @@ const AuthPage = ({
                 >
                   {otpBusy ? 'Sending…' : 'Send code'}
                 </Button>
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography
-                    component="span"
-                    onClick={() => {
-                      setEmailStep(null);
-                      setOtpNotice('');
-                    }}
-                    sx={{
-                      color: 'primary.main',
-                      fontWeight: 400,
-                      fontSize: '0.95rem',
-                      cursor: 'pointer',
-                      '&:hover': { textDecoration: 'underline' },
-                    }}
-                  >
-                    Cancel
-                  </Typography>
-                </Box>
               </Box>
             )}
 
@@ -512,6 +421,60 @@ const AuthPage = ({
                 {otpNotice}
               </Typography>
             )}
+
+            {/* Custom-styled Google button with the real GIS button invisibly
+                stacked on top (see useGoogleAuth for why). */}
+            <Box sx={{ position: 'relative', width: '100%' }}>
+              <Button
+                variant="outlined"
+                fullWidth
+                startIcon={<GoogleIcon />}
+                tabIndex={-1}
+                aria-hidden="true"
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 400,
+                  py: 1.1,
+                  borderRadius: 2,
+                  bgcolor: '#fff',
+                  color: 'text.primary',
+                  borderColor: '#d9dce1',
+                  '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
+                }}
+              >
+                Continue with Google
+              </Button>
+              <Box
+                ref={googleButtonRef}
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 1,
+                  opacity: 0,
+                  overflow: 'hidden',
+                  cursor: 'pointer',
+                }}
+              />
+            </Box>
+
+            {/* Apple's HIG black pill button, built as a plain styled MUI Button. */}
+            <Button
+              fullWidth
+              onClick={handleAppleClick}
+              startIcon={<AppleIcon sx={{ fontSize: 20 }} />}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 400,
+                py: 1.1,
+                borderRadius: 2,
+                bgcolor: '#000',
+                color: '#fff',
+                border: '1px solid #000',
+                '&:hover': { bgcolor: '#1a1a1a', borderColor: '#1a1a1a' },
+              }}
+            >
+              Continue with Apple
+            </Button>
           </Box>
         )}
       </Box>
