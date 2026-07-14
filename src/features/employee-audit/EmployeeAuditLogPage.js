@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { useAuth } from '../auth/AuthContext';
 import { getEmployeeAuditLog } from '../../helper';
 
 // Read-only view of the tamper-evident employee audit trail (see
@@ -9,8 +8,13 @@ import { getEmployeeAuditLog } from '../../helper';
 // logged-in company's own employees (or platform-wide for the "super"
 // account) — there is no edit/delete action anywhere in this UI because no
 // such endpoint exists on the backend.
-const EmployeeAuditLogPage = () => {
-  const { token } = useAuth();
+//
+// `token` must be passed by the caller (a Company/brand token from the admin
+// dashboard's "Users" tab, or an Employee's own token from the Staff
+// Dashboard) — this component intentionally has no auth context of its own
+// so it can be reused from either tree without depending on which provider
+// happens to be mounted above it.
+const EmployeeAuditLogPage = ({ token }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);

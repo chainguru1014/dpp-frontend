@@ -26,6 +26,7 @@ import {
   updateUserProfile,
   updateCompany,
   removeCompany,
+  registerCompany,
 } from '../../helper';
 
 const AdminLoadingOverlay = () => (
@@ -273,6 +274,75 @@ const UserEditDialog = ({ user, onChange, onClose, onSave }) => {
   );
 };
 
+// Lets a platform admin directly provision a new brand/company account,
+// instead of waiting for the brand to self-register. Reuses the same public
+// POST /company endpoint the self-serve registration form uses (registerCompany
+// in helper.js) — an admin-created company still goes through the normal
+// isVerified approval step below.
+const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
+  const [form, setForm] = useState({ name: '', email: '', title: '', allowedEmailDomains: '' });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return;
+    setSaving(true);
+    const doc = await registerCompany({
+      name: form.name.trim(),
+      email: form.email.trim() || undefined,
+      title: form.title.trim() || undefined,
+      allowedEmailDomains: form.allowedEmailDomains
+        .split(',')
+        .map((d) => d.trim().toLowerCase())
+        .filter(Boolean),
+    });
+    setSaving(false);
+    if (doc) {
+      setForm({ name: '', email: '', title: '', allowedEmailDomains: '' });
+      onCreated();
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>Create Company</DialogTitle>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        <TextField
+          label="Company Name"
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          fullWidth
+        />
+        <TextField
+          label="Email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          fullWidth
+        />
+        <TextField
+          label="Title"
+          value={form.title}
+          onChange={(e) => setForm({ ...form, title: e.target.value })}
+          fullWidth
+        />
+        <TextField
+          label="Allowed Staff Email Domains"
+          helperText="Comma-separated corporate domains (e.g. hm.com) for this company's Staff Login. Can be left blank and set later."
+          value={form.allowedEmailDomains}
+          onChange={(e) => setForm({ ...form, allowedEmailDomains: e.target.value })}
+          fullWidth
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button variant="contained" onClick={handleSave} disabled={saving || !form.name.trim()}>
+          Create
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 const AdminUsersPage = () => {
   const [companies, setCompanies] = useState([]);
   const [users, setUsers] = useState([]);
@@ -281,6 +351,7 @@ const AdminUsersPage = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [editingCompany, setEditingCompany] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [createCompanyOpen, setCreateCompanyOpen] = useState(false);
 
   const reloadAdminData = () => {
     setLoading(true);
@@ -335,19 +406,29 @@ const AdminUsersPage = () => {
         }}
       >
         <Typography variant="h6">Company Users</Typography>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Status Filter</InputLabel>
-          <Select
-            label="Status Filter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="approved">Approved</MenuItem>
-            <MenuItem value="waiting">Waiting</MenuItem>
-          </Select>
-        </FormControl>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Button variant="contained" onClick={() => setCreateCompanyOpen(true)}>
+            Create Company
+          </Button>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>Status Filter</InputLabel>
+            <Select
+              label="Status Filter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <MenuItem value="all">All</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="waiting">Waiting</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Box>
+      <CreateCompanyDialog
+        open={createCompanyOpen}
+        onClose={() => setCreateCompanyOpen(false)}
+        onCreated={reloadAdminData}
+      />
       <CompanyUsersTable
         companies={companies}
         loading={loading}

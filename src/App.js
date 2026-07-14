@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
 import Page from './pages';
 import PublicProductPage from './pages/PublicProductPage';
+import StaffApp from './features/employee-auth/StaffApp';
 
 function PublicProductRoute() {
   const [searchParams] = useSearchParams();
@@ -39,6 +40,7 @@ function App() {
               <Route path="/product/:productId/:qrcodeId" element={<PublicProductPageWrapper />} />
               <Route path="/" element={<PublicProductRoute />} />
               <Route path="/admin/*" element={<Page />} />
+              <Route path="/staff/*" element={<StaffApp />} />
             </Routes>
           </BrowserRouter>
         </ThemeProvider>

@@ -604,6 +604,75 @@ export const getEmployeeAuditLog = async (token, { page = 1, limit = 50 } = {}) 
     }
 };
 
+// ----- Employee roster management (Company/brand admin only) -----
+// Provisioning is the only way an Employee record is created — see
+// backend/controllers/employeeController.ts and employeeAuthController.otpRequest,
+// which refuses to send a code to anyone not provisioned here first.
+export const inviteEmployee = async (token, data) => {
+    try {
+        const res = await axios.post(`${Backend_URL}employee-auth/employees`, data, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Failed to invite employee' };
+    }
+};
+
+export const listEmployees = async (token, companyId) => {
+    try {
+        const res = await axios.get(`${Backend_URL}employee-auth/employees`, {
+            params: companyId ? { companyId } : undefined,
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return res.data?.data || [];
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+};
+
+export const updateEmployee = async (token, id, data) => {
+    try {
+        const res = await axios.patch(`${Backend_URL}employee-auth/employees/${id}`, data, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Failed to update employee' };
+    }
+};
+
+// ----- Employee's own passwordless login (corporate SSO) -----
+// Mirrors requestOtp/verifyOtp above but hits /employee-auth/*, a completely
+// separate collection/route from the consumer and company auth flows.
+export const requestEmployeeOtp = async (email) => {
+    try {
+        const res = await axios.post(`${Backend_URL}employee-auth/otp/request`, { email });
+        return { ok: true, message: res?.data?.message || 'Code sent — check your email.' };
+    } catch (err) {
+        const message =
+            err.response?.data?.message ||
+            (err.response?.status === 429 ? 'Please wait before requesting another code' : null) ||
+            err.message ||
+            'Failed to send code';
+        return { ok: false, message };
+    }
+};
+
+export const verifyEmployeeOtp = async (email, code) => {
+    try {
+        const res = await axios.post(`${Backend_URL}employee-auth/otp/verify`, { email, code });
+        if (res?.data?.status === 'success' && res.data.employee) {
+            return { ok: true, employee: res.data.employee, token: res.data.token || '' };
+        }
+        return { ok: false, message: res?.data?.message || 'Invalid or expired code' };
+    } catch (err) {
+        const message = err.response?.data?.message || err.message || 'Invalid or expired code';
+        return { ok: false, message };
+    }
+};
+
 
 export const CalculateRemainPeriod = (start, data) => {
     const {period, unit} = data;

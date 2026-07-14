@@ -511,6 +511,21 @@ const AuthPage = ({
             >
               Continue with Apple
             </Button>
+
+            <Box sx={{ textAlign: 'center', mt: 0.5 }}>
+              <Typography
+                component="a"
+                href="/staff"
+                sx={{
+                  color: 'text.secondary',
+                  fontWeight: 400,
+                  fontSize: '0.85rem',
+                  textDecoration: 'underline',
+                }}
+              >
+                Staff Login
+              </Typography>
+            </Box>
           </Box>
         )}
       </Box>
