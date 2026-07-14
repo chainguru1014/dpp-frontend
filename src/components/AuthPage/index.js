@@ -61,7 +61,9 @@ const AuthPage = ({
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  const RESEND_COOLDOWN_SECONDS = 30;
+  // Must match the backend's per-email resend cooldown (see authController.otpRequest) —
+  // a shorter client cooldown would let users retry before the server accepts it, guaranteeing a 429.
+  const RESEND_COOLDOWN_SECONDS = 60;
 
   const sendOtp = async (email) => {
     setOtpBusy(true);

@@ -69,6 +69,7 @@ import Admin from '../components/admin';
 import AuthPage from '../components/AuthPage';
 import yometelLogoWhite from '../assets/yometel-logo-white.png';
 import ProfilePage from '../features/profile/ProfilePage';
+import EmployeeAuditLogPage from '../features/employee-audit/EmployeeAuditLogPage';
 import ProductsTable from '../features/products/ProductsTable';
 import ProductMintSection from '../features/products/ProductMintSection';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
@@ -1285,6 +1286,14 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
+      {!isAppUser && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'employeeAuditLog'} onClick={() => go('employeeAuditLog')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
+            <ListItemText primary="Staff Audit Log" />
+          </ListItemButton>
+        </ListItem>
+      )}
       <ListItem disablePadding>
         <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
           <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
@@ -1495,6 +1504,10 @@ const InnerPage = () => {
                 <Admin />
               </Box>
             </Box>
+          )}
+
+          {activePage === 'employeeAuditLog' && !isAppUser && (
+            <EmployeeAuditLogPage />
           )}
 
           {activePage === 'products' && (

@@ -588,6 +588,22 @@ export const removeCompany = async(id) => {
     }
 };
 
+// Reads the employee audit log (backend/routes/employeeAuthRoutes.ts). Scoped
+// server-side to the logged-in company's own employees (or platform-wide for
+// the "super" account) — see backend/controllers/employeeAuditLogController.ts.
+export const getEmployeeAuditLog = async (token, { page = 1, limit = 50 } = {}) => {
+    try {
+        const res = await axios.get(`${Backend_URL}employee-auth/audit-log`, {
+            params: { page, limit },
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return res.data;
+    } catch (err) {
+        console.log(err);
+        return { data: [], pagination: { page, limit, total: 0 } };
+    }
+};
+
 
 export const CalculateRemainPeriod = (start, data) => {
     const {period, unit} = data;

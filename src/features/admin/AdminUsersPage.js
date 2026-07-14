@@ -243,6 +243,23 @@ const UserEditDialog = ({ user, onChange, onClose, onSave }) => {
               multiline
               minRows={2}
             />
+            {Object.prototype.hasOwnProperty.call(user, 'isVerified') && (
+              <TextField
+                label="Allowed Staff Email Domains"
+                helperText="Comma-separated corporate domains (e.g. hm.com) whose staff can sign in via Staff Login. Leave blank to disable the employee route for this company."
+                value={(user.allowedEmailDomains || []).join(', ')}
+                onChange={(e) =>
+                  onChange({
+                    ...user,
+                    allowedEmailDomains: e.target.value
+                      .split(',')
+                      .map((d) => d.trim().toLowerCase())
+                      .filter(Boolean),
+                  })
+                }
+                fullWidth
+              />
+            )}
           </>
         )}
       </DialogContent>
