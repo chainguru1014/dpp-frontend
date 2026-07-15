@@ -22,11 +22,10 @@ import { listEmployees, inviteEmployee, updateEmployee } from '../../helper';
 // Admin-provisioning UI for the employee/staff route (backend/controllers/employeeController.ts).
 // This is the only place a staff account gets created — employeeAuthController.otpRequest
 // refuses to send a sign-in code to anyone not added here first, so a company
-// admin must invite each employee by their real corporate email up front. The
-// backend hashes that email immediately; it is never stored or shown again
-// after this call, which is why the roster table below only ever displays
-// domain/role/employeeCode, never an email address.
-const InviteDialog = ({ open, onClose, onInvited, token, companyId }) => {
+// admin must invite each employee by their real corporate email up front.
+// There's no company picker: the backend matches the invited email's domain
+// against every registered company's Allowed Staff Email Domains itself.
+const InviteDialog = ({ open, onClose, onInvited, token }) => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('staff');
   const [employeeCode, setEmployeeCode] = useState('');
@@ -44,7 +43,6 @@ const InviteDialog = ({ open, onClose, onInvited, token, companyId }) => {
       email: email.trim(),
       role,
       employeeCode: employeeCode.trim() || undefined,
-      company_id: companyId || undefined,
     });
     setSaving(false);
     if (!res.ok) {
@@ -85,8 +83,9 @@ const InviteDialog = ({ open, onClose, onInvited, token, companyId }) => {
         />
         {!!error && <Alert severity="error">{error}</Alert>}
         <Typography variant="caption" color="text.secondary">
-          The email's domain must already be listed in this company's Allowed Staff Email Domains
-          (set that on the company record in the Users tab first).
+          The email's domain is automatically matched against each registered company's Allowed
+          Staff Email Domains (set on the company record in the Users tab) to find who this
+          employee belongs to.
         </Typography>
       </DialogContent>
       <DialogActions>
@@ -99,14 +98,14 @@ const InviteDialog = ({ open, onClose, onInvited, token, companyId }) => {
   );
 };
 
-const EmployeeRosterPage = ({ token, companyId }) => {
+const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const reload = () => {
     setLoading(true);
-    listEmployees(token, companyId)
+    listEmployees(token)
       .then(setEmployees)
       .finally(() => setLoading(false));
   };
@@ -114,7 +113,7 @@ const EmployeeRosterPage = ({ token, companyId }) => {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, companyId]);
+  }, [token]);
 
   const handleToggleActive = async (employee) => {
     await updateEmployee(token, employee._id, { isActive: !employee.isActive });
@@ -127,8 +126,12 @@ const EmployeeRosterPage = ({ token, companyId }) => {
   };
 
   const columns = [
+    { field: 'email', headerName: 'Corporate Email', width: 220, valueGetter: (p) => p.row.email || '—' },
+    ...(showCompanyColumn
+      ? [{ field: 'companyName', headerName: 'Company', width: 160, valueGetter: (p) => p.row.companyName || '—' }]
+      : []),
     { field: 'employeeCode', headerName: 'Employee Code', width: 160, valueGetter: (p) => p.row.employeeCode || '—' },
-    { field: 'emailDomain', headerName: 'Domain', width: 160 },
+    { field: 'emailDomain', headerName: 'Domain', width: 140 },
     {
       field: 'role',
       headerName: 'Role',
@@ -164,11 +167,7 @@ const EmployeeRosterPage = ({ token, companyId }) => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Staff Roster</Typography>
-        <Button
-          variant="contained"
-          onClick={() => setInviteOpen(true)}
-          disabled={companyId === ''}
-        >
+        <Button variant="contained" onClick={() => setInviteOpen(true)}>
           Invite Employee
         </Button>
       </Box>
@@ -184,13 +183,7 @@ const EmployeeRosterPage = ({ token, companyId }) => {
           sx={{ minHeight: 260 }}
         />
       </Box>
-      <InviteDialog
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
-        onInvited={reload}
-        token={token}
-        companyId={companyId}
-      />
+      <InviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} onInvited={reload} token={token} />
     </Box>
   );
 };

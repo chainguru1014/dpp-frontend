@@ -1,53 +1,84 @@
 import React, { useEffect, useState } from 'react';
-import { Box, FormControl, InputLabel, MenuItem, Select, Tabs, Tab } from '@mui/material';
+import { Box, Typography, Tabs, Tab } from '@mui/material';
+import { DataGrid } from '@mui/x-data-grid';
 import EmployeeRosterPage from './EmployeeRosterPage';
 import EmployeeAuditLogPage from './EmployeeAuditLogPage';
 import { getAdminUserData } from '../../helper';
 
+// The built-in platform admin account lives in the Company collection too,
+// but it's not a brand/company and never takes on staff of its own — mirrors
+// the isAdmin check in features/auth/AuthContext.js.
+const isAdminCompany = (c) => c.role === 'super' || c.role === 'admin' || c.name === 'admin';
+
+const companyColumns = [
+  { field: 'name', headerName: 'Company Name', width: 160 },
+  { field: 'email', headerName: 'Email', width: 200 },
+  { field: 'location', headerName: 'Location', width: 160 },
+  {
+    field: 'allowedEmailDomains',
+    headerName: 'Allowed Staff Email Domains',
+    width: 220,
+    valueGetter: (p) => (p.row.allowedEmailDomains || []).join(', ') || '—',
+  },
+  { field: 'productCount', headerName: 'Products', width: 90, type: 'number', valueGetter: (p) => p.row.productCount || 0 },
+  { field: 'scanCount', headerName: 'Scans', width: 90, type: 'number', valueGetter: (p) => p.row.scanCount || 0 },
+  {
+    field: 'isVerified',
+    headerName: 'Status',
+    width: 110,
+    valueGetter: (p) => (p.row.isVerified ? 'Approved' : 'Waiting'),
+  },
+];
+
 // Company/brand-admin view of the employee route: provision staff accounts
-// and review their tamper-evident audit trail. The roster tab is scoped
+// and review their tamper-evident audit trail. Both tabs are scoped
 // server-side to the logged-in company's own employees, unless the caller is
-// the platform "super" account, which must say which company it's acting on
-// behalf of via companyId (see resolveTargetCompany in
-// backend/controllers/employeeController.ts) — hence the company picker
-// below, shown for admins only. The audit log stays platform-wide for admins
-// (its endpoint has no per-company filter yet).
+// the platform "super" account, which sees every company's employees (see
+// backend/controllers/employeeController.ts). For admins, the registered
+// companies are listed here for reference — inviting no longer requires
+// picking one: the invited email's domain is matched against each company's
+// Allowed Staff Email Domains automatically.
 const EmployeeManagementPage = ({ token, isAdmin }) => {
   const [tab, setTab] = useState('roster');
   const [companies, setCompanies] = useState([]);
-  const [companyId, setCompanyId] = useState('');
+  const [companiesLoading, setCompaniesLoading] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) return;
-    getAdminUserData('approved').then((data) => {
-      const list = data.companies || [];
-      setCompanies(list);
-      setCompanyId((current) => current || list[0]?._id || '');
-    });
+    setCompaniesLoading(true);
+    getAdminUserData()
+      .then((data) => setCompanies((data.companies || []).filter((c) => !isAdminCompany(c))))
+      .finally(() => setCompaniesLoading(false));
   }, [isAdmin]);
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 2 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-          <Tab value="roster" label="Roster" />
-          <Tab value="auditLog" label="Audit Log" />
-        </Tabs>
-        {isAdmin && (
-          <FormControl size="small" sx={{ minWidth: 240 }}>
-            <InputLabel>Company</InputLabel>
-            <Select label="Company" value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
-              {companies.map((c) => (
-                <MenuItem key={c._id} value={c._id}>
-                  {c.name} ({c.email})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-      </Box>
-      {tab === 'roster' && <EmployeeRosterPage token={token} companyId={isAdmin ? companyId : undefined} />}
-      {tab === 'auditLog' && <EmployeeAuditLogPage token={token} />}
+      {isAdmin && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Registered Companies
+          </Typography>
+          <Box sx={{ bgcolor: '#fff', borderRadius: 1, boxShadow: 1 }}>
+            <DataGrid
+              loading={companiesLoading}
+              columns={companyColumns}
+              rows={companies}
+              getRowId={(row) => row._id}
+              autoHeight
+              initialState={{ pagination: { paginationModel: { page: 0, pageSize: 5 } } }}
+              pageSizeOptions={[5, 10, 25]}
+              sx={{ minHeight: 200 }}
+            />
+          </Box>
+        </Box>
+      )}
+
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
+        <Tab value="roster" label="Roster" />
+        <Tab value="auditLog" label="Audit Log" />
+      </Tabs>
+      {tab === 'roster' && <EmployeeRosterPage token={token} showCompanyColumn={isAdmin} />}
+      {tab === 'auditLog' && <EmployeeAuditLogPage token={token} showCompanyColumn={isAdmin} />}
     </Box>
   );
 };

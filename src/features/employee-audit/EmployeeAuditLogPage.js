@@ -14,7 +14,7 @@ import { getEmployeeAuditLog } from '../../helper';
 // Dashboard) — this component intentionally has no auth context of its own
 // so it can be reused from either tree without depending on which provider
 // happens to be mounted above it.
-const EmployeeAuditLogPage = ({ token }) => {
+const EmployeeAuditLogPage = ({ token, showCompanyColumn }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -38,6 +38,15 @@ const EmployeeAuditLogPage = ({ token }) => {
       valueGetter: (p) => (p.row.createdAt ? new Date(p.row.createdAt).toLocaleString() : ''),
     },
     { field: 'action', headerName: 'Action', width: 160 },
+    { field: 'email', headerName: 'Corporate Email', width: 220, valueGetter: (p) => p.row.employee_id?.email || '—' },
+    ...(showCompanyColumn
+      ? [{
+          field: 'companyName',
+          headerName: 'Company',
+          width: 160,
+          valueGetter: (p) => p.row.employee_id?.company_id?.name || '—',
+        }]
+      : []),
     {
       field: 'employeeCode',
       headerName: 'Employee',
