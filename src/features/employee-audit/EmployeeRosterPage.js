@@ -26,7 +26,7 @@ import { listEmployees, inviteEmployee, updateEmployee } from '../../helper';
 // backend hashes that email immediately; it is never stored or shown again
 // after this call, which is why the roster table below only ever displays
 // domain/role/employeeCode, never an email address.
-const InviteDialog = ({ open, onClose, onInvited, token }) => {
+const InviteDialog = ({ open, onClose, onInvited, token, companyId }) => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('staff');
   const [employeeCode, setEmployeeCode] = useState('');
@@ -40,7 +40,12 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
       return;
     }
     setSaving(true);
-    const res = await inviteEmployee(token, { email: email.trim(), role, employeeCode: employeeCode.trim() || undefined });
+    const res = await inviteEmployee(token, {
+      email: email.trim(),
+      role,
+      employeeCode: employeeCode.trim() || undefined,
+      company_id: companyId || undefined,
+    });
     setSaving(false);
     if (!res.ok) {
       setError(res.message);
@@ -94,14 +99,14 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
   );
 };
 
-const EmployeeRosterPage = ({ token }) => {
+const EmployeeRosterPage = ({ token, companyId }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const reload = () => {
     setLoading(true);
-    listEmployees(token)
+    listEmployees(token, companyId)
       .then(setEmployees)
       .finally(() => setLoading(false));
   };
@@ -109,7 +114,7 @@ const EmployeeRosterPage = ({ token }) => {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, companyId]);
 
   const handleToggleActive = async (employee) => {
     await updateEmployee(token, employee._id, { isActive: !employee.isActive });
@@ -159,7 +164,11 @@ const EmployeeRosterPage = ({ token }) => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Staff Roster</Typography>
-        <Button variant="contained" onClick={() => setInviteOpen(true)}>
+        <Button
+          variant="contained"
+          onClick={() => setInviteOpen(true)}
+          disabled={companyId === ''}
+        >
           Invite Employee
         </Button>
       </Box>
@@ -175,7 +184,13 @@ const EmployeeRosterPage = ({ token }) => {
           sx={{ minHeight: 260 }}
         />
       </Box>
-      <InviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} onInvited={reload} token={token} />
+      <InviteDialog
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onInvited={reload}
+        token={token}
+        companyId={companyId}
+      />
     </Box>
   );
 };

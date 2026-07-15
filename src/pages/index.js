@@ -1508,7 +1508,7 @@ const InnerPage = () => {
           )}
 
           {activePage === 'employeeAuditLog' && !isAppUser && (
-            <EmployeeManagementPage token={token} />
+            <EmployeeManagementPage token={token} isAdmin={isAdmin} />
           )}
 
           {activePage === 'products' && (
