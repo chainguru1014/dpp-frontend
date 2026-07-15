@@ -372,8 +372,8 @@ const InnerPage = () => {
   // inline state (sent / rate-limited / failed).
   const requestOtpHandler = async (email, mode) => requestOtp(email, mode);
 
-  const verifyOtpHandler = async (email, code) => {
-    const res = await verifyOtp(email, code);
+  const verifyOtpHandler = async (email, code, mode) => {
+    const res = await verifyOtp(email, code, mode);
     if (res?.ok) handleAuthSuccess(res.user);
     return res;
   };

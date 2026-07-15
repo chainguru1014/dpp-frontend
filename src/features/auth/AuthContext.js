@@ -163,10 +163,18 @@ export const AuthProvider = ({ children }) => {
 
   // Returns { ok, message?, user? } so the OTP form can show "invalid/expired
   // code" inline instead of a blocking alert.
-  const verifyOtp = async (email, code) => {
+  // `mode`: 'signin' | 'signup' — see requestOtp above. Sign-in never requires
+  // profile completion (only fresh sign-ups do): auth/otp/request only
+  // succeeds for an email that's already registered, so an incomplete
+  // profile on a successful sign-in means an old abandoned signup, not
+  // someone who needs onboarding right now.
+  const verifyOtp = async (email, code, mode) => {
     const res = await verifyOtpApi(email, code);
     if (!res?.ok) return { ok: false, message: res?.message };
-    return { ok: true, user: applyAuthResult(res) };
+    const patched = mode === 'signin' && res.user && !res.user.profileCompleted
+      ? { ...res, user: { ...res.user, profileCompleted: true } }
+      : res;
+    return { ok: true, user: applyAuthResult(patched) };
   };
 
   const completeProfile = async (payload) => applyAuthResult(await completeProfileApi(payload, token));

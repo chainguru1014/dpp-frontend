@@ -108,7 +108,7 @@ const AuthPage = ({
     if (code.length !== 6) return;
     setOtpBusy(true);
     setOtpNotice('');
-    const res = await onVerifyOtp(otpEmail.trim(), code);
+    const res = await onVerifyOtp(otpEmail.trim(), code, authMode);
     setOtpBusy(false);
     if (!res?.ok) {
       setOtpNotice(res?.message || 'Invalid or expired code. Please try again.');
