@@ -152,9 +152,14 @@ export const appleLogin = async (identityToken, user) => {
 // Requests a 6-digit email OTP. Unlike the other auth helpers this does NOT
 // alert() on failure — the OTP UI shows its own inline state (sending / sent /
 // rate-limited), so the caller needs the raw { ok, message } result to render.
-export const requestOtp = async (email) => {
+// `mode`: 'signin' (default) hits the sign-in-only endpoint, which refuses to
+// send a code for an unregistered email; 'signup' hits the endpoint that
+// creates the account (and refuses if it already exists) — see
+// backend/controllers/authController.ts otpRequest/signupOtpRequest.
+export const requestOtp = async (email, mode = 'signin') => {
     try {
-        const res = await axios.post(`${Backend_URL}auth/otp/request`, { email });
+        const endpoint = mode === 'signup' ? 'auth/signup/otp/request' : 'auth/otp/request';
+        const res = await axios.post(`${Backend_URL}${endpoint}`, { email });
         return { ok: true, message: res?.data?.message || 'Code sent — check your email.' };
     } catch (err) {
         const message =

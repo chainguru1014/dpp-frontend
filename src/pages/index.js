@@ -370,7 +370,7 @@ const InnerPage = () => {
 
   // Returns { ok, message } straight through so the AuthPage OTP UI can show
   // inline state (sent / rate-limited / failed).
-  const requestOtpHandler = async (email) => requestOtp(email);
+  const requestOtpHandler = async (email, mode) => requestOtp(email, mode);
 
   const verifyOtpHandler = async (email, code) => {
     const res = await verifyOtp(email, code);

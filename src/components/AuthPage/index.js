@@ -44,6 +44,7 @@ const AuthPage = ({
 }) => {
   // OTP flow's own local UI state — nothing here needs to be lifted up, the
   // parent only cares once verification actually succeeds.
+  const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
   const [emailStep, setEmailStep] = useState('email'); // 'email' | 'code'
   const [otpEmail, setOtpEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -68,7 +69,7 @@ const AuthPage = ({
   const sendOtp = async (email) => {
     setOtpBusy(true);
     setOtpNotice('');
-    const res = await onRequestOtp(email);
+    const res = await onRequestOtp(email, authMode);
     setOtpBusy(false);
     if (res?.ok) {
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
@@ -286,31 +287,58 @@ const AuthPage = ({
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, justifyContent: 'center', gap: 1.5 }}>
             {emailStep === 'email' && (
-              <Box
-                component="form"
-                onSubmit={handleSendCode}
-                sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
-              >
-                <TextField
-                  placeholder="Email"
-                  type="email"
-                  value={otpEmail}
-                  onChange={(e) => setOtpEmail(e.target.value)}
-                  required
-                  autoFocus
-                  fullWidth
-                  sx={fieldSx}
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  fullWidth
-                  disabled={otpBusy}
-                  sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
+              <>
+                <Box sx={{ display: 'flex', bgcolor: 'rgba(0,0,0,0.06)', borderRadius: 999, p: 0.5, mb: 0.5 }}>
+                  {[
+                    { key: 'signin', label: 'Sign In' },
+                    { key: 'signup', label: 'Sign Up' },
+                  ].map((opt) => (
+                    <Box
+                      key={opt.key}
+                      onClick={() => { setAuthMode(opt.key); setOtpNotice(''); }}
+                      sx={{
+                        flex: 1,
+                        textAlign: 'center',
+                        py: 0.7,
+                        borderRadius: 999,
+                        cursor: 'pointer',
+                        bgcolor: authMode === opt.key ? '#fff' : 'transparent',
+                        boxShadow: authMode === opt.key ? '0 1px 4px rgba(0,0,0,0.18)' : 'none',
+                      }}
+                    >
+                      <Typography sx={{ fontSize: '0.85rem', fontWeight: authMode === opt.key ? 600 : 400, color: authMode === opt.key ? '#1B5E20' : 'text.secondary' }}>
+                        {opt.label}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+
+                <Box
+                  component="form"
+                  onSubmit={handleSendCode}
+                  sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
                 >
-                  {otpBusy ? 'Sending…' : 'Send code'}
-                </Button>
-              </Box>
+                  <TextField
+                    placeholder="Email"
+                    type="email"
+                    value={otpEmail}
+                    onChange={(e) => setOtpEmail(e.target.value)}
+                    required
+                    autoFocus
+                    fullWidth
+                    sx={fieldSx}
+                  />
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    fullWidth
+                    disabled={otpBusy}
+                    sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
+                  >
+                    {otpBusy ? 'Sending…' : authMode === 'signup' ? 'Create account' : 'Send code'}
+                  </Button>
+                </Box>
+              </>
             )}
 
             {emailStep === 'code' && (

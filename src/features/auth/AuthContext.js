@@ -158,7 +158,8 @@ export const AuthProvider = ({ children }) => {
 
   // Returns { ok, message } (not a user) — the OTP-request UI needs the raw
   // result to show inline state, including surfacing a 429 rate-limit message.
-  const requestOtp = async (email) => requestOtpApi(email);
+  // `mode`: 'signin' | 'signup' — see helper.js requestOtp.
+  const requestOtp = async (email, mode) => requestOtpApi(email, mode);
 
   // Returns { ok, message?, user? } so the OTP form can show "invalid/expired
   // code" inline instead of a blocking alert.
