@@ -116,7 +116,6 @@ const InnerPage = () => {
     requestOtp,
     verifyOtp,
     completeProfile,
-    completeCompanyProfile,
     isAdmin,
     isAppUser,
     canManageProducts,
@@ -359,19 +358,19 @@ const InnerPage = () => {
     setActivePage('dashboard');
   };
 
-  const googleCredentialHandler = async (idToken, audience) => {
-    const user = await loginWithGoogle(idToken, audience);
+  const googleCredentialHandler = async (idToken) => {
+    const user = await loginWithGoogle(idToken);
     handleAuthSuccess(user);
   };
 
-  const appleCredentialHandler = async (identityToken, appleUser, audience) => {
-    const user = await loginWithApple(identityToken, appleUser, audience);
+  const appleCredentialHandler = async (identityToken, appleUser) => {
+    const user = await loginWithApple(identityToken, appleUser);
     handleAuthSuccess(user);
   };
 
   // Returns { ok, message } straight through so the AuthPage OTP UI can show
   // inline state (sent / rate-limited / failed).
-  const requestOtpHandler = async (email, mode, audience) => requestOtp(email, mode, audience);
+  const requestOtpHandler = async (email, mode) => requestOtp(email, mode);
 
   const verifyOtpHandler = async (email, code, mode) => {
     const res = await verifyOtp(email, code, mode);
@@ -428,25 +427,6 @@ const InnerPage = () => {
       handleAuthSuccess(user);
     } catch (error) {
       console.error('Profile completion error:', error);
-    }
-  };
-
-  const completeCompanyProfileHandler = async (data) => {
-    if (!data?.name || !data?.phoneNumber || !data?.location || !data?.title) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    try {
-      const user = await completeCompanyProfile({
-        name: data.name.trim(),
-        phoneNumber: data.phoneNumber,
-        location: data.location,
-        title: data.title,
-      });
-      handleAuthSuccess(user);
-    } catch (error) {
-      console.error('Company profile completion error:', error);
     }
   };
 
@@ -1246,11 +1226,9 @@ const InnerPage = () => {
       <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
         <AuthPage
           needsProfileCompletion={needsProfileCompletion}
-          isCompanyProfile={company?.role === 'company'}
           registerData={registerData}
           setRegisterData={setRegisterData}
           onCompleteProfile={completeProfileHandler}
-          onCompleteCompanyProfile={completeCompanyProfileHandler}
           onCancelProfileCompletion={company ? logout : undefined}
           onGoogleCredential={googleCredentialHandler}
           onAppleCredential={appleCredentialHandler}

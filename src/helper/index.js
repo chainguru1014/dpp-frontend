@@ -123,16 +123,10 @@ const normalizeAuthResponse = (res) => {
 };
 
 // Sends the Google Identity Services ID token (the `credential` JWT from the
-// GIS callback) to the backend, which verifies it and finds-or-creates the
-// user. `audience: 'company'` (from the "Sign up as a Company" toggle) tells
-// the backend to create a Company instead of a User when this email doesn't
-// match an existing account yet — see backend/utils/authLink.ts.
-export const googleLogin = async (idToken, audience) => {
+// GIS callback) to the backend, which verifies it and finds-or-creates the user.
+export const googleLogin = async (idToken) => {
     try {
-        const res = await axios.post(`${Backend_URL}auth/google`, {
-            idToken,
-            ...(audience === 'company' ? { audience } : {}),
-        });
+        const res = await axios.post(`${Backend_URL}auth/google`, { idToken });
         return normalizeAuthResponse(res);
     } catch (err) {
         console.log(err);
@@ -143,14 +137,9 @@ export const googleLogin = async (idToken, audience) => {
 
 // Sends Apple's identity token (JWT) plus, on first-ever authorization only,
 // the name Apple handed back client-side (Apple never repeats it on later logins).
-// `audience`: see googleLogin above.
-export const appleLogin = async (identityToken, user, audience) => {
+export const appleLogin = async (identityToken, user) => {
     try {
-        const payload = {
-            identityToken,
-            ...(user ? { user } : {}),
-            ...(audience === 'company' ? { audience } : {}),
-        };
+        const payload = user ? { identityToken, user } : { identityToken };
         const res = await axios.post(`${Backend_URL}auth/apple`, payload);
         return normalizeAuthResponse(res);
     } catch (err) {
@@ -167,15 +156,10 @@ export const appleLogin = async (identityToken, user, audience) => {
 // send a code for an unregistered email; 'signup' hits the endpoint that
 // creates the account (and refuses if it already exists) — see
 // backend/controllers/authController.ts otpRequest/signupOtpRequest.
-// `audience`: 'consumer' (default) creates a User on signup; 'company'
-// creates a Company (the "Sign up as a Company" toggle). Ignored for 'signin'.
-export const requestOtp = async (email, mode = 'signin', audience) => {
+export const requestOtp = async (email, mode = 'signin') => {
     try {
         const endpoint = mode === 'signup' ? 'auth/signup/otp/request' : 'auth/otp/request';
-        const res = await axios.post(`${Backend_URL}${endpoint}`, {
-            email,
-            ...(mode === 'signup' && audience === 'company' ? { audience } : {}),
-        });
+        const res = await axios.post(`${Backend_URL}${endpoint}`, { email });
         return { ok: true, message: res?.data?.message || 'Code sent — check your email.' };
     } catch (err) {
         const message =
@@ -208,21 +192,6 @@ export const verifyOtp = async (email, code) => {
 export const completeProfile = async (data, token) => {
     try {
         const res = await axios.post(`${Backend_URL}auth/profile/complete`, data, {
-            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        return normalizeAuthResponse(res);
-    } catch (err) {
-        console.log(err);
-        alert(err.response?.data?.message || err.message || 'Failed to save profile');
-        return null;
-    }
-}
-
-// Same as completeProfile, but for a Company account created via "Sign up as
-// a Company" (passwordless self-signup) — see authController.completeCompanyProfile.
-export const completeCompanyProfile = async (data, token) => {
-    try {
-        const res = await axios.post(`${Backend_URL}auth/company-profile/complete`, data, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return normalizeAuthResponse(res);

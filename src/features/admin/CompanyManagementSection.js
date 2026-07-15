@@ -16,12 +16,11 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { CheckCircle, Delete, Edit, RemoveRedEye } from '@mui/icons-material';
+import { Delete, Edit, RemoveRedEye } from '@mui/icons-material';
 import CompanyPreview from '../../components/PreviewModal/companyPreview';
 import UserEditDialog from '../../components/UserEditDialog';
 import {
   getAdminUserData,
-  verifyCompany,
   updateCompany,
   removeCompany,
   registerCompany,
@@ -53,7 +52,7 @@ const AdminLoadingOverlay = () => (
   </Box>
 );
 
-const CompanyUsersTable = ({ companies, loading, onApprove, onView, onEdit, onRemove }) => {
+const CompanyUsersTable = ({ companies, loading, onView, onEdit, onRemove }) => {
   const columns = [
     {
       field: 'name',
@@ -64,7 +63,6 @@ const CompanyUsersTable = ({ companies, loading, onApprove, onView, onEdit, onRe
       ),
     },
     { field: 'email', headerName: 'Email', width: 200 },
-    { field: 'phoneNumber', headerName: 'Phone', width: 140, valueGetter: (p) => p.row.phoneNumber || '—' },
     { field: 'location', headerName: 'Location', width: 180 },
     {
       field: 'allowedEmailDomains',
@@ -106,17 +104,12 @@ const CompanyUsersTable = ({ companies, loading, onApprove, onView, onEdit, onRe
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 200,
+      width: 160,
       renderCell: (data) => (
         <Box sx={{ display: 'flex' }}>
           <IconButton onClick={() => onEdit(data.row)}>
             <Edit />
           </IconButton>
-          {!data.row.isVerified && (
-            <IconButton onClick={() => onApprove(data.id)}>
-              <CheckCircle />
-            </IconButton>
-          )}
           <IconButton onClick={() => onRemove(data.id)}>
             <Delete />
           </IconButton>
@@ -147,11 +140,9 @@ const CompanyUsersTable = ({ companies, loading, onApprove, onView, onEdit, onRe
   );
 };
 
-// Lets a platform admin directly provision a new brand/company account,
-// instead of waiting for the brand to self-register. Reuses the same public
-// POST /company endpoint the self-serve registration form uses (registerCompany
-// in helper.js) — an admin-created company still goes through the normal
-// isVerified approval step below.
+// Lets a platform admin directly provision a new brand/company account —
+// the only way a Company account gets created (self-signup is not available).
+// Reuses the POST /company endpoint (registerCompany in helper.js).
 const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
   const [form, setForm] = useState({ name: '', email: '', title: '', allowedEmailDomains: '' });
   const [saving, setSaving] = useState(false);
@@ -252,12 +243,6 @@ const CompanyManagementSection = () => {
     return true;
   });
 
-  const handleApproveCompany = (id) => {
-    verifyCompany(id).then(() => {
-      reloadCompanies();
-    });
-  };
-
   const handleCompanyEditSave = async () => {
     if (!editingCompany) return;
     const { _id, ...payload } = editingCompany;
@@ -296,7 +281,6 @@ const CompanyManagementSection = () => {
       <CompanyUsersTable
         companies={visibleCompanies}
         loading={loading}
-        onApprove={handleApproveCompany}
         onView={(id) => setCompanyInfo(companies.find((item) => item._id === id))}
         onEdit={(company) => setEditingCompany(company)}
         onRemove={async (id) => {

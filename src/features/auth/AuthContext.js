@@ -5,7 +5,6 @@ import {
   requestOtp as requestOtpApi,
   verifyOtp as verifyOtpApi,
   completeProfile as completeProfileApi,
-  completeCompanyProfile as completeCompanyProfileApi,
 } from '../../helper';
 
 const AuthContext = createContext(null);
@@ -149,20 +148,18 @@ export const AuthProvider = ({ children }) => {
 
   // Google sign-in / sign-up (ID-token flow). Returns the user record (with
   // `profileCompleted`) so the caller can route a brand-new account to
-  // profile completion. `audience`: 'company' creates a Company instead of a
-  // User for a brand-new email (see helper.js googleLogin).
-  const loginWithGoogle = async (idToken, audience) => applyAuthResult(await googleLoginApi(idToken, audience));
+  // profile completion.
+  const loginWithGoogle = async (idToken) => applyAuthResult(await googleLoginApi(idToken));
 
   // Apple sign-in / sign-up. `appleUser` is the { firstName, lastName } Apple
   // hands back client-side on first-ever authorization only (may be undefined).
-  // `audience`: see loginWithGoogle above.
-  const loginWithApple = async (identityToken, appleUser, audience) =>
-    applyAuthResult(await appleLoginApi(identityToken, appleUser, audience));
+  const loginWithApple = async (identityToken, appleUser) =>
+    applyAuthResult(await appleLoginApi(identityToken, appleUser));
 
   // Returns { ok, message } (not a user) — the OTP-request UI needs the raw
   // result to show inline state, including surfacing a 429 rate-limit message.
-  // `mode`: 'signin' | 'signup', `audience`: 'consumer' | 'company' — see helper.js requestOtp.
-  const requestOtp = async (email, mode, audience) => requestOtpApi(email, mode, audience);
+  // `mode`: 'signin' | 'signup' — see helper.js requestOtp.
+  const requestOtp = async (email, mode) => requestOtpApi(email, mode);
 
   // Returns { ok, message?, user? } so the OTP form can show "invalid/expired
   // code" inline instead of a blocking alert.
@@ -181,8 +178,6 @@ export const AuthProvider = ({ children }) => {
   };
 
   const completeProfile = async (payload) => applyAuthResult(await completeProfileApi(payload, token));
-
-  const completeCompanyProfile = async (payload) => applyAuthResult(await completeCompanyProfileApi(payload, token));
 
   const logout = () => {
     setCompany(null);
@@ -220,7 +215,6 @@ export const AuthProvider = ({ children }) => {
         requestOtp,
         verifyOtp,
         completeProfile,
-        completeCompanyProfile,
         logout,
         isAdmin,
         isAppUser,
