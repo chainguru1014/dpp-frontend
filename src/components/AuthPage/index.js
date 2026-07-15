@@ -31,11 +31,15 @@ const GoogleIcon = () => (
 
 const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff' } };
 
+const emptyCompanyProfile = { name: '', phoneNumber: '', location: '', title: '' };
+
 const AuthPage = ({
   needsProfileCompletion,
+  isCompanyProfile,
   registerData,
   setRegisterData,
   onCompleteProfile,
+  onCompleteCompanyProfile,
   onCancelProfileCompletion,
   onGoogleCredential,
   onAppleCredential,
@@ -45,14 +49,20 @@ const AuthPage = ({
   // OTP flow's own local UI state — nothing here needs to be lifted up, the
   // parent only cares once verification actually succeeds.
   const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
+  // Who a brand-new signup should create: a consumer User (default) or a
+  // Company (see "Sign up as a Company" — backend/utils/authLink.ts). Only
+  // matters when authMode is 'signup'; sign-in looks up an existing account
+  // by email regardless of this value.
+  const [audience, setAudience] = useState('consumer'); // 'consumer' | 'company'
   const [emailStep, setEmailStep] = useState('email'); // 'email' | 'code'
   const [otpEmail, setOtpEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [otpBusy, setOtpBusy] = useState(false);
   const [otpNotice, setOtpNotice] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [companyProfile, setCompanyProfile] = useState(emptyCompanyProfile);
 
-  const { buttonContainerRef: googleButtonRef } = useGoogleAuth(onGoogleCredential);
+  const { buttonContainerRef: googleButtonRef } = useGoogleAuth((idToken) => onGoogleCredential(idToken, audience));
   const { signIn: appleSignIn } = useAppleAuth();
 
   // Counts the resend cooldown down to 0 once a code has been (re)sent.
@@ -69,7 +79,7 @@ const AuthPage = ({
   const sendOtp = async (email) => {
     setOtpBusy(true);
     setOtpNotice('');
-    const res = await onRequestOtp(email, authMode);
+    const res = await onRequestOtp(email, authMode, audience);
     setOtpBusy(false);
     if (res?.ok) {
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
@@ -83,7 +93,7 @@ const AuthPage = ({
   const handleAppleClick = async () => {
     try {
       const { identityToken, user } = await appleSignIn();
-      onAppleCredential?.(identityToken, user);
+      onAppleCredential?.(identityToken, user, audience);
     } catch (err) {
       alert(err?.message || 'Apple sign-in failed');
     }
@@ -120,15 +130,111 @@ const AuthPage = ({
     onCompleteProfile(registerData);
   };
 
+  const handleCompanyProfileSubmit = (e) => {
+    e.preventDefault();
+    onCompleteCompanyProfile(companyProfile);
+  };
+
   const navigate = useNavigate();
 
   return (
     <AuthShell>
         {!needsProfileCompletion && (
-          <AudienceToggle value="consumer" onSelectConsumer={() => {}} onSelectStaff={() => navigate('/staff')} />
+          <AudienceToggle
+            value={audience}
+            onSelectConsumer={() => setAudience('consumer')}
+            onSelectCompany={() => setAudience('company')}
+            onSelectStaff={() => navigate('/staff')}
+          />
         )}
 
-        {needsProfileCompletion ? (
+        {needsProfileCompletion && isCompanyProfile ? (
+          <Box
+            component="form"
+            onSubmit={handleCompanyProfileSubmit}
+            sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+          >
+            <Typography variant="body2" sx={{ mb: 1.5, flexShrink: 0, color: 'text.secondary' }}>
+              Just a few more details about your company before we can review your account.
+            </Typography>
+
+            <Box
+              sx={{
+                flex: 1,
+                minHeight: 0,
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: { xs: 1.5, sm: 2 },
+                pr: 0.5,
+              }}
+            >
+              <TextField
+                placeholder="Company Name"
+                value={companyProfile.name}
+                onChange={(e) => setCompanyProfile((prev) => ({ ...prev, name: e.target.value }))}
+                required
+                fullWidth
+                sx={fieldSx}
+              />
+              <TextField
+                placeholder="Phone Number"
+                value={companyProfile.phoneNumber}
+                onChange={(e) => setCompanyProfile((prev) => ({ ...prev, phoneNumber: e.target.value }))}
+                required
+                fullWidth
+                sx={fieldSx}
+              />
+              <TextField
+                placeholder="Business Address"
+                value={companyProfile.location}
+                onChange={(e) => setCompanyProfile((prev) => ({ ...prev, location: e.target.value }))}
+                required
+                fullWidth
+                sx={fieldSx}
+              />
+              <TextField
+                placeholder="Description"
+                helperText="A short description of your business — shown to the admin reviewing your application."
+                value={companyProfile.title}
+                onChange={(e) => setCompanyProfile((prev) => ({ ...prev, title: e.target.value }))}
+                required
+                fullWidth
+                multiline
+                minRows={2}
+                sx={fieldSx}
+              />
+            </Box>
+
+            <Box sx={{ flexShrink: 0, pt: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
+              >
+                Complete Profile
+              </Button>
+              {onCancelProfileCompletion && (
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography
+                    component="span"
+                    onClick={onCancelProfileCompletion}
+                    sx={{
+                      color: 'primary.main',
+                      fontWeight: 400,
+                      fontSize: '0.95rem',
+                      cursor: 'pointer',
+                      '&:hover': { textDecoration: 'underline' },
+                    }}
+                  >
+                    Not you? Sign out
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        ) : needsProfileCompletion ? (
           <Box
             component="form"
             onSubmit={handleProfileSubmit}

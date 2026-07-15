@@ -3,8 +3,9 @@ import { Box, Typography } from '@mui/material';
 
 // Clean pill-style "who are you" switch shown at the top of both sign-in
 // cards (consumer/brand AuthPage and StaffLoginPage) so switching between
-// them is a single obvious tap instead of a buried text link.
-const AudienceToggle = ({ value, onSelectConsumer, onSelectStaff }) => (
+// them is a single obvious tap instead of a buried text link. `onSelectCompany`
+// is optional — StaffLoginPage doesn't offer a company option, only AuthPage does.
+const AudienceToggle = ({ value, onSelectConsumer, onSelectStaff, onSelectCompany }) => (
   <Box
     sx={{
       display: 'flex',
@@ -17,6 +18,7 @@ const AudienceToggle = ({ value, onSelectConsumer, onSelectStaff }) => (
   >
     {[
       { key: 'consumer', label: 'Consumer', onClick: onSelectConsumer },
+      ...(onSelectCompany ? [{ key: 'company', label: 'Company', onClick: onSelectCompany }] : []),
       { key: 'staff', label: 'Staff', onClick: onSelectStaff },
     ].map((opt) => (
       <Box

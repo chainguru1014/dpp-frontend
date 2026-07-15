@@ -116,6 +116,7 @@ const InnerPage = () => {
     requestOtp,
     verifyOtp,
     completeProfile,
+    completeCompanyProfile,
     isAdmin,
     isAppUser,
     canManageProducts,
@@ -351,26 +352,26 @@ const InnerPage = () => {
 
   // Shared by every passwordless auth method: once we have a signed-in actor,
   // send them to the dashboard. If their profile isn't complete yet, the
-  // top-level gate below (`!company.profileCompleted`) shows the
-  // profile-completion form instead regardless of activePage.
+  // top-level `needsProfileCompletion` gate below shows the profile-completion
+  // form instead regardless of activePage.
   const handleAuthSuccess = (user) => {
     if (!user) return;
     setActivePage('dashboard');
   };
 
-  const googleCredentialHandler = async (idToken) => {
-    const user = await loginWithGoogle(idToken);
+  const googleCredentialHandler = async (idToken, audience) => {
+    const user = await loginWithGoogle(idToken, audience);
     handleAuthSuccess(user);
   };
 
-  const appleCredentialHandler = async (identityToken, appleUser) => {
-    const user = await loginWithApple(identityToken, appleUser);
+  const appleCredentialHandler = async (identityToken, appleUser, audience) => {
+    const user = await loginWithApple(identityToken, appleUser, audience);
     handleAuthSuccess(user);
   };
 
   // Returns { ok, message } straight through so the AuthPage OTP UI can show
   // inline state (sent / rate-limited / failed).
-  const requestOtpHandler = async (email, mode) => requestOtp(email, mode);
+  const requestOtpHandler = async (email, mode, audience) => requestOtp(email, mode, audience);
 
   const verifyOtpHandler = async (email, code, mode) => {
     const res = await verifyOtp(email, code, mode);
@@ -427,6 +428,25 @@ const InnerPage = () => {
       handleAuthSuccess(user);
     } catch (error) {
       console.error('Profile completion error:', error);
+    }
+  };
+
+  const completeCompanyProfileHandler = async (data) => {
+    if (!data?.name || !data?.phoneNumber || !data?.location || !data?.title) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      const user = await completeCompanyProfile({
+        name: data.name.trim(),
+        phoneNumber: data.phoneNumber,
+        location: data.location,
+        title: data.title,
+      });
+      handleAuthSuccess(user);
+    } catch (error) {
+      console.error('Company profile completion error:', error);
     }
   };
 
@@ -1217,15 +1237,20 @@ const InnerPage = () => {
 
   // Not signed in, or signed in but the passwordless account still needs its
   // profile filled out — either way, show the full-screen auth card instead
-  // of the dashboard shell.
-  if (!company || !company.profileCompleted) {
+  // of the dashboard shell. Strict `=== false` (not a falsy check): accounts
+  // that predate the profileCompleted field entirely (undefined) must be
+  // treated as complete, not forced through profile completion again.
+  const needsProfileCompletion = !!company && company.profileCompleted === false;
+  if (!company || needsProfileCompletion) {
     return (
       <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
         <AuthPage
-          needsProfileCompletion={!!company && !company.profileCompleted}
+          needsProfileCompletion={needsProfileCompletion}
+          isCompanyProfile={company?.role === 'company'}
           registerData={registerData}
           setRegisterData={setRegisterData}
           onCompleteProfile={completeProfileHandler}
+          onCompleteCompanyProfile={completeCompanyProfileHandler}
           onCancelProfileCompletion={company ? logout : undefined}
           onGoogleCredential={googleCredentialHandler}
           onAppleCredential={appleCredentialHandler}

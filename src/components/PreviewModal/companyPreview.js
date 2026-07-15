@@ -39,6 +39,12 @@ export default function CompanyPreview({companyInfo,setCompanyInfo}) {
                         <Typography>Title : {companyInfo?.title}</Typography>
                     </Box>
                     <Box sx={{marginTop:5}}>
+                        <Typography>Phone : {companyInfo?.phoneNumber || '—'}</Typography>
+                    </Box>
+                    <Box sx={{marginTop:5}}>
+                        <Typography>Address : {companyInfo?.location || '—'}</Typography>
+                    </Box>
+                    <Box sx={{marginTop:5}}>
                         <Typography>ID Documents</Typography>
                         {
                             companyInfo?.idDocuments?.map(item=>(
