@@ -46,30 +46,6 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             Discover products you'll love.
           </Typography>
 
-          <Box
-            onClick={() => setConsent((c) => !c)}
-            sx={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              bgcolor: 'rgba(255,255,255,0.92)',
-              borderRadius: 2,
-              p: 1.5,
-              mb: 2,
-              cursor: 'pointer',
-            }}
-          >
-            <Checkbox
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-              onClick={(e) => e.stopPropagation()}
-              sx={{ p: 0, mr: 1.5, mt: 0.25 }}
-            />
-            <Typography variant="body2" sx={{ color: 'text.primary' }}>
-              I agree to let the AI Concierge of this app learn from my scans, favorites, and browsing
-              history to personalize my experience.
-            </Typography>
-          </Box>
-
           <Typography variant="subtitle1" sx={{ ...whiteTextSx, fontWeight: 600, mt: 1, mb: 0.5 }}>
             Scan the products you love.
           </Typography>
@@ -80,10 +56,37 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             Your preferences and scan history may also be shared with participating brands and retailers
             to deliver more relevant recommendations and help improve products and services.
           </Typography>
-          <Typography variant="body2" sx={whiteTextSx}>
+          <Typography variant="body2" sx={{ ...whiteTextSx, mb: 2 }}>
             Your profile cannot be used to identify you personally. Your scans and preferences are linked
             only to your in-app profile—not to your real identity.
           </Typography>
+
+          {/* Placed after all the explanatory content, on purpose — the user
+              should read what they're agreeing to before the checkbox. No card
+              background: it sits directly on the transparent AuthShell card
+              like everything else here, so the checkbox itself gets a white
+              tint for contrast instead. */}
+          <Box
+            onClick={() => setConsent((c) => !c)}
+            sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, cursor: 'pointer' }}
+          >
+            <Checkbox
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              onClick={(e) => e.stopPropagation()}
+              sx={{
+                p: 0,
+                mr: 1.5,
+                mt: 0.25,
+                color: 'rgba(255,255,255,0.85)',
+                '&.Mui-checked': { color: '#fff' },
+              }}
+            />
+            <Typography variant="body2" sx={whiteTextSx}>
+              I agree to let the AI Concierge of this app learn from my scans, favorites, and browsing
+              history to personalize my experience.
+            </Typography>
+          </Box>
 
           {mode === 'preview' && (
             <Typography variant="body2" sx={{ ...whiteTextSx, fontStyle: 'italic', mt: 1.5 }}>
