@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, Checkbox, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import AuthShell from '../AuthShell';
 
 // Card background is transparent (see AuthShell) so the forest photo shows
@@ -20,7 +20,11 @@ const whiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
 //    signed-out AuthPage) — informational only, nothing is persisted, since
 //    there's no account to attach a decision to yet.
 const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, saving, apiError }) => {
-  const [consent, setConsent] = useState(!!initialConsent);
+  // `null` = no explicit choice made yet, which is what keeps the primary
+  // button disabled below. Only 'review' (reopened via Privacy Preferences)
+  // starts pre-selected, since a decision already exists to show; a fresh
+  // 'onboarding'/'preview' visit always requires an active choice.
+  const [consent, setConsent] = useState(mode === 'review' ? !!initialConsent : null);
 
   const handleSubmit = () => {
     if (mode === 'preview') {
@@ -67,30 +71,42 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
           </Typography>
 
           {/* Placed after all the explanatory content, on purpose — the user
-              should read what they're agreeing to before the checkbox. No card
-              background: it sits directly on the transparent AuthShell card
-              like everything else here, so the checkbox itself gets a white
-              tint for contrast instead. */}
-          <Box
-            onClick={() => setConsent((c) => !c)}
-            sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, cursor: 'pointer' }}
-          >
-            <Checkbox
-              checked={consent}
-              onChange={(e) => setConsent(e.target.checked)}
-              onClick={(e) => e.stopPropagation()}
+              should read what they're agreeing to before choosing. Nothing is
+              pre-selected for a fresh visit, and the primary button below
+              stays disabled until one of these is picked. */}
+          <Typography variant="body2" sx={{ ...whiteTextSx, mb: 1 }}>
+            I agree to let the AI Concierge of this app learn from my scans, favorites, and browsing
+            history to personalize my experience.
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 2 }}>
+            <Button
+              onClick={() => setConsent(true)}
+              variant={consent === true ? 'contained' : 'outlined'}
+              color={consent === true ? 'success' : 'inherit'}
               sx={{
-                p: 0,
-                mr: 1.5,
-                mt: 0.25,
-                color: 'rgba(255,255,255,0.85)',
-                '&.Mui-checked': { color: '#fff' },
+                flex: 1,
+                textTransform: 'none',
+                fontWeight: 400,
+                borderRadius: 2,
+                ...(consent === true ? {} : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
               }}
-            />
-            <Typography variant="body2" sx={whiteTextSx}>
-              I agree to let the AI Concierge of this app learn from my scans, favorites, and browsing
-              history to personalize my experience.
-            </Typography>
+            >
+              I Agree
+            </Button>
+            <Button
+              onClick={() => setConsent(false)}
+              variant={consent === false ? 'contained' : 'outlined'}
+              color={consent === false ? 'error' : 'inherit'}
+              sx={{
+                flex: 1,
+                textTransform: 'none',
+                fontWeight: 400,
+                borderRadius: 2,
+                ...(consent === false ? {} : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
+              }}
+            >
+              I Disagree
+            </Button>
           </Box>
 
           {mode === 'preview' && (
@@ -113,7 +129,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             variant="contained"
             fullWidth
             onClick={handleSubmit}
-            disabled={!!saving}
+            disabled={!!saving || consent === null}
             sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
           >
             {saving

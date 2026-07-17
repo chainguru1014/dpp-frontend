@@ -3,6 +3,11 @@ import { Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import background1 from '../../assets/background-1.jpg';
 
+// Serif face for the left-hand tagline — no Times New Roman on most
+// non-Windows systems, so this falls through to the nearest equivalents
+// before the generic serif keyword.
+const taglineFontFamily = '"Times New Roman", Times, Georgia, serif';
+
 // Shared visual shell for every sign-in surface (consumer/brand AuthPage and
 // the Staff Login page) — same background, left tagline, and card frame
 // everywhere. Card background is deliberately near-transparent so the forest
@@ -38,17 +43,18 @@ const AuthShell = ({ children, cardSx }) => (
         maxWidth: 340,
         flexShrink: 0,
         transform: 'translateX(-100px)',
+        fontFamily: taglineFontFamily,
       }}
     >
-      <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.25 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.25 }}>
         Digital Product
         <br />
         Passport
       </Typography>
-      <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.4 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.4 }}>
         for
       </Typography>
-      <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.25 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.25 }}>
         Traceability
         <br />
         Environment

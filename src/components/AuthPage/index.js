@@ -6,6 +6,7 @@ import { useGoogleAuth } from '../../features/auth/useGoogleAuth';
 import { useAppleAuth } from '../../features/auth/useAppleAuth';
 import AuthShell from '../AuthShell';
 import AudienceToggle from '../AudienceToggle';
+import yometelLogoWhite from '../../assets/yometel-logo-white.png';
 
 // Multi-color Google "G" mark (rendered inline so no extra asset is needed).
 const GoogleIcon = () => (
@@ -30,6 +31,12 @@ const GoogleIcon = () => (
 );
 
 const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff' } };
+
+// Smaller boxes/text for the sign-in/sign-up view specifically — the
+// profile-completion form (which also uses `fieldSx`) is unaffected.
+const compactFieldSx = { ...fieldSx, '& .MuiOutlinedInput-input': { fontSize: '0.85rem' } };
+const compactButtonSx = { textTransform: 'none', fontWeight: 400, fontSize: '0.85rem', py: 0.85, borderRadius: 2 };
+const compactLinkSx = { fontWeight: 400, fontSize: '0.8rem' };
 
 // Card background is deliberately transparent (see AuthShell) so the forest
 // photo shows through — any text sitting directly on it (not on a solid
@@ -131,6 +138,14 @@ const AuthPage = ({
 
   return (
     <AuthShell>
+        <Box sx={{ textAlign: 'center', mb: 2, flexShrink: 0 }}>
+          <Box
+            component="img"
+            src={yometelLogoWhite}
+            alt="Yometel"
+            sx={{ width: { xs: 130, sm: 160 }, height: 'auto', display: 'inline-block' }}
+          />
+        </Box>
         {needsProfileCompletion ? (
           <Box
             component="form"
@@ -303,14 +318,15 @@ const AuthPage = ({
                   required
                   autoFocus
                   fullWidth
-                  sx={fieldSx}
+                  size="small"
+                  sx={compactFieldSx}
                 />
                 <Button
                   type="submit"
                   variant="contained"
                   fullWidth
                   disabled={otpBusy}
-                  sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
+                  sx={compactButtonSx}
                 >
                   {otpBusy ? 'Sending…' : authMode === 'signup' ? 'Create account' : 'Send code'}
                 </Button>
@@ -323,7 +339,7 @@ const AuthPage = ({
                 onSubmit={handleVerifyCode}
                 sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
               >
-                <Typography variant="body2" sx={whiteTextSx}>
+                <Typography variant="body2" sx={{ ...whiteTextSx, fontSize: '0.85rem' }}>
                   Enter the 6-digit code sent to {otpEmail}
                 </Typography>
                 <TextField
@@ -333,11 +349,12 @@ const AuthPage = ({
                   required
                   autoFocus
                   fullWidth
+                  size="small"
                   inputProps={{
                     inputMode: 'numeric',
                     pattern: '[0-9]*',
                     maxLength: 6,
-                    style: { letterSpacing: 8, textAlign: 'center', fontSize: '1.3rem' },
+                    style: { letterSpacing: 6, textAlign: 'center', fontSize: '1.1rem' },
                   }}
                   sx={fieldSx}
                 />
@@ -346,7 +363,7 @@ const AuthPage = ({
                   variant="contained"
                   fullWidth
                   disabled={otpBusy || otpCode.length !== 6}
-                  sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
+                  sx={compactButtonSx}
                 >
                   {otpBusy ? 'Verifying…' : 'Verify'}
                 </Button>
@@ -356,9 +373,8 @@ const AuthPage = ({
                     onClick={resendCooldown > 0 || otpBusy ? undefined : handleResendCode}
                     sx={{
                       ...whiteTextSx,
+                      ...compactLinkSx,
                       color: resendCooldown > 0 || otpBusy ? 'rgba(255,255,255,0.6)' : '#fff',
-                      fontWeight: 400,
-                      fontSize: '0.95rem',
                       cursor: resendCooldown > 0 || otpBusy ? 'default' : 'pointer',
                       '&:hover': resendCooldown > 0 || otpBusy ? undefined : { textDecoration: 'underline' },
                     }}
@@ -374,8 +390,7 @@ const AuthPage = ({
                     }}
                     sx={{
                       ...whiteTextSx,
-                      fontWeight: 400,
-                      fontSize: '0.95rem',
+                      ...compactLinkSx,
                       cursor: 'pointer',
                       '&:hover': { textDecoration: 'underline' },
                     }}
@@ -390,7 +405,7 @@ const AuthPage = ({
               <Typography
                 role="status"
                 variant="body2"
-                sx={{ textAlign: 'center', ...whiteTextSx }}
+                sx={{ textAlign: 'center', fontSize: '0.8rem', ...whiteTextSx }}
               >
                 {otpNotice}
               </Typography>
@@ -408,11 +423,8 @@ const AuthPage = ({
                   tabIndex={-1}
                   aria-hidden="true"
                   sx={{
-                    textTransform: 'none',
-                    fontWeight: 400,
-                    py: 1.1,
+                    ...compactButtonSx,
                     px: 1,
-                    borderRadius: 2,
                     bgcolor: '#fff',
                     color: 'text.primary',
                     borderColor: '#d9dce1',
@@ -438,14 +450,11 @@ const AuthPage = ({
               <Button
                 fullWidth
                 onClick={handleAppleClick}
-                startIcon={<AppleIcon sx={{ fontSize: 20, color: '#000' }} />}
+                startIcon={<AppleIcon sx={{ fontSize: 18, color: '#000' }} />}
                 sx={{
+                  ...compactButtonSx,
                   flex: 1,
-                  textTransform: 'none',
-                  fontWeight: 400,
-                  py: 1.1,
                   px: 1,
-                  borderRadius: 2,
                   bgcolor: '#fff',
                   color: 'primary.main',
                   border: '1px solid #d9dce1',
@@ -466,8 +475,7 @@ const AuthPage = ({
                 onClick={() => { setAuthMode(authMode === 'signin' ? 'signup' : 'signin'); setOtpNotice(''); }}
                 sx={{
                   ...whiteTextSx,
-                  fontWeight: 400,
-                  fontSize: '0.95rem',
+                  ...compactLinkSx,
                   cursor: 'pointer',
                   '&:hover': { textDecoration: 'underline' },
                 }}
