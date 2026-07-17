@@ -7,7 +7,7 @@ import { Box, Typography } from '@mui/material';
 // White + shadow (not primary blue) because the card background is
 // transparent (see AuthShell) — plain blue text disappears into the forest photo.
 const AudienceToggle = ({ value, onSelectConsumer, onSelectStaff }) => (
-  <Box sx={{ textAlign: 'center', mt: 0.5 }}>
+  <Box sx={{ textAlign: 'center' }}>
     <Typography
       component="span"
       onClick={value === 'staff' ? onSelectConsumer : onSelectStaff}

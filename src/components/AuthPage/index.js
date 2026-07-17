@@ -465,46 +465,51 @@ const AuthPage = ({
               </Button>
             </Box>
 
-            {/* Consumer/Staff and Sign In/Sign Up each show only the single
-                relevant question — one tap to switch, no pill toggle. */}
-            <AudienceToggle value="consumer" onSelectConsumer={() => {}} onSelectStaff={() => navigate('/staff')} />
+            {/* Trailing links clustered tightly together (their own small
+                gap, not the parent's larger gap:1.5) so they read as one
+                "auxiliary links" group instead of three widely-spaced rows. */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+              {/* Consumer/Staff and Sign In/Sign Up each show only the single
+                  relevant question — one tap to switch, no pill toggle. */}
+              <AudienceToggle value="consumer" onSelectConsumer={() => {}} onSelectStaff={() => navigate('/staff')} />
 
-            <Box sx={{ textAlign: 'center', mt: 0.5 }}>
-              <Typography
-                component="span"
-                onClick={() => { setAuthMode(authMode === 'signin' ? 'signup' : 'signin'); setOtpNotice(''); }}
-                sx={{
-                  ...whiteTextSx,
-                  ...compactLinkSx,
-                  cursor: 'pointer',
-                  '&:hover': { textDecoration: 'underline' },
-                }}
-              >
-                {authMode === 'signin' ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
-              </Typography>
-            </Box>
-
-            {/* GDPR: lets a user reopen the AI Concierge consent screen at
-                any time to review or change their choice — see
-                AiConciergeConsentPage, opened via pages/index.js's
-                showPrivacyPreferences state. */}
-            {onOpenPrivacyPreferences && (
-              <Box sx={{ textAlign: 'center', mt: 1.5 }}>
+              <Box sx={{ textAlign: 'center' }}>
                 <Typography
                   component="span"
-                  onClick={onOpenPrivacyPreferences}
+                  onClick={() => { setAuthMode(authMode === 'signin' ? 'signup' : 'signin'); setOtpNotice(''); }}
                   sx={{
                     ...whiteTextSx,
-                    fontWeight: 400,
-                    fontSize: '0.85rem',
-                    textDecoration: 'underline',
+                    ...compactLinkSx,
                     cursor: 'pointer',
+                    '&:hover': { textDecoration: 'underline' },
                   }}
                 >
-                  Privacy Preferences
+                  {authMode === 'signin' ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
                 </Typography>
               </Box>
-            )}
+
+              {/* GDPR: lets a user reopen the AI Concierge consent screen at
+                  any time to review or change their choice — see
+                  AiConciergeConsentPage, opened via pages/index.js's
+                  showPrivacyPreferences state. */}
+              {onOpenPrivacyPreferences && (
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography
+                    component="span"
+                    onClick={onOpenPrivacyPreferences}
+                    sx={{
+                      ...whiteTextSx,
+                      fontWeight: 400,
+                      fontSize: '0.85rem',
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Privacy Preferences
+                  </Typography>
+                </Box>
+              )}
+            </Box>
           </Box>
         )}
     </AuthShell>
