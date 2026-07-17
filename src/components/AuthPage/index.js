@@ -124,10 +124,6 @@ const AuthPage = ({
 
   return (
     <AuthShell>
-        {!needsProfileCompletion && (
-          <AudienceToggle value="consumer" onSelectConsumer={() => {}} onSelectStaff={() => navigate('/staff')} />
-        )}
-
         {needsProfileCompletion ? (
           <Box
             component="form"
@@ -392,84 +388,85 @@ const AuthPage = ({
               </Typography>
             )}
 
-            {/* Custom-styled Google button with the real GIS button invisibly
-                stacked on top (see useGoogleAuth for why). */}
-            <Box sx={{ position: 'relative', width: '100%' }}>
+            {/* Google + Apple side by side, each half width. Google is a
+                custom-styled button with the real (invisible) GIS button
+                stacked on top — see useGoogleAuth for why. */}
+            <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+              <Box sx={{ position: 'relative', flex: 1 }}>
+                <Button
+                  variant="outlined"
+                  fullWidth
+                  startIcon={<GoogleIcon />}
+                  tabIndex={-1}
+                  aria-hidden="true"
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 400,
+                    py: 1.1,
+                    px: 1,
+                    borderRadius: 2,
+                    bgcolor: '#fff',
+                    color: 'text.primary',
+                    borderColor: '#d9dce1',
+                    '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
+                  }}
+                >
+                  Google
+                </Button>
+                <Box
+                  ref={googleButtonRef}
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    zIndex: 1,
+                    opacity: 0,
+                    overflow: 'hidden',
+                    cursor: 'pointer',
+                  }}
+                />
+              </Box>
+
+              {/* White background, app-blue label, black Apple glyph. */}
               <Button
-                variant="outlined"
                 fullWidth
-                startIcon={<GoogleIcon />}
-                tabIndex={-1}
-                aria-hidden="true"
+                onClick={handleAppleClick}
+                startIcon={<AppleIcon sx={{ fontSize: 20, color: '#000' }} />}
                 sx={{
+                  flex: 1,
                   textTransform: 'none',
                   fontWeight: 400,
                   py: 1.1,
+                  px: 1,
                   borderRadius: 2,
                   bgcolor: '#fff',
-                  color: 'text.primary',
-                  borderColor: '#d9dce1',
+                  color: 'primary.main',
+                  border: '1px solid #d9dce1',
                   '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
                 }}
               >
-                Continue with Google
+                Apple
               </Button>
-              <Box
-                ref={googleButtonRef}
+            </Box>
+
+            {/* Sign In/Sign Up and Consumer/Staff each show only the single
+                relevant question — one tap to switch, no pill toggle. */}
+            <Box sx={{ textAlign: 'center', mt: 0.5 }}>
+              <Typography
+                component="span"
+                onClick={() => { setAuthMode(authMode === 'signin' ? 'signup' : 'signin'); setOtpNotice(''); }}
                 sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  zIndex: 1,
-                  opacity: 0,
-                  overflow: 'hidden',
+                  color: 'primary.main',
+                  fontWeight: 400,
+                  fontSize: '0.95rem',
                   cursor: 'pointer',
+                  '&:hover': { textDecoration: 'underline' },
                 }}
-              />
+              >
+                {authMode === 'signin' ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
+              </Typography>
             </Box>
 
-            {/* Apple's HIG black pill button, built as a plain styled MUI Button. */}
-            <Button
-              fullWidth
-              onClick={handleAppleClick}
-              startIcon={<AppleIcon sx={{ fontSize: 20 }} />}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 400,
-                py: 1.1,
-                borderRadius: 2,
-                bgcolor: '#000',
-                color: '#fff',
-                border: '1px solid #000',
-                '&:hover': { bgcolor: '#1a1a1a', borderColor: '#1a1a1a' },
-              }}
-            >
-              Continue with Apple
-            </Button>
-
-            <Box sx={{ display: 'flex', bgcolor: 'rgba(0,0,0,0.06)', borderRadius: 999, p: 0.5, mt: 0.5 }}>
-              {[
-                { key: 'signin', label: 'Sign In' },
-                { key: 'signup', label: 'Sign Up' },
-              ].map((opt) => (
-                <Box
-                  key={opt.key}
-                  onClick={() => { setAuthMode(opt.key); setOtpNotice(''); }}
-                  sx={{
-                    flex: 1,
-                    textAlign: 'center',
-                    py: 0.7,
-                    borderRadius: 999,
-                    cursor: 'pointer',
-                    bgcolor: authMode === opt.key ? '#fff' : 'transparent',
-                    boxShadow: authMode === opt.key ? '0 1px 4px rgba(0,0,0,0.18)' : 'none',
-                  }}
-                >
-                  <Typography sx={{ fontSize: '0.85rem', fontWeight: authMode === opt.key ? 600 : 400, color: authMode === opt.key ? '#1B5E20' : 'text.secondary' }}>
-                    {opt.label}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
+            <AudienceToggle value="consumer" onSelectConsumer={() => {}} onSelectStaff={() => navigate('/staff')} />
           </Box>
         )}
     </AuthShell>

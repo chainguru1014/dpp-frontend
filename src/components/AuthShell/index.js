@@ -1,13 +1,13 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import yometelLogo from '../../assets/yometel-logo-trans.png';
 import background1 from '../../assets/background-1.jpg';
 
 // Shared visual shell for every sign-in surface (consumer/brand AuthPage and
-// the Staff Login page) — same background, left tagline, logo, and card
-// frame everywhere. Only the card's inner content (the actual form) differs
-// per caller, passed as `children`.
+// the Staff Login page) — same background, left tagline, and card frame
+// everywhere. Card background is deliberately near-transparent so the forest
+// photo shows through. Only the card's inner content (the actual form)
+// differs per caller, passed as `children`.
 const AuthShell = ({ children, cardSx }) => (
   <Box
     sx={{
@@ -64,9 +64,9 @@ const AuthShell = ({ children, cardSx }) => (
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        bgcolor: alpha('#f3f4f6', 0.45),
-        backdropFilter: 'blur(6px)',
-        WebkitBackdropFilter: 'blur(6px)',
+        bgcolor: alpha('#f3f4f6', 0.2),
+        backdropFilter: 'blur(3px)',
+        WebkitBackdropFilter: 'blur(3px)',
         border: '2px solid',
         borderColor: '#1B5E20',
         borderRadius: 3,
@@ -76,16 +76,6 @@ const AuthShell = ({ children, cardSx }) => (
         ...cardSx,
       }}
     >
-      {/* Yometel wordmark (pinned) */}
-      <Box sx={{ textAlign: 'center', mb: 4, flexShrink: 0 }}>
-        <Box
-          component="img"
-          src={yometelLogo}
-          alt="Yometel"
-          sx={{ width: { xs: 150, sm: 190 }, height: 'auto', display: 'inline-block' }}
-        />
-      </Box>
-
       {children}
     </Box>
   </Box>

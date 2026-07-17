@@ -51,8 +51,6 @@ const StaffLoginPage = () => {
 
   return (
     <AuthShell>
-      <AudienceToggle value="staff" onSelectConsumer={() => navigate('/')} onSelectStaff={() => {}} />
-
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, justifyContent: 'center', gap: 1.5 }}>
         <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary', mb: 0.5 }}>
           Sign in with your corporate email
@@ -123,6 +121,8 @@ const StaffLoginPage = () => {
             {notice}
           </Typography>
         )}
+
+        <AudienceToggle value="staff" onSelectConsumer={() => navigate('/')} onSelectStaff={() => {}} />
       </Box>
     </AuthShell>
   );
