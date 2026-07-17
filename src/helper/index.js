@@ -202,6 +202,21 @@ export const completeProfile = async (data, token) => {
     }
 }
 
+// Records (or changes) the AI Concierge personalization consent decision —
+// see authController.aiConciergeConsent. Does NOT alert() on failure; the
+// consent screen shows its own inline error like the OTP flow does.
+export const saveAiConciergeConsent = async (consent, token) => {
+    try {
+        const res = await axios.post(`${Backend_URL}auth/ai-concierge-consent`, { consent }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return normalizeAuthResponse(res);
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+}
+
 // Admin scan-history feed (filters + search + pagination).
 export const getScanHistory = async (params) => {
     try {

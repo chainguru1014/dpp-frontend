@@ -47,6 +47,7 @@ const AuthPage = ({
   onAppleCredential,
   onRequestOtp,
   onVerifyOtp,
+  onOpenPrivacyPreferences,
 }) => {
   // OTP flow's own local UI state — nothing here needs to be lifted up, the
   // parent only cares once verification actually succeeds.
@@ -474,6 +475,28 @@ const AuthPage = ({
                 {authMode === 'signin' ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
               </Typography>
             </Box>
+
+            {/* GDPR: lets a user reopen the AI Concierge consent screen at
+                any time to review or change their choice — see
+                AiConciergeConsentPage, opened via pages/index.js's
+                showPrivacyPreferences state. */}
+            {onOpenPrivacyPreferences && (
+              <Box sx={{ textAlign: 'center', mt: 1.5 }}>
+                <Typography
+                  component="span"
+                  onClick={onOpenPrivacyPreferences}
+                  sx={{
+                    ...whiteTextSx,
+                    fontWeight: 400,
+                    fontSize: '0.85rem',
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Privacy Preferences
+                </Typography>
+              </Box>
+            )}
           </Box>
         )}
     </AuthShell>

@@ -67,6 +67,7 @@ import PreviewModal from '../components/PreviewModal';
 import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
 import AuthPage from '../components/AuthPage';
+import AiConciergeConsentPage from '../components/AiConciergeConsentPage';
 import yometelLogoWhite from '../assets/yometel-logo-white.png';
 import ProfilePage from '../features/profile/ProfilePage';
 import EmployeeManagementPage from '../features/employee-audit/EmployeeManagementPage';
@@ -116,6 +117,7 @@ const InnerPage = () => {
     requestOtp,
     verifyOtp,
     completeProfile,
+    saveAiConciergeConsent,
     isAdmin,
     isAppUser,
     canManageProducts,
@@ -125,6 +127,13 @@ const InnerPage = () => {
   // ESG and LCA feeds are restricted to the products they own.
   const ownerScopeKind = isAppUser ? 'User' : 'Company';
   const ownerScopeId = company?._id || company?.id;
+
+  // GDPR: the "Privacy Preferences" link (on AuthPage) can reopen the AI
+  // Concierge consent screen at any time, independent of the login/profile
+  // gates below — see the top-level render branches.
+  const [showPrivacyPreferences, setShowPrivacyPreferences] = useState(false);
+  const [aiConsentBusy, setAiConsentBusy] = useState(false);
+  const [aiConsentError, setAiConsentError] = useState('');
 
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
@@ -428,6 +437,22 @@ const InnerPage = () => {
     } catch (error) {
       console.error('Profile completion error:', error);
     }
+  };
+
+  // Shared by both the mandatory first-login gate (`needsAiConsent` below)
+  // and the "Privacy Preferences" link (`showPrivacyPreferences`) — the only
+  // difference is whether the gate clears itself (onboarding, once `company`
+  // updates) or the link's local `showPrivacyPreferences` flag needs closing.
+  const handleAiConsentSubmit = async (consent) => {
+    setAiConsentBusy(true);
+    setAiConsentError('');
+    const updated = await saveAiConciergeConsent(consent);
+    setAiConsentBusy(false);
+    if (!updated) {
+      setAiConsentError('Could not save your preference. Please try again.');
+      return;
+    }
+    setShowPrivacyPreferences(false);
   };
 
   const resetFields = () => {
@@ -1215,6 +1240,24 @@ const InnerPage = () => {
 
   const isProfileMenuOpen = Boolean(profileMenuAnchor);
 
+  // GDPR: "Privacy Preferences" reopens the AI Concierge consent screen at
+  // any time, regardless of sign-in state — works whether or not `company`
+  // exists (see AiConciergeConsentPage's 'preview' vs 'review' mode).
+  if (showPrivacyPreferences) {
+    return (
+      <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
+        <AiConciergeConsentPage
+          mode={company ? 'review' : 'preview'}
+          initialConsent={!!company?.aiConciergeConsent}
+          onSubmit={handleAiConsentSubmit}
+          onClose={() => { setShowPrivacyPreferences(false); setAiConsentError(''); }}
+          saving={aiConsentBusy}
+          apiError={aiConsentError}
+        />
+      </Box>
+    );
+  }
+
   // Not signed in, or signed in but the passwordless account still needs its
   // profile filled out — either way, show the full-screen auth card instead
   // of the dashboard shell. Strict `=== false` (not a falsy check): accounts
@@ -1234,6 +1277,28 @@ const InnerPage = () => {
           onAppleCredential={appleCredentialHandler}
           onRequestOtp={requestOtpHandler}
           onVerifyOtp={verifyOtpHandler}
+          onOpenPrivacyPreferences={() => setShowPrivacyPreferences(true)}
+        />
+      </Box>
+    );
+  }
+
+  // First login (or any older app-user account that predates this feature
+  // and never decided) — gate on the AI Concierge personalization consent
+  // screen before the dashboard. Only relevant to app users (consumers);
+  // brand/company and admin accounts were never asked. Once `company`
+  // updates (handleAiConsentSubmit -> saveAiConciergeConsent), this clears
+  // itself and the dashboard renders below, exactly like needsProfileCompletion.
+  const needsAiConsent = isAppUser && !company.aiConciergeConsentAt;
+  if (needsAiConsent) {
+    return (
+      <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
+        <AiConciergeConsentPage
+          mode="onboarding"
+          initialConsent={!!company.aiConciergeConsent}
+          onSubmit={handleAiConsentSubmit}
+          saving={aiConsentBusy}
+          apiError={aiConsentError}
         />
       </Box>
     );

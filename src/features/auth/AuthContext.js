@@ -5,6 +5,7 @@ import {
   requestOtp as requestOtpApi,
   verifyOtp as verifyOtpApi,
   completeProfile as completeProfileApi,
+  saveAiConciergeConsent as saveAiConciergeConsentApi,
 } from '../../helper';
 
 const AuthContext = createContext(null);
@@ -179,6 +180,11 @@ export const AuthProvider = ({ children }) => {
 
   const completeProfile = async (payload) => applyAuthResult(await completeProfileApi(payload, token));
 
+  // Records (or changes) the AI Concierge personalization consent decision —
+  // see helper.js saveAiConciergeConsent / authController.aiConciergeConsent.
+  // Returns null on failure so the caller can show its own inline error.
+  const saveAiConciergeConsent = async (consent) => applyAuthResult(await saveAiConciergeConsentApi(consent, token));
+
   const logout = () => {
     setCompany(null);
     setToken(null);
@@ -215,6 +221,7 @@ export const AuthProvider = ({ children }) => {
         requestOtp,
         verifyOtp,
         completeProfile,
+        saveAiConciergeConsent,
         logout,
         isAdmin,
         isAppUser,
