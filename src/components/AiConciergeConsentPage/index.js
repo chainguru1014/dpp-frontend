@@ -30,8 +30,13 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
     onSubmit(consent);
   };
 
+  // A fixed `height` (not just `maxHeight`) — AuthShell's card otherwise only
+  // caps itself and shrinks to fit content, so with this content (which fits
+  // well under the default 82-94vh cap) the scroll area below never actually
+  // triggered. ~2/3 of that default cap forces the content to overflow and
+  // scroll instead, and makes the card itself noticeably shorter.
   return (
-    <AuthShell cardSx={{ maxHeight: { xs: '94vh', sm: '86vh' } }}>
+    <AuthShell cardSx={{ height: { xs: '63vh', sm: '57vh' }, maxHeight: { xs: '63vh', sm: '57vh' } }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}>
           <Typography
