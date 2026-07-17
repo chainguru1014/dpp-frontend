@@ -31,6 +31,12 @@ const GoogleIcon = () => (
 
 const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff' } };
 
+// Card background is deliberately transparent (see AuthShell) so the forest
+// photo shows through — any text sitting directly on it (not on a solid
+// button/field surface) needs to be white with a shadow to stay legible
+// against a busy, variable-brightness photo.
+const whiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
+
 const AuthPage = ({
   needsProfileCompletion,
   registerData,
@@ -130,7 +136,7 @@ const AuthPage = ({
             onSubmit={handleProfileSubmit}
             sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
           >
-            <Typography variant="body2" sx={{ mb: 1.5, flexShrink: 0, color: 'text.secondary' }}>
+            <Typography variant="body2" sx={{ mb: 1.5, flexShrink: 0, ...whiteTextSx }}>
               Just a few more details to finish setting up your account.
             </Typography>
 
@@ -267,7 +273,7 @@ const AuthPage = ({
                     component="span"
                     onClick={onCancelProfileCompletion}
                     sx={{
-                      color: 'primary.main',
+                      ...whiteTextSx,
                       fontWeight: 400,
                       fontSize: '0.95rem',
                       cursor: 'pointer',
@@ -316,7 +322,7 @@ const AuthPage = ({
                 onSubmit={handleVerifyCode}
                 sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
               >
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                <Typography variant="body2" sx={whiteTextSx}>
                   Enter the 6-digit code sent to {otpEmail}
                 </Typography>
                 <TextField
@@ -348,7 +354,8 @@ const AuthPage = ({
                     component="span"
                     onClick={resendCooldown > 0 || otpBusy ? undefined : handleResendCode}
                     sx={{
-                      color: resendCooldown > 0 || otpBusy ? 'text.disabled' : 'primary.main',
+                      ...whiteTextSx,
+                      color: resendCooldown > 0 || otpBusy ? 'rgba(255,255,255,0.6)' : '#fff',
                       fontWeight: 400,
                       fontSize: '0.95rem',
                       cursor: resendCooldown > 0 || otpBusy ? 'default' : 'pointer',
@@ -365,7 +372,7 @@ const AuthPage = ({
                       setOtpNotice('');
                     }}
                     sx={{
-                      color: 'primary.main',
+                      ...whiteTextSx,
                       fontWeight: 400,
                       fontSize: '0.95rem',
                       cursor: 'pointer',
@@ -382,7 +389,7 @@ const AuthPage = ({
               <Typography
                 role="status"
                 variant="body2"
-                sx={{ textAlign: 'center', color: 'text.secondary' }}
+                sx={{ textAlign: 'center', ...whiteTextSx }}
               >
                 {otpNotice}
               </Typography>
@@ -448,14 +455,16 @@ const AuthPage = ({
               </Button>
             </Box>
 
-            {/* Sign In/Sign Up and Consumer/Staff each show only the single
+            {/* Consumer/Staff and Sign In/Sign Up each show only the single
                 relevant question — one tap to switch, no pill toggle. */}
+            <AudienceToggle value="consumer" onSelectConsumer={() => {}} onSelectStaff={() => navigate('/staff')} />
+
             <Box sx={{ textAlign: 'center', mt: 0.5 }}>
               <Typography
                 component="span"
                 onClick={() => { setAuthMode(authMode === 'signin' ? 'signup' : 'signin'); setOtpNotice(''); }}
                 sx={{
-                  color: 'primary.main',
+                  ...whiteTextSx,
                   fontWeight: 400,
                   fontSize: '0.95rem',
                   cursor: 'pointer',
@@ -465,8 +474,6 @@ const AuthPage = ({
                 {authMode === 'signin' ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
               </Typography>
             </Box>
-
-            <AudienceToggle value="consumer" onSelectConsumer={() => {}} onSelectStaff={() => navigate('/staff')} />
           </Box>
         )}
     </AuthShell>

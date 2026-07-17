@@ -7,6 +7,10 @@ import AudienceToggle from '../../components/AudienceToggle';
 
 const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff' } };
 
+// Card background is transparent (see AuthShell) so the forest photo shows
+// through — text sitting directly on it needs to be white with a shadow.
+const whiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
+
 // Same visual shell as the consumer/brand AuthPage (background, tagline,
 // logo, card frame) — only the card's inner content differs: a corporate
 // email/OTP form instead of nickname/social buttons. See the client brief's
@@ -52,7 +56,7 @@ const StaffLoginPage = () => {
   return (
     <AuthShell>
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, justifyContent: 'center', gap: 1.5 }}>
-        <Typography variant="body2" sx={{ textAlign: 'center', color: 'text.secondary', mb: 0.5 }}>
+        <Typography variant="body2" sx={{ textAlign: 'center', mb: 0.5, ...whiteTextSx }}>
           Sign in with your corporate email
         </Typography>
 
@@ -81,7 +85,7 @@ const StaffLoginPage = () => {
           </Box>
         ) : (
           <Box component="form" onSubmit={handleVerify} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            <Typography variant="body2" sx={whiteTextSx}>
               Enter the 6-digit code sent to {email.trim()}
             </Typography>
             <TextField
@@ -108,7 +112,7 @@ const StaffLoginPage = () => {
               <Typography
                 component="span"
                 onClick={() => { setStage('email'); setCode(''); setNotice(''); }}
-                sx={{ color: 'primary.main', fontWeight: 400, fontSize: '0.95rem', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                sx={{ ...whiteTextSx, fontWeight: 400, fontSize: '0.95rem', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
               >
                 Use a different email
               </Typography>
@@ -117,7 +121,7 @@ const StaffLoginPage = () => {
         )}
 
         {!!notice && (
-          <Typography role="status" variant="body2" sx={{ textAlign: 'center', color: 'text.secondary' }}>
+          <Typography role="status" variant="body2" sx={{ textAlign: 'center', ...whiteTextSx }}>
             {notice}
           </Typography>
         )}
