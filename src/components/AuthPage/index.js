@@ -34,8 +34,22 @@ const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff'
 
 // Smaller boxes/text for the sign-in/sign-up view specifically — the
 // profile-completion form (which also uses `fieldSx`) is unaffected.
-const compactFieldSx = { ...fieldSx, '& .MuiOutlinedInput-input': { fontSize: '0.85rem' } };
-const compactButtonSx = { textTransform: 'none', fontWeight: 400, fontSize: '0.85rem', py: 0.85, borderRadius: 2 };
+// Shared fixed height so the email field, Send code/Verify button, and the
+// Google/Apple buttons all line up instead of the buttons' own vertical
+// padding making them a few px taller/shorter than the input.
+const COMPACT_CONTROL_HEIGHT = 40;
+const compactFieldSx = {
+  ...fieldSx,
+  '& .MuiOutlinedInput-root': { ...fieldSx['& .MuiOutlinedInput-root'], height: COMPACT_CONTROL_HEIGHT },
+  '& .MuiOutlinedInput-input': { fontSize: '0.85rem' },
+};
+const compactButtonSx = {
+  textTransform: 'none',
+  fontWeight: 400,
+  fontSize: '0.85rem',
+  height: COMPACT_CONTROL_HEIGHT,
+  borderRadius: 2,
+};
 const compactLinkSx = { fontWeight: 400, fontSize: '0.8rem' };
 
 // Card background is deliberately transparent (see AuthShell) so the forest
