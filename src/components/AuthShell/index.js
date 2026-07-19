@@ -3,13 +3,12 @@ import { Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import background1 from '../../assets/background-1.jpg';
 
-// Serif face for the left-hand tagline — no Times New Roman on most
-// non-Windows systems, so this falls through to the nearest equivalents
-// before the generic serif keyword.
-const taglineFontFamily = '"Times New Roman", Times, Georgia, serif';
+// Cochin is a macOS/iOS system serif — falls through to the nearest
+// look-alikes on Windows/Linux/Android, where it isn't installed.
+const taglineFontFamily = 'Cochin, Georgia, "Times New Roman", Times, serif';
 
 // Shared visual shell for every sign-in surface (consumer/brand AuthPage and
-// the Staff Login page) — same background, left tagline, and card frame
+// the Staff Login page) — same background, flanking taglines, and card frame
 // everywhere. Card background is deliberately near-transparent so the forest
 // photo shows through. Only the card's inner content (the actual form)
 // differs per caller, passed as `children`.
@@ -18,12 +17,21 @@ const AuthShell = ({ children, cardSx }) => (
     sx={{
       width: '100vw',
       maxWidth: '100vw',
+      // `dvh` (not `vh`) so this tracks the *actual visible* viewport as
+      // iOS Safari's address bar/toolbar hides and shows, and as the
+      // on-screen keyboard opens for the code-input step — using a static
+      // `vh` here while the card below also caps itself in viewport units
+      // let the two disagree on the true visible height, which is what
+      // made the card's top content (logo/title) ride up and overlap the
+      // newly-appeared "Enter the 6-digit code…" row once the keyboard
+      // opened.
       height: '100dvh',
       minHeight: '100dvh',
-      display: 'flex',
+      display: 'grid',
+      gridTemplateColumns: { xs: '1fr', md: '1fr auto 1fr' },
       alignItems: 'center',
-      justifyContent: 'center',
-      gap: { xs: 0, md: 10 },
+      justifyItems: 'center',
+      columnGap: { xs: 0, md: 6 },
       boxSizing: 'border-box',
       overflow: 'hidden',
       backgroundImage: `url(${background1})`,
@@ -33,16 +41,17 @@ const AuthShell = ({ children, cardSx }) => (
       px: { xs: 2, md: 6 },
     }}
   >
-    {/* Left tagline */}
+    {/* Left tagline — its own grid column (not a flex sibling nudged with a
+        transform hack) so the card in the middle column stays truly
+        centered on the page regardless of how long this text is. */}
     <Box
       sx={{
         display: { xs: 'none', md: 'flex' },
         flexDirection: 'column',
+        justifySelf: 'end',
         color: '#fff',
         textShadow: '0 2px 8px rgba(0,0,0,0.55)',
         maxWidth: 340,
-        flexShrink: 0,
-        transform: 'translateX(-100px)',
         fontFamily: taglineFontFamily,
       }}
     >
@@ -55,9 +64,9 @@ const AuthShell = ({ children, cardSx }) => (
         for
       </Typography>
       <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.25 }}>
-        Traceability
+        Circular Economy
         <br />
-        Environment
+        &amp; Environment
       </Typography>
     </Box>
 
@@ -66,23 +75,47 @@ const AuthShell = ({ children, cardSx }) => (
       sx={{
         width: { xs: '100%', sm: 360 },
         maxWidth: '92vw',
-        maxHeight: { xs: '94vh', sm: '82vh' },
+        maxHeight: { xs: '94dvh', sm: '82dvh' },
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         bgcolor: alpha('#f3f4f6', 0.2),
         backdropFilter: 'blur(3px)',
         WebkitBackdropFilter: 'blur(3px)',
-        border: '2px solid',
-        borderColor: '#1B5E20',
         borderRadius: 3,
         boxShadow: '0 24px 60px rgba(0,0,0,0.28)',
         px: { xs: 2.5, sm: 4 },
         py: { xs: 3, sm: 4.5 },
+        fontFamily: taglineFontFamily,
+        '& .MuiTypography-root': { fontFamily: taglineFontFamily },
         ...cardSx,
       }}
     >
       {children}
+    </Box>
+
+    {/* Right tagline — mirrors the left column so the card in between is
+        flanked symmetrically instead of only having text on one side. */}
+    <Box
+      sx={{
+        display: { xs: 'none', md: 'flex' },
+        flexDirection: 'column',
+        justifySelf: 'start',
+        color: '#fff',
+        textShadow: '0 2px 8px rgba(0,0,0,0.55)',
+        maxWidth: 340,
+        fontFamily: taglineFontFamily,
+      }}
+    >
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.25 }}>
+        Improved Traceability
+      </Typography>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.4 }}>
+        as
+      </Typography>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.25 }}>
+        Your Concierge
+      </Typography>
     </Box>
   </Box>
 );

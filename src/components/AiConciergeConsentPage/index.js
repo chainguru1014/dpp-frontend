@@ -34,13 +34,13 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
     onSubmit(consent);
   };
 
-  // A fixed `height` (not just `maxHeight`) — AuthShell's card otherwise only
-  // caps itself and shrinks to fit content, so with this content (which fits
-  // well under the default 82-94vh cap) the scroll area below never actually
-  // triggered. ~2/3 of that default cap forces the content to overflow and
-  // scroll instead, and makes the card itself noticeably shorter.
+  // No fixed `height` override here (there used to be one, forcing the card
+  // down to ~60vh purely to trigger a scrollbar) — AuthShell's own default
+  // cap (94vh xs / 82vh sm) is tall enough for this content to fit without
+  // scrolling, while still capping/scrolling as a fallback on very short
+  // screens (see cardScroll-equivalent `overflowY: 'auto'` below).
   return (
-    <AuthShell cardSx={{ height: { xs: '63vh', sm: '57vh' }, maxHeight: { xs: '63vh', sm: '57vh' } }}>
+    <AuthShell cardSx={{ height: 'auto', maxHeight: { xs: '94dvh', sm: '88dvh' } }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}>
           <Typography
@@ -82,13 +82,17 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             <Button
               onClick={() => setConsent(true)}
               variant={consent === true ? 'contained' : 'outlined'}
-              color={consent === true ? 'success' : 'inherit'}
+              color="inherit"
               sx={{
                 flex: 1,
                 textTransform: 'none',
                 fontWeight: 400,
                 borderRadius: 2,
-                ...(consent === true ? {} : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
+                // Bright green (not the theme's muted `success` token) so the
+                // active "agreed" state reads as vividly green.
+                ...(consent === true
+                  ? { bgcolor: '#22c55e', borderColor: '#22c55e', color: '#fff', '&:hover': { bgcolor: '#16a34a', borderColor: '#16a34a' } }
+                  : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
               }}
             >
               I Agree

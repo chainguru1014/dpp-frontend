@@ -470,7 +470,7 @@ const AuthPage = ({
                   flex: 1,
                   px: 1,
                   bgcolor: '#fff',
-                  color: 'primary.main',
+                  color: '#000',
                   border: '1px solid #d9dce1',
                   '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
                 }}
