@@ -43,11 +43,22 @@ const compactFieldSx = {
   '& .MuiOutlinedInput-root': { ...fieldSx['& .MuiOutlinedInput-root'], height: COMPACT_CONTROL_HEIGHT },
   '& .MuiOutlinedInput-input': { fontSize: '0.85rem' },
 };
+// 2/3 of COMPACT_CONTROL_HEIGHT — the Verify/Send code/Google/Apple buttons
+// and the code-entry input, specifically (NOT the email field above, which
+// stays at the full COMPACT_CONTROL_HEIGHT via compactFieldSx).
+const SMALL_CONTROL_HEIGHT = Math.round((COMPACT_CONTROL_HEIGHT * 2) / 3);
+const smallFieldSx = {
+  ...fieldSx,
+  '& .MuiOutlinedInput-root': { ...fieldSx['& .MuiOutlinedInput-root'], height: SMALL_CONTROL_HEIGHT },
+  '& .MuiOutlinedInput-input': { padding: '4px 14px' },
+};
 const compactButtonSx = {
   textTransform: 'none',
   fontWeight: 400,
   fontSize: '0.85rem',
-  height: COMPACT_CONTROL_HEIGHT,
+  height: SMALL_CONTROL_HEIGHT,
+  minHeight: SMALL_CONTROL_HEIGHT,
+  py: 0,
   borderRadius: 2,
 };
 const compactLinkSx = { fontWeight: 400, fontSize: '0.8rem' };
@@ -370,7 +381,7 @@ const AuthPage = ({
                     maxLength: 6,
                     style: { letterSpacing: 6, textAlign: 'center', fontSize: '1.1rem' },
                   }}
-                  sx={fieldSx}
+                  sx={smallFieldSx}
                 />
                 <Button
                   type="submit"

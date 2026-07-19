@@ -48,7 +48,9 @@ const AuthShell = ({ children, cardSx }) => (
       sx={{
         display: { xs: 'none', md: 'flex' },
         flexDirection: 'column',
+        alignItems: 'center',
         justifySelf: 'end',
+        textAlign: 'center',
         color: '#fff',
         textShadow: '0 2px 8px rgba(0,0,0,0.55)',
         maxWidth: 340,
@@ -100,7 +102,9 @@ const AuthShell = ({ children, cardSx }) => (
       sx={{
         display: { xs: 'none', md: 'flex' },
         flexDirection: 'column',
+        alignItems: 'center',
         justifySelf: 'start',
+        textAlign: 'center',
         color: '#fff',
         textShadow: '0 2px 8px rgba(0,0,0,0.55)',
         maxWidth: 340,
