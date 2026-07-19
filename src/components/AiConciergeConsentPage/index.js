@@ -6,6 +6,12 @@ import AuthShell from '../AuthShell';
 // through — text sitting directly on it needs to be white with a shadow.
 const whiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
 
+// Matches AuthPage's SMALL_CONTROL_HEIGHT (2/3 of its old 40px control
+// height) — same height as the Send code/Verify/Google/Apple buttons there,
+// so the I Agree / I Disagree buttons here are visually consistent with the
+// rest of the sign-in flow's controls.
+const CONSENT_BUTTON_HEIGHT = 27;
+
 // Shown once after a User's first login (see pages/index.js `needsAiConsent`,
 // derived from `!company.aiConciergeConsentAt`) and reachable any time after
 // via the "Privacy Preferences" link on AuthPage, so a user can change or
@@ -88,6 +94,9 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                 textTransform: 'none',
                 fontWeight: 400,
                 borderRadius: 2,
+                height: CONSENT_BUTTON_HEIGHT,
+                minHeight: CONSENT_BUTTON_HEIGHT,
+                py: 0,
                 // Bright green (not the theme's muted `success` token) so the
                 // active "agreed" state reads as vividly green.
                 ...(consent === true
@@ -106,6 +115,9 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                 textTransform: 'none',
                 fontWeight: 400,
                 borderRadius: 2,
+                height: CONSENT_BUTTON_HEIGHT,
+                minHeight: CONSENT_BUTTON_HEIGHT,
+                py: 0,
                 ...(consent === false ? {} : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
               }}
             >
