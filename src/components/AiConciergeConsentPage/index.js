@@ -146,7 +146,14 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             fullWidth
             onClick={handleSubmit}
             disabled={!!saving || consent === null}
-            sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 400,
+              borderRadius: 2,
+              height: CONSENT_BUTTON_HEIGHT,
+              minHeight: CONSENT_BUTTON_HEIGHT,
+              py: 0,
+            }}
           >
             {saving
               ? 'Saving…'
