@@ -34,23 +34,21 @@ const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff'
 
 // Smaller boxes/text for the sign-in/sign-up view specifically — the
 // profile-completion form (which also uses `fieldSx`) is unaffected.
-// Shared fixed height so the email field, Send code/Verify button, and the
-// Google/Apple buttons all line up instead of the buttons' own vertical
-// padding making them a few px taller/shorter than the input.
+// Shared fixed height so the email field, code field, Send code/Verify
+// button, and the Google/Apple buttons all line up instead of the buttons'
+// own vertical padding making them a few px taller/shorter than the inputs.
 const COMPACT_CONTROL_HEIGHT = 40;
-const compactFieldSx = {
-  ...fieldSx,
-  '& .MuiOutlinedInput-root': { ...fieldSx['& .MuiOutlinedInput-root'], height: COMPACT_CONTROL_HEIGHT },
-  '& .MuiOutlinedInput-input': { fontSize: '0.85rem' },
-};
-// 2/3 of COMPACT_CONTROL_HEIGHT — the Verify/Send code/Google/Apple buttons
-// and the code-entry input, specifically (NOT the email field above, which
-// stays at the full COMPACT_CONTROL_HEIGHT via compactFieldSx).
+// 2/3 of COMPACT_CONTROL_HEIGHT — every control on this view (email field,
+// code field, Send code/Verify button, Google/Apple buttons) uses this
+// smaller height now.
 const SMALL_CONTROL_HEIGHT = Math.round((COMPACT_CONTROL_HEIGHT * 2) / 3);
 const smallFieldSx = {
   ...fieldSx,
   '& .MuiOutlinedInput-root': { ...fieldSx['& .MuiOutlinedInput-root'], height: SMALL_CONTROL_HEIGHT },
-  '& .MuiOutlinedInput-input': { padding: '4px 14px' },
+  // The code field overrides this via its own `inputProps.style` (inline
+  // style wins over this sx-generated class), so this only really governs
+  // the email field's text size.
+  '& .MuiOutlinedInput-input': { padding: '4px 14px', fontSize: '0.85rem' },
 };
 const compactButtonSx = {
   textTransform: 'none',
@@ -111,8 +109,10 @@ const AuthPage = ({
     const res = await onRequestOtp(email, authMode);
     setOtpBusy(false);
     if (res?.ok) {
+      // No "Code sent" success notice here — the code-entry step's own
+      // "Enter the 6-digit code sent to {email}" line already says this,
+      // so a separate notice below the form was just redundant.
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
-      setOtpNotice(res.message || 'Code sent — check your email.');
     } else {
       setOtpNotice(res?.message || 'Failed to send code. Please try again.');
     }
@@ -344,7 +344,7 @@ const AuthPage = ({
                   autoFocus
                   fullWidth
                   size="small"
-                  sx={compactFieldSx}
+                  sx={smallFieldSx}
                 />
                 <Button
                   type="submit"
