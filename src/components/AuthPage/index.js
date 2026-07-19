@@ -8,14 +8,14 @@ import AuthShell from '../AuthShell';
 import AudienceToggle from '../AudienceToggle';
 import yometelLogoWhite from '../../assets/yometel-logo-white.png';
 
-// Monochrome Google "G" mark (Simple Icons, CC0) — white so it reads against
-// this button's black background (was the official 4-color "G" on white).
+// Monochrome Google "G" mark (Simple Icons, CC0) — black to match this
+// button's white background (was the official 4-color "G").
 // Sized to fit inside the compact Send-code-height buttons (see
 // SMALL_CONTROL_HEIGHT) without crowding them.
 const GoogleIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
     <path
-      fill="#ffffff"
+      fill="#000000"
       d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
     />
   </svg>
@@ -441,10 +441,10 @@ const AuthPage = ({
                   sx={{
                     ...compactButtonSx,
                     px: 1,
-                    bgcolor: '#000',
-                    color: '#fff',
-                    borderColor: '#000',
-                    '&:hover': { bgcolor: '#222', borderColor: '#222' },
+                    bgcolor: '#fff',
+                    color: '#000',
+                    borderColor: '#d9dce1',
+                    '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
                   }}
                 >
                   Google
