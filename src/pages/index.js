@@ -72,7 +72,7 @@ import yometelLogoWhite from '../assets/yometel-logo-white.png';
 import ProfilePage from '../features/profile/ProfilePage';
 import EmployeeManagementPage from '../features/employee-audit/EmployeeManagementPage';
 import ProductsTable from '../features/products/ProductsTable';
-import ProductMintSection from '../features/products/ProductMintSection';
+import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import HistoryPage from '../features/history/HistoryPage';
@@ -134,6 +134,20 @@ const InnerPage = () => {
   const [showPrivacyPreferences, setShowPrivacyPreferences] = useState(false);
   const [aiConsentBusy, setAiConsentBusy] = useState(false);
   const [aiConsentError, setAiConsentError] = useState('');
+  // Device-local AI Concierge choice ({ consent, decidedAt } | null) — read
+  // eagerly (inlined rather than via loadStateFromStorage below, which isn't
+  // declared yet at this point in the component body) so the pre-login gate
+  // render check above has it on first paint. Deliberately not account-bound:
+  // the gate runs before login, so there's often no account yet to attach a
+  // decision to.
+  const [aiConsentChoice, setAiConsentChoice] = useState(() => {
+    try {
+      const stored = localStorage.getItem('dpp_aiConciergeConsentChoice');
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      return null;
+    }
+  });
 
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
@@ -439,19 +453,38 @@ const InnerPage = () => {
     }
   };
 
-  // Shared by both the mandatory first-login gate (`needsAiConsent` below)
-  // and the "Privacy Preferences" link (`showPrivacyPreferences`) — the only
-  // difference is whether the gate clears itself (onboarding, once `company`
-  // updates) or the link's local `showPrivacyPreferences` flag needs closing.
+  // Persists the choice locally (source of truth — this is a preference, not
+  // an auth-gated action) and best-effort syncs it to the account if one is
+  // signed in. Never blocks on the sync failing: an auth/network hiccup must
+  // not trap the user on this screen.
+  const persistAiConsentChoice = async (consent) => {
+    const choice = { consent, decidedAt: Date.now() };
+    saveStateToStorage('aiConciergeConsentChoice', choice);
+    setAiConsentChoice(choice);
+    if (company) {
+      const updated = await saveAiConciergeConsent(consent);
+      if (!updated) {
+        console.warn('Could not sync AI Concierge consent to account');
+      }
+    }
+  };
+
+  // Pre-login gate (see `aiConsentChoice` above) — clearing it here falls
+  // through to whatever the next render pass decides (Login if signed out,
+  // straight to the dashboard if a session happens to already exist).
+  const handleAiConsentGateSubmit = async (consent) => {
+    setAiConsentBusy(true);
+    await persistAiConsentChoice(consent);
+    setAiConsentBusy(false);
+  };
+
+  // "Privacy Preferences" link — always returns to wherever it was opened
+  // from once the local choice is updated.
   const handleAiConsentSubmit = async (consent) => {
     setAiConsentBusy(true);
     setAiConsentError('');
-    const updated = await saveAiConciergeConsent(consent);
+    await persistAiConsentChoice(consent);
     setAiConsentBusy(false);
-    if (!updated) {
-      setAiConsentError('Could not save your preference. Please try again.');
-      return;
-    }
     setShowPrivacyPreferences(false);
   };
 
@@ -1240,15 +1273,32 @@ const InnerPage = () => {
 
   const isProfileMenuOpen = Boolean(profileMenuAnchor);
 
+  // Pre-login gate: shown before Login/dashboard on every fresh visit until a
+  // local AI Concierge choice exists, regardless of sign-in state — decoupled
+  // from `company` entirely (the login page itself sits behind this).
+  if (!aiConsentChoice) {
+    return (
+      <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
+        <AiConciergeConsentPage
+          mode="gate"
+          initialConsent={null}
+          onSubmit={handleAiConsentGateSubmit}
+          saving={aiConsentBusy}
+          apiError={aiConsentError}
+        />
+      </Box>
+    );
+  }
+
   // GDPR: "Privacy Preferences" reopens the AI Concierge consent screen at
-  // any time, regardless of sign-in state — works whether or not `company`
-  // exists (see AiConciergeConsentPage's 'preview' vs 'review' mode).
+  // any time, regardless of sign-in state, to review/change the locally
+  // stored choice above.
   if (showPrivacyPreferences) {
     return (
       <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
         <AiConciergeConsentPage
-          mode={company ? 'review' : 'preview'}
-          initialConsent={!!company?.aiConciergeConsent}
+          mode="review"
+          initialConsent={aiConsentChoice.consent}
           onSubmit={handleAiConsentSubmit}
           onClose={() => { setShowPrivacyPreferences(false); setAiConsentError(''); }}
           saving={aiConsentBusy}
@@ -1278,27 +1328,6 @@ const InnerPage = () => {
           onRequestOtp={requestOtpHandler}
           onVerifyOtp={verifyOtpHandler}
           onOpenPrivacyPreferences={() => setShowPrivacyPreferences(true)}
-        />
-      </Box>
-    );
-  }
-
-  // First login (or any older app-user account that predates this feature
-  // and never decided) — gate on the AI Concierge personalization consent
-  // screen before the dashboard. Only relevant to app users (consumers);
-  // brand/company and admin accounts were never asked. Once `company`
-  // updates (handleAiConsentSubmit -> saveAiConciergeConsent), this clears
-  // itself and the dashboard renders below, exactly like needsProfileCompletion.
-  const needsAiConsent = isAppUser && !company.aiConciergeConsentAt;
-  if (needsAiConsent) {
-    return (
-      <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
-        <AiConciergeConsentPage
-          mode="onboarding"
-          initialConsent={!!company.aiConciergeConsent}
-          onSubmit={handleAiConsentSubmit}
-          saving={aiConsentBusy}
-          apiError={aiConsentError}
         />
       </Box>
     );
@@ -1648,13 +1677,13 @@ const InnerPage = () => {
             open={activePage === 'newProduct'}
             onClose={() => setActivePage('products')}
             fullWidth
-            maxWidth="md"
+            maxWidth={productPanelMode === 'print' ? 'lg' : 'md'}
             fullScreen={isMobile}
             scroll="paper"
           >
             <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
               {productPanelMode === 'print'
-                ? 'Generate & Print QR Codes'
+                ? 'Generate & Print Codes'
                 : isEditing
                 ? 'Edit Product'
                 : 'New Product'}
@@ -1795,7 +1824,7 @@ const InnerPage = () => {
                       ownerInfo={ownerInfo}
                       onClick={() => setOpenOwnerDialog(true)}
                     />
-                    <ProductMintSection
+                    <GenerateAndPrintPanel
                       selectedProduct={selectedProduct}
                       companyId={company?._id || company?.id}
                       mintAmount={mintAmount}
@@ -1811,7 +1840,6 @@ const InnerPage = () => {
                       onOpenPrint={() => setOpenPrintModal(true)}
                       securityQRCodes={securityQRCodes}
                       onGenerateSecurityQR={generateSecurityQRHandler}
-                      onOpenSecurityDialog={() => {}}
                       canGenerate={canManageProducts}
                     />
                   </Box>

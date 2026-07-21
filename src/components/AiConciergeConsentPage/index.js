@@ -12,31 +12,27 @@ const whiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
 // rest of the sign-in flow's controls.
 const CONSENT_BUTTON_HEIGHT = 27;
 
-// Shown once after a User's first login (see pages/index.js `needsAiConsent`,
-// derived from `!company.aiConciergeConsentAt`) and reachable any time after
-// via the "Privacy Preferences" link on AuthPage, so a user can change or
-// withdraw consent per GDPR.
+// Shown before login on every fresh visit that hasn't made a local choice yet
+// (see pages/index.js's `aiConsentChoice`, read from localStorage) and
+// reachable any time after via the "Privacy Preferences" link on AuthPage, so
+// a user can change or withdraw consent per GDPR. The choice itself is
+// device-local (localStorage), not account-bound — deciding happens before
+// login, so there's often no account yet to attach it to; if one does exist,
+// the parent best-effort syncs it to the backend too.
 //
 // `mode`:
-//  - 'onboarding': first-ever decision — submitting always proceeds into the
-//    dashboard (the parent's gate clears itself once `company` updates).
+//  - 'gate': the pre-login initial visit — submitting always continues to
+//    the login screen next (the parent's gate clears itself once a local
+//    choice is stored).
 //  - 'review': already decided once, reopened via Privacy Preferences —
 //    submitting (or Cancel) returns to wherever the link was opened from.
-//  - 'preview': nobody is signed in (Privacy Preferences tapped from a
-//    signed-out AuthPage) — informational only, nothing is persisted, since
-//    there's no account to attach a decision to yet.
 const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, saving, apiError }) => {
   // `null` = no explicit choice made yet, which is what keeps the primary
-  // button disabled below. Only 'review' (reopened via Privacy Preferences)
-  // starts pre-selected, since a decision already exists to show; a fresh
-  // 'onboarding'/'preview' visit always requires an active choice.
-  const [consent, setConsent] = useState(mode === 'review' ? !!initialConsent : null);
+  // button disabled below. A prior local choice (either mode) starts
+  // pre-selected so the user sees what they picked last time.
+  const [consent, setConsent] = useState(initialConsent != null ? !!initialConsent : null);
 
   const handleSubmit = () => {
-    if (mode === 'preview') {
-      onClose();
-      return;
-    }
     onSubmit(consent);
   };
 
@@ -130,12 +126,6 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             </Button>
           </Box>
 
-          {mode === 'preview' && (
-            <Typography sx={{ ...whiteTextSx, fontSize: '0.78rem', fontStyle: 'italic', mt: 0.75 }}>
-              Sign in to save this preference to your account.
-            </Typography>
-          )}
-
           {!!apiError && (
             <Box sx={{ bgcolor: 'rgba(253,236,236,0.95)', borderRadius: 2, p: 1, mt: 1 }}>
               <Typography sx={{ fontSize: '0.78rem', color: 'error.main' }}>
@@ -163,13 +153,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
               '&:hover': { bgcolor: '#1f5688' },
             }}
           >
-            {saving
-              ? 'Saving…'
-              : mode === 'onboarding'
-              ? 'Continue'
-              : mode === 'review'
-              ? 'Save Preferences'
-              : 'Close'}
+            {saving ? 'Saving…' : mode === 'review' ? 'Save Preferences' : 'Continue'}
           </Button>
           {mode === 'review' && (
             <Box sx={{ textAlign: 'center' }}>
