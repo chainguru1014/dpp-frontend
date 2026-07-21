@@ -7,6 +7,7 @@ import { useAppleAuth } from '../../features/auth/useAppleAuth';
 import AuthShell from '../AuthShell';
 import AudienceToggle from '../AudienceToggle';
 import yometelLogoWhite from '../../assets/yometel-logo-white.png';
+import theme from '../../theme';
 
 // Monochrome Google "G" mark (Simple Icons, CC0) — black to match this
 // button's white background (was the official 4-color "G").
@@ -50,7 +51,11 @@ const compactButtonSx = {
   py: 0,
   borderRadius: 2,
 };
-const compactLinkSx = { fontWeight: 400, fontSize: '0.8rem', lineHeight: 1.2 };
+// Explicit font-family override — AuthShell blanket-applies its decorative
+// Cochin serif to every Typography in the card (for the headline copy), but
+// these are utility links that should read like the buttons next to them,
+// not like the tagline.
+const compactLinkSx = { fontWeight: 400, fontSize: '0.8rem', lineHeight: 1.2, fontFamily: theme.typography.fontFamily };
 
 // Card background is deliberately transparent (see AuthShell) so the forest
 // photo shows through — any text sitting directly on it (not on a solid
@@ -484,7 +489,7 @@ const AuthPage = ({
             {/* Trailing links clustered tightly together (their own small
                 gap, not the parent's larger gap:1.5) so they read as one
                 "auxiliary links" group instead of three widely-spaced rows. */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
               {/* Consumer/Staff and Sign In/Sign Up each show only the single
                   relevant question — one tap to switch, no pill toggle. */}
               <AudienceToggle value="consumer" onSelectConsumer={() => {}} onSelectStaff={() => navigate('/staff')} />
@@ -518,6 +523,7 @@ const AuthPage = ({
                       fontWeight: 400,
                       fontSize: '0.8rem',
                       lineHeight: 1.2,
+                      fontFamily: theme.typography.fontFamily,
                       textDecoration: 'underline',
                       cursor: 'pointer',
                     }}

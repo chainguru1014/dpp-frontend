@@ -25,20 +25,26 @@ const AuthShell = ({ children, cardSx }) => (
       // made the card's top content (logo/title) ride up and overlap the
       // newly-appeared "Enter the 6-digit code…" row once the keyboard
       // opened.
-      height: '100dvh',
+      // On xs, the taglines now stack above/below the card (single grid
+      // column, see gridTemplateColumns below) instead of flanking it, so
+      // the three of them together can be taller than one screen — `auto` +
+      // scroll there, vs. the fixed viewport-locked hero layout on md+.
+      height: { xs: 'auto', md: '100dvh' },
       minHeight: '100dvh',
       display: 'grid',
       gridTemplateColumns: { xs: '1fr', md: '1fr auto 1fr' },
       alignItems: 'center',
       justifyItems: 'center',
       columnGap: { xs: 0, md: 6 },
+      rowGap: { xs: 3, md: 0 },
       boxSizing: 'border-box',
-      overflow: 'hidden',
+      overflow: { xs: 'auto', md: 'hidden' },
       backgroundImage: `url(${background1})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
       px: { xs: 2, md: 6 },
+      py: { xs: 4, md: 0 },
     }}
   >
     {/* Left tagline — its own grid column (not a flex sibling nudged with a
@@ -46,34 +52,34 @@ const AuthShell = ({ children, cardSx }) => (
         centered on the page regardless of how long this text is. */}
     <Box
       sx={{
-        display: { xs: 'none', md: 'flex' },
+        // Shown on every device (was hidden below `md`) — stacks above the
+        // card on narrow screens since it's alone in the single xs grid
+        // column (see gridTemplateColumns above).
+        display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifySelf: 'end',
+        justifySelf: { xs: 'center', md: 'end' },
         textAlign: 'center',
         color: '#fff',
         textShadow: '0 2px 8px rgba(0,0,0,0.55)',
-        // Wide enough that "Digital Product" / "Circular Economy" each stay
-        // on one line — h4's default size wrapped mid-phrase at the old
-        // 340px cap (worse on Windows, where Cochin falls through to the
-        // wider Georgia/Times), scattering the block into one word per line
-        // instead of the intended 5-line shape.
-        maxWidth: 380,
+        // Wider than the right column, at a smaller font size (1.3rem here
+        // vs 1.6rem there) — this phrase has ~50% more characters, so
+        // matching font sizes made this block noticeably taller/heavier
+        // than the right one despite both being 3 lines. Scaling the font
+        // down roughly by sqrt(charCountRight / charCountLeft) balances the
+        // two blocks' rendered "ink area" instead.
+        maxWidth: 420,
         fontFamily: taglineFontFamily,
       }}
     >
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
-        Digital Product
-        <br />
-        Passport
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.3rem', lineHeight: 1.2 }}>
+        Digital Product Passport
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2, fontStyle: 'italic' }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.3rem', lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
         for
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
-        Circular Economy
-        <br />
-        &amp; Environment
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.3rem', lineHeight: 1.2 }}>
+        Circular Economy &amp; Environment
       </Typography>
     </Box>
 
@@ -105,25 +111,33 @@ const AuthShell = ({ children, cardSx }) => (
         flanked symmetrically instead of only having text on one side. */}
     <Box
       sx={{
-        display: { xs: 'none', md: 'flex' },
+        // Shown on every device (was hidden below `md`) — stacks below the
+        // card on narrow screens since it's alone in the single xs grid
+        // column (see gridTemplateColumns above).
+        display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifySelf: 'start',
+        justifySelf: { xs: 'center', md: 'start' },
         textAlign: 'center',
         color: '#fff',
         textShadow: '0 2px 8px rgba(0,0,0,0.55)',
-        // Matches the left column's width/sizing — see its comment.
-        maxWidth: 380,
+        // Narrower + larger font than the left column — see its comment;
+        // this phrase has fewer characters, so a bigger font here keeps the
+        // two blocks' visual weight comparable instead of this one reading
+        // as the lighter/smaller of the pair.
+        maxWidth: 340,
         fontFamily: taglineFontFamily,
       }}
     >
       <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
         Improved Traceability
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
+      {/* Italicized to match the left column's "for" — both are the
+          connector word joining the two noun phrases either side of it. */}
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
         as
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2, fontStyle: 'italic' }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
         Your Concierge
       </Typography>
     </Box>

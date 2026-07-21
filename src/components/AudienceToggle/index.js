@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
+import theme from '../../theme';
 
 // Single-line "who are you" link shown at the bottom of both sign-in cards
 // (consumer/brand AuthPage and StaffLoginPage), same pattern as the
@@ -17,6 +18,10 @@ const AudienceToggle = ({ value, onSelectConsumer, onSelectStaff }) => (
         fontWeight: 400,
         fontSize: '0.8rem',
         lineHeight: 1.2,
+        // Matches the buttons' font (AuthShell blanket-applies its
+        // decorative Cochin serif to every Typography in the card, but this
+        // utility link should read like a button, not the tagline).
+        fontFamily: theme.typography.fontFamily,
         cursor: 'pointer',
         '&:hover': { textDecoration: 'underline' },
       }}
