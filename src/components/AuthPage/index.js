@@ -50,7 +50,7 @@ const compactButtonSx = {
   py: 0,
   borderRadius: 2,
 };
-const compactLinkSx = { fontWeight: 400, fontSize: '0.8rem' };
+const compactLinkSx = { fontWeight: 400, fontSize: '0.8rem', lineHeight: 1.2 };
 
 // Card background is deliberately transparent (see AuthShell) so the forest
 // photo shows through — any text sitting directly on it (not on a solid
@@ -484,7 +484,7 @@ const AuthPage = ({
             {/* Trailing links clustered tightly together (their own small
                 gap, not the parent's larger gap:1.5) so they read as one
                 "auxiliary links" group instead of three widely-spaced rows. */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {/* Consumer/Staff and Sign In/Sign Up each show only the single
                   relevant question — one tap to switch, no pill toggle. */}
               <AudienceToggle value="consumer" onSelectConsumer={() => {}} onSelectStaff={() => navigate('/staff')} />
@@ -516,7 +516,8 @@ const AuthPage = ({
                     sx={{
                       ...whiteTextSx,
                       fontWeight: 400,
-                      fontSize: '0.85rem',
+                      fontSize: '0.8rem',
+                      lineHeight: 1.2,
                       textDecoration: 'underline',
                       cursor: 'pointer',
                     }}

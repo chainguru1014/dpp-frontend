@@ -15,7 +15,8 @@ const AudienceToggle = ({ value, onSelectConsumer, onSelectStaff }) => (
         color: '#fff',
         textShadow: '0 1px 3px rgba(0,0,0,0.6)',
         fontWeight: 400,
-        fontSize: '0.95rem',
+        fontSize: '0.8rem',
+        lineHeight: 1.2,
         cursor: 'pointer',
         '&:hover': { textDecoration: 'underline' },
       }}

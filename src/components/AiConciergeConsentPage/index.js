@@ -60,12 +60,9 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
           <Typography sx={{ ...whiteTextSx, textAlign: 'center', fontSize: '1.15rem', fontWeight: 400, lineHeight: 1.3, mb: 0.8 }}>
             Meet Your AI Concierge
           </Typography>
-          <Typography sx={{ ...whiteTextSx, fontSize: '0.78rem', lineHeight: 1.35, mb: 1 }}>
-            Discover products you'll love.
-          </Typography>
 
           <Typography sx={{ ...whiteTextSx, fontSize: '0.85rem', fontWeight: 600, lineHeight: 1.3, mt: 0.5, mb: 0.3 }}>
-            Scan the products you love.
+            Scan the products you like, discover what you like next.
           </Typography>
           <Typography sx={{ ...whiteTextSx, fontSize: '0.78rem', lineHeight: 1.35, mb: 0.75 }}>
             Your AI Concierge learns your preferences and recommends products you'll love—across brands.
@@ -100,10 +97,11 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                 height: CONSENT_BUTTON_HEIGHT,
                 minHeight: CONSENT_BUTTON_HEIGHT,
                 py: 0,
-                // Bright green (not the theme's muted `success` token) so the
-                // active "agreed" state reads as vividly green.
+                // The app's dark blue (theme.palette.primary.dark, #266aa8) —
+                // matches the Continue/Save Preferences/Close button below
+                // and the app project's equivalent.
                 ...(consent === true
-                  ? { bgcolor: '#22c55e', borderColor: '#22c55e', color: '#fff', '&:hover': { bgcolor: '#16a34a', borderColor: '#16a34a' } }
+                  ? { bgcolor: '#266aa8', borderColor: '#266aa8', color: '#fff', '&:hover': { bgcolor: '#1f5688', borderColor: '#1f5688' } }
                   : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
               }}
             >
@@ -112,7 +110,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             <Button
               onClick={() => setConsent(false)}
               variant={consent === false ? 'contained' : 'outlined'}
-              color={consent === false ? 'error' : 'inherit'}
+              color="inherit"
               sx={{
                 flex: 1,
                 textTransform: 'none',
@@ -121,7 +119,11 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                 height: CONSENT_BUTTON_HEIGHT,
                 minHeight: CONSENT_BUTTON_HEIGHT,
                 py: 0,
-                ...(consent === false ? {} : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
+                // Gray background with dark blue text (was red) — reads as
+                // "declined" without the alarm-red error color.
+                ...(consent === false
+                  ? { bgcolor: '#e5e7eb', borderColor: '#e5e7eb', color: '#266aa8', '&:hover': { bgcolor: '#d1d5db', borderColor: '#d1d5db' } }
+                  : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
               }}
             >
               I Disagree
@@ -156,6 +158,9 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
               height: CONSENT_BUTTON_HEIGHT,
               minHeight: CONSENT_BUTTON_HEIGHT,
               py: 0,
+              // Same dark blue as the I Agree active state above.
+              bgcolor: '#266aa8',
+              '&:hover': { bgcolor: '#1f5688' },
             }}
           >
             {saving

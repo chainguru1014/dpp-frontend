@@ -53,19 +53,24 @@ const AuthShell = ({ children, cardSx }) => (
         textAlign: 'center',
         color: '#fff',
         textShadow: '0 2px 8px rgba(0,0,0,0.55)',
-        maxWidth: 340,
+        // Wide enough that "Digital Product" / "Circular Economy" each stay
+        // on one line — h4's default size wrapped mid-phrase at the old
+        // 340px cap (worse on Windows, where Cochin falls through to the
+        // wider Georgia/Times), scattering the block into one word per line
+        // instead of the intended 5-line shape.
+        maxWidth: 380,
         fontFamily: taglineFontFamily,
       }}
     >
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.25 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
         Digital Product
         <br />
         Passport
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.4 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2, fontStyle: 'italic' }}>
         for
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.25 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
         Circular Economy
         <br />
         &amp; Environment
@@ -107,17 +112,18 @@ const AuthShell = ({ children, cardSx }) => (
         textAlign: 'center',
         color: '#fff',
         textShadow: '0 2px 8px rgba(0,0,0,0.55)',
-        maxWidth: 340,
+        // Matches the left column's width/sizing — see its comment.
+        maxWidth: 380,
         fontFamily: taglineFontFamily,
       }}
     >
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.25 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
         Improved Traceability
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.4 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
         as
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, lineHeight: 1.25 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2, fontStyle: 'italic' }}>
         Your Concierge
       </Typography>
     </Box>
