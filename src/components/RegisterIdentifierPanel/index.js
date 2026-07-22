@@ -262,6 +262,23 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
       )}
       {pageItems.length > 0 ? (
         <>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1.5, mb: 1.5 }}>
+            <Typography variant="body2" color="text.secondary">
+              Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, visibleIdentifiers.length)} of {visibleIdentifiers.length}
+            </Typography>
+            {totalPages > 1 && (
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(e, p) => setPage(p)}
+                color="primary"
+                shape="rounded"
+                size="small"
+                siblingCount={1}
+                boundaryCount={1}
+              />
+            )}
+          </Box>
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1.5 }}>
             {pageItems.map((item) => (
               <Box
@@ -319,18 +336,6 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
               </Box>
             ))}
           </Box>
-          {totalPages > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-              <Pagination
-                count={totalPages}
-                page={page}
-                onChange={(e, p) => setPage(p)}
-                color="primary"
-                shape="rounded"
-                size="small"
-              />
-            </Box>
-          )}
         </>
       ) : (
         <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
