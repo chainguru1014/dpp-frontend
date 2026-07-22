@@ -38,11 +38,16 @@ const QRCode = ({ data, identifer, onDelete }) => {
     const [qrcodeImage, setQRcodeImage] = useState('');
 
     useEffect(() => {
-        (async () => {
-            const payload = normalizeQrPayload(data);
-            const code = await qrcode.toDataURL(payload);
-            setQRcodeImage(code);
-        })()
+        const payload = normalizeQrPayload(data);
+        if (!payload) {
+            setQRcodeImage('');
+            return;
+        }
+        let cancelled = false;
+        qrcode.toDataURL(payload)
+            .then((code) => { if (!cancelled) setQRcodeImage(code); })
+            .catch((err) => console.error('Failed to render QR code:', err));
+        return () => { cancelled = true; };
     }, [data]);
 
     const entries = identifer || [];

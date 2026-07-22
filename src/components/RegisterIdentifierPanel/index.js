@@ -71,12 +71,15 @@ const CodeImage = ({ sourceType, value, onReady }) => {
       const url = renderEan13ToDataUrl(value);
       setImage(url);
       onReady?.(url);
-    } else if (sourceType === 'gs1dl') {
+    } else if (sourceType === 'gs1dl' && value) {
       qrcode.toDataURL(value).then((url) => {
         if (cancelled) return;
         setImage(url);
         onReady?.(url);
-      }).catch(() => setImage(null));
+      }).catch((err) => {
+        console.error('Failed to render GS1 Digital Link QR code:', err);
+        setImage(null);
+      });
     } else {
       setImage(null);
     }

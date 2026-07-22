@@ -21,13 +21,14 @@ const SecurityQRCode = ({ data, identifer, onDelete }) => {
     const [securityUrl, setSecurityUrl] = useState('');
 
     useEffect(() => {
-        (async () => {
-            // Generate QR code with security URL format: http://82.165.217.122:3001/product/{encryptedKey}
-            const url = `${SECURITY_BASE_URL}/product/${data}`;
-            setSecurityUrl(url);
-            const code = await qrcode.toDataURL(url);
-            setQRcodeImage(code);
-        })()
+        // Generate QR code with security URL format: http://82.165.217.122:3001/product/{encryptedKey}
+        const url = `${SECURITY_BASE_URL}/product/${data}`;
+        setSecurityUrl(url);
+        let cancelled = false;
+        qrcode.toDataURL(url)
+            .then((code) => { if (!cancelled) setQRcodeImage(code); })
+            .catch((err) => console.error('Failed to render Security QR code:', err));
+        return () => { cancelled = true; };
     }, [data]);
 
     const entries = identifer || [];
