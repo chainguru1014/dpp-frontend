@@ -1,5 +1,8 @@
-import react, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import qrcode from 'qrcode';
+import { Box, IconButton, Typography, Tooltip } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
+import CopyIconButton from '../CopyIconButton';
 
 // If backend returns a full URL (often localhost in dev),
 // rewrite it to the configured public web base URL before encoding into QR.
@@ -27,10 +30,9 @@ const normalizeQrPayload = (raw) => {
     }
 };
 
-const QRCode = ({data,identifer}) => {
-
+const QRCode = ({ data, identifer }) => {
     const [qrcodeImage, setQRcodeImage] = useState('');
-    
+
     useEffect(() => {
         (async () => {
             const payload = normalizeQrPayload(data);
@@ -39,22 +41,44 @@ const QRCode = ({data,identifer}) => {
         })()
     }, [data]);
 
+    const entries = identifer || [];
+    const pmcEntry = entries.find((item) => item.type === 'PMC Code');
+    const otherEntries = entries.filter((item) => item.type !== 'PMC Code');
+
     return (
-        <div style={{maxWidth:228}}>
-            <div>
-            <img
-                // srcSet={`${item.img}?w=161&fit=crop&auto=format&dpr=2 2x`}
-                src={`${qrcodeImage}`}
-                // alt={item.title}
-                loading="lazy"
-            />
-            </div>
-            {
-                identifer.map(item=>(
-                    <div>{item.type} : {item.serial}</div>
-                ))
-            }
-        </div>
+        <Box sx={{ maxWidth: 228 }}>
+            <Box sx={{ position: 'relative', display: 'inline-block', width: '100%' }}>
+                <img src={qrcodeImage} loading="lazy" style={{ width: '100%', display: 'block' }} alt="QR code" />
+                {qrcodeImage && (
+                    <Tooltip title="Download image">
+                        <IconButton
+                            component="a"
+                            href={qrcodeImage}
+                            download={`qr-${data}.png`}
+                            size="small"
+                            sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255,255,255,0.85)', '&:hover': { bgcolor: '#fff' } }}
+                        >
+                            <DownloadIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                )}
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>{data}</Typography>
+                <CopyIconButton value={data} />
+            </Box>
+            {otherEntries.map((item, i) => (
+                <div key={i}>{item.type} : {item.serial}</div>
+            ))}
+            {pmcEntry && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main', flex: 1 }}>
+                        {pmcEntry.serial}
+                    </Typography>
+                    <CopyIconButton value={pmcEntry.serial} />
+                </Box>
+            )}
+        </Box>
     );
 }
 

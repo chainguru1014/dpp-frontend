@@ -47,8 +47,17 @@ const GenerateAndPrintPanel = ({
   const [displayPage, setDisplayPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
+  // Security QR codes are already fully loaded client-side (no backend
+  // batching to coordinate) — just paginate the array in place.
+  const [securityPage, setSecurityPage] = useState(1);
+  const securityTotal = (securityQRCodes || []).length;
+  const securityTotalPages = Math.max(1, Math.ceil(securityTotal / PAGE_SIZE));
+  const securityPageCodes = (securityQRCodes || []).slice((securityPage - 1) * PAGE_SIZE, securityPage * PAGE_SIZE);
+  const securityOffset = (securityPage - 1) * PAGE_SIZE;
+
   useEffect(() => {
     setDisplayPage(1);
+    setSecurityPage(1);
   }, [selectedProduct?._id, totalAmount]);
 
   const backendPageFor = Math.floor(((displayPage - 1) * PAGE_SIZE) / BACKEND_SIZE) + 1;
@@ -159,18 +168,32 @@ const GenerateAndPrintPanel = ({
               {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
             </Box>
           )}
-          {securityQRCodes && securityQRCodes.length > 0 ? (
+          {securityTotal > 0 ? (
             <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                Total: {securityQRCodes.length} Security QR Code(s)
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1.5, mb: 1.5 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Showing {securityOffset + 1}–{Math.min(securityOffset + PAGE_SIZE, securityTotal)} of {securityTotal}
+                </Typography>
+                {securityTotal > PAGE_SIZE && (
+                  <Pagination
+                    count={securityTotalPages}
+                    page={securityPage}
+                    onChange={(e, p) => setSecurityPage(p)}
+                    color="primary"
+                    shape="rounded"
+                    size="small"
+                    siblingCount={1}
+                    boundaryCount={1}
+                  />
+                )}
+              </Box>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                {securityQRCodes.map((item, index) => (
+                {securityPageCodes.map((item, index) => (
                   <Box
-                    key={index}
+                    key={securityOffset + index}
                     sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}
                   >
-                    <SecurityQRCode data={item} identifer={identifiers[index] || []} />
+                    <SecurityQRCode data={item} identifer={identifiers[securityOffset + index] || []} />
                   </Box>
                 ))}
               </Box>
