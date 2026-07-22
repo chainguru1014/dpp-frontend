@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import qrcode from 'qrcode';
 import { Box, IconButton, Typography, Tooltip } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
+import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIconButton from '../CopyIconButton';
 
 // If backend returns a full URL (often localhost in dev),
@@ -30,7 +31,10 @@ const normalizeQrPayload = (raw) => {
     }
 };
 
-const QRCode = ({ data, identifer }) => {
+// `onDelete`, when provided, renders a bottom-right remove button alongside
+// the download button — both sit in the same flex row so they never overlap
+// each other or the image above them.
+const QRCode = ({ data, identifer, onDelete }) => {
     const [qrcodeImage, setQRcodeImage] = useState('');
 
     useEffect(() => {
@@ -46,23 +50,8 @@ const QRCode = ({ data, identifer }) => {
     const otherEntries = entries.filter((item) => item.type !== 'PMC Code');
 
     return (
-        <Box sx={{ maxWidth: 228 }}>
-            <Box sx={{ position: 'relative', display: 'inline-block', width: '100%' }}>
-                <img src={qrcodeImage} loading="lazy" style={{ width: '100%', display: 'block' }} alt="QR code" />
-                {qrcodeImage && (
-                    <Tooltip title="Download image">
-                        <IconButton
-                            component="a"
-                            href={qrcodeImage}
-                            download={`qr-${data}.png`}
-                            size="small"
-                            sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255,255,255,0.85)', '&:hover': { bgcolor: '#fff' } }}
-                        >
-                            <DownloadIcon fontSize="small" />
-                        </IconButton>
-                    </Tooltip>
-                )}
-            </Box>
+        <Box sx={{ maxWidth: 228, width: '100%' }}>
+            <img src={qrcodeImage} loading="lazy" style={{ width: '100%', display: 'block' }} alt="QR code" />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                 <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>{data}</Typography>
                 <CopyIconButton value={data} />
@@ -78,6 +67,22 @@ const QRCode = ({ data, identifer }) => {
                     <CopyIconButton value={pmcEntry.serial} />
                 </Box>
             )}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 0.5 }}>
+                {qrcodeImage && (
+                    <Tooltip title="Download image">
+                        <IconButton component="a" href={qrcodeImage} download={`qr-${data}.png`} size="small">
+                            <DownloadIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                )}
+                {onDelete && (
+                    <Tooltip title="Remove">
+                        <IconButton size="small" onClick={onDelete}>
+                            <DeleteIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                )}
+            </Box>
         </Box>
     );
 }

@@ -66,12 +66,18 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
         try {
             const fromN = printMode === 'print' ? printed + 1 : Number(from);
             const toN = printMode === 'print' ? printed + Number(count) : Number(to);
+            // Both now return { qrcode_id, ... } per item (only for ids that
+            // actually still have a QRcode document), matched by id below —
+            // not bare arrays keyed by position.
             const urls = await getProductQRcodes(product._id, 0, fromN, toN);
             const idents = await getProductIdentifiers(product._id, 0, fromN, toN);
+            const identifiersByQrcodeId = new Map(
+                (Array.isArray(idents) ? idents : []).map((entry) => [entry.qrcode_id, entry.identifiers])
+            );
             const items = await Promise.all(
-                (Array.isArray(urls) ? urls : []).map(async (url, i) => ({
-                    img: await qrcode.toDataURL(String(url || '')),
-                    identifiers: Array.isArray(idents?.[i]) ? idents[i] : [],
+                (Array.isArray(urls) ? urls : []).map(async (item) => ({
+                    img: await qrcode.toDataURL(String(item?.url || '')),
+                    identifiers: identifiersByQrcodeId.get(item?.qrcode_id) || [],
                 }))
             );
             setPdfItems(items);

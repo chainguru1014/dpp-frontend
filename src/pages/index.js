@@ -59,6 +59,8 @@ import {
   updateCompanyAvatar,
   generateSecurityQRCodes,
   getSecurityQRCodes,
+  deleteQrCode,
+  deleteSecurityQrCode,
   checkUsernameExists,
 } from '../helper';
 import QRCode from '../components/displayQRCode';
@@ -854,6 +856,25 @@ const InnerPage = () => {
       console.error('Error generating security QR codes:', error);
       setIsMinting(false);
       setMintingProgress(0);
+    }
+  };
+
+  // Voids one minted QR code / Security QR code from the Generate & Print
+  // dialog. Removed locally on success rather than re-fetching the whole
+  // page — cheaper, and getQRcodesWithProductId/getSerials only return
+  // still-existing ids anyway so a re-fetch would show the same result.
+  const deleteQrCodeHandler = async (qrcodeId) => {
+    if (!selectedProduct) return;
+    if (await deleteQrCode(selectedProduct._id, qrcodeId)) {
+      setQrCodes((prev) => prev.filter((item) => item.qrcode_id !== qrcodeId));
+      setIdentifiers((prev) => prev.filter((item) => item.qrcode_id !== qrcodeId));
+    }
+  };
+
+  const deleteSecurityQrCodeHandler = async (securityQrcodeId) => {
+    if (!selectedProduct) return;
+    if (await deleteSecurityQrCode(selectedProduct._id, securityQrcodeId)) {
+      setSecurityQRCodes((prev) => prev.filter((item) => item.security_qrcode_id !== securityQrcodeId));
     }
   };
 
@@ -1840,6 +1861,8 @@ const InnerPage = () => {
                       onOpenPrint={() => setOpenPrintModal(true)}
                       securityQRCodes={securityQRCodes}
                       onGenerateSecurityQR={generateSecurityQRHandler}
+                      onDeleteQrCode={deleteQrCodeHandler}
+                      onDeleteSecurityQrCode={deleteSecurityQrCodeHandler}
                       canGenerate={canManageProducts}
                     />
                   </Box>

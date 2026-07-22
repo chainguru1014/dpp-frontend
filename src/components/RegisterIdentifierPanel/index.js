@@ -28,7 +28,8 @@ const SOURCE_TYPES = [
   { value: 'gs1dl', label: 'GS1 Digital Link' },
 ];
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 10;
+const MAX_BULK = 50;
 
 const randomDigits = (count) => Array.from({ length: count }, () => Math.floor(Math.random() * 10)).join('');
 const randomHex = (bytes) => Array.from({ length: bytes }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('').toUpperCase();
@@ -58,40 +59,34 @@ const generateRandomValue = (sourceType) => {
 };
 
 // Renders the barcode/QR image for one identifier's value — sync for
-// barcode (canvas), async for gs1dl (qrcode.toDataURL).
-const CodeImage = ({ sourceType, value }) => {
+// barcode (canvas), async for gs1dl (qrcode.toDataURL). Reports the finished
+// data URL up via onReady so the parent card can put a download button for
+// it in its own bottom-right action row (rather than overlaying the image).
+const CodeImage = ({ sourceType, value, onReady }) => {
   const [image, setImage] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     if (sourceType === 'barcode') {
-      setImage(renderEan13ToDataUrl(value));
+      const url = renderEan13ToDataUrl(value);
+      setImage(url);
+      onReady?.(url);
     } else if (sourceType === 'gs1dl') {
-      qrcode.toDataURL(value).then((url) => { if (!cancelled) setImage(url); }).catch(() => setImage(null));
+      qrcode.toDataURL(value).then((url) => {
+        if (cancelled) return;
+        setImage(url);
+        onReady?.(url);
+      }).catch(() => setImage(null));
     } else {
       setImage(null);
     }
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sourceType, value]);
 
   if (!image) return null;
 
-  return (
-    <Box sx={{ position: 'relative', display: 'inline-block', width: '100%', mb: 1 }}>
-      <img src={image} alt={sourceType} style={{ width: '100%', display: 'block', background: '#fff' }} />
-      <Tooltip title="Download image">
-        <IconButton
-          component="a"
-          href={image}
-          download={`${sourceType}-${value}.png`}
-          size="small"
-          sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255,255,255,0.85)', '&:hover': { bgcolor: '#fff' } }}
-        >
-          <DownloadIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-    </Box>
-  );
+  return <img src={image} alt={sourceType} style={{ width: '100%', display: 'block', background: '#fff', marginBottom: 6 }} />;
 };
 
 // Lets a company register a barcode/GTIN/NFC/RFID identifier against a
@@ -109,10 +104,12 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
   const [rawValue, setRawValue] = useState('');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [bulkAmount, setBulkAmount] = useState(5);
+  const [bulkGenerating, setBulkGenerating] = useState(false);
   const [page, setPage] = useState(1);
+  const [imagesByItemId, setImagesByItemId] = useState({});
 
   const activeLabel = SOURCE_TYPES.find((t) => t.value === sourceType)?.label || sourceType;
-  const showsImage = sourceType === 'barcode' || sourceType === 'gs1dl';
   const visibleIdentifiers = useMemo(
     () => (lockedSourceType ? identifiers.filter((item) => item.source_type === lockedSourceType) : identifiers),
     [identifiers, lockedSourceType]
@@ -136,10 +133,6 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
     refresh();
   }, [refresh]);
 
-  const handleGenerate = () => {
-    setRawValue(generateRandomValue(sourceType));
-  };
-
   const handleRegister = async () => {
     if (!productId || !companyId || !rawValue.trim()) return;
     setSubmitting(true);
@@ -153,6 +146,25 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
       }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Bulk random generation — a stand-in for a real per-type generation/
+  // reading engine (see generateRandomValue above), registering `amount`
+  // random values of the locked type in one go.
+  const handleBulkGenerate = async () => {
+    const amount = Math.max(1, Math.min(MAX_BULK, Number(bulkAmount) || 0));
+    if (!productId || !companyId || !amount) return;
+    setBulkGenerating(true);
+    try {
+      for (let i = 0; i < amount; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await registerProductIdentifier(productId, companyId, sourceType, generateRandomValue(sourceType), 'Randomly generated (test stub)');
+      }
+      setPage(1);
+      await refresh();
+    } finally {
+      setBulkGenerating(false);
     }
   };
 
@@ -171,10 +183,11 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
       )}
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         {lockedSourceType
-          ? `Register this product's own ${activeLabel} so scanning it in the app resolves to this product and gets a PMC. Use this for identifiers printed outside this platform. "Generate" fills in a random test value — there's no real ${activeLabel.toLowerCase()} generation/reading engine wired in yet, so use it to exercise registration and PMC resolution until that's built.`
+          ? `Register this product's own ${activeLabel} so scanning it in the app resolves to this product and gets a PMC. Use this for identifiers printed outside this platform.`
           : "Register this product's own barcode, GTIN, NFC tag, or RFID tag so scanning it in the app resolves to this product and gets a PMC. Use this for identifiers printed outside this platform — including barcodes from companies that don't follow the GS1 Digital Link standard."}
       </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 1.5 }}>
         {!lockedSourceType && (
           <TextField
             select
@@ -196,11 +209,6 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
           onChange={(e) => setRawValue(e.target.value)}
           sx={{ minWidth: 240, flexGrow: 1 }}
         />
-        <Tooltip title="Fill in a random test value (no real generation engine yet)">
-          <Button variant="outlined" startIcon={<CasinoIcon />} onClick={handleGenerate}>
-            Generate
-          </Button>
-        </Tooltip>
         <TextField
           label="Note (optional)"
           size="small"
@@ -216,6 +224,34 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
           Register
         </Button>
       </Box>
+
+      {/* Bulk random generation — a stand-in for a real generation/reading
+          engine per type (see generateRandomValue above). Intentionally a
+          separate control from manual Register above: this creates and
+          registers `amount` random values immediately. */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
+        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+          No real {activeLabel.toLowerCase()} generation/reading engine yet — fills in random test values.
+        </Typography>
+        <TextField
+          type="number"
+          label="Amount"
+          size="small"
+          value={bulkAmount}
+          onChange={(e) => setBulkAmount(e.target.value)}
+          inputProps={{ min: 1, max: MAX_BULK }}
+          sx={{ width: 100 }}
+        />
+        <Button
+          variant="outlined"
+          startIcon={<CasinoIcon />}
+          onClick={handleBulkGenerate}
+          disabled={bulkGenerating || !companyId || !bulkAmount || Number(bulkAmount) < 1}
+        >
+          {bulkGenerating ? 'Generating…' : 'Generate'}
+        </Button>
+      </Box>
+
       {!companyId && (
         <Typography variant="body2" color="error" sx={{ mb: 2 }}>
           Company information not available — cannot register identifiers.
@@ -223,34 +259,23 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
       )}
       {pageItems.length > 0 ? (
         <>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: showsImage ? 'repeat(auto-fill, minmax(180px, 1fr))' : 'repeat(auto-fill, minmax(260px, 1fr))',
-              gap: 1.5,
-            }}
-          >
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1.5 }}>
             {pageItems.map((item) => (
               <Box
                 key={item._id}
-                sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default', position: 'relative' }}
+                sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default' }}
               >
-                <Tooltip title="Delete">
-                  <IconButton
-                    size="small"
-                    onClick={() => handleDelete(item._id)}
-                    sx={{ position: 'absolute', top: 4, right: 4 }}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
                 {!lockedSourceType && (
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
                     {SOURCE_TYPES.find((t) => t.value === item.source_type)?.label || item.source_type}
                   </Typography>
                 )}
                 {(item.source_type === 'barcode' || item.source_type === 'gs1dl') && (
-                  <CodeImage sourceType={item.source_type} value={item.raw_value} />
+                  <CodeImage
+                    sourceType={item.source_type}
+                    value={item.raw_value}
+                    onReady={(url) => setImagesByItemId((prev) => (prev[item._id] === url ? prev : { ...prev, [item._id]: url }))}
+                  />
                 )}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>{item.raw_value}</Typography>
@@ -269,6 +294,25 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
                     {item.note}
                   </Typography>
                 )}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 0.5 }}>
+                  {imagesByItemId[item._id] && (
+                    <Tooltip title="Download image">
+                      <IconButton
+                        component="a"
+                        href={imagesByItemId[item._id]}
+                        download={`${item.source_type}-${item.raw_value}.png`}
+                        size="small"
+                      >
+                        <DownloadIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                  <Tooltip title="Remove">
+                    <IconButton size="small" onClick={() => handleDelete(item._id)}>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
               </Box>
             ))}
           </Box>

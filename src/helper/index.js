@@ -492,14 +492,36 @@ export const generateSecurityQRCodes = async (product_id, amount, company_id) =>
 
 export const getSecurityQRCodes = async (product_id, page = 1) => {
     try {
-        const res = await axios.post(`${Backend_URL}qrcode/security/product`, { 
-            product_id, 
-            page 
+        const res = await axios.post(`${Backend_URL}qrcode/security/product`, {
+            product_id,
+            page
         });
         return res.data.data || [];
     } catch (err) {
         console.log(err);
         return [];
+    }
+}
+
+// Voids one specific minted QR code (does not renumber/shrink the rest of
+// the range — see backend qrcodeController.deleteQrcode).
+export const deleteQrCode = async (product_id, qrcode_id) => {
+    try {
+        await axios.delete(`${Backend_URL}qrcode/product/${product_id}/${qrcode_id}`);
+        return true;
+    } catch (err) {
+        alert(err.response?.data?.message || 'Failed to delete QR code');
+        return false;
+    }
+}
+
+export const deleteSecurityQrCode = async (product_id, security_qrcode_id) => {
+    try {
+        await axios.delete(`${Backend_URL}qrcode/security/${product_id}/${security_qrcode_id}`);
+        return true;
+    } catch (err) {
+        alert(err.response?.data?.message || 'Failed to delete Security QR code');
+        return false;
     }
 }
 

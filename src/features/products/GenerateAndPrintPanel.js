@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Button, Tab, Tabs, TextField, Typography, Pagination } from '@mui/material';
 import CircularProgressWithLabel from '../../components/CircularProgressBar';
 import QRCode from '../../components/displayQRCode';
@@ -13,6 +13,11 @@ const TABS = [
   { key: 'gs1dl', label: 'GS1 Digital Link' },
   { key: 'barcode', label: 'Barcode' },
 ];
+
+// 5 per row, filling the dialog's full width — same sizing for every tab
+// that shows an image (QR, Security QR, and RegisterIdentifierPanel's own
+// grid for GS1-DL/Barcode/RFID/NFC).
+const GRID_SX = { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1.5, width: '100%' };
 
 // Replaces the old single-section print view (ProductMintSection) with one
 // tab per identifier format. QR/Security QR keep the existing mint+print
@@ -35,12 +40,18 @@ const GenerateAndPrintPanel = ({
   onOpenPrint,
   securityQRCodes,
   onGenerateSecurityQR,
+  onDeleteQrCode,
+  onDeleteSecurityQrCode,
   canGenerate = true,
 }) => {
   const [tab, setTab] = useState('qr');
 
   // Same 10-per-display-page / 100-per-backend-batch split ProductMintSection
   // used — the backend serves codes in batches of 100 (parent's page/setPage).
+  // qrcodes/identifiers are now { qrcode_id, ... } objects (only for ids that
+  // actually still have a QRcode document — see backend qrcodeController),
+  // not bare strings keyed by array position, so a deleted item just stops
+  // appearing instead of leaving a positional gap.
   const PAGE_SIZE = 10;
   const BACKEND_SIZE = 100;
   const total = Number(totalAmount) || 0;
@@ -69,6 +80,13 @@ const GenerateAndPrintPanel = ({
   const pageCodes = (qrcodes || []).slice(offsetInBackend, offsetInBackend + PAGE_SIZE);
   const startItem = total === 0 ? 0 : (displayPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(displayPage * PAGE_SIZE, total);
+
+  // identifiers is the { qrcode_id, identifiers }[] batch for the same
+  // backend page qrcodes came from — match by id, not position.
+  const identifiersByQrcodeId = useMemo(
+    () => new Map((identifiers || []).map((entry) => [entry.qrcode_id, entry.identifiers])),
+    [identifiers]
+  );
 
   if (!selectedProduct) {
     return (
@@ -136,9 +154,14 @@ const GenerateAndPrintPanel = ({
               />
             )}
           </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 1.5 }}>
-            {pageCodes.map((item, index) => (
-              <QRCode key={offsetInBackend + index} data={item} identifer={identifiers[offsetInBackend + index] || []} />
+          <Box sx={GRID_SX}>
+            {pageCodes.map((item) => (
+              <QRCode
+                key={item.qrcode_id}
+                data={item.url}
+                identifer={identifiersByQrcodeId.get(item.qrcode_id) || []}
+                onDelete={onDeleteQrCode ? () => onDeleteQrCode(item.qrcode_id) : undefined}
+              />
             ))}
           </Box>
         </Box>
@@ -187,14 +210,14 @@ const GenerateAndPrintPanel = ({
                   />
                 )}
               </Box>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                {securityPageCodes.map((item, index) => (
-                  <Box
-                    key={securityOffset + index}
-                    sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.paper' }}
-                  >
-                    <SecurityQRCode data={item} identifer={identifiers[securityOffset + index] || []} />
-                  </Box>
+              <Box sx={GRID_SX}>
+                {securityPageCodes.map((item) => (
+                  <SecurityQRCode
+                    key={item.security_qrcode_id}
+                    data={item.encrypted_key}
+                    identifer={[]}
+                    onDelete={onDeleteSecurityQrCode ? () => onDeleteSecurityQrCode(item.security_qrcode_id) : undefined}
+                  />
                 ))}
               </Box>
             </Box>
