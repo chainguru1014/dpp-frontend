@@ -8,6 +8,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import qrcode from 'qrcode';
 import MyDocument from './exportPDF';
+import Stat from './Stat';
 import { printProductQRCodes, getProductQRcodes, getProductIdentifiers } from '../../helper';
 
 const cardStyle = {
@@ -23,28 +24,6 @@ const cardStyle = {
     overflow: 'hidden',
     outline: 'none',
 };
-
-const Stat = ({ label, value, highlight }) => (
-    <Box
-        sx={{
-            flex: 1,
-            textAlign: 'center',
-            py: 1.25,
-            px: 1,
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: highlight ? 'primary.main' : 'divider',
-            bgcolor: highlight ? 'rgba(31,51,97,0.06)' : 'background.default',
-        }}
-    >
-        <Typography sx={{ fontWeight: 400, fontSize: 22, lineHeight: 1.2, color: highlight ? 'primary.main' : 'text.primary' }}>
-            {value}
-        </Typography>
-        <Typography variant="caption" color="text.secondary">
-            {label}
-        </Typography>
-    </Box>
-);
 
 export default function PrintModal({ open, setOpen, totalAmount, product, setProduct }) {
     const [from, setFrom] = React.useState(0);

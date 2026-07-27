@@ -7,6 +7,7 @@ import { TextField, Stack, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import MyDocument from './exportPDF';
+import Stat from './Stat';
 
 const cardStyle = {
     position: 'absolute',
@@ -50,9 +51,9 @@ export default function SimplePrintModal({ open, setOpen, title, items }) {
                 </Box>
 
                 <Box sx={{ p: 3 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {items.length} item{items.length === 1 ? '' : 's'} ready to print.
-                    </Typography>
+                    <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
+                        <Stat label={items.length === 1 ? 'Item ready to print' : 'Items ready to print'} value={items.length} highlight />
+                    </Stack>
 
                     <TextField
                         type="number"
@@ -72,7 +73,6 @@ export default function SimplePrintModal({ open, setOpen, title, items }) {
                         <PDFDownloadLink
                             style={{ textDecoration: 'none' }}
                             document={<MyDocument items={items} itemsPerRow={Number(itemsPerRow) || 5} />}
-                            onClick={() => setOpen(false)}
                             fileName={`${title.replace(/\s+/g, '-').toLowerCase()}.pdf`}
                         >
                             {({ loading }) => (
