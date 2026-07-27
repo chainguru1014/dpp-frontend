@@ -202,20 +202,19 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
 
   // Renders one PDF-ready item per identifier in the requested 1-indexed
   // position range (see printOrderIdentifiers above) — barcode/gs1dl render
-  // an image the same way CodeImage above does; NFC/RFID have no visual
-  // code, just text.
+  // an image the same way CodeImage above does, printed alone; NFC/RFID have
+  // no visual code, so the bare tag value is printed as text instead.
   const printItemsSource = async (fromN, toN) => {
     const slice = printOrderIdentifiers.slice(Math.max(0, fromN - 1), toN);
     return Promise.all(slice.map(async (item) => {
-      let img = null;
       if (item.source_type === 'barcode') {
-        img = renderEan13ToDataUrl(item.raw_value);
-      } else if (item.source_type === 'gs1dl' && item.raw_value) {
-        img = await qrcode.toDataURL(item.raw_value).catch(() => null);
+        return { img: renderEan13ToDataUrl(item.raw_value) };
       }
-      const itemIdentifiers = [{ type: activeLabel, serial: item.raw_value }];
-      if (item.pmc_code) itemIdentifiers.push({ type: 'PMC Code', serial: item.pmc_code });
-      return { img, identifiers: itemIdentifiers };
+      if (item.source_type === 'gs1dl' && item.raw_value) {
+        const img = await qrcode.toDataURL(item.raw_value).catch(() => null);
+        return { img };
+      }
+      return { code: item.raw_value };
     }));
   };
 
@@ -280,23 +279,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           per type (see generateRandomValue above). Intentionally a separate
           control from manual Register above: this creates and registers
           `amount` values immediately. */}
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
-        <TextField
-          type="number"
-          label="Amount"
-          size="small"
-          value={bulkAmount}
-          onChange={(e) => setBulkAmount(e.target.value)}
-          inputProps={{ min: 1, max: MAX_BULK }}
-          sx={{ width: 100 }}
-        />
-        <Button
-          variant="outlined"
-          onClick={handleBulkGenerate}
-          disabled={bulkGenerating || !companyId || !bulkAmount || Number(bulkAmount) < 1}
-        >
-          {bulkGenerating ? 'Generating…' : 'Generate'}
-        </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
         <Button
           variant="outlined"
           onClick={() => setPrintOpen(true)}
@@ -304,6 +287,24 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
         >
           Print
         </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+          <TextField
+            type="number"
+            label="Amount"
+            size="small"
+            value={bulkAmount}
+            onChange={(e) => setBulkAmount(e.target.value)}
+            inputProps={{ min: 1, max: MAX_BULK }}
+            sx={{ width: 100 }}
+          />
+          <Button
+            variant="outlined"
+            onClick={handleBulkGenerate}
+            disabled={bulkGenerating || !companyId || !bulkAmount || Number(bulkAmount) < 1}
+          >
+            {bulkGenerating ? 'Generating…' : 'Generate'}
+          </Button>
+        </Box>
       </Box>
       <PrintDialog
         open={printOpen}

@@ -95,19 +95,17 @@ const GenerateAndPrintPanel = ({
     [identifiers]
   );
 
-  // Renders one PDF-ready item per Security QR code in the requested
-  // 1-indexed position range — securityQRCodes is already sorted ascending
-  // by security_qrcode_id (see backend getSecurityQRCodes), so position
-  // matches that stable, never-reused sequence the same way a regular QR
-  // code's position matches its qrcode_id.
+  // Renders one PDF-ready item (QR image only) per Security QR code in the
+  // requested 1-indexed position range — securityQRCodes is already sorted
+  // ascending by security_qrcode_id (see backend getSecurityQRCodes), so
+  // position matches that stable, never-reused sequence the same way a
+  // regular QR code's position matches its qrcode_id.
   const securityItemsSource = async (fromN, toN) => {
     const slice = (securityQRCodes || []).slice(Math.max(0, fromN - 1), toN);
     return Promise.all(slice.map(async (item) => {
       const url = `${SECURITY_BASE_URL}/product/${item.encrypted_key}`;
       const img = await qrcode.toDataURL(url).catch(() => null);
-      const codeIdentifiers = [{ type: 'Security URL', serial: url }];
-      if (item.pmc_code) codeIdentifiers.push({ type: 'PMC Code', serial: item.pmc_code });
-      return { img, identifiers: codeIdentifiers };
+      return { img };
     }));
   };
 
@@ -142,27 +140,29 @@ const GenerateAndPrintPanel = ({
       {tab === 'qr' && (
         <Box>
           {canGenerate && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-              <TextField
-                type="number"
-                label="Amount"
-                variant="outlined"
-                size="small"
-                value={mintAmount}
-                onChange={(e) => setMintAmount(e.target.value)}
-                sx={{ minWidth: 120 }}
-              />
-              <Button
-                variant="outlined"
-                onClick={batchMintHandler}
-                disabled={!mintAmount || mintAmount <= 0}
-              >
-                Generate
-              </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2 }}>
               <Button variant="outlined" onClick={onOpenPrint} disabled={total === 0}>
                 Print
               </Button>
-              {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
+              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                <TextField
+                  type="number"
+                  label="Amount"
+                  variant="outlined"
+                  size="small"
+                  value={mintAmount}
+                  onChange={(e) => setMintAmount(e.target.value)}
+                  sx={{ minWidth: 120 }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={batchMintHandler}
+                  disabled={!mintAmount || mintAmount <= 0}
+                >
+                  Generate
+                </Button>
+                {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
+              </Box>
             </Box>
           )}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1.5, mb: 1.5 }}>
@@ -198,23 +198,7 @@ const GenerateAndPrintPanel = ({
       {tab === 'securityQr' && (
         <Box>
           {canGenerate && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-              <TextField
-                type="number"
-                label="Amount"
-                variant="outlined"
-                size="small"
-                value={mintAmount}
-                onChange={(e) => setMintAmount(e.target.value)}
-                sx={{ minWidth: 120 }}
-              />
-              <Button
-                variant="outlined"
-                onClick={onGenerateSecurityQR}
-                disabled={!mintAmount || mintAmount <= 0}
-              >
-                Generate
-              </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2 }}>
               <Button
                 variant="outlined"
                 onClick={() => setSecurityPrintOpen(true)}
@@ -222,7 +206,25 @@ const GenerateAndPrintPanel = ({
               >
                 Print
               </Button>
-              {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
+              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+                <TextField
+                  type="number"
+                  label="Amount"
+                  variant="outlined"
+                  size="small"
+                  value={mintAmount}
+                  onChange={(e) => setMintAmount(e.target.value)}
+                  sx={{ minWidth: 120 }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={onGenerateSecurityQR}
+                  disabled={!mintAmount || mintAmount <= 0}
+                >
+                  Generate
+                </Button>
+                {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
+              </Box>
             </Box>
           )}
           {securityTotal > 0 ? (
