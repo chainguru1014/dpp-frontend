@@ -156,7 +156,7 @@ const GenerateAndPrintPanel = ({
                 onClick={batchMintHandler}
                 disabled={!mintAmount || mintAmount <= 0}
               >
-                Generate QR code
+                Generate
               </Button>
               <Button variant="outlined" onClick={onOpenPrint} disabled={total === 0}>
                 Print
@@ -212,7 +212,7 @@ const GenerateAndPrintPanel = ({
                 onClick={onGenerateSecurityQR}
                 disabled={!mintAmount || mintAmount <= 0}
               >
-                Generate Security QR code
+                Generate
               </Button>
               <Button
                 variant="outlined"

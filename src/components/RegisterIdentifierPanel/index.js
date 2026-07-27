@@ -18,7 +18,7 @@ import {
   deleteProductIdentifier,
 } from '../../helper';
 import CopyIconButton from '../CopyIconButton';
-import { renderEan13ToDataUrl } from '../../utils/barcodeRenderer';
+import { renderEan13ToDataUrl, toValidEan13 } from '../../utils/barcodeRenderer';
 import SimplePrintModal from '../printModal/SimplePrintModal';
 
 const SOURCE_TYPES = [
@@ -30,6 +30,17 @@ const SOURCE_TYPES = [
 
 const PAGE_SIZE = 10;
 const MAX_BULK = 50;
+
+// Just enough width for each type's actual value shape (short numeric
+// barcode vs. a full GS1 Digital Link URL) instead of one wide field sized
+// for the longest case.
+const VALUE_WIDTH = {
+  barcode: 160,
+  nfc: 200,
+  rfid: 220,
+  gs1dl: 340,
+};
+const DEFAULT_VALUE_WIDTH = 240;
 
 const randomDigits = (count) => Array.from({ length: count }, () => Math.floor(Math.random() * 10)).join('');
 const randomHex = (bytes) => Array.from({ length: bytes }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('').toUpperCase();
@@ -44,9 +55,11 @@ const randomHex = (bytes) => Array.from({ length: bytes }, () => Math.floor(Math
 const generateRandomValue = (sourceType) => {
   switch (sourceType) {
     case 'barcode':
-      // 12 random digits; the barcode renderer itself computes/appends a
-      // valid EAN-13 check digit, so just hand it 12 digits here.
-      return randomDigits(12);
+      // Register the full 13-digit EAN-13 (12 random digits + the same check
+      // digit renderEan13ToDataUrl/CodeImage computes for display) — a scan
+      // of the rendered barcode returns all 13 digits, so the registered
+      // raw_value must include the check digit too or lookup never matches.
+      return toValidEan13(randomDigits(12));
     case 'gs1dl':
       return `https://id.gs1.org/01/${randomDigits(14)}/21/SN${randomDigits(6)}`;
     case 'nfc':
@@ -217,7 +230,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
           : "Register this product's own barcode, GTIN, NFC tag, or RFID tag so scanning it in the app resolves to this product and gets a PMC. Use this for identifiers printed outside this platform — including barcodes from companies that don't follow the GS1 Digital Link standard."}
       </Typography>
 
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 1.5 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 1.5 }}>
         {!lockedSourceType && (
           <TextField
             select
@@ -237,7 +250,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
           size="small"
           value={rawValue}
           onChange={(e) => setRawValue(e.target.value)}
-          sx={{ minWidth: 240, flexGrow: 1 }}
+          sx={{ width: lockedSourceType ? VALUE_WIDTH[lockedSourceType] || DEFAULT_VALUE_WIDTH : DEFAULT_VALUE_WIDTH }}
         />
         <TextField
           label="Note (optional)"
