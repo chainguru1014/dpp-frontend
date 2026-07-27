@@ -11,7 +11,6 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
-import CasinoIcon from '@mui/icons-material/Casino';
 import qrcode from 'qrcode';
 import {
   registerProductIdentifier,
@@ -20,6 +19,7 @@ import {
 } from '../../helper';
 import CopyIconButton from '../CopyIconButton';
 import { renderEan13ToDataUrl } from '../../utils/barcodeRenderer';
+import SimplePrintModal from '../printModal/SimplePrintModal';
 
 const SOURCE_TYPES = [
   { value: 'barcode', label: 'Barcode / GTIN' },
@@ -111,6 +111,9 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
   const [bulkGenerating, setBulkGenerating] = useState(false);
   const [page, setPage] = useState(1);
   const [imagesByItemId, setImagesByItemId] = useState({});
+  const [printOpen, setPrintOpen] = useState(false);
+  const [printItems, setPrintItems] = useState([]);
+  const [preparingPrint, setPreparingPrint] = useState(false);
 
   const activeLabel = SOURCE_TYPES.find((t) => t.value === sourceType)?.label || sourceType;
   const visibleIdentifiers = useMemo(
@@ -162,7 +165,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
     try {
       for (let i = 0; i < amount; i++) {
         // eslint-disable-next-line no-await-in-loop
-        await registerProductIdentifier(productId, companyId, sourceType, generateRandomValue(sourceType), 'Randomly generated (test stub)');
+        await registerProductIdentifier(productId, companyId, sourceType, generateRandomValue(sourceType), 'Test value');
       }
       setPage(1);
       await refresh();
@@ -174,6 +177,30 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
   const handleDelete = async (id) => {
     if (await deleteProductIdentifier(id)) {
       await refresh();
+    }
+  };
+
+  // Builds one PDF-ready item per currently registered identifier of this
+  // type (not just the visible page) — barcode/gs1dl render an image the
+  // same way CodeImage above does; NFC/RFID have no visual code, just text.
+  const handleOpenPrint = async () => {
+    setPreparingPrint(true);
+    try {
+      const items = await Promise.all(visibleIdentifiers.map(async (item) => {
+        let img = null;
+        if (item.source_type === 'barcode') {
+          img = renderEan13ToDataUrl(item.raw_value);
+        } else if (item.source_type === 'gs1dl' && item.raw_value) {
+          img = await qrcode.toDataURL(item.raw_value).catch(() => null);
+        }
+        const identifiers = [{ type: activeLabel, serial: item.raw_value }];
+        if (item.pmc_code) identifiers.push({ type: 'PMC Code', serial: item.pmc_code });
+        return { img, identifiers };
+      }));
+      setPrintItems(items);
+      setPrintOpen(true);
+    } finally {
+      setPreparingPrint(false);
     }
   };
 
@@ -228,14 +255,11 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
         </Button>
       </Box>
 
-      {/* Bulk random generation — a stand-in for a real generation/reading
-          engine per type (see generateRandomValue above). Intentionally a
-          separate control from manual Register above: this creates and
-          registers `amount` random values immediately. */}
+      {/* Bulk generation — a stand-in for a real generation/reading engine
+          per type (see generateRandomValue above). Intentionally a separate
+          control from manual Register above: this creates and registers
+          `amount` values immediately. */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
-        <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-          No real {activeLabel.toLowerCase()} generation/reading engine yet — fills in random test values.
-        </Typography>
         <TextField
           type="number"
           label="Amount"
@@ -247,13 +271,25 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
         />
         <Button
           variant="outlined"
-          startIcon={<CasinoIcon />}
           onClick={handleBulkGenerate}
           disabled={bulkGenerating || !companyId || !bulkAmount || Number(bulkAmount) < 1}
         >
           {bulkGenerating ? 'Generating…' : 'Generate'}
         </Button>
+        <Button
+          variant="outlined"
+          onClick={handleOpenPrint}
+          disabled={preparingPrint || visibleIdentifiers.length === 0}
+        >
+          {preparingPrint ? 'Preparing…' : 'Print'}
+        </Button>
       </Box>
+      <SimplePrintModal
+        open={printOpen}
+        setOpen={setPrintOpen}
+        title={`Print ${activeLabel}`}
+        items={printItems}
+      />
 
       {!companyId && (
         <Typography variant="body2" color="error" sx={{ mb: 2 }}>

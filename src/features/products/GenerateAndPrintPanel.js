@@ -1,16 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Button, Tab, Tabs, TextField, Typography, Pagination } from '@mui/material';
+import qrcode from 'qrcode';
 import CircularProgressWithLabel from '../../components/CircularProgressBar';
 import QRCode from '../../components/displayQRCode';
 import SecurityQRCode from '../../components/displaySecurityQRCode';
 import RegisterIdentifierPanel from '../../components/RegisterIdentifierPanel';
+import SimplePrintModal from '../../components/printModal/SimplePrintModal';
+
+const SECURITY_BASE_URL = process.env.REACT_APP_SECURITY_BASE_URL || process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com';
 
 const TABS = [
   { key: 'qr', label: 'QR Code' },
   { key: 'securityQr', label: 'Security QR Code' },
+  { key: 'gs1dl', label: 'GS1 Digital Link' },
   { key: 'rfid', label: 'RFID Tag' },
   { key: 'nfc', label: 'NFC Tag' },
-  { key: 'gs1dl', label: 'GS1 Digital Link' },
   { key: 'barcode', label: 'Barcode' },
 ];
 
@@ -45,6 +49,9 @@ const GenerateAndPrintPanel = ({
   canGenerate = true,
 }) => {
   const [tab, setTab] = useState('qr');
+  const [securityPrintOpen, setSecurityPrintOpen] = useState(false);
+  const [securityPrintItems, setSecurityPrintItems] = useState([]);
+  const [preparingSecurityPrint, setPreparingSecurityPrint] = useState(false);
 
   // Same 10-per-display-page / 100-per-backend-batch split ProductMintSection
   // used — the backend serves codes in batches of 100 (parent's page/setPage).
@@ -88,6 +95,27 @@ const GenerateAndPrintPanel = ({
     [identifiers]
   );
 
+  // Builds one PDF-ready item per currently generated Security QR code (not
+  // just the visible page) — mirrors displaySecurityQRCode's own QR
+  // rendering and includes the item's PMC code, same as RegisterIdentifierPanel's
+  // print flow for the other four tabs.
+  const handleOpenSecurityPrint = async () => {
+    setPreparingSecurityPrint(true);
+    try {
+      const items = await Promise.all((securityQRCodes || []).map(async (item) => {
+        const url = `${SECURITY_BASE_URL}/product/${item.encrypted_key}`;
+        const img = await qrcode.toDataURL(url).catch(() => null);
+        const codeIdentifiers = [{ type: 'Security URL', serial: url }];
+        if (item.pmc_code) codeIdentifiers.push({ type: 'PMC Code', serial: item.pmc_code });
+        return { img, identifiers: codeIdentifiers };
+      }));
+      setSecurityPrintItems(items);
+      setSecurityPrintOpen(true);
+    } finally {
+      setPreparingSecurityPrint(false);
+    }
+  };
+
   if (!selectedProduct) {
     return (
       <Typography color="text.secondary" sx={{ fontStyle: 'italic', pt: 2 }}>
@@ -113,7 +141,7 @@ const GenerateAndPrintPanel = ({
       {tab === 'qr' && (
         <Box>
           {canGenerate && (
-            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 2 }}>
               <TextField
                 type="number"
                 label="Amount"
@@ -124,10 +152,9 @@ const GenerateAndPrintPanel = ({
                 sx={{ minWidth: 120 }}
               />
               <Button
-                variant="contained"
+                variant="outlined"
                 onClick={batchMintHandler}
                 disabled={!mintAmount || mintAmount <= 0}
-                sx={{ minWidth: 150 }}
               >
                 Generate QR code
               </Button>
@@ -170,7 +197,7 @@ const GenerateAndPrintPanel = ({
       {tab === 'securityQr' && (
         <Box>
           {canGenerate && (
-            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 2 }}>
               <TextField
                 type="number"
                 label="Amount"
@@ -181,12 +208,18 @@ const GenerateAndPrintPanel = ({
                 sx={{ minWidth: 120 }}
               />
               <Button
-                variant="contained"
+                variant="outlined"
                 onClick={onGenerateSecurityQR}
                 disabled={!mintAmount || mintAmount <= 0}
-                sx={{ minWidth: 200 }}
               >
                 Generate Security QR code
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={handleOpenSecurityPrint}
+                disabled={preparingSecurityPrint || securityTotal === 0}
+              >
+                {preparingSecurityPrint ? 'Preparing…' : 'Print'}
               </Button>
               {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
             </Box>
@@ -215,7 +248,7 @@ const GenerateAndPrintPanel = ({
                   <SecurityQRCode
                     key={item.security_qrcode_id}
                     data={item.encrypted_key}
-                    identifer={[]}
+                    identifer={item.pmc_code ? [{ type: 'PMC Code', serial: item.pmc_code }] : []}
                     onDelete={onDeleteSecurityQrCode ? () => onDeleteSecurityQrCode(item.security_qrcode_id) : undefined}
                   />
                 ))}
@@ -226,6 +259,12 @@ const GenerateAndPrintPanel = ({
               No Security QR Codes generated yet.
             </Typography>
           )}
+          <SimplePrintModal
+            open={securityPrintOpen}
+            setOpen={setSecurityPrintOpen}
+            title="Print Security QR Codes"
+            items={securityPrintItems}
+          />
         </Box>
       )}
 

@@ -54,6 +54,7 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
     const [count, setCount] = React.useState(0);
     const [preparing, setPreparing] = React.useState(false);
     const [pdfItems, setPdfItems] = React.useState([]);
+    const [itemsPerRow, setItemsPerRow] = React.useState(5);
 
     const printed = product ? product.printed_amount : 0;
     const available = totalAmount - printed;
@@ -207,6 +208,18 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
                         </Stack>
                     )}
 
+                    <TextField
+                        type="number"
+                        label="Items per row"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        value={itemsPerRow}
+                        onChange={(e) => setItemsPerRow(e.target.value)}
+                        InputProps={{ inputProps: { min: 1, max: 20 } }}
+                        sx={{ mt: 2 }}
+                    />
+
                     {/* Actions */}
                     <Stack direction="row" spacing={1.5} justifyContent="flex-end" alignItems="center" sx={{ mt: 3 }}>
                         <Button variant="text" color="inherit" onClick={() => setOpen(false)}>
@@ -219,7 +232,7 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
                         ) : (
                             <PDFDownloadLink
                                 style={{ textDecoration: 'none' }}
-                                document={<MyDocument items={pdfItems} />}
+                                document={<MyDocument items={pdfItems} itemsPerRow={Number(itemsPerRow) || 5} />}
                                 onClick={downloadPDFHandler}
                                 fileName={`${product?.name}-${printMode}-${printMode === 'print' ? printed + 1 : from}-${printMode === 'print' ? printed + Number(count) : to}.pdf`}
                             >
