@@ -2,9 +2,8 @@ import * as React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
-// Shared stat tile used by both PrintModal (QR tab) and SimplePrintModal
-// (Security QR/GS1DL/RFID/NFC/Barcode tabs) so every print dialog reads as
-// one consistent design.
+// Shared stat tile used by PrintDialog (every print dialog: QR, Security QR,
+// GS1DL, RFID, NFC, Barcode) so they all read as one consistent design.
 const Stat = ({ label, value, highlight }) => (
     <Box
         sx={{

@@ -1847,6 +1847,7 @@ const InnerPage = () => {
                     />
                     <GenerateAndPrintPanel
                       selectedProduct={selectedProduct}
+                      setSelectedProduct={setSelectedProduct}
                       companyId={company?._id || company?.id}
                       mintAmount={mintAmount}
                       setMintAmount={setMintAmount}

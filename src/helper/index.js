@@ -335,6 +335,24 @@ export const printProductQRCodes = async (id, count) => {
     }
 }
 
+export const printSecurityQRCodes = async (product_id, count) => {
+    try {
+        const res = await axios.post(`${Backend_URL}qrcode/security/${product_id}/print`, { count });
+        return res.data.data;
+    } catch (err) {
+        console.log(err);
+    }
+}
+
+export const printProductIdentifiers = async (product_id, source_type, count) => {
+    try {
+        const res = await axios.post(`${Backend_URL}product-identifier/${product_id}/print`, { source_type, count });
+        return res.data.data;
+    } catch (err) {
+        console.log(err);
+    }
+}
+
 export const getCompanyProducts = async (data) => {
     try {
         console.log('getCompanyProducts request data:', data);

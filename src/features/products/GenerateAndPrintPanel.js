@@ -5,7 +5,8 @@ import CircularProgressWithLabel from '../../components/CircularProgressBar';
 import QRCode from '../../components/displayQRCode';
 import SecurityQRCode from '../../components/displaySecurityQRCode';
 import RegisterIdentifierPanel from '../../components/RegisterIdentifierPanel';
-import SimplePrintModal from '../../components/printModal/SimplePrintModal';
+import PrintDialog from '../../components/printModal/PrintDialog';
+import { printSecurityQRCodes } from '../../helper';
 
 const SECURITY_BASE_URL = process.env.REACT_APP_SECURITY_BASE_URL || process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com';
 
@@ -30,6 +31,7 @@ const GRID_SX = { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1
 // its generate-or-register controls — no show/hide toggle.
 const GenerateAndPrintPanel = ({
   selectedProduct,
+  setSelectedProduct,
   companyId,
   mintAmount,
   setMintAmount,
@@ -50,8 +52,6 @@ const GenerateAndPrintPanel = ({
 }) => {
   const [tab, setTab] = useState('qr');
   const [securityPrintOpen, setSecurityPrintOpen] = useState(false);
-  const [securityPrintItems, setSecurityPrintItems] = useState([]);
-  const [preparingSecurityPrint, setPreparingSecurityPrint] = useState(false);
 
   // Same 10-per-display-page / 100-per-backend-batch split ProductMintSection
   // used — the backend serves codes in batches of 100 (parent's page/setPage).
@@ -95,25 +95,26 @@ const GenerateAndPrintPanel = ({
     [identifiers]
   );
 
-  // Builds one PDF-ready item per currently generated Security QR code (not
-  // just the visible page) — mirrors displaySecurityQRCode's own QR
-  // rendering and includes the item's PMC code, same as RegisterIdentifierPanel's
-  // print flow for the other four tabs.
-  const handleOpenSecurityPrint = async () => {
-    setPreparingSecurityPrint(true);
-    try {
-      const items = await Promise.all((securityQRCodes || []).map(async (item) => {
-        const url = `${SECURITY_BASE_URL}/product/${item.encrypted_key}`;
-        const img = await qrcode.toDataURL(url).catch(() => null);
-        const codeIdentifiers = [{ type: 'Security URL', serial: url }];
-        if (item.pmc_code) codeIdentifiers.push({ type: 'PMC Code', serial: item.pmc_code });
-        return { img, identifiers: codeIdentifiers };
-      }));
-      setSecurityPrintItems(items);
-      setSecurityPrintOpen(true);
-    } finally {
-      setPreparingSecurityPrint(false);
-    }
+  // Renders one PDF-ready item per Security QR code in the requested
+  // 1-indexed position range — securityQRCodes is already sorted ascending
+  // by security_qrcode_id (see backend getSecurityQRCodes), so position
+  // matches that stable, never-reused sequence the same way a regular QR
+  // code's position matches its qrcode_id.
+  const securityItemsSource = async (fromN, toN) => {
+    const slice = (securityQRCodes || []).slice(Math.max(0, fromN - 1), toN);
+    return Promise.all(slice.map(async (item) => {
+      const url = `${SECURITY_BASE_URL}/product/${item.encrypted_key}`;
+      const img = await qrcode.toDataURL(url).catch(() => null);
+      const codeIdentifiers = [{ type: 'Security URL', serial: url }];
+      if (item.pmc_code) codeIdentifiers.push({ type: 'PMC Code', serial: item.pmc_code });
+      return { img, identifiers: codeIdentifiers };
+    }));
+  };
+
+  const onMarkSecurityPrinted = async (count) => {
+    const updated = await printSecurityQRCodes(selectedProduct._id, count);
+    if (updated && setSelectedProduct) setSelectedProduct(updated);
+    return updated?.security_printed_amount;
   };
 
   if (!selectedProduct) {
@@ -216,10 +217,10 @@ const GenerateAndPrintPanel = ({
               </Button>
               <Button
                 variant="outlined"
-                onClick={handleOpenSecurityPrint}
-                disabled={preparingSecurityPrint || securityTotal === 0}
+                onClick={() => setSecurityPrintOpen(true)}
+                disabled={securityTotal === 0}
               >
-                {preparingSecurityPrint ? 'Preparing…' : 'Print'}
+                Print
               </Button>
               {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
             </Box>
@@ -259,26 +260,55 @@ const GenerateAndPrintPanel = ({
               No Security QR Codes generated yet.
             </Typography>
           )}
-          <SimplePrintModal
+          <PrintDialog
             open={securityPrintOpen}
             setOpen={setSecurityPrintOpen}
             title="Print Security QR Codes"
-            items={securityPrintItems}
+            subtitle={selectedProduct?.name}
+            totalAmount={securityTotal}
+            printedAmount={selectedProduct?.security_printed_amount || 0}
+            itemsSource={securityItemsSource}
+            onMarkPrinted={onMarkSecurityPrinted}
+            fileNamePrefix={`${selectedProduct?.name || 'product'}-security-qr`}
           />
         </Box>
       )}
 
       {tab === 'rfid' && (
-        <RegisterIdentifierPanel productId={selectedProduct._id} companyId={companyId} lockedSourceType="rfid" />
+        <RegisterIdentifierPanel
+          productId={selectedProduct._id}
+          companyId={companyId}
+          lockedSourceType="rfid"
+          product={selectedProduct}
+          onProductChange={setSelectedProduct}
+        />
       )}
       {tab === 'nfc' && (
-        <RegisterIdentifierPanel productId={selectedProduct._id} companyId={companyId} lockedSourceType="nfc" />
+        <RegisterIdentifierPanel
+          productId={selectedProduct._id}
+          companyId={companyId}
+          lockedSourceType="nfc"
+          product={selectedProduct}
+          onProductChange={setSelectedProduct}
+        />
       )}
       {tab === 'gs1dl' && (
-        <RegisterIdentifierPanel productId={selectedProduct._id} companyId={companyId} lockedSourceType="gs1dl" />
+        <RegisterIdentifierPanel
+          productId={selectedProduct._id}
+          companyId={companyId}
+          lockedSourceType="gs1dl"
+          product={selectedProduct}
+          onProductChange={setSelectedProduct}
+        />
       )}
       {tab === 'barcode' && (
-        <RegisterIdentifierPanel productId={selectedProduct._id} companyId={companyId} lockedSourceType="barcode" />
+        <RegisterIdentifierPanel
+          productId={selectedProduct._id}
+          companyId={companyId}
+          lockedSourceType="barcode"
+          product={selectedProduct}
+          onProductChange={setSelectedProduct}
+        />
       )}
     </Box>
   );

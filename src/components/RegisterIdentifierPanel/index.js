@@ -16,10 +16,11 @@ import {
   registerProductIdentifier,
   listProductIdentifiers,
   deleteProductIdentifier,
+  printProductIdentifiers,
 } from '../../helper';
 import CopyIconButton from '../CopyIconButton';
 import { renderEan13ToDataUrl, toValidEan13 } from '../../utils/barcodeRenderer';
-import SimplePrintModal from '../printModal/SimplePrintModal';
+import PrintDialog from '../printModal/PrintDialog';
 
 const SOURCE_TYPES = [
   { value: 'barcode', label: 'Barcode / GTIN' },
@@ -114,7 +115,7 @@ const CodeImage = ({ sourceType, value, onReady }) => {
 // tab per identifier type), the type picker is replaced with a fixed label
 // and the list below only shows identifiers of that type, instead of a
 // mixed list with a type dropdown.
-const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => {
+const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, product, onProductChange }) => {
   const [identifiers, setIdentifiers] = useState([]);
   const [sourceType, setSourceType] = useState(lockedSourceType || 'barcode');
   const [rawValue, setRawValue] = useState('');
@@ -125,13 +126,19 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
   const [page, setPage] = useState(1);
   const [imagesByItemId, setImagesByItemId] = useState({});
   const [printOpen, setPrintOpen] = useState(false);
-  const [printItems, setPrintItems] = useState([]);
-  const [preparingPrint, setPreparingPrint] = useState(false);
 
   const activeLabel = SOURCE_TYPES.find((t) => t.value === sourceType)?.label || sourceType;
   const visibleIdentifiers = useMemo(
     () => (lockedSourceType ? identifiers.filter((item) => item.source_type === lockedSourceType) : identifiers),
     [identifiers, lockedSourceType]
+  );
+  // Stable oldest-first order for the print dialog's position-based ranges —
+  // listProductIdentifiers returns newest-first (for the on-screen grid), but
+  // a printed "position" needs to mean the same item forever, the same way a
+  // regular QR code's position is its permanent qrcode_id.
+  const printOrderIdentifiers = useMemo(
+    () => [...visibleIdentifiers].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
+    [visibleIdentifiers]
   );
   const totalPages = Math.max(1, Math.ceil(visibleIdentifiers.length / PAGE_SIZE));
   const pageItems = visibleIdentifiers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -193,28 +200,29 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
     }
   };
 
-  // Builds one PDF-ready item per currently registered identifier of this
-  // type (not just the visible page) — barcode/gs1dl render an image the
-  // same way CodeImage above does; NFC/RFID have no visual code, just text.
-  const handleOpenPrint = async () => {
-    setPreparingPrint(true);
-    try {
-      const items = await Promise.all(visibleIdentifiers.map(async (item) => {
-        let img = null;
-        if (item.source_type === 'barcode') {
-          img = renderEan13ToDataUrl(item.raw_value);
-        } else if (item.source_type === 'gs1dl' && item.raw_value) {
-          img = await qrcode.toDataURL(item.raw_value).catch(() => null);
-        }
-        const identifiers = [{ type: activeLabel, serial: item.raw_value }];
-        if (item.pmc_code) identifiers.push({ type: 'PMC Code', serial: item.pmc_code });
-        return { img, identifiers };
-      }));
-      setPrintItems(items);
-      setPrintOpen(true);
-    } finally {
-      setPreparingPrint(false);
-    }
+  // Renders one PDF-ready item per identifier in the requested 1-indexed
+  // position range (see printOrderIdentifiers above) — barcode/gs1dl render
+  // an image the same way CodeImage above does; NFC/RFID have no visual
+  // code, just text.
+  const printItemsSource = async (fromN, toN) => {
+    const slice = printOrderIdentifiers.slice(Math.max(0, fromN - 1), toN);
+    return Promise.all(slice.map(async (item) => {
+      let img = null;
+      if (item.source_type === 'barcode') {
+        img = renderEan13ToDataUrl(item.raw_value);
+      } else if (item.source_type === 'gs1dl' && item.raw_value) {
+        img = await qrcode.toDataURL(item.raw_value).catch(() => null);
+      }
+      const itemIdentifiers = [{ type: activeLabel, serial: item.raw_value }];
+      if (item.pmc_code) itemIdentifiers.push({ type: 'PMC Code', serial: item.pmc_code });
+      return { img, identifiers: itemIdentifiers };
+    }));
+  };
+
+  const onMarkPrinted = async (count) => {
+    const updated = await printProductIdentifiers(productId, lockedSourceType, count);
+    if (updated && onProductChange) onProductChange(updated);
+    return updated?.identifier_printed_amounts?.[lockedSourceType];
   };
 
   if (!productId) return null;
@@ -291,17 +299,21 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType }) => 
         </Button>
         <Button
           variant="outlined"
-          onClick={handleOpenPrint}
-          disabled={preparingPrint || visibleIdentifiers.length === 0}
+          onClick={() => setPrintOpen(true)}
+          disabled={visibleIdentifiers.length === 0}
         >
-          {preparingPrint ? 'Preparing…' : 'Print'}
+          Print
         </Button>
       </Box>
-      <SimplePrintModal
+      <PrintDialog
         open={printOpen}
         setOpen={setPrintOpen}
         title={`Print ${activeLabel}`}
-        items={printItems}
+        totalAmount={visibleIdentifiers.length}
+        printedAmount={product?.identifier_printed_amounts?.[lockedSourceType] || 0}
+        itemsSource={printItemsSource}
+        onMarkPrinted={onMarkPrinted}
+        fileNamePrefix={`${product?.name || 'product'}-${lockedSourceType || sourceType}`}
       />
 
       {!companyId && (
