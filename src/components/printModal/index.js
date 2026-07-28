@@ -17,6 +17,7 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
         return Promise.all(
             (Array.isArray(urls) ? urls : []).map(async (item) => ({
                 img: await qrcode.toDataURL(String(item?.url || '')),
+                code: item?.url,
             }))
         );
     };

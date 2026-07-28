@@ -115,10 +115,10 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                 height: CONSENT_BUTTON_HEIGHT,
                 minHeight: CONSENT_BUTTON_HEIGHT,
                 py: 0,
-                // Gray background with dark blue text — reads as "declined"
+                // Gray background with white text — reads as "declined"
                 // without the alarm-red error color.
                 ...(consent === false
-                  ? { bgcolor: '#e5e7eb', borderColor: '#e5e7eb', color: '#266aa8', '&:hover': { bgcolor: '#d1d5db', borderColor: '#d1d5db' } }
+                  ? { bgcolor: '#9ca3af', borderColor: '#9ca3af', color: '#fff', '&:hover': { bgcolor: '#6b7280', borderColor: '#6b7280' } }
                   : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
               }}
             >

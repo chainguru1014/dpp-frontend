@@ -202,17 +202,19 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
 
   // Renders one PDF-ready item per identifier in the requested 1-indexed
   // position range (see printOrderIdentifiers above) — barcode/gs1dl render
-  // an image the same way CodeImage above does, printed alone; NFC/RFID have
-  // no visual code, so the bare tag value is printed as text instead.
+  // an image the same way CodeImage above does, with the raw value carried
+  // as `code` so MyDocument can print a truncated reference under it; NFC/RFID
+  // have no visual code, so the bare tag value is printed as truncated text
+  // instead.
   const printItemsSource = async (fromN, toN) => {
     const slice = printOrderIdentifiers.slice(Math.max(0, fromN - 1), toN);
     return Promise.all(slice.map(async (item) => {
       if (item.source_type === 'barcode') {
-        return { img: renderEan13ToDataUrl(item.raw_value) };
+        return { img: renderEan13ToDataUrl(item.raw_value), code: item.raw_value };
       }
       if (item.source_type === 'gs1dl' && item.raw_value) {
         const img = await qrcode.toDataURL(item.raw_value).catch(() => null);
-        return { img };
+        return { img, code: item.raw_value };
       }
       return { code: item.raw_value };
     }));
