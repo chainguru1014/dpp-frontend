@@ -185,7 +185,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
     try {
       for (let i = 0; i < amount; i++) {
         // eslint-disable-next-line no-await-in-loop
-        await registerProductIdentifier(productId, companyId, sourceType, generateRandomValue(sourceType), 'Test value');
+        await registerProductIdentifier(productId, companyId, sourceType, generateRandomValue(sourceType), '');
       }
       setPage(1);
       await refresh();
@@ -373,7 +373,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
                     <CopyIconButton value={item.pmc_code} />
                   </Box>
                 )}
-                {item.note && (
+                {item.note && item.note.trim().toLowerCase() !== 'test value' && (
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, fontStyle: 'italic' }}>
                     {item.note}
                   </Typography>
