@@ -62,23 +62,17 @@ const AuthShell = ({ children, cardSx }) => (
         textAlign: 'center',
         color: '#fff',
         textShadow: '0 2px 8px rgba(0,0,0,0.55)',
-        // Wider than the right column, at a smaller font size (1.3rem here
-        // vs 1.6rem there) — this phrase has ~50% more characters, so
-        // matching font sizes made this block noticeably taller/heavier
-        // than the right one despite both being 3 lines. Scaling the font
-        // down roughly by sqrt(charCountRight / charCountLeft) balances the
-        // two blocks' rendered "ink area" instead.
         maxWidth: 420,
         fontFamily: taglineFontFamily,
       }}
     >
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.3rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
         Digital Product Passport
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.3rem', lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
         for
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.3rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
         Circular Economy &amp; Environment
       </Typography>
     </Box>
@@ -121,10 +115,8 @@ const AuthShell = ({ children, cardSx }) => (
         textAlign: 'center',
         color: '#fff',
         textShadow: '0 2px 8px rgba(0,0,0,0.55)',
-        // Narrower + larger font than the left column — see its comment;
-        // this phrase has fewer characters, so a bigger font here keeps the
-        // two blocks' visual weight comparable instead of this one reading
-        // as the lighter/smaller of the pair.
+        // Same font/size as the left column (see below) — narrower max
+        // width since this phrase has fewer characters.
         maxWidth: 340,
         fontFamily: taglineFontFamily,
       }}

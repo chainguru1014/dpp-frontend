@@ -10,10 +10,15 @@ import {
 
 const AuthContext = createContext(null);
 
-const STORAGE_KEY = 'dpp_company';
+// Exported so the employee login flow (features/employee-auth) can bridge a
+// Supervisor's Employee session into this same storage — see StaffLoginPage's
+// handling of employeeType === 'supervisor'. Company/User sessions never
+// share a token or storage key with an Employee session (see
+// EmployeeAuthContext), except for this one deliberate, one-way bridge.
+export const STORAGE_KEY = 'dpp_company';
 // JWT issued by the passwordless auth endpoints (google/apple/otp-verify).
 // Needed as a Bearer token for the profile-completion call.
-const TOKEN_STORAGE_KEY = 'dpp_auth_token';
+export const TOKEN_STORAGE_KEY = 'dpp_auth_token';
 
 const safeStorageGet = (storage, key) => {
   try {

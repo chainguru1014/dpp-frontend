@@ -66,7 +66,7 @@ const ProductsSidebarTree = ({
                 <span
                   style={{
                     fontSize: 12,
-                    color: 'blue',
+                    color: '#2f80c8',
                     textDecoration: 'underline',
                     cursor: 'pointer',
                   }}
@@ -174,7 +174,7 @@ const ProductsSidebarTree = ({
                         style={{
                           marginLeft: 12,
                           fontSize: 12,
-                          color: 'blue',
+                          color: '#2f80c8',
                           textDecoration: 'underline',
                           cursor: 'pointer',
                         }}

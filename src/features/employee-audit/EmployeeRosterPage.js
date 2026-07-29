@@ -28,6 +28,7 @@ import { listEmployees, inviteEmployee, updateEmployee } from '../../helper';
 const InviteDialog = ({ open, onClose, onInvited, token }) => {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState('staff');
+  const [employeeType, setEmployeeType] = useState('working_employee');
   const [employeeCode, setEmployeeCode] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -42,6 +43,7 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
     const res = await inviteEmployee(token, {
       email: email.trim(),
       role,
+      employeeType,
       employeeCode: employeeCode.trim() || undefined,
     });
     setSaving(false);
@@ -51,6 +53,7 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
     }
     setEmail('');
     setRole('staff');
+    setEmployeeType('working_employee');
     setEmployeeCode('');
     onInvited();
     onClose();
@@ -75,6 +78,17 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
             <MenuItem value="admin">Admin</MenuItem>
           </Select>
         </FormControl>
+        <FormControl fullWidth>
+          <InputLabel>Employee Type</InputLabel>
+          <Select label="Employee Type" value={employeeType} onChange={(e) => setEmployeeType(e.target.value)}>
+            <MenuItem value="working_employee">Working Employee</MenuItem>
+            <MenuItem value="supervisor">Supervisor</MenuItem>
+          </Select>
+        </FormControl>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
+          Working Employee signs in on the mobile app with their corporate email. Supervisor signs
+          in on this dashboard and can manage products and view the Dashboard page.
+        </Typography>
         <TextField
           label="Employee Code (optional)"
           value={employeeCode}
@@ -125,6 +139,11 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
     reload();
   };
 
+  const handleEmployeeTypeChange = async (employee, employeeType) => {
+    await updateEmployee(token, employee._id, { employeeType });
+    reload();
+  };
+
   const columns = [
     { field: 'email', headerName: 'Corporate Email', width: 220, valueGetter: (p) => p.row.email || '—' },
     ...(showCompanyColumn
@@ -141,6 +160,21 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
           <MenuItem value="staff">Staff</MenuItem>
           <MenuItem value="manager">Manager</MenuItem>
           <MenuItem value="admin">Admin</MenuItem>
+        </Select>
+      ),
+    },
+    {
+      field: 'employeeType',
+      headerName: 'Employee Type',
+      width: 180,
+      renderCell: (p) => (
+        <Select
+          size="small"
+          value={p.row.employeeType || 'working_employee'}
+          onChange={(e) => handleEmployeeTypeChange(p.row, e.target.value)}
+        >
+          <MenuItem value="working_employee">Working Employee</MenuItem>
+          <MenuItem value="supervisor">Supervisor</MenuItem>
         </Select>
       ),
     },

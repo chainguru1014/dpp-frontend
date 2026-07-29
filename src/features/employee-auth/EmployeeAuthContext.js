@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { requestEmployeeOtp, verifyEmployeeOtp } from '../../helper';
+import { STORAGE_KEY as COMPANY_STORAGE_KEY, TOKEN_STORAGE_KEY as COMPANY_TOKEN_STORAGE_KEY } from '../auth/AuthContext';
 
 // Deliberately separate from features/auth/AuthContext.js (Company/brand
 // login) — an Employee session must never be confused with a Company
@@ -9,6 +10,31 @@ const EmployeeAuthContext = createContext(null);
 
 const STORAGE_KEY = 'dpp_employee';
 const TOKEN_STORAGE_KEY = 'dpp_employee_token';
+
+// One deliberate, one-way exception to the "never shares storage" rule above:
+// a Supervisor-role employee gets the full brand dashboard (Products +
+// Dashboard, reused as-is from the Company/brand experience — see
+// pages/index.js's isEmployeeActor gating), so their session also needs to
+// live where that dashboard's AuthContext reads it from. Used by both
+// StaffLoginPage (right after verifying the code) and StaffApp (in case a
+// Supervisor lands back on /staff with a stale session still in storage).
+export const bridgeSupervisorSession = (employee, token) => {
+  const bridgedSession = {
+    _id: employee.company_id,
+    name: employee.companyName || employee.emailDomain,
+    role: 'company',
+    profileCompleted: true,
+    actorKind: 'Employee',
+    employeeType: 'supervisor',
+    employeeId: employee._id,
+  };
+  try {
+    sessionStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(bridgedSession));
+    sessionStorage.setItem(COMPANY_TOKEN_STORAGE_KEY, token || '');
+  } catch (error) {
+    // Storage unavailable (private mode, etc.) — caller falls back to the Staff Console.
+  }
+};
 
 const safeGet = (key) => {
   try {
@@ -55,7 +81,7 @@ export const EmployeeAuthProvider = ({ children }) => {
     setToken(res.token);
     safeSet(STORAGE_KEY, JSON.stringify(res.employee));
     safeSet(TOKEN_STORAGE_KEY, res.token || '');
-    return { ok: true, employee: res.employee };
+    return { ok: true, employee: res.employee, token: res.token };
   };
 
   const logout = () => {

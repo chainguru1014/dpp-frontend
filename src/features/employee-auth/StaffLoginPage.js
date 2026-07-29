@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Typography, TextField, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useEmployeeAuth } from './EmployeeAuthContext';
+import { useEmployeeAuth, bridgeSupervisorSession } from './EmployeeAuthContext';
 import AuthShell from '../../components/AuthShell';
 import AudienceToggle from '../../components/AudienceToggle';
 
@@ -50,6 +50,18 @@ const StaffLoginPage = () => {
     setBusy(false);
     if (!res.ok) {
       setNotice(res.message);
+      return;
+    }
+
+    // A Supervisor gets the full brand dashboard (Products + Dashboard),
+    // not the limited Staff Console — bridge this Employee session into the
+    // Company/User AuthContext's own storage and hand off to /admin, which
+    // reads that storage on mount. pages/index.js recognizes
+    // `actorKind: 'Employee'` and restricts its nav to just Dashboard/Products
+    // for this session — see isEmployeeActor there.
+    if (res.employee?.employeeType === 'supervisor') {
+      bridgeSupervisorSession(res.employee, res.token);
+      navigate('/admin', { replace: true });
     }
   };
 

@@ -92,11 +92,11 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
 
         {/* Header */}
         <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: 1, borderColor: 'divider' }}>
-          <Typography sx={{ fontSize: 18, fontWeight: 400, color: '#1976d2' }}>Yometel</Typography>
+          <Typography sx={{ fontSize: 18, fontWeight: 400, color: '#2f80c8' }}>Yometel</Typography>
         </Box>
 
         <Box sx={{ px: 2.5, pt: 1.5, pb: 1, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: 28, fontWeight: 400, color: '#3c5b92', lineHeight: 1.2 }}>
+          <Typography sx={{ fontSize: 28, fontWeight: 400, color: '#2f80c8', lineHeight: 1.2 }}>
             {info.name || '—'}
           </Typography>
           <Typography sx={{ fontSize: 22, color: '#666', lineHeight: 1.2 }}>
@@ -132,11 +132,11 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
         {/* Accordion sections to match ResultScreen style */}
         <Box sx={{ flex: 1, overflow: 'auto', bgcolor: '#fafafa' }}>
           <Accordion expanded={expandedSection === 'product'} onChange={() => setExpandedSection(expandedSection === 'product' ? '' : 'product')} disableGutters>
-            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#3c5b92', color: '#fff' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#2f80c8', color: '#fff' }}>
               <Typography sx={{ fontWeight: 400 }}>Product Details</Typography>
             </AccordionSummary>
             <AccordionDetails sx={{ bgcolor: '#fff' }}>
-              <Typography sx={{ fontSize: 16, fontWeight: 400, color: '#1976d2', mb: 0.5 }}>{info.name || '—'}</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 400, color: '#2f80c8', mb: 0.5 }}>{info.name || '—'}</Typography>
               <Typography sx={{ fontSize: 14, color: 'text.secondary', mb: 0.5 }}>{info.model || '—'}</Typography>
               {info._id && <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1 }}>Product ID: {info._id}</Typography>}
               {detailLines.length > 0 && (
@@ -168,7 +168,7 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
           </Accordion>
 
           <Accordion expanded={expandedSection === 'material'} onChange={() => setExpandedSection(expandedSection === 'material' ? '' : 'material')} disableGutters>
-            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#3c5b92', color: '#fff' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#2f80c8', color: '#fff' }}>
               <Typography sx={{ fontWeight: 400 }}>Materials</Typography>
             </AccordionSummary>
             <AccordionDetails sx={{ bgcolor: '#fff' }}>
@@ -177,7 +177,7 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
                   <img src={getFileUrl(images[0])} alt="" style={{ maxWidth: '100%', maxHeight: 200, objectFit: 'contain', background: '#eee', borderRadius: 1 }} />
                 </Box>
               )}
-              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#1976d2' }}>Material</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#2f80c8' }}>Material</Typography>
               <Typography sx={{ fontSize: 14, mb: 1 }}>Size : {materialSize.size || '—'}</Typography>
               {info._id && <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1 }}>Product ID: {info._id}</Typography>}
               {(materialSize.materials || []).map((row, i) => (
@@ -187,11 +187,11 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
           </Accordion>
 
           <Accordion expanded={expandedSection === 'maintenance'} onChange={() => setExpandedSection(expandedSection === 'maintenance' ? '' : 'maintenance')} disableGutters>
-            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#3c5b92', color: '#fff' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#2f80c8', color: '#fff' }}>
               <Typography sx={{ fontWeight: 400 }}>Care Label</Typography>
             </AccordionSummary>
             <AccordionDetails sx={{ bgcolor: '#fff' }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#1976d2', mb: 1 }}>Maintenance</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#2f80c8', mb: 1 }}>Maintenance</Typography>
               <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1 }}>Selected care symbols</Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
                 {(maintenance.iconIds || []).length > 0
@@ -204,7 +204,7 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
               </Box>
               {maintenance.description && <Typography sx={{ fontSize: 13, whiteSpace: 'pre-line' }}>{maintenance.description}</Typography>}
               <Box sx={{ mt: 2, p: 1.5, bgcolor: '#f5f5f5', borderRadius: 1 }}>
-                <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#1976d2', mb: 0.5 }}>DPP</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#2f80c8', mb: 0.5 }}>DPP</Typography>
                 <Typography sx={{ fontSize: 12 }}>Traceability</Typography>
                 <Typography sx={{ fontSize: 12 }}>More punchy product information</Typography>
                 <Typography sx={{ fontSize: 12 }}>Contributing to Supply Chain & Sustainability</Typography>
@@ -213,11 +213,11 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
           </Accordion>
 
           <Accordion expanded={expandedSection === 'dispose'} onChange={() => setExpandedSection(expandedSection === 'dispose' ? '' : 'dispose')} disableGutters>
-            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#3c5b92', color: '#fff' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#2f80c8', color: '#fff' }}>
               <Typography sx={{ fontWeight: 400 }}>Dispose</Typography>
             </AccordionSummary>
             <AccordionDetails sx={{ bgcolor: '#fff' }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#1976d2', mb: 1 }}>URL</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#2f80c8', mb: 1 }}>URL</Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                 {disposal.repairUrl && <Box><Typography component="span" sx={{ fontSize: 12, color: 'text.secondary' }}>Repair </Typography><Link href={disposal.repairUrl} target="_blank" rel="noopener noreferrer" sx={{ fontSize: 13 }}>Repair</Link></Box>}
                 {disposal.reuseUrl && <Box><Typography component="span" sx={{ fontSize: 12, color: 'text.secondary' }}>Reuse </Typography><Link href={disposal.reuseUrl} target="_blank" rel="noopener noreferrer" sx={{ fontSize: 13 }}>Reuse</Link></Box>}
@@ -234,23 +234,23 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
           </Accordion>
 
           <Accordion expanded={expandedSection === 'traceability'} onChange={() => setExpandedSection(expandedSection === 'traceability' ? '' : 'traceability')} disableGutters>
-            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#3c5b92', color: '#fff' }}>
+            <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: '#fff' }} />} sx={{ bgcolor: '#2f80c8', color: '#fff' }}>
               <Typography sx={{ fontWeight: 400 }}>Traceability/ESG</Typography>
             </AccordionSummary>
             <AccordionDetails sx={{ bgcolor: '#fff' }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#1976d2', mb: 1 }}>Made in</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#2f80c8', mb: 1 }}>Made in</Typography>
               <Typography sx={{ fontSize: 13, mb: 1 }}>{traceabilityEsg.madeIn || '—'}</Typography>
-              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#1976d2', mb: 0.5 }}>Material origins</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#2f80c8', mb: 0.5 }}>Material origins</Typography>
               {(traceabilityEsg.materialOrigins || []).map((row, i) => (
                 <Typography key={i} sx={{ fontSize: 13 }}>{row.material || '—'} {row.companyName || ''}</Typography>
               ))}
-              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#1976d2', mt: 2, mb: 0.5 }}>Shipping</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#2f80c8', mt: 2, mb: 0.5 }}>Shipping</Typography>
               <Typography sx={{ fontSize: 13 }}>{traceabilityEsg.shippingLog || '—'}</Typography>
-              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#1976d2', mt: 1, mb: 0.5 }}>Distance</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#2f80c8', mt: 1, mb: 0.5 }}>Distance</Typography>
               <Typography sx={{ fontSize: 13 }}>{traceabilityEsg.distance || '—'}</Typography>
-              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#1976d2', mt: 1, mb: 0.5 }}>CO2 by Production</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#2f80c8', mt: 1, mb: 0.5 }}>CO2 by Production</Typography>
               <Typography sx={{ fontSize: 13 }}>{traceabilityEsg.co2Production || '—'}</Typography>
-              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#1976d2', mt: 1, mb: 0.5 }}>CO2 by Transportation</Typography>
+              <Typography sx={{ fontSize: 14, fontWeight: 400, color: '#2f80c8', mt: 1, mb: 0.5 }}>CO2 by Transportation</Typography>
               <Typography sx={{ fontSize: 13 }}>{traceabilityEsg.co2Transportation || '—'}</Typography>
             </AccordionDetails>
           </Accordion>

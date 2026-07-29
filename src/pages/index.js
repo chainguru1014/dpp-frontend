@@ -130,6 +130,16 @@ const InnerPage = () => {
   const ownerScopeKind = isAppUser ? 'User' : 'Company';
   const ownerScopeId = company?._id || company?.id;
 
+  // A Supervisor-role corporate employee, bridged in here from the Staff
+  // Login flow (see StaffLoginPage's employeeType === 'supervisor' branch).
+  // Their session reuses this same `company` slot (role: 'company', so
+  // canManageProducts/isAdmin above already compute correctly) purely so
+  // Products/Dashboard can be reused unmodified — but they must only ever
+  // see those two pages, never Users/Staff Management/ESG/LCA/Recommendations/
+  // Chat/Notifications, which a real Company session can reach.
+  const isEmployeeActor = company?.actorKind === 'Employee';
+  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile'];
+
   // GDPR: the "Privacy Preferences" link (on AuthPage) can reopen the AI
   // Concierge consent screen at any time, independent of the login/profile
   // gates below — see the top-level render branches.
@@ -272,6 +282,17 @@ const InnerPage = () => {
   };
 
   const [activePage, setActivePage] = useState(() => loadStateFromStorage('activePage', 'dashboard'));
+
+  // activePage persists across sessions via localStorage (see saveStateToStorage
+  // below), so a Supervisor employee could otherwise land straight back on a
+  // page (Chat, Users, ESG…) a previous Company session left behind on this
+  // browser. Force them back to Dashboard the moment that happens.
+  useEffect(() => {
+    if (isEmployeeActor && !EMPLOYEE_ALLOWED_PAGES.includes(activePage)) {
+      setActivePage('dashboard');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEmployeeActor, activePage]);
   const [previousPage, setPreviousPage] = useState(() => loadStateFromStorage('previousPage', 'dashboard'));
   const [selectedProduct, setSelectedProduct] = useState(() => loadStateFromStorage('selectedProduct', null));
   const [detailTab, setDetailTab] = useState(0);
@@ -1397,7 +1418,7 @@ const InnerPage = () => {
           <ListItemText primary="Products" />
         </ListItemButton>
       </ListItem>
-      {isAdmin && (
+      {isAdmin && !isEmployeeActor && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'users'} onClick={() => go('users')}>
             <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
@@ -1405,7 +1426,7 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
-      {!isAppUser && (
+      {!isAppUser && !isEmployeeActor && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'employeeAuditLog'} onClick={() => go('employeeAuditLog')}>
             <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
@@ -1413,39 +1434,45 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
-      <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
-          <ListItemText primary="ESG" />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
-          <ListItemText primary="LCA" />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'recommendations'} onClick={() => go('recommendations')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><AutoAwesomeIcon /></ListItemIcon>
-          <ListItemText primary="Recommendations" />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'chat'} onClick={() => go('chat')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><ChatBubbleOutlineIcon /></ListItemIcon>
-          <ListItemText primary="Chat" />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
-        <ListItemButton
-          selected={activePage === 'notifications' || activePage === 'allNotifications'}
-          onClick={() => go(isAdmin ? 'notifications' : 'allNotifications')}
-        >
-          <ListItemIcon sx={{ color: 'inherit' }}><CampaignIcon /></ListItemIcon>
-          <ListItemText primary="Notifications" />
-        </ListItemButton>
-      </ListItem>
+      {/* Supervisor-role employees (isEmployeeActor) only ever get Dashboard +
+          Products above — everything below here is Company/User-session only. */}
+      {!isEmployeeActor && (
+        <>
+          <ListItem disablePadding>
+            <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
+              <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
+              <ListItemText primary="Scan History" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
+              <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
+              <ListItemText primary="LCA" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton selected={activePage === 'recommendations'} onClick={() => go('recommendations')}>
+              <ListItemIcon sx={{ color: 'inherit' }}><AutoAwesomeIcon /></ListItemIcon>
+              <ListItemText primary="Recommendations" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton selected={activePage === 'chat'} onClick={() => go('chat')}>
+              <ListItemIcon sx={{ color: 'inherit' }}><ChatBubbleOutlineIcon /></ListItemIcon>
+              <ListItemText primary="Chat" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={activePage === 'notifications' || activePage === 'allNotifications'}
+              onClick={() => go(isAdmin ? 'notifications' : 'allNotifications')}
+            >
+              <ListItemIcon sx={{ color: 'inherit' }}><CampaignIcon /></ListItemIcon>
+              <ListItemText primary="Notifications" />
+            </ListItemButton>
+          </ListItem>
+        </>
+      )}
     </List>
   );
 

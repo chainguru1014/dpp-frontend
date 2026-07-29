@@ -1,6 +1,7 @@
-import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
-import { EmployeeAuthProvider, useEmployeeAuth } from './EmployeeAuthContext';
+import React, { useEffect } from 'react';
+import { Box, Typography, Button, CircularProgress } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { EmployeeAuthProvider, useEmployeeAuth, bridgeSupervisorSession } from './EmployeeAuthContext';
 import StaffLoginPage from './StaffLoginPage';
 import EmployeeAuditLogPage from '../employee-audit/EmployeeAuditLogPage';
 
@@ -44,7 +45,29 @@ const StaffDashboard = () => {
 };
 
 const StaffAppInner = () => {
-  const { employee } = useEmployeeAuth();
+  const { employee, token } = useEmployeeAuth();
+  const navigate = useNavigate();
+
+  // Covers the case where a Supervisor lands back on /staff directly (bookmark,
+  // typed URL, stale tab) with their Employee session already restored from
+  // sessionStorage — the normal redirect only fires once, right after
+  // StaffLoginPage's handleVerify. Re-bridge and bounce to /admin instead of
+  // showing the limited Staff Console.
+  useEffect(() => {
+    if (employee?.employeeType === 'supervisor') {
+      bridgeSupervisorSession(employee, token);
+      navigate('/admin', { replace: true });
+    }
+  }, [employee, token, navigate]);
+
+  if (employee?.employeeType === 'supervisor') {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress size={28} />
+      </Box>
+    );
+  }
+
   return employee ? <StaffDashboard /> : <StaffLoginPage />;
 };
 

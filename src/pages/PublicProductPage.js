@@ -30,7 +30,7 @@ const SoundWaveIcon = () => (
         sx={{
           width: '3px',
           height: `${height}px`,
-          backgroundColor: '#1565C0',
+          backgroundColor: '#2f80c8',
           borderRadius: '2px',
         }}
       />
@@ -143,7 +143,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
               padding: '8px',
             }}
           >
-            <QrCodeIcon sx={{ fontSize: 32, color: '#1565C0' }} />
+            <QrCodeIcon sx={{ fontSize: 32, color: '#2f80c8' }} />
           </Box>
 
           {/* Yometel Logo with Sound Wave */}
@@ -178,7 +178,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
               sx={{
                 width: 36,
                 height: 36,
-                bgcolor: '#1976d2',
+                bgcolor: '#2f80c8',
                 fontSize: '16px',
                 fontWeight: 400,
               }}
@@ -339,7 +339,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
             padding: '8px',
           }}
         >
-          <QrCodeIcon sx={{ fontSize: 32, color: '#1565C0' }} />
+          <QrCodeIcon sx={{ fontSize: 32, color: '#2f80c8' }} />
         </Box>
 
         {/* Yometel Logo with Sound Wave */}
@@ -374,7 +374,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
             sx={{
               width: 36,
               height: 36,
-              bgcolor: '#1976d2',
+              bgcolor: '#2f80c8',
               fontSize: '16px',
               fontWeight: 400,
             }}
