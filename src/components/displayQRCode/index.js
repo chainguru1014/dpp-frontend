@@ -4,6 +4,7 @@ import { Box, IconButton, Typography, Tooltip } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIconButton from '../CopyIconButton';
+import { truncateCode } from '../../utils/truncateCode';
 
 // If backend returns a full URL (often localhost in dev),
 // rewrite it to the configured public web base URL before encoding into QR.
@@ -58,7 +59,11 @@ const QRCode = ({ data, identifer, onDelete }) => {
         <Box sx={{ maxWidth: 228, width: '100%' }}>
             <img src={qrcodeImage} loading="lazy" style={{ width: '100%', display: 'block' }} alt="QR code" />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>{data}</Typography>
+                <Tooltip title={data}>
+                    <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>
+                        {truncateCode(data)}
+                    </Typography>
+                </Tooltip>
                 <CopyIconButton value={data} />
             </Box>
             {otherEntries.map((item, i) => (

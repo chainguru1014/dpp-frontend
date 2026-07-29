@@ -4,6 +4,7 @@ import { Box, IconButton, Typography, Tooltip } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CopyIconButton from '../CopyIconButton';
+import { truncateCode } from '../../utils/truncateCode';
 
 // Security URL base - should be configurable
 // For production, this should be your VPS domain/IP
@@ -39,7 +40,11 @@ const SecurityQRCode = ({ data, identifer, onDelete }) => {
         <Box sx={{ maxWidth: 228, width: '100%' }}>
             <img src={qrcodeImage} alt="Security QR Code" loading="lazy" style={{ width: '100%', display: 'block' }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-                <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>{securityUrl}</Typography>
+                <Tooltip title={securityUrl}>
+                    <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>
+                        {truncateCode(securityUrl)}
+                    </Typography>
+                </Tooltip>
                 <CopyIconButton value={securityUrl} />
             </Box>
             {otherEntries.map((item, index) => (
