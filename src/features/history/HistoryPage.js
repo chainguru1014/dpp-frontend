@@ -23,6 +23,14 @@ const fmt = (d) => {
   }
 };
 
+const SCAN_TYPE_LABEL = {
+  qr: 'QR',
+  barcode: 'Barcode',
+  gs1dl: 'GS1 Digital Link',
+  nfc: 'NFC',
+  rfid: 'RFID',
+};
+
 function Mark({ on, label }) {
   return (
     <Tooltip title={label}>
@@ -156,6 +164,18 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
         width: 140,
         sortable: false,
         valueGetter: (p) => p.row.pmc_code || '—',
+      },
+      {
+        field: 'identifier_type',
+        headerName: 'Scan Type',
+        width: 140,
+        renderCell: (p) => (
+          <Chip
+            size="small"
+            variant="outlined"
+            label={SCAN_TYPE_LABEL[p.row.identifier_type] || p.row.identifier_type || 'QR'}
+          />
+        ),
       },
       {
         field: 'source',

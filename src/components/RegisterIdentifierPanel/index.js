@@ -20,6 +20,7 @@ import {
 } from '../../helper';
 import CopyIconButton from '../CopyIconButton';
 import { renderEan13ToDataUrl, toValidEan13 } from '../../utils/barcodeRenderer';
+import { truncateCode } from '../../utils/truncateCode';
 import PrintDialog from '../printModal/PrintDialog';
 
 const SOURCE_TYPES = [
@@ -362,7 +363,11 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
                   />
                 )}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>{item.raw_value}</Typography>
+                  <Tooltip title={item.raw_value}>
+                    <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>
+                      {truncateCode(item.raw_value)}
+                    </Typography>
+                  </Tooltip>
                   <CopyIconButton value={item.raw_value} />
                 </Box>
                 {item.pmc_code && (

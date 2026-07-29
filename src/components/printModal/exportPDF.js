@@ -1,5 +1,6 @@
 import React from 'react';
 import { Document, Page, View, StyleSheet, Image, Text } from '@react-pdf/renderer';
+import { truncateCode } from '../../utils/truncateCode';
 
 // Create styles
 const styles = StyleSheet.create({
@@ -12,16 +13,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Shortens a long code/URL to "first9 ... last4" so the printed page shows
-// an at-a-glance reference instead of a wrapping wall of characters — full
-// codes are still recoverable by scanning the image (or, for RFID/NFC which
-// have no image, by looking the tag up via its PMC in the app).
-const truncateCode = (text) => {
-  const str = String(text || '');
-  if (str.length <= 16) return str;
-  return `${str.slice(0, 9)} ... ${str.slice(-4)}`;
-};
-
 // A4 page is 595pt wide; styles.page pads 40pt each side, leaving ~515pt of
 // content width to divide across however many items go in one row.
 const PAGE_CONTENT_WIDTH = 515;
@@ -32,13 +23,12 @@ const ITEM_MARGIN = 6;
  * caller and passed in (`items: [{ img, code, pmc }]`), so the document never
  * renders an empty <Image> — which previously produced a blank PDF when the
  * async image generation hadn't completed before react-pdf built the blob.
- * Prints the image when there is one (QR, Security QR, GS1 Digital Link,
- * Barcode) with its `code` truncated underneath, or else just the truncated
- * `code` as text (RFID/NFC, which have no visual code) — the full code would
- * wrap across several lines and clutter the printed sheet, so only a
- * shortened "first9 ... last4" reference is shown (see truncateCode above).
- * Security QR items additionally carry a `pmc`, printed on its own line
- * beneath the code so the physical PMC is visible without scanning.
+ * Prints ONLY the image when there is one (QR, Security QR, GS1 Digital
+ * Link, Barcode) — no code/PMC text underneath; the short reference for
+ * those is shown on-screen instead (see the Registered Identifiers grid in
+ * components/RegisterIdentifierPanel), not on the printed sheet. Items with
+ * no image at all (RFID/NFC, which have no visual code) still print their
+ * truncated `code` as text — otherwise nothing would print for them.
  * `itemsPerRow` controls how many items fit across one line (see
  * PrintDialog's "Items per row" field).
  */
@@ -52,18 +42,14 @@ const MyDocument = ({ items = [], itemsPerRow = 5 }) => {
         <View style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap' }}>
           {items.map((it, index) => (
             <View key={index} style={{ width: `${itemSize}px`, margin: `${ITEM_MARGIN}px` }}>
-              {it.img && (
+              {it.img ? (
                 <Image src={it.img} style={{ width: `${itemSize}px`, height: `${itemSize}px` }} />
-              )}
-              {it.code && (
-                <Text style={{ fontSize: 9, color: 'black', marginTop: 2, textAlign: 'center' }}>
-                  {truncateCode(it.code)}
-                </Text>
-              )}
-              {it.pmc && (
-                <Text style={{ fontSize: 9, color: 'black', marginTop: 1, textAlign: 'center' }}>
-                  {truncateCode(it.pmc)}
-                </Text>
+              ) : (
+                it.code && (
+                  <Text style={{ fontSize: 9, color: 'black', marginTop: 2, textAlign: 'center' }}>
+                    {truncateCode(it.code)}
+                  </Text>
+                )
               )}
             </View>
           ))}
