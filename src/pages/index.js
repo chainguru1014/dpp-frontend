@@ -33,6 +33,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
+import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import PeopleIcon from '@mui/icons-material/People';
 import HistoryIcon from '@mui/icons-material/History';
 import TimelineIcon from '@mui/icons-material/Timeline';
@@ -73,6 +74,7 @@ import AiConciergeConsentPage from '../components/AiConciergeConsentPage';
 import yometelLogoWhite from '../assets/yometel-logo-white.png';
 import ProfilePage from '../features/profile/ProfilePage';
 import EmployeeManagementPage from '../features/employee-audit/EmployeeManagementPage';
+import ProcessStepsPage from '../features/process-steps/ProcessStepsPage';
 import ProductsTable from '../features/products/ProductsTable';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
@@ -138,7 +140,7 @@ const InnerPage = () => {
   // see those two pages, never Users/Staff Management/ESG/LCA/Recommendations/
   // Chat/Notifications, which a real Company session can reach.
   const isEmployeeActor = company?.actorKind === 'Employee';
-  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile'];
+  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps'];
 
   // GDPR: the "Privacy Preferences" link (on AuthPage) can reopen the AI
   // Concierge consent screen at any time, independent of the login/profile
@@ -1418,6 +1420,14 @@ const InnerPage = () => {
           <ListItemText primary="Products" />
         </ListItemButton>
       </ListItem>
+      {!isAppUser && !isAdmin && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'processSteps'} onClick={() => go('processSteps')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><FormatListNumberedIcon /></ListItemIcon>
+            <ListItemText primary="Process Step Labels" />
+          </ListItemButton>
+        </ListItem>
+      )}
       {isAdmin && !isEmployeeActor && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'users'} onClick={() => go('users')}>
@@ -1654,6 +1664,10 @@ const InnerPage = () => {
 
           {activePage === 'employeeAuditLog' && !isAppUser && (
             <EmployeeManagementPage token={token} isAdmin={isAdmin} />
+          )}
+
+          {activePage === 'processSteps' && !isAppUser && !isAdmin && (
+            <ProcessStepsPage token={token} />
           )}
 
           {activePage === 'products' && (

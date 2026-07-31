@@ -703,6 +703,30 @@ export const updateEmployee = async (token, id, data) => {
     }
 };
 
+// ----- Process Step Labels (Worker Operations grid config) -----
+export const getProcessSteps = async (token) => {
+    try {
+        const res = await axios.get(`${Backend_URL}company/process-steps`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return res.data?.data?.processSteps || [];
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+};
+
+export const updateProcessSteps = async (token, processSteps) => {
+    try {
+        const res = await axios.put(`${Backend_URL}company/process-steps`, { processSteps }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data?.processSteps || [] };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Failed to save process steps' };
+    }
+};
+
 // ----- Employee's own passwordless login (corporate SSO) -----
 // Mirrors requestOtp/verifyOtp above but hits /employee-auth/*, a completely
 // separate collection/route from the consumer and company auth flows.
