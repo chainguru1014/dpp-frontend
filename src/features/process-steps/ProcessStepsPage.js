@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, TextField, IconButton, Alert, Paper } from '@mui/material';
+import { Box, Typography, Button, TextField, Select, MenuItem, IconButton, Alert, Paper } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
@@ -7,7 +7,27 @@ import { getProcessSteps, updateProcessSteps } from '../../helper';
 
 const MIN_STEPS = 1;
 const MAX_STEPS = 10;
-const emptyStep = () => ({ entity: '', type: '' });
+
+// Fixed set of step "type" categories — the mobile app translates each key
+// via i18n instead of displaying free text, so this list (the value stored)
+// must stay in sync with backend/controllers/companyController.ts's
+// PROCESS_STEP_TYPE_KEYS and app/src/screens/EmployeeHomeScreen.tsx's
+// TYPE_LABEL_KEYS.
+const TYPE_OPTIONS = [
+  { value: 'receiving', label: 'Receiving' },
+  { value: 'shipping', label: 'Shipping' },
+  { value: 'finalInspection', label: 'Final Inspection' },
+  { value: 'inboundScan', label: 'Inbound Scan' },
+  { value: 'packing', label: 'Packing' },
+  { value: 'unpacking', label: 'Unpacking' },
+  { value: 'storeReceipt', label: 'Store Receipt' },
+  { value: 'inspection', label: 'Inspection' },
+  { value: 'returnCheck', label: 'Return Check' },
+  { value: 'disposal', label: 'Disposal Registration' },
+  { value: 'general', label: 'General' },
+];
+
+const emptyStep = () => ({ entity: '', type: 'general' });
 
 // Manages the numbered "Worker Operations" step labels shown as a grid on the
 // mobile app's employee home screen (each tile = entity on top, type below).
@@ -23,7 +43,15 @@ const ProcessStepsPage = ({ token }) => {
   const reload = () => {
     setLoading(true);
     getProcessSteps(token)
-      .then((data) => setSteps(data && data.length ? data.map((s) => ({ entity: s.entity || '', type: s.type || '' })) : [emptyStep()]))
+      .then((data) => setSteps(data && data.length
+        ? data.map((s) => ({
+            entity: s.entity || '',
+            // Older steps saved before the fixed type list existed may carry
+            // free text that no longer matches any option — fall back to
+            // "General" rather than leaving the Select on an invalid value.
+            type: TYPE_OPTIONS.some((o) => o.value === s.type) ? s.type : 'general',
+          }))
+        : [emptyStep()]))
       .finally(() => setLoading(false));
   };
 
@@ -50,7 +78,7 @@ const ProcessStepsPage = ({ token }) => {
     setError('');
     setSuccess('');
 
-    const invalidIndex = steps.findIndex((step) => !step.entity.trim() || !step.type.trim());
+    const invalidIndex = steps.findIndex((step) => !step.entity.trim() || !step.type);
     if (invalidIndex !== -1) {
       setError(`Step ${invalidIndex + 1} needs both an Entity and a Type before saving.`);
       return;
@@ -59,7 +87,7 @@ const ProcessStepsPage = ({ token }) => {
     setSaving(true);
     const res = await updateProcessSteps(
       token,
-      steps.map((step) => ({ entity: step.entity.trim(), type: step.type.trim() }))
+      steps.map((step) => ({ entity: step.entity.trim(), type: step.type }))
     );
     setSaving(false);
 
@@ -80,8 +108,8 @@ const ProcessStepsPage = ({ token }) => {
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         These labels populate the numbered Worker Operations grid on the mobile app's employee home
-        screen. Add between 1 and 10 steps, each with an Entity (e.g. "Tokyo DC") and a Type (e.g.
-        "Receiving").
+        screen. Add between 1 and 10 steps, each with an Entity (e.g. "Tokyo DC") and a Type chosen
+        from the list below — the app displays each Type in the worker's own language.
       </Typography>
 
       {!!error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -99,14 +127,17 @@ const ProcessStepsPage = ({ token }) => {
               size="small"
               fullWidth
             />
-            <TextField
-              label="Type"
-              placeholder="Receiving"
+            <Select
               value={step.type}
               onChange={(e) => handleChange(index, 'type', e.target.value)}
               size="small"
               fullWidth
-            />
+              displayEmpty
+            >
+              {TYPE_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+              ))}
+            </Select>
             <IconButton onClick={() => handleRemove(index)} disabled={steps.length <= MIN_STEPS} aria-label="Remove step">
               <DeleteIcon />
             </IconButton>
