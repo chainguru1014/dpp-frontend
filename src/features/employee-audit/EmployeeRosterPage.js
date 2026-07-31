@@ -20,6 +20,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
+import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { listEmployees, inviteEmployee, updateEmployee, deleteEmployee } from '../../helper';
 
@@ -111,6 +112,7 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({ email: '', employeeType: 'working_employee' });
+  const [rowError, setRowError] = useState('');
 
   const reload = () => {
     setLoading(true);
@@ -130,23 +132,35 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
   };
 
   const startEdit = (employee) => {
+    setRowError('');
     setEditingId(employee._id);
     setDraft({ email: employee.email || '', employeeType: employee.employeeType || 'working_employee' });
   };
 
   const cancelEdit = () => {
+    setRowError('');
     setEditingId(null);
   };
 
   const saveEdit = async (employee) => {
-    await updateEmployee(token, employee._id, { email: draft.email.trim(), employeeType: draft.employeeType });
+    setRowError('');
+    const res = await updateEmployee(token, employee._id, { email: draft.email.trim(), employeeType: draft.employeeType });
+    if (!res.ok) {
+      setRowError(res.message || 'Failed to save changes.');
+      return;
+    }
     setEditingId(null);
     reload();
   };
 
   const handleRemove = async (employee) => {
     if (!window.confirm(`Remove ${employee.email || 'this employee'} from the roster?`)) return;
-    await deleteEmployee(token, employee._id);
+    setRowError('');
+    const res = await deleteEmployee(token, employee._id);
+    if (!res.ok) {
+      setRowError(res.message || 'Failed to remove employee.');
+      return;
+    }
     reload();
   };
 
@@ -218,19 +232,19 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
       renderCell: (p) =>
         editingId === p.row._id ? (
           <>
-            <IconButton size="small" color="primary" onClick={() => saveEdit(p.row)} aria-label="Save">
+            <IconButton size="small" onClick={() => saveEdit(p.row)} aria-label="Save">
               <SaveIcon fontSize="small" />
             </IconButton>
-            <Button size="small" onClick={cancelEdit} sx={{ ml: 0.5 }}>
-              Cancel
-            </Button>
+            <IconButton size="small" onClick={cancelEdit} aria-label="Cancel">
+              <CloseIcon fontSize="small" />
+            </IconButton>
           </>
         ) : (
           <>
             <IconButton size="small" onClick={() => startEdit(p.row)} aria-label="Edit">
               <EditIcon fontSize="small" />
             </IconButton>
-            <IconButton size="small" color="error" onClick={() => handleRemove(p.row)} aria-label="Remove">
+            <IconButton size="small" onClick={() => handleRemove(p.row)} aria-label="Remove">
               <DeleteIcon fontSize="small" />
             </IconButton>
           </>
@@ -246,6 +260,11 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
           Invite Employee
         </Button>
       </Box>
+      {!!rowError && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setRowError('')}>
+          {rowError}
+        </Alert>
+      )}
       <Box sx={{ bgcolor: '#fff', borderRadius: 1, boxShadow: 1 }}>
         <DataGrid
           loading={loading}
