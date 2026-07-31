@@ -132,15 +132,15 @@ const InnerPage = () => {
   const ownerScopeKind = isAppUser ? 'User' : 'Company';
   const ownerScopeId = company?._id || company?.id;
 
-  // A Supervisor-role corporate employee, bridged in here from the Staff
-  // Login flow (see StaffLoginPage's employeeType === 'supervisor' branch).
-  // Their session reuses this same `company` slot (role: 'company', so
-  // canManageProducts/isAdmin above already compute correctly) purely so
-  // Products/Dashboard can be reused unmodified — but they must only ever
-  // see those two pages, never Users/Staff Management/ESG/LCA/Recommendations/
-  // Chat/Notifications, which a real Company session can reach.
+  // A corporate employee (working_employee or supervisor), bridged in here
+  // from the Staff Login flow (see StaffLoginPage's bridgeEmployeeSession
+  // call). Their session reuses this same `company` slot (role: 'company',
+  // so canManageProducts/isAdmin above already compute correctly) purely so
+  // Dashboard/Products/Scan History can be reused unmodified — but they must
+  // only ever see those pages, never Users/Staff Management/ESG/LCA/
+  // Recommendations/Chat/Notifications, which a real Company session can reach.
   const isEmployeeActor = company?.actorKind === 'Employee';
-  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps'];
+  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history'];
 
   // GDPR: the "Privacy Preferences" link (on AuthPage) can reopen the AI
   // Concierge consent screen at any time, independent of the login/profile
@@ -1444,16 +1444,16 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
-      {/* Supervisor-role employees (isEmployeeActor) only ever get Dashboard +
-          Products above — everything below here is Company/User-session only. */}
+      {/* Scan History is shared with employees (see EMPLOYEE_ALLOWED_PAGES) —
+          everything else below is Company/User-session only. */}
+      <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
+          <ListItemText primary="Scan History" />
+        </ListItemButton>
+      </ListItem>
       {!isEmployeeActor && (
         <>
-          <ListItem disablePadding>
-            <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
-              <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
-              <ListItemText primary="Scan History" />
-            </ListItemButton>
-          </ListItem>
           <ListItem disablePadding>
             <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
               <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>

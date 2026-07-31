@@ -29,12 +29,13 @@ const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff'
 // Shared fixed height so the email field, code field, Send code/Verify
 // button, and the Google/Apple buttons all line up instead of the buttons'
 // own vertical padding making them a few px taller/shorter than the inputs.
-const COMPACT_CONTROL_HEIGHT = 40;
+export const COMPACT_CONTROL_HEIGHT = 40;
 // 2/3 of COMPACT_CONTROL_HEIGHT — every control on this view (email field,
 // code field, Send code/Verify button, Google/Apple buttons) uses this
-// smaller height now.
-const SMALL_CONTROL_HEIGHT = Math.round((COMPACT_CONTROL_HEIGHT * 2) / 3);
-const smallFieldSx = {
+// smaller height now. Exported so other auth-style forms (StaffLoginPage)
+// can match it exactly instead of drifting with their own magic numbers.
+export const SMALL_CONTROL_HEIGHT = Math.round((COMPACT_CONTROL_HEIGHT * 2) / 3);
+export const smallFieldSx = {
   ...fieldSx,
   '& .MuiOutlinedInput-root': { ...fieldSx['& .MuiOutlinedInput-root'], height: SMALL_CONTROL_HEIGHT },
   // The code field overrides this via its own `inputProps.style` (inline
@@ -42,7 +43,7 @@ const smallFieldSx = {
   // the email field's text size.
   '& .MuiOutlinedInput-input': { padding: '4px 14px', fontSize: '0.85rem' },
 };
-const compactButtonSx = {
+export const compactButtonSx = {
   textTransform: 'none',
   fontWeight: 400,
   fontSize: '0.85rem',
@@ -426,7 +427,7 @@ const AuthPage = ({
               <Typography
                 role="status"
                 variant="body2"
-                sx={{ textAlign: 'center', fontSize: '0.8rem', ...whiteTextSx }}
+                sx={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 600, ...whiteTextSx, color: '#ff8a80' }}
               >
                 {otpNotice}
               </Typography>

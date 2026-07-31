@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Box, Typography, TextField, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { useEmployeeAuth, bridgeSupervisorSession } from './EmployeeAuthContext';
+import { useEmployeeAuth, bridgeEmployeeSession } from './EmployeeAuthContext';
 import AuthShell from '../../components/AuthShell';
 import AudienceToggle from '../../components/AudienceToggle';
-
-const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff' } };
+import { smallFieldSx, compactButtonSx } from '../../components/AuthPage';
 
 // Card background is transparent (see AuthShell) so the forest photo shows
 // through — text sitting directly on it needs to be white with a shadow.
@@ -24,6 +23,7 @@ const StaffLoginPage = () => {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  const [noticeIsError, setNoticeIsError] = useState(false);
 
   const handleSendCode = async (e) => {
     e.preventDefault();
@@ -34,9 +34,11 @@ const StaffLoginPage = () => {
     const res = await requestOtp(trimmed);
     setBusy(false);
     if (!res.ok) {
+      setNoticeIsError(true);
       setNotice(res.message);
       return;
     }
+    setNoticeIsError(false);
     setNotice(res.message || 'Code sent — check your email.');
     setStage('code');
   };
@@ -49,20 +51,18 @@ const StaffLoginPage = () => {
     const res = await verifyOtp(email.trim(), code.trim());
     setBusy(false);
     if (!res.ok) {
-      setNotice(res.message);
+      setNoticeIsError(true);
+      setNotice(res.message || 'Invalid code. Please try again.');
       return;
     }
 
-    // A Supervisor gets the full brand dashboard (Products + Dashboard),
-    // not the limited Staff Console — bridge this Employee session into the
-    // Company/User AuthContext's own storage and hand off to /admin, which
-    // reads that storage on mount. pages/index.js recognizes
-    // `actorKind: 'Employee'` and restricts its nav to just Dashboard/Products
-    // for this session — see isEmployeeActor there.
-    if (res.employee?.employeeType === 'supervisor') {
-      bridgeSupervisorSession(res.employee, res.token);
-      navigate('/admin', { replace: true });
-    }
+    // Every employee gets the brand dashboard (Dashboard + Products + Scan
+    // History, scoped to their own company) — bridge this Employee session
+    // into the Company/User AuthContext's own storage and hand off to
+    // /admin, which reads that storage on mount. pages/index.js recognizes
+    // `actorKind: 'Employee'` and restricts its nav via EMPLOYEE_ALLOWED_PAGES.
+    bridgeEmployeeSession(res.employee, res.token);
+    navigate('/admin', { replace: true });
   };
 
   return (
@@ -83,14 +83,14 @@ const StaffLoginPage = () => {
               autoFocus
               fullWidth
               disabled={busy}
-              sx={fieldSx}
+              sx={smallFieldSx}
             />
             <Button
               type="submit"
               variant="contained"
               fullWidth
               disabled={busy}
-              sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
+              sx={compactButtonSx}
             >
               {busy ? 'Sending…' : 'Send code'}
             </Button>
@@ -109,21 +109,21 @@ const StaffLoginPage = () => {
               fullWidth
               disabled={busy}
               inputProps={{ inputMode: 'numeric', pattern: '[0-9]*', maxLength: 6, style: { letterSpacing: 8, textAlign: 'center', fontSize: '1.3rem' } }}
-              sx={fieldSx}
+              sx={smallFieldSx}
             />
             <Button
               type="submit"
               variant="contained"
               fullWidth
               disabled={busy || code.length !== 6}
-              sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
+              sx={compactButtonSx}
             >
               {busy ? 'Verifying…' : 'Verify'}
             </Button>
             <Box sx={{ textAlign: 'center' }}>
               <Typography
                 component="span"
-                onClick={() => { setStage('email'); setCode(''); setNotice(''); }}
+                onClick={() => { setStage('email'); setCode(''); setNotice(''); setNoticeIsError(false); }}
                 sx={{ ...whiteTextSx, fontWeight: 400, fontSize: '0.95rem', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
               >
                 Use a different email
@@ -133,7 +133,16 @@ const StaffLoginPage = () => {
         )}
 
         {!!notice && (
-          <Typography role="status" variant="body2" sx={{ textAlign: 'center', ...whiteTextSx }}>
+          <Typography
+            role="status"
+            variant="body2"
+            sx={{
+              textAlign: 'center',
+              fontWeight: 600,
+              ...whiteTextSx,
+              ...(noticeIsError && { color: '#ff8a80' }),
+            }}
+          >
             {notice}
           </Typography>
         )}

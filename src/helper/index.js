@@ -703,6 +703,17 @@ export const updateEmployee = async (token, id, data) => {
     }
 };
 
+export const deleteEmployee = async (token, id) => {
+    try {
+        await axios.delete(`${Backend_URL}employee-auth/employees/${id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Failed to remove employee' };
+    }
+};
+
 // ----- Process Step Labels (Worker Operations grid config) -----
 export const getProcessSteps = async (token) => {
     try {

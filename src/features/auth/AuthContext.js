@@ -10,10 +10,10 @@ import {
 
 const AuthContext = createContext(null);
 
-// Exported so the employee login flow (features/employee-auth) can bridge a
-// Supervisor's Employee session into this same storage — see StaffLoginPage's
-// handling of employeeType === 'supervisor'. Company/User sessions never
-// share a token or storage key with an Employee session (see
+// Exported so the employee login flow (features/employee-auth) can bridge any
+// Employee session (working_employee or supervisor) into this same storage —
+// see StaffLoginPage's bridgeEmployeeSession call. Company/User sessions
+// never share a token or storage key with an Employee session (see
 // EmployeeAuthContext), except for this one deliberate, one-way bridge.
 export const STORAGE_KEY = 'dpp_company';
 // JWT issued by the passwordless auth endpoints (google/apple/otp-verify).

@@ -15,9 +15,13 @@ import {
   Alert,
   Switch,
   FormControlLabel,
+  IconButton,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { listEmployees, inviteEmployee, updateEmployee } from '../../helper';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { listEmployees, inviteEmployee, updateEmployee, deleteEmployee } from '../../helper';
 
 // Admin-provisioning UI for the employee/staff route (backend/controllers/employeeController.ts).
 // This is the only place a staff account gets created — employeeAuthController.otpRequest
@@ -27,7 +31,6 @@ import { listEmployees, inviteEmployee, updateEmployee } from '../../helper';
 // against every registered company's Allowed Staff Email Domains itself.
 const InviteDialog = ({ open, onClose, onInvited, token }) => {
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('staff');
   const [employeeType, setEmployeeType] = useState('working_employee');
   const [employeeCode, setEmployeeCode] = useState('');
   const [error, setError] = useState('');
@@ -42,7 +45,6 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
     setSaving(true);
     const res = await inviteEmployee(token, {
       email: email.trim(),
-      role,
       employeeType,
       employeeCode: employeeCode.trim() || undefined,
     });
@@ -52,7 +54,6 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
       return;
     }
     setEmail('');
-    setRole('staff');
     setEmployeeType('working_employee');
     setEmployeeCode('');
     onInvited();
@@ -70,14 +71,6 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
           onChange={(e) => setEmail(e.target.value)}
           fullWidth
         />
-        <FormControl fullWidth>
-          <InputLabel>Role</InputLabel>
-          <Select label="Role" value={role} onChange={(e) => setRole(e.target.value)}>
-            <MenuItem value="staff">Staff</MenuItem>
-            <MenuItem value="manager">Manager</MenuItem>
-            <MenuItem value="admin">Admin</MenuItem>
-          </Select>
-        </FormControl>
         <FormControl fullWidth>
           <InputLabel>Employee Type</InputLabel>
           <Select label="Employee Type" value={employeeType} onChange={(e) => setEmployeeType(e.target.value)}>
@@ -116,6 +109,8 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [draft, setDraft] = useState({ email: '', employeeType: 'working_employee' });
 
   const reload = () => {
     setLoading(true);
@@ -134,49 +129,69 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
     reload();
   };
 
-  const handleRoleChange = async (employee, role) => {
-    await updateEmployee(token, employee._id, { role });
+  const startEdit = (employee) => {
+    setEditingId(employee._id);
+    setDraft({ email: employee.email || '', employeeType: employee.employeeType || 'working_employee' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+  };
+
+  const saveEdit = async (employee) => {
+    await updateEmployee(token, employee._id, { email: draft.email.trim(), employeeType: draft.employeeType });
+    setEditingId(null);
     reload();
   };
 
-  const handleEmployeeTypeChange = async (employee, employeeType) => {
-    await updateEmployee(token, employee._id, { employeeType });
+  const handleRemove = async (employee) => {
+    if (!window.confirm(`Remove ${employee.email || 'this employee'} from the roster?`)) return;
+    await deleteEmployee(token, employee._id);
     reload();
   };
 
   const columns = [
-    { field: 'email', headerName: 'Corporate Email', width: 220, valueGetter: (p) => p.row.email || '—' },
+    {
+      field: 'email',
+      headerName: 'Corporate Email',
+      width: 240,
+      renderCell: (p) =>
+        editingId === p.row._id ? (
+          <TextField
+            size="small"
+            fullWidth
+            value={draft.email}
+            onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+          />
+        ) : (
+          p.row.email || '—'
+        ),
+    },
     ...(showCompanyColumn
       ? [{ field: 'companyName', headerName: 'Company', width: 160, valueGetter: (p) => p.row.companyName || '—' }]
       : []),
     { field: 'employeeCode', headerName: 'Employee Code', width: 160, valueGetter: (p) => p.row.employeeCode || '—' },
     { field: 'emailDomain', headerName: 'Domain', width: 140 },
     {
-      field: 'role',
-      headerName: 'Role',
-      width: 160,
-      renderCell: (p) => (
-        <Select size="small" value={p.row.role} onChange={(e) => handleRoleChange(p.row, e.target.value)}>
-          <MenuItem value="staff">Staff</MenuItem>
-          <MenuItem value="manager">Manager</MenuItem>
-          <MenuItem value="admin">Admin</MenuItem>
-        </Select>
-      ),
-    },
-    {
       field: 'employeeType',
       headerName: 'Employee Type',
-      width: 180,
-      renderCell: (p) => (
-        <Select
-          size="small"
-          value={p.row.employeeType || 'working_employee'}
-          onChange={(e) => handleEmployeeTypeChange(p.row, e.target.value)}
-        >
-          <MenuItem value="working_employee">Working Employee</MenuItem>
-          <MenuItem value="supervisor">Supervisor</MenuItem>
-        </Select>
-      ),
+      width: 200,
+      renderCell: (p) =>
+        editingId === p.row._id ? (
+          <Select
+            size="small"
+            fullWidth
+            value={draft.employeeType}
+            onChange={(e) => setDraft((d) => ({ ...d, employeeType: e.target.value }))}
+          >
+            <MenuItem value="working_employee">Working Employee</MenuItem>
+            <MenuItem value="supervisor">Supervisor</MenuItem>
+          </Select>
+        ) : p.row.employeeType === 'supervisor' ? (
+          'Supervisor'
+        ) : (
+          'Working Employee'
+        ),
     },
     {
       field: 'isActive',
@@ -194,6 +209,32 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
       headerName: 'Last Login',
       width: 190,
       valueGetter: (p) => (p.row.lastLoginAt ? new Date(p.row.lastLoginAt).toLocaleString() : 'Never'),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 120,
+      sortable: false,
+      renderCell: (p) =>
+        editingId === p.row._id ? (
+          <>
+            <IconButton size="small" color="primary" onClick={() => saveEdit(p.row)} aria-label="Save">
+              <SaveIcon fontSize="small" />
+            </IconButton>
+            <Button size="small" onClick={cancelEdit} sx={{ ml: 0.5 }}>
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <>
+            <IconButton size="small" onClick={() => startEdit(p.row)} aria-label="Edit">
+              <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" color="error" onClick={() => handleRemove(p.row)} aria-label="Remove">
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </>
+        ),
     },
   ];
 

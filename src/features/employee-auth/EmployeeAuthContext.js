@@ -12,27 +12,30 @@ const STORAGE_KEY = 'dpp_employee';
 const TOKEN_STORAGE_KEY = 'dpp_employee_token';
 
 // One deliberate, one-way exception to the "never shares storage" rule above:
-// a Supervisor-role employee gets the full brand dashboard (Products +
-// Dashboard, reused as-is from the Company/brand experience — see
-// pages/index.js's isEmployeeActor gating), so their session also needs to
-// live where that dashboard's AuthContext reads it from. Used by both
-// StaffLoginPage (right after verifying the code) and StaffApp (in case a
-// Supervisor lands back on /staff with a stale session still in storage).
-export const bridgeSupervisorSession = (employee, token) => {
+// every employee (working_employee or supervisor) gets the same brand
+// dashboard shell (Dashboard + Products + Scan History, reused as-is from
+// the Company/brand experience — see pages/index.js's isEmployeeActor/
+// EMPLOYEE_ALLOWED_PAGES gating), scoped to their own company's products, so
+// their session also needs to live where that dashboard's AuthContext reads
+// it from. Used by both StaffLoginPage (right after verifying the code) and
+// StaffApp (in case an employee lands back on /staff with a stale session
+// still in storage).
+export const bridgeEmployeeSession = (employee, token) => {
   const bridgedSession = {
     _id: employee.company_id,
     name: employee.companyName || employee.emailDomain,
     role: 'company',
     profileCompleted: true,
     actorKind: 'Employee',
-    employeeType: 'supervisor',
+    employeeType: employee.employeeType || 'working_employee',
     employeeId: employee._id,
   };
   try {
     sessionStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(bridgedSession));
     sessionStorage.setItem(COMPANY_TOKEN_STORAGE_KEY, token || '');
   } catch (error) {
-    // Storage unavailable (private mode, etc.) — caller falls back to the Staff Console.
+    // Storage unavailable (private mode, etc.) — caller can't bridge; the login
+    // form's own notice already told the user something went wrong.
   }
 };
 
