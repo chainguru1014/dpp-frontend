@@ -6,6 +6,7 @@ import theme from './theme';
 import Page from './pages';
 import PublicProductPage from './pages/PublicProductPage';
 import StaffApp from './features/employee-auth/StaffApp';
+import GlobalLoadingBar from './components/GlobalLoadingBar';
 
 function PublicProductRoute() {
   const [searchParams] = useSearchParams();
@@ -35,6 +36,7 @@ function App() {
       <StyledEngineProvider injectFirst>
         <ThemeProvider theme={theme}>
           <CssBaseline />
+          <GlobalLoadingBar />
           <BrowserRouter>
             <Routes>
               <Route path="/product/:productId/:qrcodeId" element={<PublicProductPageWrapper />} />

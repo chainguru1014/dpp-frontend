@@ -24,6 +24,12 @@ export const bridgeEmployeeSession = (employee, token) => {
   const bridgedSession = {
     _id: employee.company_id,
     name: employee.companyName || employee.emailDomain,
+    // Shown in the top bar next to the avatar (see pages/index.js) — the
+    // employee's own name, not the brand's, falling back to the email's
+    // local part when no name was set at invite time. Kept separate from
+    // `name` above so anywhere else reading `company.name` as "the brand"
+    // is unaffected.
+    displayName: employee.name || (employee.email ? employee.email.split('@')[0] : (employee.companyName || employee.emailDomain)),
     role: 'company',
     profileCompleted: true,
     actorKind: 'Employee',

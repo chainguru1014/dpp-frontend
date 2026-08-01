@@ -738,6 +738,41 @@ export const updateProcessSteps = async (token, processSteps) => {
     }
 };
 
+// ----- Corporate capture audit trail (Capture History page, Supervisor-only) -----
+export const getCaptures = async (token) => {
+    try {
+        const res = await axios.get(`${Backend_URL}captures?date=all`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return res.data?.data?.docs || [];
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+};
+
+// ----- Consumer app Home page location steps (platform-wide, super-admin managed) -----
+export const getConsumerLocationSteps = async () => {
+    try {
+        const res = await axios.get(`${Backend_URL}platform-settings/consumer-location-steps`);
+        return res.data?.data?.processSteps || [];
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+};
+
+export const updateConsumerLocationSteps = async (token, processSteps) => {
+    try {
+        const res = await axios.put(`${Backend_URL}platform-settings/consumer-location-steps`, { processSteps }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data?.processSteps || [] };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Failed to save location steps' };
+    }
+};
+
 // ----- Employee's own passwordless login (corporate SSO) -----
 // Mirrors requestOtp/verifyOtp above but hits /employee-auth/*, a completely
 // separate collection/route from the consumer and company auth flows.

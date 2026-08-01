@@ -75,6 +75,8 @@ import yometelLogoWhite from '../assets/yometel-logo-white.png';
 import ProfilePage from '../features/profile/ProfilePage';
 import EmployeeManagementPage from '../features/employee-audit/EmployeeManagementPage';
 import ProcessStepsPage from '../features/process-steps/ProcessStepsPage';
+import ConsumerLocationStepsPage from '../features/consumer-steps/ConsumerLocationStepsPage';
+import CaptureHistoryPage from '../features/capture-history/CaptureHistoryPage';
 import ProductsTable from '../features/products/ProductsTable';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
@@ -140,7 +142,7 @@ const InnerPage = () => {
   // only ever see those pages, never Users/Staff Management/ESG/LCA/
   // Recommendations/Chat/Notifications, which a real Company session can reach.
   const isEmployeeActor = company?.actorKind === 'Employee';
-  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history'];
+  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history', 'captureHistory'];
 
   // GDPR: the "Privacy Preferences" link (on AuthPage) can reopen the AI
   // Concierge consent screen at any time, independent of the login/profile
@@ -1420,11 +1422,27 @@ const InnerPage = () => {
           <ListItemText primary="Products" />
         </ListItemButton>
       </ListItem>
-      {!isAppUser && !isAdmin && (
+      {/* Process Step Labels manages the Worker Operations grid for a single
+          company — a Supervisor may edit their own company's; a plain
+          Company/brand account may too. A working_employee never sees it
+          (only a Supervisor may edit process steps — see
+          resolveProcessStepsActor's canWrite check on the backend). */}
+      {!isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'processSteps'} onClick={() => go('processSteps')}>
             <ListItemIcon sx={{ color: 'inherit' }}><FormatListNumberedIcon /></ListItemIcon>
             <ListItemText primary="Process Step Labels" />
+          </ListItemButton>
+        </ListItem>
+      )}
+      {/* Capture History: a Supervisor (or a plain Company/brand account)
+          reviewing every working employee's capture activity for their
+          company. */}
+      {!isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'captureHistory'} onClick={() => go('captureHistory')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
+            <ListItemText primary="Capture History" />
           </ListItemButton>
         </ListItem>
       )}
@@ -1433,6 +1451,14 @@ const InnerPage = () => {
           <ListItemButton selected={activePage === 'users'} onClick={() => go('users')}>
             <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
             <ListItemText primary="Users" />
+          </ListItemButton>
+        </ListItem>
+      )}
+      {isAdmin && !isEmployeeActor && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'consumerLocationSteps'} onClick={() => go('consumerLocationSteps')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><FormatListNumberedIcon /></ListItemIcon>
+            <ListItemText primary="Process Step Labels (Consumer)" />
           </ListItemButton>
         </ListItem>
       )}
@@ -1525,14 +1551,14 @@ const InnerPage = () => {
           <Box sx={{ flexGrow: 1 }} />
           <NotificationBell onShowAll={() => setActivePage('allNotifications')} />
           <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
-            {company.name}
+            {company.displayName || company.name}
           </Typography>
           <IconButton
             color="inherit"
             onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
           >
             <Avatar src={getFileUrl(company.avatar)}>
-              {!company.avatar && company.name?.[0]?.toUpperCase()}
+              {!company.avatar && (company.displayName || company.name)?.[0]?.toUpperCase()}
             </Avatar>
           </IconButton>
           <Menu
@@ -1666,8 +1692,16 @@ const InnerPage = () => {
             <EmployeeManagementPage token={token} isAdmin={isAdmin} />
           )}
 
-          {activePage === 'processSteps' && !isAppUser && !isAdmin && (
+          {activePage === 'processSteps' && !isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
             <ProcessStepsPage token={token} />
+          )}
+
+          {activePage === 'captureHistory' && !isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
+            <CaptureHistoryPage token={token} />
+          )}
+
+          {activePage === 'consumerLocationSteps' && isAdmin && !isEmployeeActor && (
+            <ConsumerLocationStepsPage token={token} />
           )}
 
           {activePage === 'products' && (
