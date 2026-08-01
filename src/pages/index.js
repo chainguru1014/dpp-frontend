@@ -142,7 +142,7 @@ const InnerPage = () => {
   // only ever see those pages, never Users/Staff Management/ESG/LCA/
   // Recommendations/Chat/Notifications, which a real Company session can reach.
   const isEmployeeActor = company?.actorKind === 'Employee';
-  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history', 'captureHistory'];
+  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history', 'captureHistory', 'recommendations', 'chat'];
 
   // GDPR: the "Privacy Preferences" link (on AuthPage) can reopen the AI
   // Concierge consent screen at any time, independent of the login/profile
@@ -1478,24 +1478,26 @@ const InnerPage = () => {
           <ListItemText primary="Scan History" />
         </ListItemButton>
       </ListItem>
+      {/* Recommendations and Chat are available to every role, including
+          working_employee and Supervisor — see EMPLOYEE_ALLOWED_PAGES. */}
+      <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'recommendations'} onClick={() => go('recommendations')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><AutoAwesomeIcon /></ListItemIcon>
+          <ListItemText primary="Recommendations" />
+        </ListItemButton>
+      </ListItem>
+      <ListItem disablePadding>
+        <ListItemButton selected={activePage === 'chat'} onClick={() => go('chat')}>
+          <ListItemIcon sx={{ color: 'inherit' }}><ChatBubbleOutlineIcon /></ListItemIcon>
+          <ListItemText primary="Chat" />
+        </ListItemButton>
+      </ListItem>
       {!isEmployeeActor && (
         <>
           <ListItem disablePadding>
             <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
               <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
               <ListItemText primary="LCA" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton selected={activePage === 'recommendations'} onClick={() => go('recommendations')}>
-              <ListItemIcon sx={{ color: 'inherit' }}><AutoAwesomeIcon /></ListItemIcon>
-              <ListItemText primary="Recommendations" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton selected={activePage === 'chat'} onClick={() => go('chat')}>
-              <ListItemIcon sx={{ color: 'inherit' }}><ChatBubbleOutlineIcon /></ListItemIcon>
-              <ListItemText primary="Chat" />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
