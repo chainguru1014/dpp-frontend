@@ -32,6 +32,7 @@ import { listEmployees, inviteEmployee, updateEmployee, deleteEmployee } from '.
 // against every registered company's Allowed Staff Email Domains itself.
 const InviteDialog = ({ open, onClose, onInvited, token }) => {
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [employeeType, setEmployeeType] = useState('working_employee');
   const [employeeCode, setEmployeeCode] = useState('');
   const [error, setError] = useState('');
@@ -43,9 +44,14 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
       setError('A valid corporate email is required.');
       return;
     }
+    if (!name.trim()) {
+      setError('A name is required — it\'s shown as the Worker on captures in the mobile app.');
+      return;
+    }
     setSaving(true);
     const res = await inviteEmployee(token, {
       email: email.trim(),
+      name: name.trim(),
       employeeType,
       employeeCode: employeeCode.trim() || undefined,
     });
@@ -55,6 +61,7 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
       return;
     }
     setEmail('');
+    setName('');
     setEmployeeType('working_employee');
     setEmployeeCode('');
     onInvited();
@@ -70,6 +77,13 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
           placeholder="jane.doe@company.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          fullWidth
+        />
+        <TextField
+          label="Name"
+          placeholder="Jane Doe"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           fullWidth
         />
         <FormControl fullWidth>
@@ -111,7 +125,7 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [draft, setDraft] = useState({ email: '', employeeType: 'working_employee' });
+  const [draft, setDraft] = useState({ email: '', name: '', employeeType: 'working_employee' });
   const [rowError, setRowError] = useState('');
 
   const reload = () => {
@@ -134,7 +148,7 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
   const startEdit = (employee) => {
     setRowError('');
     setEditingId(employee._id);
-    setDraft({ email: employee.email || '', employeeType: employee.employeeType || 'working_employee' });
+    setDraft({ email: employee.email || '', name: employee.name || '', employeeType: employee.employeeType || 'working_employee' });
   };
 
   const cancelEdit = () => {
@@ -144,7 +158,7 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
 
   const saveEdit = async (employee) => {
     setRowError('');
-    const res = await updateEmployee(token, employee._id, { email: draft.email.trim(), employeeType: draft.employeeType });
+    const res = await updateEmployee(token, employee._id, { email: draft.email.trim(), name: draft.name.trim(), employeeType: draft.employeeType });
     if (!res.ok) {
       setRowError(res.message || 'Failed to save changes.');
       return;
@@ -179,6 +193,22 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
           />
         ) : (
           p.row.email || '—'
+        ),
+    },
+    {
+      field: 'name',
+      headerName: 'Name',
+      width: 160,
+      renderCell: (p) =>
+        editingId === p.row._id ? (
+          <TextField
+            size="small"
+            fullWidth
+            value={draft.name}
+            onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
+          />
+        ) : (
+          p.row.name || '—'
         ),
     },
     ...(showCompanyColumn
