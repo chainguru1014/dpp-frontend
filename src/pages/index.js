@@ -36,6 +36,7 @@ import Inventory2Icon from '@mui/icons-material/Inventory2';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import PeopleIcon from '@mui/icons-material/People';
 import HistoryIcon from '@mui/icons-material/History';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
@@ -142,7 +143,7 @@ const InnerPage = () => {
   // only ever see those pages, never Users/Staff Management/ESG/LCA/
   // Recommendations/Chat/Notifications, which a real Company session can reach.
   const isEmployeeActor = company?.actorKind === 'Employee';
-  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history', 'captureHistory', 'recommendations', 'chat'];
+  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history', 'captureHistory', 'recommendations', 'chat', 'trace'];
 
   // GDPR: the "Privacy Preferences" link (on AuthPage) can reopen the AI
   // Concierge consent screen at any time, independent of the login/profile
@@ -1441,7 +1442,7 @@ const InnerPage = () => {
       {!isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'captureHistory'} onClick={() => go('captureHistory')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
+            <ListItemIcon sx={{ color: 'inherit' }}><AssessmentIcon /></ListItemIcon>
             <ListItemText primary="Capture History" />
           </ListItemButton>
         </ListItem>
@@ -1462,7 +1463,10 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
-      {!isAppUser && !isEmployeeActor && (
+      {/* Staff Management (provisioning employees) is super-admin only now —
+          a plain Company/brand account can no longer reach it, and neither
+          can a Supervisor or working_employee. */}
+      {isAdmin && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'employeeAuditLog'} onClick={() => go('employeeAuditLog')}>
             <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
@@ -1492,14 +1496,19 @@ const InnerPage = () => {
           <ListItemText primary="Chat" />
         </ListItemButton>
       </ListItem>
+      {/* LCA is visible to a Supervisor too (scoped to their own company's
+          products via ownerScopeKind/ownerScopeId below) — just not to a
+          working_employee. */}
+      {(!isEmployeeActor || company?.employeeType === 'supervisor') && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
+            <ListItemText primary="LCA" />
+          </ListItemButton>
+        </ListItem>
+      )}
       {!isEmployeeActor && (
         <>
-          <ListItem disablePadding>
-            <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
-              <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
-              <ListItemText primary="LCA" />
-            </ListItemButton>
-          </ListItem>
           <ListItem disablePadding>
             <ListItemButton
               selected={activePage === 'notifications' || activePage === 'allNotifications'}
@@ -1664,7 +1673,7 @@ const InnerPage = () => {
             <HistoryPage ownerKind={isAdmin ? null : ownerScopeKind} ownerId={isAdmin ? null : ownerScopeId} />
           )}
 
-          {activePage === 'trace' && (
+          {activePage === 'trace' && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
             <TracePage ownerKind={isAdmin ? null : ownerScopeKind} ownerId={isAdmin ? null : ownerScopeId} />
           )}
 
@@ -1690,7 +1699,7 @@ const InnerPage = () => {
             </Box>
           )}
 
-          {activePage === 'employeeAuditLog' && !isAppUser && (
+          {activePage === 'employeeAuditLog' && isAdmin && (
             <EmployeeManagementPage token={token} isAdmin={isAdmin} />
           )}
 
