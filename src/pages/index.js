@@ -140,10 +140,13 @@ const InnerPage = () => {
   // call). Their session reuses this same `company` slot (role: 'company',
   // so canManageProducts/isAdmin above already compute correctly) purely so
   // Dashboard/Products/Scan History can be reused unmodified — but they must
-  // only ever see those pages, never Users/Staff Management/ESG/LCA/
-  // Recommendations/Chat/Notifications, which a real Company session can reach.
+  // only ever see these listed pages, never Users/ESG/Notifications, which a
+  // real Company session can reach. Staff Management (employeeAuditLog) is
+  // included so a Supervisor can manage their own company's roster, but the
+  // nav item/page render still additionally gate it to employeeType ===
+  // 'supervisor' so a working_employee can't reach it.
   const isEmployeeActor = company?.actorKind === 'Employee';
-  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history', 'captureHistory', 'recommendations', 'chat', 'trace'];
+  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history', 'captureHistory', 'recommendations', 'chat', 'trace', 'employeeAuditLog'];
 
   // GDPR: the "Privacy Preferences" link (on AuthPage) can reopen the AI
   // Concierge consent screen at any time, independent of the login/profile
@@ -1463,10 +1466,12 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
-      {/* Staff Management (provisioning employees) is super-admin only now —
-          a plain Company/brand account can no longer reach it, and neither
-          can a Supervisor or working_employee. */}
-      {isAdmin && (
+      {/* Staff Management (provisioning employees): the super admin sees every
+          company's roster plus company management; a Supervisor sees only
+          their own company's roster (see EmployeeManagementPage's isAdmin
+          prop). A plain Company/brand account and a working_employee never
+          see it. */}
+      {(isAdmin || (isEmployeeActor && company?.employeeType === 'supervisor')) && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'employeeAuditLog'} onClick={() => go('employeeAuditLog')}>
             <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
@@ -1699,7 +1704,7 @@ const InnerPage = () => {
             </Box>
           )}
 
-          {activePage === 'employeeAuditLog' && isAdmin && (
+          {activePage === 'employeeAuditLog' && (isAdmin || (isEmployeeActor && company?.employeeType === 'supervisor')) && (
             <EmployeeManagementPage token={token} isAdmin={isAdmin} />
           )}
 

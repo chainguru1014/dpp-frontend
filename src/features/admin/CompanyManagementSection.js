@@ -1,10 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   Typography,
   Dialog,
   DialogTitle,
@@ -90,16 +86,6 @@ const CompanyUsersTable = ({ companies, loading, onView, onEdit, onRemove }) => 
       width: 110,
       type: 'number',
       valueGetter: (p) => p.row.uniqueScannerCount || 0,
-    },
-    {
-      field: 'isVerified',
-      headerName: 'Status',
-      width: 100,
-      renderCell: (data) => (
-        <span style={{ whiteSpace: 'pre-line', padding: 10 }}>
-          {data.value ? 'Approved' : 'Waiting'}
-        </span>
-      ),
     },
     {
       field: 'actions',
@@ -213,7 +199,6 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
 // this table.
 const CompanyManagementSection = () => {
   const [companies, setCompanies] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('all');
   const [companyInfo, setCompanyInfo] = useState(undefined);
   const [editingCompany, setEditingCompany] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -223,10 +208,7 @@ const CompanyManagementSection = () => {
     setLoading(true);
     getAdminUserData()
       .then((data) => {
-        const sorted = (data.companies || [])
-          .filter((c) => !isAdminCompany(c))
-          .sort((a, b) => (b.isVerified === a.isVerified ? 0 : b.isVerified ? 1 : -1));
-        setCompanies(sorted);
+        setCompanies((data.companies || []).filter((c) => !isAdminCompany(c)));
       })
       .finally(() => setLoading(false));
   };
@@ -234,14 +216,6 @@ const CompanyManagementSection = () => {
   useEffect(() => {
     reloadCompanies();
   }, []);
-
-  // The backend doesn't filter companies by status (unlike users), so it's
-  // applied client-side here.
-  const visibleCompanies = companies.filter((c) => {
-    if (statusFilter === 'approved') return !!c.isVerified;
-    if (statusFilter === 'waiting') return !c.isVerified;
-    return true;
-  });
 
   const handleCompanyEditSave = async () => {
     if (!editingCompany) return;
@@ -255,23 +229,9 @@ const CompanyManagementSection = () => {
     <Box sx={{ mb: 4 }}>
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h6">Registered Companies</Typography>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Button variant="contained" onClick={() => setCreateCompanyOpen(true)}>
-            Create Company
-          </Button>
-          <FormControl size="small" sx={{ minWidth: 160 }}>
-            <InputLabel>Status Filter</InputLabel>
-            <Select
-              label="Status Filter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="approved">Approved</MenuItem>
-              <MenuItem value="waiting">Waiting</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
+        <Button variant="contained" onClick={() => setCreateCompanyOpen(true)}>
+          Create Company
+        </Button>
       </Box>
       <CreateCompanyDialog
         open={createCompanyOpen}
@@ -279,7 +239,7 @@ const CompanyManagementSection = () => {
         onCreated={reloadCompanies}
       />
       <CompanyUsersTable
-        companies={visibleCompanies}
+        companies={companies}
         loading={loading}
         onView={(id) => setCompanyInfo(companies.find((item) => item._id === id))}
         onEdit={(company) => setEditingCompany(company)}
