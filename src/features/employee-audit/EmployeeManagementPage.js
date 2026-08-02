@@ -9,7 +9,10 @@ import CompanyManagementSection from '../admin/CompanyManagementSection';
 // admin (isAdmin=true, sees every company's roster plus company management)
 // and by a per-company Supervisor (isAdmin=false, sees only their own
 // company's roster — see pages/index.js's nav/render gating on
-// company?.employeeType === 'supervisor'). Both tabs are scoped server-side
+// company?.employeeType === 'supervisor'). A Supervisor may only manage
+// working employees, never other Supervisors (restrictToWorkingEmployee,
+// enforced here in the UI and again in employeeController.ts). Both tabs are
+// scoped server-side
 // to the logged-in company's own employees, unless the caller is the
 // platform "super" account, which sees every company's employees (see
 // backend/controllers/employeeController.ts's resolveRosterActor). For
@@ -28,7 +31,9 @@ const EmployeeManagementPage = ({ token, isAdmin }) => {
         <Tab value="roster" label="Roster" />
         <Tab value="auditLog" label="Audit Log" />
       </Tabs>
-      {tab === 'roster' && <EmployeeRosterPage token={token} showCompanyColumn={isAdmin} />}
+      {tab === 'roster' && (
+        <EmployeeRosterPage token={token} showCompanyColumn={isAdmin} restrictToWorkingEmployee={!isAdmin} />
+      )}
       {tab === 'auditLog' && <EmployeeAuditLogPage token={token} showCompanyColumn={isAdmin} />}
     </Box>
   );

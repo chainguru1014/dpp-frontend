@@ -30,7 +30,7 @@ import { listEmployees, inviteEmployee, updateEmployee, deleteEmployee } from '.
 // admin must invite each employee by their real corporate email up front.
 // There's no company picker: the backend matches the invited email's domain
 // against every registered company's Allowed Staff Email Domains itself.
-const InviteDialog = ({ open, onClose, onInvited, token }) => {
+const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmployee }) => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [employeeType, setEmployeeType] = useState('working_employee');
@@ -86,16 +86,17 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
           onChange={(e) => setName(e.target.value)}
           fullWidth
         />
-        <FormControl fullWidth>
+        <FormControl fullWidth disabled={restrictToWorkingEmployee}>
           <InputLabel>Employee Type</InputLabel>
           <Select label="Employee Type" value={employeeType} onChange={(e) => setEmployeeType(e.target.value)}>
             <MenuItem value="working_employee">Working Employee</MenuItem>
-            <MenuItem value="supervisor">Supervisor</MenuItem>
+            {!restrictToWorkingEmployee && <MenuItem value="supervisor">Supervisor</MenuItem>}
           </Select>
         </FormControl>
         <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
-          Working Employee signs in on the mobile app with their corporate email. Supervisor signs
-          in on this dashboard and can manage products and view the Dashboard page.
+          {restrictToWorkingEmployee
+            ? 'A Supervisor may only invite Working Employees, who sign in on the mobile app with their corporate email.'
+            : 'Working Employee signs in on the mobile app with their corporate email. Supervisor signs in on this dashboard and can manage products and view the Dashboard page.'}
         </Typography>
         <TextField
           label="Employee Code (optional)"
@@ -120,7 +121,7 @@ const InviteDialog = ({ open, onClose, onInvited, token }) => {
   );
 };
 
-const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
+const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmployee }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -225,11 +226,12 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
           <Select
             size="small"
             fullWidth
+            disabled={restrictToWorkingEmployee}
             value={draft.employeeType}
             onChange={(e) => setDraft((d) => ({ ...d, employeeType: e.target.value }))}
           >
             <MenuItem value="working_employee">Working Employee</MenuItem>
-            <MenuItem value="supervisor">Supervisor</MenuItem>
+            {!restrictToWorkingEmployee && <MenuItem value="supervisor">Supervisor</MenuItem>}
           </Select>
         ) : p.row.employeeType === 'supervisor' ? (
           'Supervisor'
@@ -307,7 +309,13 @@ const EmployeeRosterPage = ({ token, showCompanyColumn }) => {
           sx={{ minHeight: 260 }}
         />
       </Box>
-      <InviteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} onInvited={reload} token={token} />
+      <InviteDialog
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        onInvited={reload}
+        token={token}
+        restrictToWorkingEmployee={restrictToWorkingEmployee}
+      />
     </Box>
   );
 };

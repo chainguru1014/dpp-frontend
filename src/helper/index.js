@@ -177,6 +177,17 @@ export const requestOtp = async (email, mode = 'signin') => {
 export const verifyOtp = async (email, code) => {
     try {
         const res = await axios.post(`${Backend_URL}auth/otp/verify`, { email, code });
+        // The backend's /auth/otp/* endpoints recognize a corporate Employee
+        // address too (the mobile app's unified login screen relies on that —
+        // see project memory), but on this web admin panel a Supervisor/
+        // working_employee must sign in at the dedicated Staff Login page
+        // (/staff) instead, so their session gets bridged correctly. Reject
+        // here rather than establishing a session, since otherwise the
+        // resulting `user` record has no reliable actorKind for this page to
+        // gate on (see EmployeeAuthContext's bridgeSupervisorSession).
+        if (res?.data?.actorKind === 'Employee') {
+            return { ok: false, message: 'Staff accounts must sign in from the Staff Login page.' };
+        }
         const normalized = normalizeAuthResponse(res);
         if (!normalized) return { ok: false, message: res?.data?.message || 'Invalid or expired code' };
         return { ok: true, ...normalized };

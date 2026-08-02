@@ -58,7 +58,7 @@ const CompanyUsersTable = ({ companies, loading, onView, onEdit, onRemove }) => 
         <span style={{ whiteSpace: 'pre-line', padding: 10 }}>{data.value}</span>
       ),
     },
-    { field: 'email', headerName: 'Email', width: 200 },
+    { field: 'email', headerName: 'Corporate Admin Email', width: 200 },
     { field: 'location', headerName: 'Location', width: 180 },
     {
       field: 'allowedEmailDomains',
@@ -164,7 +164,8 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
           fullWidth
         />
         <TextField
-          label="Email"
+          label="Corporate Admin Email"
+          helperText="A Supervisor account is auto-created with this email, named after the company (e.g. 'Acme admin'), so it can sign in immediately at the Staff Login page."
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           fullWidth
