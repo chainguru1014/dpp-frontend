@@ -8,8 +8,8 @@ const COLORS = ['#2f80c8', '#4a96dd', '#5b9bd8', '#8aa0c4', '#6b7a93', '#aab6c8'
 
 const Section = ({ title, children }) => (
   <Card sx={{ height: '100%' }}>
-    <CardContent sx={{ py: { xs: 2, md: 1.25 }, '&:last-child': { pb: { xs: 2, md: 1.25 } } }}>
-      <Typography variant="subtitle1" sx={{ mb: { xs: 1, md: 0.5 }, fontWeight: 400 }}>
+    <CardContent sx={{ py: { xs: 1.4, md: 0.9 }, '&:last-child': { pb: { xs: 1.4, md: 0.9 } } }}>
+      <Typography variant="subtitle1" sx={{ mb: { xs: 0.7, md: 0.35 }, fontWeight: 400, fontSize: { xs: '0.95rem', md: '0.88rem' } }}>
         {title}
       </Typography>
       {children}
@@ -29,11 +29,11 @@ const Kpi = ({ label, value, sub, onClick }) => (
       }),
     }}
   >
-    <CardContent sx={{ textAlign: 'center', py: { xs: 2, md: 1 } }}>
-      <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
+    <CardContent sx={{ textAlign: 'center', py: { xs: 1.4, md: 0.7 } }}>
+      <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.7rem', md: '1.5rem' } }}>
         {value}
       </Typography>
-      <Typography variant="body2" color="text.secondary">
+      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
         {label}
       </Typography>
       {sub && (
@@ -49,7 +49,7 @@ const Kpi = ({ label, value, sub, onClick }) => (
 const DayBars = ({ data }) => {
   const max = Math.max(1, ...data.map((d) => d.count));
   return (
-    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.75, height: { xs: 130, md: 132 }, mt: 1 }}>
+    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.75, height: { xs: 95, md: 95 }, mt: 1 }}>
       {data.map((d, i) => (
         <Box
           key={i}
@@ -171,7 +171,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null, p
         Analytics
       </Typography>
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 1.5, md: 1.5 }, mb: { xs: 1.5, md: 1.5 } }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 1, md: 1 }, mb: { xs: 1, md: 1 } }}>
         {productsCount != null && (
           <Box sx={kpiBoxSx}>
             <Kpi label="Products" value={productsCount} onClick={onProductsClick} />
@@ -190,7 +190,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null, p
         </Box>
       </Box>
 
-      <Grid container spacing={{ xs: 1.5, md: 1.5 }}>
+      <Grid container spacing={{ xs: 1, md: 1 }}>
         <Grid item xs={12} md={8}>
           <Section title="Scans — last 14 days">
             <DayBars data={a.scansByDay || []} />

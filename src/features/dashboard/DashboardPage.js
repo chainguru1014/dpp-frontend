@@ -116,7 +116,7 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
         <Typography variant="subtitle1" sx={{ mb: { xs: 1.5, md: 0.75 }, color: 'text.secondary', fontWeight: 400 }}>
           Usage Statistics
         </Typography>
-        <Grid container spacing={{ xs: 1.5, md: 2 }}>
+        <Grid container spacing={{ xs: 1, md: 1.25 }}>
           {isAdmin ? (
             <>
               <Grid item xs={12} sm={6} md={4}>
@@ -136,13 +136,13 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                     }
                   }}
                 >
-                  <CardContent sx={{ textAlign: 'center', py: { xs: 2.5, md: 1.25 } }}>
-                    <PeopleIcon sx={{ fontSize: { xs: 44, md: 32 }, color: 'primary.main', mb: { xs: 1.5, md: 0.5 } }} />
-                    <Typography variant="h6" sx={{ mb: 0.5 }}>
+                  <CardContent sx={{ textAlign: 'center', py: { xs: 1.75, md: 0.9 } }}>
+                    <PeopleIcon sx={{ fontSize: { xs: 31, md: 22 }, color: 'primary.main', mb: { xs: 1, md: 0.35 } }} />
+                    <Typography variant="h6" sx={{ mb: 0.35, fontSize: { xs: '0.95rem', md: '0.85rem' } }}>
                       Users
                     </Typography>
-                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
-                      {loading ? <CircularProgress size={22} thickness={5} /> : stats.users}
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.7rem', md: '1.5rem' } }}>
+                      {loading ? <CircularProgress size={16} thickness={5} /> : stats.users}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -164,13 +164,13 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                     }
                   }}
                 >
-                  <CardContent sx={{ textAlign: 'center', py: { xs: 2.5, md: 1.25 } }}>
-                    <BusinessIcon sx={{ fontSize: { xs: 44, md: 32 }, color: 'primary.main', mb: { xs: 1.5, md: 0.5 } }} />
-                    <Typography variant="h6" sx={{ mb: 0.5 }}>
+                  <CardContent sx={{ textAlign: 'center', py: { xs: 1.75, md: 0.9 } }}>
+                    <BusinessIcon sx={{ fontSize: { xs: 31, md: 22 }, color: 'primary.main', mb: { xs: 1, md: 0.35 } }} />
+                    <Typography variant="h6" sx={{ mb: 0.35, fontSize: { xs: '0.95rem', md: '0.85rem' } }}>
                       Companies
                     </Typography>
-                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
-                      {loading ? <CircularProgress size={22} thickness={5} /> : stats.companies}
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.7rem', md: '1.5rem' } }}>
+                      {loading ? <CircularProgress size={16} thickness={5} /> : stats.companies}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -192,13 +192,13 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                     }
                   }}
                 >
-                  <CardContent sx={{ textAlign: 'center', py: { xs: 2.5, md: 1.25 } }}>
-                    <Inventory2Icon sx={{ fontSize: { xs: 44, md: 32 }, color: 'primary.main', mb: { xs: 1.5, md: 0.5 } }} />
-                    <Typography variant="h6" sx={{ mb: 0.5 }}>
+                  <CardContent sx={{ textAlign: 'center', py: { xs: 1.75, md: 0.9 } }}>
+                    <Inventory2Icon sx={{ fontSize: { xs: 31, md: 22 }, color: 'primary.main', mb: { xs: 1, md: 0.35 } }} />
+                    <Typography variant="h6" sx={{ mb: 0.35, fontSize: { xs: '0.95rem', md: '0.85rem' } }}>
                       Products
                     </Typography>
-                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
-                      {loading ? <CircularProgress size={22} thickness={5} /> : formatNumber(stats.products)}
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.7rem', md: '1.5rem' } }}>
+                      {loading ? <CircularProgress size={16} thickness={5} /> : formatNumber(stats.products)}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -217,13 +217,13 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
                 }}
                 onClick={onNavigateToProducts}
               >
-                <CardContent sx={{ textAlign: 'center', py: { xs: 2.5, md: 1.25 } }}>
-                  <Inventory2Icon sx={{ fontSize: { xs: 44, md: 32 }, color: 'primary.main', mb: { xs: 1.5, md: 0.5 } }} />
-                  <Typography variant="h6" sx={{ mb: 0.5 }}>
+                <CardContent sx={{ textAlign: 'center', py: { xs: 1.75, md: 0.9 } }}>
+                  <Inventory2Icon sx={{ fontSize: { xs: 31, md: 22 }, color: 'primary.main', mb: { xs: 1, md: 0.35 } }} />
+                  <Typography variant="h6" sx={{ mb: 0.35, fontSize: { xs: '0.95rem', md: '0.85rem' } }}>
                     Products
                   </Typography>
-                  <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400 }}>
-                    {loading ? <CircularProgress size={22} thickness={5} /> : stats.products}
+                  <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.7rem', md: '1.5rem' } }}>
+                    {loading ? <CircularProgress size={16} thickness={5} /> : stats.products}
                   </Typography>
                 </CardContent>
               </Card>

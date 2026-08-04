@@ -6,7 +6,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import { getProcessSteps, updateProcessSteps } from '../../helper';
 
 const MIN_STEPS = 1;
-const MAX_STEPS = 10;
+const MAX_STEPS = 18;
 
 // Fixed set of step "type" categories — the mobile app translates each key
 // via i18n instead of displaying free text, so this list (the value stored)
@@ -108,7 +108,7 @@ const ProcessStepsPage = ({ token }) => {
       </Box>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         These labels populate the numbered Worker Operations grid on the mobile app's employee home
-        screen. Add between 1 and 10 steps, each with an Entity (e.g. "Tokyo DC") and a Type chosen
+        screen. Add between 1 and 18 steps, each with an Entity (e.g. "Tokyo DC") and a Type chosen
         from the list below — the app displays each Type in the worker's own language.
       </Typography>
 

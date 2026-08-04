@@ -105,19 +105,19 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
         </Box>
 
         {/* Image slider */}
-        <Box sx={{ position: 'relative', width: '100%', minHeight: 280, bgcolor: '#e8eef2' }}>
+        <Box sx={{ position: 'relative', width: '100%', minHeight: 140, bgcolor: '#e8eef2' }}>
           {images.length > 0 ? (
             <Slide transitionDuration={200} autoplay={false} onChange={(_, next) => setCurrentSlideIndex(next)}>
               {images.map((slideImage, index) => (
                 <div key={index}>
-                  <Box sx={{ width: '100%', height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e8eef2' }}>
-                    <img src={getFileUrl(slideImage)} alt="" style={{ maxWidth: '100%', maxHeight: 280, objectFit: 'contain' }} />
+                  <Box sx={{ width: '100%', height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e8eef2' }}>
+                    <img src={getFileUrl(slideImage)} alt="" style={{ maxWidth: '100%', maxHeight: 140, objectFit: 'contain' }} />
                   </Box>
                 </div>
               ))}
             </Slide>
           ) : (
-            <Box sx={{ width: '100%', height: 280, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box sx={{ width: '100%', height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>No image</Typography>
             </Box>
           )}

@@ -66,13 +66,13 @@ const AuthShell = ({ children, cardSx }) => (
         fontFamily: taglineFontFamily,
       }}
     >
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2 }}>
         Digital Product Passport
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
         for
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2 }}>
         Circular Economy &amp; Environment
       </Typography>
     </Box>
@@ -121,15 +121,15 @@ const AuthShell = ({ children, cardSx }) => (
         fontFamily: taglineFontFamily,
       }}
     >
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2 }}>
         Improved Traceability
       </Typography>
       {/* Italicized to match the left column's "for" — both are the
           connector word joining the two noun phrases either side of it. */}
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
         as
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2 }}>
         Your Concierge
       </Typography>
     </Box>

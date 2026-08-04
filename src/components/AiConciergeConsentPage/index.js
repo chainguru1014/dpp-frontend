@@ -12,20 +12,19 @@ const whiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
 // rest of the sign-in flow's controls.
 const CONSENT_BUTTON_HEIGHT = 27;
 
-// Shown before login on every fresh visit that hasn't made a local choice yet
-// (see pages/index.js's `aiConsentChoice`, read from localStorage) and
-// reachable any time after via the "Privacy Preferences" link on AuthPage, so
-// a user can change or withdraw consent per GDPR. The choice itself is
-// device-local (localStorage), not account-bound — deciding happens before
-// login, so there's often no account yet to attach it to; if one does exist,
-// the parent best-effort syncs it to the backend too.
+// `mode: 'gate'` is shown once, right after a User account's first sign-in
+// or sign-up, until that account has recorded an AI Concierge consent
+// decision (see pages/index.js's `isAppUser && !company?.aiConciergeConsentAt`
+// render branch) — submitting syncs the choice to the account, which clears
+// the gate and falls through to the dashboard on the next render, so this
+// screen's own button is what sends the user there. It never reappears for
+// that account afterward.
 //
-// `mode`:
-//  - 'gate': the pre-login initial visit — submitting always continues to
-//    the login screen next (the parent's gate clears itself once a local
-//    choice is stored).
-//  - 'review': already decided once, reopened via Privacy Preferences —
-//    submitting (or Cancel) returns to wherever the link was opened from.
+// It's also reachable before login via the "Privacy Preferences" link on
+// AuthPage (`mode: 'review'`), so a user can preview/change their choice per
+// GDPR even pre-account; that path stays device-local (localStorage) since
+// there's no account yet to attach it to — submitting (or Cancel) there
+// returns to wherever the link was opened from.
 const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, saving, apiError }) => {
   // `null` = no explicit choice made yet, which is what keeps the primary
   // button disabled below. A prior local choice (either mode) starts

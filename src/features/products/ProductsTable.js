@@ -109,6 +109,91 @@ export default function ProductsTable({
       ),
     },
     {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 250,
+      sortable: false,
+      renderCell: (p) => (
+        <Box>
+          <Tooltip title="View details">
+            <IconButton size="small" onClick={() => onSelectProduct && onSelectProduct(p.row)}>
+              <VisibilityIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {canTransfer && (
+            <Tooltip title="Transfer ownership">
+              <IconButton size="small" onClick={() => onTransferClick && onTransferClick(p.row)}>
+                <SwapHorizIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+          <Tooltip title="Ownership history">
+            <IconButton size="small" onClick={() => onHistoryClick && onHistoryClick(p.row)}>
+              <HistoryIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={canManage ? 'Generate QR / Mint' : 'View / Print QR codes'}>
+            <IconButton size="small" onClick={() => onPrintProduct && onPrintProduct(p.row._id)}>
+              <PrintIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          {canManage && (
+            <>
+              <Tooltip title="Edit">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    const i = indexOf(p.row._id);
+                    if (i >= 0 && onEditProduct) onEditProduct(i);
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Delete">
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    const i = indexOf(p.row._id);
+                    if (i >= 0 && onDeleteProduct) onDeleteProduct(i);
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </>
+          )}
+        </Box>
+      ),
+    },
+    {
+      field: 'items',
+      headerName: 'Items',
+      width: 90,
+      type: 'number',
+      // Units the current account owns in the ownership ledger.
+      valueGetter: (p) =>
+        typeof p.row.ownedQuantity === 'number'
+          ? p.row.ownedQuantity
+          : Array.isArray(p.row.serials)
+          ? p.row.serials.length
+          : 0,
+    },
+    {
+      field: 'minted',
+      headerName: 'Issued',
+      width: 90,
+      type: 'number',
+      valueGetter: (p) => p.row.total_minted_amount || 0,
+    },
+    {
+      field: 'printed',
+      headerName: 'Printed',
+      width: 90,
+      type: 'number',
+      valueGetter: (p) => p.row.printed_amount || 0,
+    },
+    {
       field: 'brand',
       headerName: 'Brand',
       width: 160,
@@ -176,91 +261,6 @@ export default function ProductsTable({
           </Link>
         );
       },
-    },
-    {
-      field: 'items',
-      headerName: 'Items',
-      width: 90,
-      type: 'number',
-      // Units the current account owns in the ownership ledger.
-      valueGetter: (p) =>
-        typeof p.row.ownedQuantity === 'number'
-          ? p.row.ownedQuantity
-          : Array.isArray(p.row.serials)
-          ? p.row.serials.length
-          : 0,
-    },
-    {
-      field: 'minted',
-      headerName: 'Minted',
-      width: 90,
-      type: 'number',
-      valueGetter: (p) => p.row.total_minted_amount || 0,
-    },
-    {
-      field: 'printed',
-      headerName: 'Printed',
-      width: 90,
-      type: 'number',
-      valueGetter: (p) => p.row.printed_amount || 0,
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 250,
-      sortable: false,
-      renderCell: (p) => (
-        <Box>
-          <Tooltip title="View details">
-            <IconButton size="small" onClick={() => onSelectProduct && onSelectProduct(p.row)}>
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {canTransfer && (
-            <Tooltip title="Transfer ownership">
-              <IconButton size="small" onClick={() => onTransferClick && onTransferClick(p.row)}>
-                <SwapHorizIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title="Ownership history">
-            <IconButton size="small" onClick={() => onHistoryClick && onHistoryClick(p.row)}>
-              <HistoryIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={canManage ? 'Generate QR / Mint' : 'View / Print QR codes'}>
-            <IconButton size="small" onClick={() => onPrintProduct && onPrintProduct(p.row._id)}>
-              <PrintIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {canManage && (
-            <>
-              <Tooltip title="Edit">
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    const i = indexOf(p.row._id);
-                    if (i >= 0 && onEditProduct) onEditProduct(i);
-                  }}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete">
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    const i = indexOf(p.row._id);
-                    if (i >= 0 && onDeleteProduct) onDeleteProduct(i);
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </>
-          )}
-        </Box>
-      ),
     },
   ];
 
