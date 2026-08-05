@@ -154,12 +154,11 @@ const InnerPage = () => {
   const [showPrivacyPreferences, setShowPrivacyPreferences] = useState(false);
   const [aiConsentBusy, setAiConsentBusy] = useState(false);
   const [aiConsentError, setAiConsentError] = useState('');
-  // Device-local AI Concierge choice ({ consent, decidedAt } | null) — used
-  // to pre-fill the pre-login "Privacy Preferences" review screen only. The
-  // actual post-login gate (see the `isAppUser && !company?.aiConciergeConsentAt`
-  // render branch below) is account-bound, not device-local: it checks
-  // `aiConciergeConsentAt` on the signed-in account so it only ever shows
-  // once per account, right after that account's first sign-in/sign-up.
+  // Device-local AI Concierge choice ({ consent, decidedAt } | null) — pre-
+  // fills the pre-login "Privacy Preferences" review screen, and is also the
+  // post-login gate's fallback for Company/Admin/Employee accounts (see
+  // `aiConciergeAlreadyDecided` below), since only User accounts can persist
+  // the decision to the backend (`aiConciergeConsentAt`).
   const [aiConsentChoice, setAiConsentChoice] = useState(() => {
     try {
       const stored = localStorage.getItem('dpp_aiConciergeConsentChoice');
@@ -1331,7 +1330,7 @@ const InnerPage = () => {
       <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
         <AiConciergeConsentPage
           mode="review"
-          initialConsent={aiConsentChoice.consent}
+          initialConsent={aiConsentChoice ? aiConsentChoice.consent : null}
           onSubmit={handleAiConsentSubmit}
           onClose={() => { setShowPrivacyPreferences(false); setAiConsentError(''); }}
           saving={aiConsentBusy}
@@ -1366,16 +1365,19 @@ const InnerPage = () => {
     );
   }
 
-  // Post-login gate: shown once right after a User account's first sign-in
-  // or sign-up (never before login, and never again once a decision is
-  // recorded) — Company/Admin/Employee sessions never see this, since only
-  // User accounts carry aiConciergeConsentAt (see backend authController.
-  // aiConciergeConsent). Submitting syncs to the account (handleAiConsentGateSubmit
-  // -> persistAiConsentChoice -> saveAiConciergeConsent), which sets
-  // aiConciergeConsentAt on `company` and this falls through to the
-  // dashboard below on the next render — i.e. the gate's own button is what
-  // sends the user to the dashboard.
-  if (isAppUser && !company?.aiConciergeConsentAt) {
+  // Post-login gate: shown once right after ANY account's first sign-in or
+  // sign-up (never before login). User accounts persist the decision on the
+  // account itself (`aiConciergeConsentAt`, works across browsers/devices —
+  // see backend authController.aiConciergeConsent). Company/Admin/Employee
+  // accounts can't: that endpoint only accepts User actorKind, so those fall
+  // back to the same device-local flag (`aiConsentChoice`) the old pre-login
+  // gate used — meaning for those account kinds it's once per browser, not
+  // once per account. Submitting (handleAiConsentGateSubmit ->
+  // persistAiConsentChoice) sets both, which clears this condition and falls
+  // through to the dashboard below on the next render — the gate's own
+  // button is what sends the user there.
+  const aiConciergeAlreadyDecided = isAppUser ? !!company?.aiConciergeConsentAt : !!aiConsentChoice;
+  if (!aiConciergeAlreadyDecided) {
     return (
       <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
         <AiConciergeConsentPage

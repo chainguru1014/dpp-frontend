@@ -96,10 +96,10 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
         </Box>
 
         <Box sx={{ px: 2.5, pt: 1.5, pb: 1, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: 28, fontWeight: 400, color: '#2f80c8', lineHeight: 1.2 }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 400, color: '#2f80c8', lineHeight: 1.2 }}>
             {info.name || '—'}
           </Typography>
-          <Typography sx={{ fontSize: 22, color: '#666', lineHeight: 1.2 }}>
+          <Typography sx={{ fontSize: 14, color: '#666', lineHeight: 1.2 }}>
             {info.model || '—'}
           </Typography>
         </Box>

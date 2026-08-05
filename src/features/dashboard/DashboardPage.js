@@ -122,6 +122,7 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
               <Grid item xs={12} sm={6} md={4}>
                 <Card
                   sx={{
+                    width: '70%',
                     cursor: 'pointer',
                     transition: 'transform 0.2s, box-shadow 0.2s',
                     '&:hover': {
@@ -150,6 +151,7 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
               <Grid item xs={12} sm={6} md={4}>
                 <Card
                   sx={{
+                    width: '70%',
                     cursor: 'pointer',
                     transition: 'transform 0.2s, box-shadow 0.2s',
                     '&:hover': {
@@ -178,6 +180,7 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
               <Grid item xs={12} sm={6} md={4}>
                 <Card
                   sx={{
+                    width: '70%',
                     cursor: 'pointer',
                     transition: 'transform 0.2s, box-shadow 0.2s',
                     '&:hover': {
@@ -208,6 +211,7 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
             <Grid item xs={12} sm={6} md={4}>
               <Card
                 sx={{
+                  width: '70%',
                   cursor: 'pointer',
                   transition: 'transform 0.2s, box-shadow 0.2s',
                   '&:hover': {
