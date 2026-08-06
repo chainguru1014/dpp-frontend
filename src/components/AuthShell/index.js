@@ -7,6 +7,12 @@ import background1 from '../../assets/background-1.jpg';
 // look-alikes on Windows/Linux/Android, where it isn't installed.
 const taglineFontFamily = 'Cochin, Georgia, "Times New Roman", Times, serif';
 
+// Fluid size for the flanking taglines: was a fixed 1.15rem regardless of
+// viewport, so it read oversized at 1280x720 and even at 1920x1080. Scales
+// continuously with viewport width instead of jumping at breakpoints —
+// 0.85rem at <=1280px wide, 1rem at 1920px, capping at 1.15rem by 2560px+.
+const taglineFontSize = 'clamp(0.85rem, calc(0.55rem + 0.375vw), 1.15rem)';
+
 // Shared visual shell for every sign-in surface (consumer/brand AuthPage and
 // the Staff Login page) — same background, flanking taglines, and card frame
 // everywhere. Card background is deliberately near-transparent so the forest
@@ -66,13 +72,13 @@ const AuthShell = ({ children, cardSx }) => (
         fontFamily: taglineFontFamily,
       }}
     >
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
         Digital Product Passport
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
         for
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
         Circular Economy &amp; Environment
       </Typography>
     </Box>
@@ -121,15 +127,15 @@ const AuthShell = ({ children, cardSx }) => (
         fontFamily: taglineFontFamily,
       }}
     >
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
         Improved Traceability
       </Typography>
       {/* Italicized to match the left column's "for" — both are the
           connector word joining the two noun phrases either side of it. */}
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
         as
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: '1.15rem', lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
         Your Concierge
       </Typography>
     </Box>

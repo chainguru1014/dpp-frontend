@@ -50,6 +50,7 @@ const modalStyle = {
   maxWidth: '92vw',
   height: '60vh',
   maxHeight: '90vh',
+  overflow: 'auto',
 };
 
 export default function PreviewModal({ open, setOpen, productInfo }) {

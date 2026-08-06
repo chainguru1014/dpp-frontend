@@ -93,6 +93,7 @@ import ProductHistoryDialog from '../features/products/ProductHistoryDialog';
 import ProductTransferDialog from '../features/products/ProductTransferDialog';
 import { getFileUrl } from '../helper';
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
+import { compactMediaQuery } from '../theme';
 
 const serialTypes = [{ label: 'Serial Number', value: 'serial' }];
 const DEFAULT_BRAND_NAME = 'Yometel';
@@ -1412,10 +1413,11 @@ const InnerPage = () => {
       my: 0.75,
       py: 1,
       px: 2,
+      [compactMediaQuery]: { mx: 1, my: 0.4, py: 0.6, px: 1.5 },
     },
-    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 40, justifyContent: 'center' },
-    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 24 },
-    '& .MuiListItemText-primary': { fontSize: '1.02rem', fontWeight: 400 },
+    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 40, justifyContent: 'center', [compactMediaQuery]: { minWidth: 30 } },
+    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 24, [compactMediaQuery]: { fontSize: 19 } },
+    '& .MuiListItemText-primary': { fontSize: '1.02rem', fontWeight: 400, [compactMediaQuery]: { fontSize: '0.85rem' } },
     '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.14)' },
     '& .MuiListItemButton-root.Mui-selected': { backgroundColor: 'rgba(255,255,255,0.22)', borderColor: '#ffffff' },
     '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.3)' },
@@ -1556,7 +1558,9 @@ const InnerPage = () => {
           </IconButton>
           <Box
             sx={{
-              width: { xs: 'auto', md: 280 },
+              // Matches the sidebar Drawer's width below (240 md-lg, 280 xl+)
+              // so the logo stays centered over the bar at every breakpoint.
+              width: { xs: 'auto', md: 240, xl: 280 },
               flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
@@ -1569,7 +1573,7 @@ const InnerPage = () => {
               component="img"
               src={yometelLogoWhite}
               alt="Yometel"
-              sx={{ height: { xs: 24, md: 30 }, width: 'auto', display: 'block' }}
+              sx={{ height: { xs: 24, md: 28, xl: 30 }, width: 'auto', display: 'block' }}
             />
           </Box>
           <Box sx={{ flexGrow: 1 }} />
@@ -1613,14 +1617,16 @@ const InnerPage = () => {
       </AppBar>
 
       <Box sx={{ display: 'flex', flexGrow: 1, pt: 8 }}>
-        {/* Desktop sidebar (md and up) */}
+        {/* Desktop sidebar (md and up) — narrower (240) from md through lg
+            (covers 1280x720/1366x768 client displays), widening back to 280
+            only at xl (1536px+) where there's room to spare. */}
         <Drawer
           variant="permanent"
           sx={{
             display: { xs: 'none', md: 'block' },
-            width: 280,
+            width: { md: 240, xl: 280 },
             flexShrink: 0,
-            '& .MuiDrawer-paper': { width: 280, boxSizing: 'border-box', ...drawerPaperSx },
+            '& .MuiDrawer-paper': { width: { md: 240, xl: 280 }, boxSizing: 'border-box', ...drawerPaperSx },
             ...navSx,
           }}
         >
@@ -1654,6 +1660,7 @@ const InnerPage = () => {
             flexGrow: 1,
             minWidth: 0,
             p: { xs: 1.5, md: 3 },
+            [compactMediaQuery]: { p: 1.75 },
             bgcolor: '#f5f6fa',
             overflow: 'auto',
           }}
