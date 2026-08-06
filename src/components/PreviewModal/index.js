@@ -26,6 +26,9 @@ const style = {
   left: '50%',
   transform: 'translate(-50%, -50%)',
   width: '400px',
+  // Guards against narrow/low-resolution viewports where a fixed 400px would
+  // overflow the screen width (e.g. 800px-wide displays with browser chrome).
+  maxWidth: '92vw',
   maxHeight: '90vh',
   bgcolor: '#fff',
   borderRadius: 3,
@@ -44,7 +47,9 @@ const modalStyle = {
   border: '2px solid #000',
   boxShadow: 24,
   width: '400px',
+  maxWidth: '92vw',
   height: '60vh',
+  maxHeight: '90vh',
 };
 
 export default function PreviewModal({ open, setOpen, productInfo }) {

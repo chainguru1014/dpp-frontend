@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 
 // Shared visual language with the Yometel DPP mobile app:
 // bright-blue palette on a soft light-blue canvas, rounded cards, soft blue shadows.
@@ -114,4 +114,8 @@ const theme = createTheme({
   },
 });
 
-export default theme;
+// Scales typography (h1-h6, body, etc.) up/down between breakpoints instead of
+// staying fixed at the 1920x1080 sizes this palette was designed at — keeps
+// text legible on low-res laptops (800x600-1366x768) without reading oversized
+// on high-res/4K displays (2560x1600+).
+export default responsiveFontSizes(theme, { breakpoints: ['xs', 'sm', 'md', 'lg', 'xl'], factor: 2.5 });

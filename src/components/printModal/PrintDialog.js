@@ -16,11 +16,18 @@ const cardStyle = {
     transform: 'translate(-50%, -50%)',
     width: 420,
     maxWidth: '92vw',
+    // Caps the card to the viewport and scrolls the body internally — without
+    // this, taller content (e.g. the Reprint range fields plus PDF actions)
+    // ran off the bottom of the screen on short/low-resolution displays with
+    // no way to reach the Apply/Download button.
+    maxHeight: '90vh',
     bgcolor: 'background.paper',
     borderRadius: 3,
     boxShadow: 24,
     overflow: 'hidden',
     outline: 'none',
+    display: 'flex',
+    flexDirection: 'column',
 };
 
 // Generic "print a range of already-generated/registered items to PDF"
@@ -105,7 +112,7 @@ export default function PrintDialog({
     return (
         <Modal open={open} onClose={() => setOpen(false)}>
             <Box sx={cardStyle}>
-                {/* Header */}
+                {/* Header — flexShrink: 0 keeps it pinned above the scrolling body below. */}
                 <Box
                     sx={{
                         px: 3,
@@ -115,6 +122,7 @@ export default function PrintDialog({
                         justifyContent: 'space-between',
                         backgroundImage: 'linear-gradient(120deg, #2f80c8 0%, #4a96dd 100%)',
                         color: '#fff',
+                        flexShrink: 0,
                     }}
                 >
                     <Typography sx={{ fontWeight: 400, fontSize: 18 }}>{title}</Typography>
@@ -123,8 +131,8 @@ export default function PrintDialog({
                     </IconButton>
                 </Box>
 
-                {/* Body */}
-                <Box sx={{ p: 3 }}>
+                {/* Body — scrolls internally when it doesn't fit within cardStyle's maxHeight. */}
+                <Box sx={{ p: 3, overflowY: 'auto' }}>
                     {subtitle && (
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                             {subtitle}
