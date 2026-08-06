@@ -10,8 +10,9 @@ const taglineFontFamily = 'Cochin, Georgia, "Times New Roman", Times, serif';
 // Fluid size for the flanking taglines: was a fixed 1.15rem regardless of
 // viewport, so it read oversized at 1280x720 and even at 1920x1080. Scales
 // continuously with viewport width instead of jumping at breakpoints —
-// 0.85rem at <=1280px wide, 1rem at 1920px, capping at 1.15rem by 2560px+.
-const taglineFontSize = 'clamp(0.85rem, calc(0.55rem + 0.375vw), 1.15rem)';
+// 0.6rem at <=1280px wide, 0.7rem at 1920px, capping at 0.8rem by 2560px+
+// (70% of the original 0.85/1/1.15rem scale, per request).
+const taglineFontSize = 'clamp(0.6rem, calc(0.39rem + 0.26vw), 0.8rem)';
 
 // Shared visual shell for every sign-in surface (consumer/brand AuthPage and
 // the Staff Login page) — same background, flanking taglines, and card frame
