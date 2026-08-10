@@ -71,10 +71,6 @@ const theme = createTheme({
           paddingInline: 14,
           [`@media (max-width:${COMPACT_MAX_WIDTH}px)`]: { minHeight: 30, paddingInline: 10 },
         },
-        containedPrimary: {
-          backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navy} 100%)`,
-          '&:hover': { backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navyDark} 100%)` },
-        },
       },
     },
     MuiTab: {
