@@ -8,7 +8,7 @@ import Box from '@mui/material/Box';
 const size = 32;
 const stroke = 1.7;
 
-const ACTIVE = '#2f80c8';
+const ACTIVE = '#1b4f72';
 const IDLE = '#5b6b8c';
 
 const common = {

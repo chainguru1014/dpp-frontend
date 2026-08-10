@@ -110,7 +110,7 @@ const CaptureHistoryPage = ({ token }) => {
             <Box key={w.label} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
               <Typography variant="body2" sx={{ width: 140, flexShrink: 0 }} noWrap>{w.label}</Typography>
               <Box sx={{ flex: 1, bgcolor: '#eef2f8', borderRadius: 1, height: 10, overflow: 'hidden' }}>
-                <Box sx={{ width: `${(w.total / maxTotal) * 100}%`, bgcolor: '#2f80c8', height: '100%' }} />
+                <Box sx={{ width: `${(w.total / maxTotal) * 100}%`, bgcolor: '#1b4f72', height: '100%' }} />
               </Box>
               <Typography variant="body2" sx={{ width: 36, textAlign: 'right' }}>{w.total}</Typography>
             </Box>

@@ -1,9 +1,10 @@
 import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 
 // Shared visual language with the Yometel DPP mobile app:
-// bright-blue palette on a soft light-blue canvas, rounded cards, soft blue shadows.
-const navy = '#2f80c8';     // bright azure (primary — matches app top bar)
-const blue = '#4a96dd';     // lighter azure (hover / accents)
+// dark-navy palette on a soft light-blue canvas, rounded cards, soft blue shadows.
+const navy = '#1b4f72';     // dark navy (primary — matches app top bar/icons/fonts)
+const navyDark = '#123a56'; // darkest navy (hover / gradient dark stop)
+const blue = '#4a96dd';     // lighter azure (gradient light stop / accents)
 const gray = '#6b7a93';     // gray (secondary)
 const bg = '#f5f7fa';       // near-white / light gray canvas
 const border = '#e6eaf0';
@@ -19,7 +20,7 @@ export const compactMediaQuery = `@media (max-width:${COMPACT_MAX_WIDTH}px)`;
 
 const theme = createTheme({
   palette: {
-    primary: { main: navy, dark: '#266aa8', light: blue, contrastText: '#ffffff' },
+    primary: { main: navy, dark: navyDark, light: blue, contrastText: '#ffffff' },
     secondary: { main: gray, dark: '#55657f', contrastText: '#ffffff' },
     info: { main: gray, contrastText: '#ffffff' },
     success: { main: '#2e7d32' },
@@ -70,6 +71,10 @@ const theme = createTheme({
           paddingInline: 14,
           [`@media (max-width:${COMPACT_MAX_WIDTH}px)`]: { minHeight: 30, paddingInline: 10 },
         },
+        containedPrimary: {
+          backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navy} 100%)`,
+          '&:hover': { backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navyDark} 100%)` },
+        },
       },
     },
     MuiTab: {
@@ -106,7 +111,7 @@ const theme = createTheme({
       defaultProps: { elevation: 0 },
       styleOverrides: {
         colorPrimary: {
-          backgroundImage: `linear-gradient(120deg, ${navy} 0%, ${blue} 100%)`,
+          backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navy} 100%)`,
         },
       },
     },
@@ -134,7 +139,7 @@ const theme = createTheme({
     MuiDialogTitle: {
       styleOverrides: {
         root: {
-          backgroundImage: `linear-gradient(120deg, ${navy} 0%, ${blue} 100%)`,
+          backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navy} 100%)`,
           color: '#ffffff',
           fontWeight: 400,
           fontSize: 18,

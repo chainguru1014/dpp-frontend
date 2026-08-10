@@ -13,7 +13,7 @@ const ProductOwnerSection = ({ company, ownerInfo, onClick }) => {
       <Typography variant="body2">
         <span
           style={{
-            color: '#2f80c8',
+            color: '#1b4f72',
             cursor: 'pointer',
             textDecoration: 'underline',
           }}

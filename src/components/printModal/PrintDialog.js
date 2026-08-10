@@ -120,7 +120,7 @@ export default function PrintDialog({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        backgroundImage: 'linear-gradient(120deg, #2f80c8 0%, #4a96dd 100%)',
+                        backgroundImage: 'linear-gradient(135deg, #4a96dd 0%, #1b4f72 100%)',
                         color: '#fff',
                         flexShrink: 0,
                     }}

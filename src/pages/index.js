@@ -1399,7 +1399,7 @@ const InnerPage = () => {
 
   // Shared styling for both the desktop sidebar and the mobile overlay drawer.
   const drawerPaperSx = {
-    backgroundImage: 'linear-gradient(180deg, #2f80c8 0%, #4a96dd 100%)',
+    backgroundImage: 'linear-gradient(160deg, #4a96dd 0%, #1b4f72 100%)',
     color: '#ffffff',
     borderRight: 'none',
     overflowX: 'hidden',
@@ -1544,7 +1544,7 @@ const InnerPage = () => {
         position="fixed"
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          backgroundImage: 'linear-gradient(120deg, #2f80c8 0%, #4a96dd 100%)',
+          backgroundImage: 'linear-gradient(135deg, #4a96dd 0%, #1b4f72 100%)',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
