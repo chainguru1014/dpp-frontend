@@ -1,43 +1,51 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Card, CardContent, Typography, Grid, Stack, Divider } from '@mui/material';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Box, Card, CardContent, Typography, Grid, Stack, TextField, MenuItem, Button, Table,
+  TableHead, TableRow, TableCell, TableBody, Paper,
+} from '@mui/material';
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
+import CheckroomIcon from '@mui/icons-material/Checkroom';
+import SellIcon from '@mui/icons-material/Sell';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import PublicIcon from '@mui/icons-material/Public';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import { getAnalytics } from '../../helper';
 import Loader from '../../components/Loader';
 
 // Blue / gray / white family only.
 const COLORS = ['#1b4f72', '#4a96dd', '#5b9bd8', '#8aa0c4', '#6b7a93', '#aab6c8'];
 
-const Section = ({ title, children }) => (
-  <Card sx={{ height: '100%' }}>
-    <CardContent sx={{ py: { xs: 1.4, md: 0.9 }, '&:last-child': { pb: { xs: 1.4, md: 0.9 } } }}>
-      <Typography variant="subtitle1" sx={{ mb: { xs: 0.7, md: 0.35 }, fontWeight: 400, fontSize: { xs: '0.95rem', md: '0.88rem' } }}>
-        {title}
-      </Typography>
-      {children}
-    </CardContent>
-  </Card>
-);
+const CATEGORY_LABELS = {
+  denim: 'Denim',
+  tops: 'Tops (T-Shirts / Knit)',
+  bottoms: 'Bottoms',
+  outerwear: 'Outerwear',
+  others: 'Others',
+};
+const CATEGORY_ICONS = {
+  denim: CheckroomIcon,
+  tops: CheckroomIcon,
+  bottoms: CheckroomIcon,
+  outerwear: CheckroomIcon,
+  others: SellIcon,
+};
 
-const Kpi = ({ label, value, sub, onClick }) => (
-  <Card
-    onClick={onClick}
-    sx={{
-      height: '100%',
-      ...(onClick && {
-        cursor: 'pointer',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        '&:hover': { transform: 'translateY(-3px)', boxShadow: 4 },
-      }),
-    }}
-  >
-    <CardContent sx={{ textAlign: 'center', py: { xs: 1.4, md: 0.7 } }}>
-      <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.7rem', md: '1.5rem' } }}>
+const Kpi = ({ icon: Icon, label, value, sub }) => (
+  <Card sx={{ height: '100%' }}>
+    <CardContent sx={{ py: 1.25 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+        <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: '#eef2f8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon sx={{ fontSize: 18, color: 'primary.main' }} />
+        </Box>
+      </Box>
+      <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.4rem', md: '1.3rem' } }}>
         {value}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
         {label}
       </Typography>
       {sub && (
-        <Typography variant="caption" color="text.secondary">
+        <Typography variant="caption" sx={{ color: '#2e7d32', fontWeight: 600 }}>
           {sub}
         </Typography>
       )}
@@ -45,63 +53,110 @@ const Kpi = ({ label, value, sub, onClick }) => (
   </Card>
 );
 
-// Vertical bars for a [{date,count}] series.
-const DayBars = ({ data }) => {
-  const max = Math.max(1, ...data.map((d) => d.count));
+const Section = ({ title, children, sx }) => (
+  <Card sx={{ height: '100%', ...sx }}>
+    <CardContent sx={{ py: 1.25 }}>
+      <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 400, fontSize: '0.92rem' }}>
+        {title}
+      </Typography>
+      {children}
+    </CardContent>
+  </Card>
+);
+
+// SVG donut chart for [{category,count}] segments.
+const Donut = ({ segments }) => {
+  const total = segments.reduce((s, x) => s + (x.count || 0), 0);
+  const r = 34;
+  const circumference = 2 * Math.PI * r;
+  let offset = 0;
   return (
-    <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 0.75, height: { xs: 95, md: 95 }, mt: 1 }}>
-      {data.map((d, i) => (
-        <Box
-          key={i}
-          sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}
-        >
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 10, mb: 0.25 }}>
-            {d.count || ''}
-          </Typography>
-          <Box
-            title={`${d.date}: ${d.count}`}
-            sx={{
-              width: '68%',
-              minHeight: 2,
-              height: `${(d.count / max) * 100}%`,
-              bgcolor: 'primary.main',
-              borderRadius: '4px 4px 0 0',
-              opacity: d.count ? 1 : 0.2,
-            }}
-          />
-          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 9, mt: 0.5 }}>
-            {d.date.slice(5)}
-          </Typography>
-        </Box>
-      ))}
+    <Stack direction="row" spacing={2} alignItems="center">
+      <Box sx={{ position: 'relative', width: 100, height: 100, flexShrink: 0 }}>
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r={r} fill="none" stroke="#eef1f6" strokeWidth="14" />
+          {total > 0 &&
+            segments.map((s, i) => {
+              if (!s.count) return null;
+              const frac = s.count / total;
+              const dash = frac * circumference;
+              const el = (
+                <circle
+                  key={s.category}
+                  cx="50" cy="50" r={r} fill="none"
+                  stroke={COLORS[i % COLORS.length]}
+                  strokeWidth="14"
+                  strokeDasharray={`${dash} ${circumference - dash}`}
+                  strokeDashoffset={-offset}
+                  transform="rotate(-90 50 50)"
+                />
+              );
+              offset += dash;
+              return el;
+            })}
+        </svg>
+      </Box>
+      <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0 }}>
+        {segments.map((s, i) => (
+          <Box key={s.category} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: COLORS[i % COLORS.length], flexShrink: 0 }} />
+            <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1 }}>
+              {CATEGORY_LABELS[s.category] || s.category}
+            </Typography>
+            <Typography variant="caption" sx={{ fontWeight: 600 }}>
+              {total ? `${Math.round((s.count / total) * 1000) / 10}%` : '0%'} ({s.count})
+            </Typography>
+          </Box>
+        ))}
+      </Stack>
+    </Stack>
+  );
+};
+
+// SVG line chart for [{date,count}] series.
+const LineChart = ({ data }) => {
+  const width = 320;
+  const height = 110;
+  const max = Math.max(1, ...data.map((d) => d.count));
+  const points = data.map((d, i) => {
+    const x = (i / Math.max(1, data.length - 1)) * width;
+    const y = height - (d.count / max) * height;
+    return `${x},${y}`;
+  });
+  return (
+    <Box sx={{ width: '100%', overflowX: 'auto' }}>
+      <svg width="100%" height={height + 20} viewBox={`0 0 ${width} ${height + 20}`} preserveAspectRatio="none">
+        <polyline points={points.join(' ')} fill="none" stroke={COLORS[0]} strokeWidth="2" />
+        {data.length > 0 && (
+          <>
+            <text x="0" y={height + 15} fontSize="8" fill="#6b7a93">{data[0].date.slice(5)}</text>
+            <text x={width - 30} y={height + 15} fontSize="8" fill="#6b7a93">{data[data.length - 1].date.slice(5)}</text>
+          </>
+        )}
+      </svg>
     </Box>
   );
 };
 
-// Horizontal bars for [{name,count}].
-const HBars = ({ items }) => {
+// Horizontal bars for [{country,count}].
+const CountryBars = ({ items }) => {
   if (!items || !items.length) {
-    return (
-      <Typography variant="body2" color="text.secondary">
-        No data yet.
-      </Typography>
-    );
+    return <Typography variant="body2" color="text.secondary">No data yet.</Typography>;
   }
+  const total = items.reduce((s, x) => s + x.count, 0) || 1;
   const max = Math.max(1, ...items.map((i) => i.count));
   return (
-    <Stack spacing={{ xs: 1.25, md: 0.75 }} sx={{ mt: 1 }}>
+    <Stack spacing={0.9}>
       {items.map((it, i) => (
-        <Box key={i}>
+        <Box key={it.country}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.25 }}>
-            <Typography variant="body2" noWrap sx={{ maxWidth: '75%' }}>
-              {it.name}
-            </Typography>
+            <Typography variant="body2" noWrap sx={{ maxWidth: '65%' }}>{it.country}</Typography>
             <Typography variant="body2" sx={{ fontWeight: 400 }}>
-              {it.count}
+              {it.count} <Typography component="span" variant="caption" color="text.secondary">({Math.round((it.count / total) * 1000) / 10}%)</Typography>
             </Typography>
           </Box>
-          <Box sx={{ height: 8, borderRadius: 4, bgcolor: '#eef1f6', overflow: 'hidden' }}>
-            <Box sx={{ height: '100%', width: `${(it.count / max) * 100}%`, bgcolor: COLORS[i % COLORS.length], borderRadius: 4 }} />
+          <Box sx={{ height: 6, borderRadius: 3, bgcolor: '#eef1f6', overflow: 'hidden' }}>
+            <Box sx={{ height: '100%', width: `${(it.count / max) * 100}%`, bgcolor: COLORS[i % COLORS.length], borderRadius: 3 }} />
           </Box>
         </Box>
       ))}
@@ -109,161 +164,171 @@ const HBars = ({ items }) => {
   );
 };
 
-// Segmented bar + legend for [{label,value,color}].
-const Breakdown = ({ segments }) => {
-  const total = segments.reduce((s, x) => s + (x.value || 0), 0);
-  return (
-    <Box sx={{ mt: 1 }}>
-      <Box sx={{ display: 'flex', height: 14, borderRadius: 7, overflow: 'hidden', bgcolor: '#eef1f6' }}>
-        {total > 0 &&
-          segments.map((s, i) =>
-            s.value > 0 ? (
-              <Box key={i} title={`${s.label}: ${s.value}`} sx={{ width: `${(s.value / total) * 100}%`, bgcolor: s.color }} />
-            ) : null
-          )}
-      </Box>
-      <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
-        {segments.map((s, i) => (
-          <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: s.color }} />
-            <Typography variant="caption" color="text.secondary">
-              {s.label}: <span>{s.value}</span>
-            </Typography>
-          </Box>
-        ))}
-      </Stack>
-    </Box>
-  );
-};
+const EMPTY_FILTERS = { date_from: '', date_to: '', item_category: '', origin_country: '', destination_country: '', city: '' };
 
-export default function DashboardAnalytics({ ownerKind = null, ownerId = null, productsCount = null, onProductsClick = null }) {
+export default function DashboardAnalytics({ ownerKind = null, ownerId = null }) {
   const [a, setA] = useState(null);
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
 
   useEffect(() => {
     setA(null);
-    getAnalytics(ownerKind, ownerId).then(setA);
-  }, [ownerKind, ownerId]);
+    const cleaned = Object.fromEntries(Object.entries(appliedFilters).filter(([, v]) => v));
+    getAnalytics(ownerKind, ownerId, cleaned).then(setA);
+  }, [ownerKind, ownerId, appliedFilters]);
+
+  const traceabilityColumns = useMemo(() => {
+    if (!a?.countryBreakdown) return [];
+    return a.countryBreakdown.slice(0, 5).map((c) => c.country);
+  }, [a]);
 
   if (!a) {
-    return (
-      <Box sx={{ mt: { xs: 3, md: 1.5 } }}>
-        <Typography variant="subtitle1" sx={{ mb: { xs: 1.5, md: 0.75 }, color: 'text.secondary', fontWeight: 400 }}>
-          Analytics
-        </Typography>
-        <Loader label="Loading analytics…" />
-      </Box>
-    );
+    return <Loader label="Loading analytics…" />;
   }
 
   const t = a.totals || {};
-  const sec = a.security || { verified: 0, failed: 0, na: 0 };
-  const checked = sec.verified + sec.failed;
-  const verifiedRate = checked > 0 ? Math.round((sec.verified / checked) * 100) : null;
-  const loggedInRate = t.scans ? Math.round((a.audience.loggedIn / t.scans) * 100) : 0;
-
-  // Equal-width KPI columns: 2-per-row on phones, all-in-one-row from md up
-  // (lets the normal-user dashboard fill the width instead of leaving a gap).
-  const kpiBoxSx = { flex: { xs: '1 1 45%', sm: '1 1 30%', md: '1 1 0' }, minWidth: 130 };
 
   return (
     <Box sx={{ mt: { xs: 3, md: 1.5 } }}>
-      <Typography variant="subtitle1" sx={{ mb: { xs: 1.5, md: 0.75 }, color: 'text.secondary', fontWeight: 400 }}>
-        Analytics
-      </Typography>
+      <Grid container spacing={1} sx={{ mb: 1.5 }}>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCodeScannerIcon} label="Total Scans" value={t.scans ?? 0} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={CheckroomIcon} label="Unique Items" value={t.uniqueItems ?? 0} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={SellIcon} label="Unique SKUs" value={t.uniqueSkus ?? 0} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={StorefrontIcon} label="Retail Stores" value={t.retailStores ?? 0} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={PublicIcon} label="Countries" value={t.countries ?? 0} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={VerifiedIcon} label="Data Integrity" value={`${t.dataIntegrity ?? 100}%`} sub="Verified" /></Grid>
+      </Grid>
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 1, md: 1 }, mb: { xs: 1, md: 1 } }}>
-        {productsCount != null && (
-          <Box sx={kpiBoxSx}>
-            <Kpi label="Products" value={productsCount} onClick={onProductsClick} />
-          </Box>
-        )}
-        <Box sx={kpiBoxSx}><Kpi label="Total Scans" value={t.scans ?? 0} /></Box>
-        <Box sx={kpiBoxSx}><Kpi label="Unique Scanners" value={t.uniqueScanners ?? 0} /></Box>
-        <Box sx={kpiBoxSx}><Kpi label="Unique PMCs Scanned" value={t.uniquePmcs ?? 0} /></Box>
-        <Box sx={kpiBoxSx}><Kpi label="Logged-in Scans" value={`${loggedInRate}%`} sub={`${a.audience.loggedIn} of ${t.scans}`} /></Box>
-        <Box sx={kpiBoxSx}>
-          <Kpi
-            label="Security Verified"
-            value={verifiedRate == null ? '—' : `${verifiedRate}%`}
-            sub={`${sec.verified} ✓ / ${sec.failed} ✗`}
-          />
-        </Box>
-      </Box>
-
-      <Grid container spacing={{ xs: 1, md: 1 }}>
-        <Grid item xs={12} md={8}>
-          <Section title="Scans — last 14 days">
-            <DayBars data={a.scansByDay || []} />
+      <Grid container spacing={1.25} sx={{ mb: 1.25 }}>
+        <Grid item xs={12} md={4}>
+          <Section title="Scans by Item Category">
+            <Donut segments={a.categoryBreakdown || []} />
           </Section>
         </Grid>
         <Grid item xs={12} md={4}>
-          <Section title="Source">
-            <Breakdown
-              segments={[
-                { label: 'Scan', value: a.source.scan, color: COLORS[1] },
-                { label: 'Visit', value: a.source.visit, color: COLORS[4] },
-              ]}
-            />
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="subtitle2" sx={{ mb: 0.5, fontWeight: 400 }}>
-              Audience
-            </Typography>
-            <Breakdown
-              segments={[
-                { label: 'Logged-in', value: a.audience.loggedIn, color: COLORS[0] },
-                { label: 'Guest', value: a.audience.guest, color: COLORS[3] },
-              ]}
-            />
+          <Section title="Scans Trend (Last 30 Days)">
+            <LineChart data={a.scansByDay || []} />
           </Section>
         </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Section title="Top products by scans">
-            <HBars items={a.topProducts} />
-          </Section>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Section title="Top brands by scans">
-            <HBars items={a.topBrands} />
-          </Section>
-        </Grid>
-
-        <Grid item xs={12} md={6}>
-          <Section title="Security checks">
-            <Breakdown
-              segments={[
-                { label: 'Verified', value: sec.verified, color: COLORS[1] },
-                { label: 'Failed', value: sec.failed, color: COLORS[4] },
-                { label: 'N/A', value: sec.na, color: '#dbe2ee' },
-              ]}
-            />
-          </Section>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Section title="Identifier type">
-            <Breakdown
-              segments={[
-                { label: 'QR (own)', value: a.identifierTypes?.qr ?? 0, color: COLORS[0] },
-                { label: 'Barcode', value: a.identifierTypes?.barcode ?? 0, color: COLORS[1] },
-                { label: 'NFC', value: a.identifierTypes?.nfc ?? 0, color: COLORS[2] },
-                { label: 'RFID', value: a.identifierTypes?.rfid ?? 0, color: COLORS[3] },
-                { label: 'GS1 Digital Link', value: a.identifierTypes?.gs1dl ?? 0, color: COLORS[5] },
-              ]}
-            />
-          </Section>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Section title="Reactions">
-            <Breakdown
-              segments={[
-                { label: 'Like', value: a.reactions.like, color: COLORS[1] },
-                { label: 'Dislike', value: a.reactions.dislike, color: COLORS[4] },
-                { label: 'Buy', value: a.reactions.buy, color: COLORS[0] },
-              ]}
-            />
+        <Grid item xs={12} md={4}>
+          <Section title="Scans by Country (Destination)">
+            <CountryBars items={a.countryBreakdown || []} />
           </Section>
         </Grid>
       </Grid>
+
+      {/* Filters */}
+      <Paper sx={{ p: 1.5, mb: 1.25 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} alignItems={{ md: 'center' }} flexWrap="wrap" useFlexGap>
+          <TextField
+            label="From" type="date" size="small" InputLabelProps={{ shrink: true }}
+            value={filters.date_from} onChange={(e) => setFilters((f) => ({ ...f, date_from: e.target.value }))}
+            sx={{ minWidth: 150 }}
+          />
+          <TextField
+            label="To" type="date" size="small" InputLabelProps={{ shrink: true }}
+            value={filters.date_to} onChange={(e) => setFilters((f) => ({ ...f, date_to: e.target.value }))}
+            sx={{ minWidth: 150 }}
+          />
+          <TextField
+            select label="Item Category" size="small" value={filters.item_category}
+            onChange={(e) => setFilters((f) => ({ ...f, item_category: e.target.value }))}
+            sx={{ minWidth: 160 }}
+          >
+            <MenuItem value="">All</MenuItem>
+            {(a.filterOptions?.itemCategories || []).map((k) => (
+              <MenuItem key={k} value={k}>{CATEGORY_LABELS[k] || k}</MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select label="Origin Country" size="small" value={filters.origin_country}
+            onChange={(e) => setFilters((f) => ({ ...f, origin_country: e.target.value }))}
+            sx={{ minWidth: 160 }}
+          >
+            <MenuItem value="">All</MenuItem>
+            {(a.filterOptions?.originCountries || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+          </TextField>
+          <TextField
+            select label="Destination Country" size="small" value={filters.destination_country}
+            onChange={(e) => setFilters((f) => ({ ...f, destination_country: e.target.value }))}
+            sx={{ minWidth: 170 }}
+          >
+            <MenuItem value="">All</MenuItem>
+            {(a.filterOptions?.destinationCountries || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+          </TextField>
+          <TextField
+            select label="City" size="small" value={filters.city}
+            onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value }))}
+            sx={{ minWidth: 150 }}
+          >
+            <MenuItem value="">All</MenuItem>
+            {(a.filterOptions?.cities || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+          </TextField>
+          <Button variant="contained" onClick={() => setAppliedFilters(filters)}>Apply</Button>
+          <Button
+            variant="text"
+            onClick={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); }}
+          >
+            Reset
+          </Button>
+        </Stack>
+      </Paper>
+
+      {/* Traceability Overview */}
+      <Paper sx={{ p: 1.5 }}>
+        <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 400, fontSize: '0.92rem' }}>
+          Traceability Overview
+        </Typography>
+        <Box sx={{ overflowX: 'auto' }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Item Category</TableCell>
+                <TableCell>SKU / Style No.</TableCell>
+                <TableCell>Origin Country</TableCell>
+                <TableCell align="right">Total Scanned (PCS)</TableCell>
+                {traceabilityColumns.map((c) => <TableCell key={c} align="right">{c}</TableCell>)}
+                <TableCell align="right">Others</TableCell>
+                <TableCell>City (Top)</TableCell>
+                <TableCell align="right">Stores</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {(a.traceabilityOverview || []).map((row) => {
+                const CategoryIcon = CATEGORY_ICONS[row.itemCategory] || SellIcon;
+                return (
+                  <TableRow key={`${row.skuStyleNumber}-${row.itemCategory}`} hover>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <CategoryIcon sx={{ fontSize: 16, color: 'primary.main' }} />
+                        {CATEGORY_LABELS[row.itemCategory] || row.itemCategory}
+                      </Box>
+                    </TableCell>
+                    <TableCell>{row.skuStyleNumber || '—'}</TableCell>
+                    <TableCell>{row.originCountry || '—'}</TableCell>
+                    <TableCell align="right">{row.totalScanned}</TableCell>
+                    {traceabilityColumns.map((c) => (
+                      <TableCell key={c} align="right">{row.destinationBreakdown?.[c] || 0}</TableCell>
+                    ))}
+                    <TableCell align="right">{row.destinationBreakdown?.Others || 0}</TableCell>
+                    <TableCell>{(row.topCities || []).join(', ') || '—'}</TableCell>
+                    <TableCell align="right">{row.stores}</TableCell>
+                  </TableRow>
+                );
+              })}
+              {!(a.traceabilityOverview || []).length && (
+                <TableRow>
+                  <TableCell colSpan={8 + traceabilityColumns.length}>
+                    <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                      No scan activity yet.
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Box>
+      </Paper>
     </Box>
   );
 }

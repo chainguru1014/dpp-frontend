@@ -295,10 +295,12 @@ export const ownerTransfer = async (payload) => {
     }
 }
 
-// Dashboard analytics (totals, series, breakdowns, top lists).
-export const getAnalytics = async (ownerKind, ownerId) => {
+// Dashboard analytics (totals, series, breakdowns, top lists). `filters` is
+// an optional object of { date_from, date_to, item_category, origin_country,
+// destination_country, city } — all optional, applied server-side.
+export const getAnalytics = async (ownerKind, ownerId, filters = {}) => {
     try {
-        const params = ownerKind && ownerId ? { owner_kind: ownerKind, owner_id: ownerId } : {};
+        const params = { ...(ownerKind && ownerId ? { owner_kind: ownerKind, owner_id: ownerId } : {}), ...filters };
         const res = await axios.get(`${Backend_URL}qrcode/analytics`, { params });
         return res?.data?.data || null;
     } catch (err) {

@@ -1,96 +1,19 @@
 import React from 'react';
-import { Box, IconButton, Typography, Link, Tooltip } from '@mui/material';
+import { Box, Typography, Link } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
-import PrintIcon from '@mui/icons-material/Print';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import HistoryIcon from '@mui/icons-material/History';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import ImageIcon from '@mui/icons-material/Image';
-import { getFileUrl } from '../../helper';
 
 const normalizeUrl = (url) => {
   if (!url) return '';
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 };
 
-// Up to 3 image thumbnails for a product row, with a "+N" overflow hint.
-const ImageStrip = ({ images }) => {
-  const all = Array.isArray(images) ? images.filter(Boolean) : [];
-  const shown = all.slice(0, 3);
-  if (!shown.length) {
-    return (
-      <Box
-        sx={{
-          width: 48,
-          height: 48,
-          borderRadius: 1,
-          bgcolor: '#eef1f6',
-          border: '1px solid',
-          borderColor: 'divider',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <ImageIcon sx={{ fontSize: 18, color: 'text.disabled' }} />
-      </Box>
-    );
-  }
-  const extra = all.length - shown.length;
-  return (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, py: 0.5 }}>
-      {shown.map((img, i) => (
-        <Box
-          key={i}
-          component="img"
-          src={getFileUrl(img)}
-          alt=""
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 1,
-            objectFit: 'contain',
-            bgcolor: '#fff',
-            p: 0.5,
-            border: '1px solid',
-            borderColor: 'divider',
-          }}
-        />
-      ))}
-      {extra > 0 && (
-        <Typography variant="caption" color="text.secondary" sx={{ ml: 0.25 }}>
-          +{extra}
-        </Typography>
-      )}
-    </Box>
-  );
-};
-
 export default function ProductsTable({
   products,
   loading,
-  canManage = true,
-  canTransfer = true,
   onSelectProduct,
-  onEditProduct,
-  onDeleteProduct,
-  onPrintProduct,
   onOwnerClick,
-  onHistoryClick,
-  onTransferClick,
 }) {
-  const indexOf = (id) => products.findIndex((p) => p._id === id);
-
   const columns = [
-    {
-      field: 'images',
-      headerName: 'Images',
-      width: 150,
-      sortable: false,
-      renderCell: (p) => <ImageStrip images={p.row.images} />,
-    },
     {
       field: 'name',
       headerName: 'Name',
@@ -104,64 +27,6 @@ export default function ProductsTable({
             <Typography variant="caption" color="text.secondary">
               {p.row.model}
             </Typography>
-          )}
-        </Box>
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 250,
-      sortable: false,
-      renderCell: (p) => (
-        <Box>
-          <Tooltip title="View details">
-            <IconButton size="small" onClick={() => onSelectProduct && onSelectProduct(p.row)}>
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {canTransfer && (
-            <Tooltip title="Transfer ownership">
-              <IconButton size="small" onClick={() => onTransferClick && onTransferClick(p.row)}>
-                <SwapHorizIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip title="Ownership history">
-            <IconButton size="small" onClick={() => onHistoryClick && onHistoryClick(p.row)}>
-              <HistoryIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title={canManage ? 'Generate QR / Mint' : 'View / Print QR codes'}>
-            <IconButton size="small" onClick={() => onPrintProduct && onPrintProduct(p.row._id)}>
-              <PrintIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          {canManage && (
-            <>
-              <Tooltip title="Edit">
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    const i = indexOf(p.row._id);
-                    if (i >= 0 && onEditProduct) onEditProduct(i);
-                  }}
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Delete">
-                <IconButton
-                  size="small"
-                  onClick={() => {
-                    const i = indexOf(p.row._id);
-                    if (i >= 0 && onDeleteProduct) onDeleteProduct(i);
-                  }}
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </>
           )}
         </Box>
       ),

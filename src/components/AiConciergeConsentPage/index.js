@@ -1,6 +1,33 @@
 import React, { useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
+import ShieldIcon from '@mui/icons-material/Shield';
+import PeopleIcon from '@mui/icons-material/People';
+import LockIcon from '@mui/icons-material/Lock';
 import AuthShell from '../AuthShell';
+
+const FEATURES = [
+  {
+    icon: QrCode2Icon,
+    title: 'Personalized just for you',
+    description: "Your AI Concierge learns from your scans, favorites, and browsing habits to recommend products and brands you'll love.",
+  },
+  {
+    icon: ShieldIcon,
+    title: 'Your privacy is our priority',
+    description: 'Your real identity is never saved. Your scans and preferences are linked only to your unique profile, and to what you ask or need help.',
+  },
+  {
+    icon: PeopleIcon,
+    title: 'Smarter recommendations',
+    description: "From styling trends to care tips, you'll receive relevant information about your closet and preferences to improve product recommendations and services.",
+  },
+  {
+    icon: LockIcon,
+    title: "You're in control",
+    description: 'You can update your preferences and manage data permissions anytime in your account settings.',
+  },
+];
 
 // Card background is transparent (see AuthShell) so the forest photo shows
 // through — text sitting directly on it needs to be white with a shadow.
@@ -56,20 +83,44 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             Meet Your AI Concierge
           </Typography>
 
-          <Typography sx={{ ...whiteTextSx, fontSize: '0.85rem', fontWeight: 600, lineHeight: 1.3, mt: 0.5, mb: 0.3 }}>
-            Scan the products you like, discover what you like next.
-          </Typography>
-          <Typography sx={{ ...whiteTextSx, fontSize: '0.78rem', lineHeight: 1.35, mb: 0.75 }}>
-            Your AI Concierge learns your preferences and recommends products you'll love—across brands.
-          </Typography>
-          <Typography sx={{ ...whiteTextSx, fontSize: '0.78rem', lineHeight: 1.35, mb: 0.75 }}>
-            Your preferences and scan history may also be shared with participating brands and retailers
-            to deliver more relevant recommendations and help improve products and services.
-          </Typography>
-          <Typography sx={{ ...whiteTextSx, fontSize: '0.78rem', lineHeight: 1.35, mb: 1 }}>
-            Your profile cannot be used to identify you personally. Your scans and preferences are linked
-            only to your in-app profile—not to your real identity.
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
+            <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.35)' }} />
+            <Box sx={{ width: 6, height: 6, mx: 1, bgcolor: 'rgba(255,255,255,0.55)', transform: 'rotate(45deg)' }} />
+            <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.35)' }} />
+          </Box>
+
+          {FEATURES.map(({ icon: FeatureIcon, title, description }) => (
+            <Box key={title} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+              <Box
+                sx={{
+                  width: 34,
+                  height: 34,
+                  flexShrink: 0,
+                  borderRadius: '50%',
+                  bgcolor: 'rgba(255,255,255,0.18)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FeatureIcon sx={{ fontSize: 18, color: '#fff' }} />
+              </Box>
+              <Box>
+                <Typography sx={{ ...whiteTextSx, fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.25, mb: 0.2 }}>
+                  {title}
+                </Typography>
+                <Typography sx={{ ...whiteTextSx, fontSize: '0.72rem', lineHeight: 1.3, opacity: 0.9 }}>
+                  {description}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
+
+          <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
+            <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.35)' }} />
+            <Box sx={{ width: 6, height: 6, mx: 1, bgcolor: 'rgba(255,255,255,0.55)', transform: 'rotate(45deg)' }} />
+            <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.35)' }} />
+          </Box>
 
           {/* Placed after all the explanatory content, on purpose — the user
               should read what they're agreeing to before choosing. Nothing is

@@ -2,6 +2,14 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import background1 from '../../assets/background-1.jpg';
+import background2 from '../../assets/background-2.png';
+import background3 from '../../assets/background-3.png';
+
+// Background slideshow — cycles through the three brand photos, each shown
+// for SLIDE_DURATION_MS, cross-fading via opacity over FADE_DURATION_MS.
+const SLIDER_IMAGES = [background1, background2, background3];
+const SLIDE_DURATION_MS = 3000;
+const FADE_DURATION_MS = 1000;
 
 // Cochin is a macOS/iOS system serif — falls through to the nearest
 // look-alikes on Windows/Linux/Android, where it isn't installed.
@@ -19,9 +27,20 @@ const taglineFontSize = 'clamp(0.6rem, calc(0.39rem + 0.26vw), 0.8rem)';
 // everywhere. Card background is deliberately near-transparent so the forest
 // photo shows through. Only the card's inner content (the actual form)
 // differs per caller, passed as `children`.
-const AuthShell = ({ children, cardSx }) => (
+const AuthShell = ({ children, cardSx }) => {
+  const [activeSlide, setActiveSlide] = React.useState(0);
+
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setActiveSlide((i) => (i + 1) % SLIDER_IMAGES.length);
+    }, SLIDE_DURATION_MS);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
   <Box
     sx={{
+      position: 'relative',
       width: '100vw',
       maxWidth: '100vw',
       // `dvh` (not `vh`) so this tracks the *actual visible* viewport as
@@ -46,14 +65,32 @@ const AuthShell = ({ children, cardSx }) => (
       rowGap: { xs: 3, md: 0 },
       boxSizing: 'border-box',
       overflow: { xs: 'auto', md: 'hidden' },
-      backgroundImage: `url(${background1})`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
       px: { xs: 2, md: 6 },
       py: { xs: 4, md: 0 },
     }}
   >
+    {/* Background slideshow — sits behind everything else (first child,
+        absolutely positioned, no z-index needed since normal-flow siblings
+        painted after it stack on top). Each slide is its own layer so the
+        outgoing/incoming images cross-fade via opacity transition. */}
+    <Box sx={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+      {SLIDER_IMAGES.map((src, i) => (
+        <Box
+          key={src}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: `url(${src})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            opacity: i === activeSlide ? 1 : 0,
+            transition: `opacity ${FADE_DURATION_MS}ms ease`,
+          }}
+        />
+      ))}
+    </Box>
+
     {/* Left tagline — its own grid column (not a flex sibling nudged with a
         transform hack) so the card in the middle column stays truly
         centered on the page regardless of how long this text is. */}
@@ -141,6 +178,7 @@ const AuthShell = ({ children, cardSx }) => (
       </Typography>
     </Box>
   </Box>
-);
+  );
+};
 
 export default AuthShell;

@@ -106,8 +106,11 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: { xs: 2, md: 1 } }}>
+      <Typography variant="h6" sx={{ mb: 0.25 }}>
         Dashboard
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: { xs: 2, md: 1 } }}>
+        Overview of product traceability and scan activity
       </Typography>
 
       {/* Usage Statistics — admin only; normal users get a Products KPI inside Analytics. */}

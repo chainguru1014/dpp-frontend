@@ -15,6 +15,7 @@ import {
   Menu,
   MenuItem,
   Select,
+  Stack,
   TextField,
   Toolbar,
   Typography,
@@ -79,6 +80,7 @@ import ProcessStepsPage from '../features/process-steps/ProcessStepsPage';
 import ConsumerLocationStepsPage from '../features/consumer-steps/ConsumerLocationStepsPage';
 import CaptureHistoryPage from '../features/capture-history/CaptureHistoryPage';
 import ProductsTable from '../features/products/ProductsTable';
+import ProductDraftCard from '../features/products/ProductDraftCard';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import DashboardPage from '../features/dashboard/DashboardPage';
@@ -171,9 +173,11 @@ const InnerPage = () => {
 
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [productsSearchQuery, setProductsSearchQuery] = useState('');
   const [productName, setProductName] = useState('');
   const [productModel, setProductModel] = useState('');
   const [productDetail, setProductDetail] = useState('');
+  const [detailFacts, setDetailFacts] = useState({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
   const [brandInfo, setBrandInfo] = useState({
     name: DEFAULT_BRAND_NAME,
     detail: DEFAULT_BRAND_DETAIL,
@@ -523,6 +527,7 @@ const InnerPage = () => {
     setProductName('');
     setProductModel('');
     setProductDetail('');
+    setDetailFacts({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
     setBrandInfo({
       name: DEFAULT_BRAND_NAME,
       detail: DEFAULT_BRAND_DETAIL,
@@ -617,6 +622,7 @@ const InnerPage = () => {
       name: productName,
       model: productModel,
       detail: productDetail,
+      detailFacts,
       brandInfo,
       company_id: company._id,
       images: productImages,
@@ -677,6 +683,7 @@ const InnerPage = () => {
       name: productName,
       model: productModel,
       detail: productDetail,
+      detailFacts,
       brandInfo,
       company_id: company._id,
       images: productImages,
@@ -743,6 +750,13 @@ const InnerPage = () => {
     setProductName(prod.name || '');
     setProductModel(prod.model || '');
     setProductDetail(prod.detail || '');
+    setDetailFacts({
+      material: prod.detailFacts?.material || '',
+      fit: prod.detailFacts?.fit || '',
+      wash: prod.detailFacts?.wash || '',
+      durability: prod.detailFacts?.durability || '',
+      traceableIdentity: prod.detailFacts?.traceableIdentity || '',
+    });
     setBrandInfo({
       name: prod.brandInfo?.name || DEFAULT_BRAND_NAME,
       detail: prod.brandInfo?.detail || DEFAULT_BRAND_DETAIL,
@@ -824,11 +838,9 @@ const InnerPage = () => {
     } else {
       setOwnerInfo(null);
     }
-    // Show preview dialog when product is selected in products page
-    // But only if not clicking on owner (owner click is handled separately)
-    if (activePage === 'products') {
-      setOpenPreviewModal(true);
-    }
+    // On the Products page, selecting a row populates the inline featured
+    // card instead of popping the preview modal — "Preview DPP" on that card
+    // opens the modal explicitly for the fuller multi-section view.
   };
 
   const batchMintHandler = async () => {
@@ -1081,6 +1093,18 @@ const InnerPage = () => {
     if (!selectedProduct) return [];
     return products.filter((product) => product.parent === selectedProduct._id);
   }, [selectedProduct, products]);
+
+  // Products page filter: matches name, brand name, or owner (company) name.
+  const filteredProducts = useMemo(() => {
+    const q = productsSearchQuery.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => {
+      const name = (p.name || '').toLowerCase();
+      const brand = (p.brandInfo?.name || '').toLowerCase();
+      const owner = (p.company_id?.name || '').toLowerCase();
+      return name.includes(q) || brand.includes(q) || owner.includes(q);
+    });
+  }, [products, productsSearchQuery]);
 
   const disabledProducts = useMemo(() => {
     function getChildrenProducts(id) {
@@ -1544,7 +1568,7 @@ const InnerPage = () => {
         position="fixed"
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          backgroundImage: 'linear-gradient(135deg, #4a96dd 0%, #1b4f72 100%)',
+          backgroundColor: '#4a96dd',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
@@ -1760,26 +1784,48 @@ const InnerPage = () => {
                   </Button>
                 )}
               </Box>
-              <ProductsTable
-                products={products}
-                loading={productsLoading}
-                canManage={canManageProducts}
-                canTransfer={!isAdmin}
-                onSelectProduct={productSelectHandler}
-                onEditProduct={(index) => {
-                  setProductPanelMode('edit');
-                  setPreviousPage('products');
-                  editProductHandler(index);
+
+              <ProductDraftCard
+                product={selectedProduct}
+                onPreview={() => setOpenPreviewModal(true)}
+                onTransferHistory={() => {
+                  setHistoryProduct(selectedProduct);
+                  setOpenProductHistory(true);
                 }}
-                onDeleteProduct={(index) => deleteProductHandler(index)}
-                onPrintProduct={(productId) => {
-                  const index = products.findIndex((p) => p._id === productId);
+                onPrintCode={() => {
+                  const index = products.findIndex((p) => p._id === selectedProduct._id);
                   if (index >= 0) {
                     setProductPanelMode('print');
                     setPreviousPage('products');
                     editProductHandler(index);
                   }
                 }}
+                onEdit={() => {
+                  const index = products.findIndex((p) => p._id === selectedProduct._id);
+                  if (index >= 0) {
+                    setProductPanelMode('edit');
+                    setPreviousPage('products');
+                    editProductHandler(index);
+                  }
+                }}
+                onRemove={() => {
+                  const index = products.findIndex((p) => p._id === selectedProduct._id);
+                  if (index >= 0) deleteProductHandler(index);
+                }}
+              />
+
+              <TextField
+                placeholder="Search by name, brand, or owner…"
+                size="small"
+                value={productsSearchQuery}
+                onChange={(e) => setProductsSearchQuery(e.target.value)}
+                sx={{ mb: 2, width: { xs: '100%', sm: 340 } }}
+              />
+
+              <ProductsTable
+                products={filteredProducts}
+                loading={productsLoading}
+                onSelectProduct={productSelectHandler}
                 onOwnerClick={(product) => {
                   if (product.company_id) {
                     setOwnerInfo(product.company_id);
@@ -1787,14 +1833,6 @@ const InnerPage = () => {
                     // Don't show product preview when clicking owner
                     setOpenPreviewModal(false);
                   }
-                }}
-                onHistoryClick={(product) => {
-                  setHistoryProduct(product);
-                  setOpenProductHistory(true);
-                }}
-                onTransferClick={(product) => {
-                  setTransferProduct(product);
-                  setOpenTransferDialog(true);
                 }}
               />
             </Box>
@@ -1993,9 +2031,9 @@ const InnerPage = () => {
                 </Tabs>
                 {detailTab === 0 && (
                   <Box>
-                    <Typography sx={{ mb: 1 }}>Brand Name</Typography>
+                    <Typography sx={{ mb: 1 }}>Product Name</Typography>
                     <TextField
-                      label="Brand Name"
+                      label="Product Name"
                       variant="outlined"
                       size="small"
                       fullWidth
@@ -2026,6 +2064,39 @@ const InnerPage = () => {
                       multiline
                       sx={{ mb: 2 }}
                     />
+                    <Typography sx={{ mb: 1 }}>Product Details</Typography>
+                    <Stack spacing={1.5} sx={{ mb: 2 }}>
+                      <TextField
+                        label="Material" placeholder="e.g. 99% Cotton, 1% Elastane"
+                        variant="outlined" size="small" fullWidth
+                        value={detailFacts.material}
+                        onChange={(e) => setDetailFacts((prev) => ({ ...prev, material: e.target.value }))}
+                      />
+                      <TextField
+                        label="Fit" placeholder="e.g. Straight Leg, Mid Rise"
+                        variant="outlined" size="small" fullWidth
+                        value={detailFacts.fit}
+                        onChange={(e) => setDetailFacts((prev) => ({ ...prev, fit: e.target.value }))}
+                      />
+                      <TextField
+                        label="Wash" placeholder="e.g. Medium Blue, Vintage Fade"
+                        variant="outlined" size="small" fullWidth
+                        value={detailFacts.wash}
+                        onChange={(e) => setDetailFacts((prev) => ({ ...prev, wash: e.target.value }))}
+                      />
+                      <TextField
+                        label="Durability" placeholder="e.g. Reinforced Seams, Long Lasting"
+                        variant="outlined" size="small" fullWidth
+                        value={detailFacts.durability}
+                        onChange={(e) => setDetailFacts((prev) => ({ ...prev, durability: e.target.value }))}
+                      />
+                      <TextField
+                        label="Traceable Product Identity" placeholder="e.g. Traceable product identity"
+                        variant="outlined" size="small" fullWidth
+                        value={detailFacts.traceableIdentity}
+                        onChange={(e) => setDetailFacts((prev) => ({ ...prev, traceableIdentity: e.target.value }))}
+                      />
+                    </Stack>
                     <Typography sx={{ mb: 1 }}>Brand Name (Required)</Typography>
                     <TextField
                       label="Brand Name"
@@ -2568,6 +2639,7 @@ const InnerPage = () => {
                   name: productName,
                   model: productModel,
                   detail: productDetail,
+                  detailFacts,
                   brandInfo,
                   company_id: company._id,
                   images: productImages,
