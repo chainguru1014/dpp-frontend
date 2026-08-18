@@ -68,7 +68,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
   // scrolling, while still capping/scrolling as a fallback on very short
   // screens (see cardScroll-equivalent `overflowY: 'auto'` below).
   return (
-    <AuthShell cardSx={{ height: 'auto', maxHeight: { xs: '94dvh', sm: '88dvh' } }}>
+    <AuthShell cardSx={{ height: 'auto', maxHeight: { xs: '94dvh', sm: '88dvh' }, width: { xs: '100%', sm: 540 } }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}>
           {/* Smaller font sizes + tighter line-heights/paragraph spacing than
@@ -90,11 +90,11 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
           </Box>
 
           {FEATURES.map(({ icon: FeatureIcon, title, description }) => (
-            <Box key={title} sx={{ display: 'flex', gap: 1, mb: 1 }}>
+            <Box key={title} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <Box
                 sx={{
-                  width: 34,
-                  height: 34,
+                  width: 51,
+                  height: 51,
                   flexShrink: 0,
                   borderRadius: '50%',
                   bgcolor: 'rgba(255,255,255,0.18)',
@@ -103,7 +103,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                   justifyContent: 'center',
                 }}
               >
-                <FeatureIcon sx={{ fontSize: 18, color: '#fff' }} />
+                <FeatureIcon sx={{ fontSize: 27, color: '#fff' }} />
               </Box>
               <Box>
                 <Typography sx={{ ...whiteTextSx, fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.25, mb: 0.2 }}>
