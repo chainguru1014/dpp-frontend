@@ -107,7 +107,7 @@ const theme = createTheme({
       defaultProps: { elevation: 0 },
       styleOverrides: {
         colorPrimary: {
-          backgroundColor: blue,
+          backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navy} 100%)`,
         },
       },
     },

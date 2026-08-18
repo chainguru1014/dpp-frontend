@@ -2,21 +2,13 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   Typography,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
-  Grid,
-  CircularProgress,
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import BusinessIcon from '@mui/icons-material/Business';
-import Inventory2Icon from '@mui/icons-material/Inventory2';
-import PeopleIcon from '@mui/icons-material/People';
 import { getAdminUserData, getProductsByUser, getOwnedProducts, registerCompany } from '../../helper';
 import DashboardAnalytics from './DashboardAnalytics';
 
@@ -97,13 +89,6 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
     }
   };
 
-  const formatNumber = (num) => {
-    if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
-    }
-    return num.toString();
-  };
-
   return (
     <Box>
       <Typography variant="h6" sx={{ mb: 0.25 }}>
@@ -113,138 +98,9 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
         Overview of product traceability and scan activity
       </Typography>
 
-      {/* Usage Statistics — admin only; normal users get a Products KPI inside Analytics. */}
-      {isAdmin && (
-      <Box>
-        <Typography variant="subtitle1" sx={{ mb: { xs: 1.5, md: 0.75 }, color: 'text.secondary', fontWeight: 400 }}>
-          Usage Statistics
-        </Typography>
-        <Grid container spacing={{ xs: 1, md: 1.25 }}>
-          {isAdmin ? (
-            <>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card
-                  sx={{
-                    width: '70%',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 4,
-                    },
-                  }}
-                  onClick={() => {
-                    console.log('Users card clicked');
-                    if (onNavigateToUsers) {
-                      onNavigateToUsers();
-                    }
-                  }}
-                >
-                  <CardContent sx={{ textAlign: 'center', py: { xs: 1.75, md: 0.9 } }}>
-                    <PeopleIcon sx={{ fontSize: { xs: 31, md: 22 }, color: 'primary.main', mb: { xs: 1, md: 0.35 } }} />
-                    <Typography variant="h6" sx={{ mb: 0.35, fontSize: { xs: '0.95rem', md: '0.85rem' } }}>
-                      Users
-                    </Typography>
-                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.7rem', md: '1.5rem' } }}>
-                      {loading ? <CircularProgress size={16} thickness={5} /> : stats.users}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card
-                  sx={{
-                    width: '70%',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 4,
-                    },
-                  }}
-                  onClick={() => {
-                    console.log('Companies card clicked');
-                    if (onNavigateToUsers) {
-                      onNavigateToUsers();
-                    }
-                  }}
-                >
-                  <CardContent sx={{ textAlign: 'center', py: { xs: 1.75, md: 0.9 } }}>
-                    <BusinessIcon sx={{ fontSize: { xs: 31, md: 22 }, color: 'primary.main', mb: { xs: 1, md: 0.35 } }} />
-                    <Typography variant="h6" sx={{ mb: 0.35, fontSize: { xs: '0.95rem', md: '0.85rem' } }}>
-                      Companies
-                    </Typography>
-                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.7rem', md: '1.5rem' } }}>
-                      {loading ? <CircularProgress size={16} thickness={5} /> : stats.companies}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card
-                  sx={{
-                    width: '70%',
-                    cursor: 'pointer',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 4,
-                    },
-                  }}
-                  onClick={() => {
-                    console.log('Products card clicked');
-                    if (onNavigateToProducts) {
-                      onNavigateToProducts();
-                    }
-                  }}
-                >
-                  <CardContent sx={{ textAlign: 'center', py: { xs: 1.75, md: 0.9 } }}>
-                    <Inventory2Icon sx={{ fontSize: { xs: 31, md: 22 }, color: 'primary.main', mb: { xs: 1, md: 0.35 } }} />
-                    <Typography variant="h6" sx={{ mb: 0.35, fontSize: { xs: '0.95rem', md: '0.85rem' } }}>
-                      Products
-                    </Typography>
-                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.7rem', md: '1.5rem' } }}>
-                      {loading ? <CircularProgress size={16} thickness={5} /> : formatNumber(stats.products)}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-            </>
-          ) : (
-            <Grid item xs={12} sm={6} md={4}>
-              <Card
-                sx={{
-                  width: '70%',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4,
-                  },
-                }}
-                onClick={onNavigateToProducts}
-              >
-                <CardContent sx={{ textAlign: 'center', py: { xs: 1.75, md: 0.9 } }}>
-                  <Inventory2Icon sx={{ fontSize: { xs: 31, md: 22 }, color: 'primary.main', mb: { xs: 1, md: 0.35 } }} />
-                  <Typography variant="h6" sx={{ mb: 0.35, fontSize: { xs: '0.95rem', md: '0.85rem' } }}>
-                    Products
-                  </Typography>
-                  <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.7rem', md: '1.5rem' } }}>
-                    {loading ? <CircularProgress size={16} thickness={5} /> : stats.products}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
-        </Grid>
-      </Box>
-      )}
-
       <DashboardAnalytics
         ownerKind={isAdmin ? null : ownerKind}
         ownerId={isAdmin ? null : ownerId}
-        productsCount={isAdmin ? null : stats.products}
-        onProductsClick={onNavigateToProducts}
       />
 
       {/* Create Company Dialog */}

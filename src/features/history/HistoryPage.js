@@ -13,7 +13,7 @@ import {
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { DataGrid } from '@mui/x-data-grid';
-import { getScanHistory } from '../../helper';
+import { getScanHistory, getProductsByUser } from '../../helper';
 
 const fmt = (d) => {
   try {
@@ -66,14 +66,39 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
     reaction: '',
     loggedIn: '',
     q: '',
+    username: '',
+    location: '',
+    product_id: '',
   });
   const [qInput, setQInput] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
+  const [locationInput, setLocationInput] = useState('');
+  const [productOptions, setProductOptions] = useState([]);
 
-  // Debounce the free-text search.
+  // Debounce the free-text searches.
   useEffect(() => {
     const t = setTimeout(() => setFilters((f) => ({ ...f, q: qInput })), 400);
     return () => clearTimeout(t);
   }, [qInput]);
+  useEffect(() => {
+    const t = setTimeout(() => setFilters((f) => ({ ...f, username: usernameInput })), 400);
+    return () => clearTimeout(t);
+  }, [usernameInput]);
+  useEffect(() => {
+    const t = setTimeout(() => setFilters((f) => ({ ...f, location: locationInput })), 400);
+    return () => clearTimeout(t);
+  }, [locationInput]);
+
+  // Product dropdown options. The scan-history query itself is still scoped
+  // server-side by ownerKind/ownerId regardless of what's selected here, so
+  // it's safe to just list every product rather than needing an owner-scoped
+  // fetch (picking one the account doesn't own simply returns no rows).
+  useEffect(() => {
+    (async () => {
+      const list = await getProductsByUser();
+      setProductOptions(Array.isArray(list) ? list : []);
+    })();
+  }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -273,6 +298,35 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             <MenuItem value="">All</MenuItem>
             <MenuItem value="true">Logged in</MenuItem>
             <MenuItem value="false">Guest</MenuItem>
+          </TextField>
+          <TextField
+            label="Username"
+            size="small"
+            placeholder="Name or email"
+            value={usernameInput}
+            onChange={(e) => setUsernameInput(e.target.value)}
+            sx={{ minWidth: 150 }}
+          />
+          <TextField
+            label="Location"
+            size="small"
+            placeholder="Country, state, city…"
+            value={locationInput}
+            onChange={(e) => setLocationInput(e.target.value)}
+            sx={{ minWidth: 170 }}
+          />
+          <TextField
+            select
+            label="Product"
+            size="small"
+            sx={{ minWidth: 160 }}
+            value={filters.product_id}
+            onChange={setF('product_id')}
+          >
+            <MenuItem value="">All</MenuItem>
+            {productOptions.map((p) => (
+              <MenuItem key={p._id} value={p._id}>{p.name || p._id}</MenuItem>
+            ))}
           </TextField>
           <TextField
             label="Search"

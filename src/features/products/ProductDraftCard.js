@@ -33,7 +33,7 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
   const filledFacts = DETAIL_FACT_ROWS.filter((row) => row.key === 'traceableIdentity' || facts[row.key]);
 
   return (
-    <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2.5, mb: 2 }}>
+    <Box sx={{ bgcolor: '#fff', borderRadius: 2, border: '2px solid', borderColor: 'primary.main', boxShadow: 1, p: 2.5, mb: 2 }}>
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           {/* Brand identity, top-left */}
@@ -89,7 +89,7 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
                 alt=""
                 sx={{
                   width: 130, height: 150, flexShrink: 0, objectFit: 'cover',
-                  borderRadius: 1.5, border: '1px solid', borderColor: 'divider', bgcolor: '#fafafa',
+                  borderRadius: 1.5, border: '2px solid', borderColor: 'primary.main', bgcolor: '#fafafa',
                 }}
               />
             ))}
@@ -97,12 +97,12 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
         )}
       </Stack>
 
-      <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap" useFlexGap sx={{ mt: 2.5 }}>
-        <Button size="small" variant="outlined" startIcon={<VisibilityIcon />} onClick={onPreview}>Preview DPP</Button>
-        <Button size="small" variant="outlined" startIcon={<HistoryIcon />} onClick={onTransferHistory}>Transfer History</Button>
-        <Button size="small" variant="outlined" startIcon={<PrintIcon />} onClick={onPrintCode}>Print Code</Button>
-        <Button size="small" variant="outlined" startIcon={<EditIcon />} onClick={onEdit}>Edit Product</Button>
-        <Button size="small" variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={onRemove}>Remove Product</Button>
+      <Stack direction="row" spacing={1.25} justifyContent="flex-end" flexWrap="wrap" useFlexGap sx={{ mt: 2.5 }}>
+        <Button variant="outlined" color="primary" startIcon={<VisibilityIcon />} onClick={onPreview}>Preview DPP</Button>
+        <Button variant="outlined" color="primary" startIcon={<HistoryIcon />} onClick={onTransferHistory}>Transfer History</Button>
+        <Button variant="outlined" color="primary" startIcon={<PrintIcon />} onClick={onPrintCode}>Print Code</Button>
+        <Button variant="outlined" color="primary" startIcon={<EditIcon />} onClick={onEdit}>Edit Product</Button>
+        <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={onRemove}>Remove Product</Button>
       </Stack>
     </Box>
   );

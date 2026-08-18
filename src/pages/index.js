@@ -18,6 +18,7 @@ import {
   Stack,
   TextField,
   Toolbar,
+  Tooltip,
   Typography,
   Dialog,
   DialogTitle,
@@ -26,6 +27,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import { TreeItem, SimpleTreeView } from '@mui/x-tree-view';
@@ -173,7 +175,9 @@ const InnerPage = () => {
 
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
-  const [productsSearchQuery, setProductsSearchQuery] = useState('');
+  const [productNameFilter, setProductNameFilter] = useState('');
+  const [productBrandFilter, setProductBrandFilter] = useState('');
+  const [productOwnerFilter, setProductOwnerFilter] = useState('');
   const [productName, setProductName] = useState('');
   const [productModel, setProductModel] = useState('');
   const [productDetail, setProductDetail] = useState('');
@@ -1094,17 +1098,19 @@ const InnerPage = () => {
     return products.filter((product) => product.parent === selectedProduct._id);
   }, [selectedProduct, products]);
 
-  // Products page filter: matches name, brand name, or owner (company) name.
+  // Products page filter: separate name/brand/owner keyword inputs.
   const filteredProducts = useMemo(() => {
-    const q = productsSearchQuery.trim().toLowerCase();
-    if (!q) return products;
+    const name = productNameFilter.trim().toLowerCase();
+    const brand = productBrandFilter.trim().toLowerCase();
+    const owner = productOwnerFilter.trim().toLowerCase();
+    if (!name && !brand && !owner) return products;
     return products.filter((p) => {
-      const name = (p.name || '').toLowerCase();
-      const brand = (p.brandInfo?.name || '').toLowerCase();
-      const owner = (p.company_id?.name || '').toLowerCase();
-      return name.includes(q) || brand.includes(q) || owner.includes(q);
+      if (name && !(p.name || '').toLowerCase().includes(name)) return false;
+      if (brand && !(p.brandInfo?.name || '').toLowerCase().includes(brand)) return false;
+      if (owner && !(p.company_id?.name || '').toLowerCase().includes(owner)) return false;
+      return true;
     });
-  }, [products, productsSearchQuery]);
+  }, [products, productNameFilter, productBrandFilter, productOwnerFilter]);
 
   const disabledProducts = useMemo(() => {
     function getChildrenProducts(id) {
@@ -1443,8 +1449,13 @@ const InnerPage = () => {
     '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 24, [compactMediaQuery]: { fontSize: 19 } },
     '& .MuiListItemText-primary': { fontSize: '1.02rem', fontWeight: 400, [compactMediaQuery]: { fontSize: '0.85rem' } },
     '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.14)' },
-    '& .MuiListItemButton-root.Mui-selected': { backgroundColor: 'rgba(255,255,255,0.22)', borderColor: '#ffffff' },
-    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.3)' },
+    // Selected item: white pill with a blue border/icon/text, standing out
+    // against the still-blue sidebar (rather than the previous translucent
+    // white overlay).
+    '& .MuiListItemButton-root.Mui-selected': { backgroundColor: '#ffffff', borderColor: '#1b4f72' },
+    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: '#f0f4fa' },
+    '& .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root': { color: '#1b4f72' },
+    '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { color: '#1b4f72' },
   };
   const navList = (
     <List>
@@ -1460,43 +1471,11 @@ const InnerPage = () => {
           <ListItemText primary="Products" />
         </ListItemButton>
       </ListItem>
-      {/* Process Step Labels manages the Worker Operations grid for a single
-          company — a Supervisor may edit their own company's; a plain
-          Company/brand account may too. A working_employee never sees it
-          (only a Supervisor may edit process steps — see
-          resolveProcessStepsActor's canWrite check on the backend). */}
-      {!isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'processSteps'} onClick={() => go('processSteps')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><FormatListNumberedIcon /></ListItemIcon>
-            <ListItemText primary="Process Step Labels" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {/* Capture History: a Supervisor (or a plain Company/brand account)
-          reviewing every working employee's capture activity for their
-          company. */}
-      {!isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'captureHistory'} onClick={() => go('captureHistory')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><AssessmentIcon /></ListItemIcon>
-            <ListItemText primary="Capture History" />
-          </ListItemButton>
-        </ListItem>
-      )}
       {isAdmin && !isEmployeeActor && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'users'} onClick={() => go('users')}>
             <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
             <ListItemText primary="Users" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {isAdmin && !isEmployeeActor && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'consumerLocationSteps'} onClick={() => go('consumerLocationSteps')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><FormatListNumberedIcon /></ListItemIcon>
-            <ListItemText primary="Process Step Labels (Consumer)" />
           </ListItemButton>
         </ListItem>
       )}
@@ -1513,6 +1492,38 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
+      {/* Process Step Labels manages the Worker Operations grid for a single
+          company — a Supervisor may edit their own company's; a plain
+          Company/brand account may too. A working_employee never sees it
+          (only a Supervisor may edit process steps — see
+          resolveProcessStepsActor's canWrite check on the backend). */}
+      {!isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'processSteps'} onClick={() => go('processSteps')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><FormatListNumberedIcon /></ListItemIcon>
+            <ListItemText primary="Process Step Labels" />
+          </ListItemButton>
+        </ListItem>
+      )}
+      {isAdmin && !isEmployeeActor && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'consumerLocationSteps'} onClick={() => go('consumerLocationSteps')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><FormatListNumberedIcon /></ListItemIcon>
+            <ListItemText primary="Process Step Labels (Consumer)" />
+          </ListItemButton>
+        </ListItem>
+      )}
+      {/* Capture History: a Supervisor (or a plain Company/brand account)
+          reviewing every working employee's capture activity for their
+          company. */}
+      {!isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'captureHistory'} onClick={() => go('captureHistory')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><AssessmentIcon /></ListItemIcon>
+            <ListItemText primary="Capture History" />
+          </ListItemButton>
+        </ListItem>
+      )}
       {/* Scan History is shared with employees (see EMPLOYEE_ALLOWED_PAGES) —
           everything else below is Company/User-session only. */}
       <ListItem disablePadding>
@@ -1521,6 +1532,29 @@ const InnerPage = () => {
           <ListItemText primary="Scan History" />
         </ListItemButton>
       </ListItem>
+      {/* LCA: Company/User accounts and the super admin only — not shown to
+          any employee actor (including a Supervisor). */}
+      {!isEmployeeActor && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
+            <ListItemText primary="LCA" />
+          </ListItemButton>
+        </ListItem>
+      )}
+      {/* Notifications: everyone except a working_employee (a Supervisor gets
+          their own company's notifications same as a plain Company account). */}
+      {(!isEmployeeActor || company?.employeeType === 'supervisor') && (
+        <ListItem disablePadding>
+          <ListItemButton
+            selected={activePage === 'notifications' || activePage === 'allNotifications'}
+            onClick={() => go(isAdmin ? 'notifications' : 'allNotifications')}
+          >
+            <ListItemIcon sx={{ color: 'inherit' }}><CampaignIcon /></ListItemIcon>
+            <ListItemText primary="Notifications" />
+          </ListItemButton>
+        </ListItem>
+      )}
       {/* Recommendations and Chat are available to every role, including
           working_employee and Supervisor — see EMPLOYEE_ALLOWED_PAGES. */}
       <ListItem disablePadding>
@@ -1535,30 +1569,6 @@ const InnerPage = () => {
           <ListItemText primary="Chat" />
         </ListItemButton>
       </ListItem>
-      {/* LCA is visible to a Supervisor too (scoped to their own company's
-          products via ownerScopeKind/ownerScopeId below) — just not to a
-          working_employee. */}
-      {(!isEmployeeActor || company?.employeeType === 'supervisor') && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
-            <ListItemText primary="LCA" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {!isEmployeeActor && (
-        <>
-          <ListItem disablePadding>
-            <ListItemButton
-              selected={activePage === 'notifications' || activePage === 'allNotifications'}
-              onClick={() => go(isAdmin ? 'notifications' : 'allNotifications')}
-            >
-              <ListItemIcon sx={{ color: 'inherit' }}><CampaignIcon /></ListItemIcon>
-              <ListItemText primary="Notifications" />
-            </ListItemButton>
-          </ListItem>
-        </>
-      )}
     </List>
   );
 
@@ -1568,7 +1578,7 @@ const InnerPage = () => {
         position="fixed"
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          backgroundColor: '#4a96dd',
+          backgroundImage: 'linear-gradient(135deg, #4a96dd 0%, #1b4f72 100%)',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
@@ -1814,13 +1824,34 @@ const InnerPage = () => {
                 }}
               />
 
-              <TextField
-                placeholder="Search by name, brand, or owner…"
-                size="small"
-                value={productsSearchQuery}
-                onChange={(e) => setProductsSearchQuery(e.target.value)}
-                sx={{ mb: 2, width: { xs: '100%', sm: 340 } }}
-              />
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} sx={{ mb: 2 }}>
+                <TextField
+                  label="Name"
+                  size="small"
+                  value={productNameFilter}
+                  onChange={(e) => setProductNameFilter(e.target.value)}
+                  sx={{ minWidth: 180 }}
+                />
+                <TextField
+                  label="Brand Name"
+                  size="small"
+                  value={productBrandFilter}
+                  onChange={(e) => setProductBrandFilter(e.target.value)}
+                  sx={{ minWidth: 180 }}
+                />
+                <TextField
+                  label="Owner Name"
+                  size="small"
+                  value={productOwnerFilter}
+                  onChange={(e) => setProductOwnerFilter(e.target.value)}
+                  sx={{ minWidth: 180 }}
+                />
+                <Tooltip title="Refresh">
+                  <IconButton onClick={loadProductsForCurrentCompany} color="primary">
+                    <RefreshIcon />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
 
               <ProductsTable
                 products={filteredProducts}

@@ -30,25 +30,33 @@ const CATEGORY_ICONS = {
   others: SellIcon,
 };
 
-const Kpi = ({ icon: Icon, label, value, sub }) => (
+// Icon on the left, number+label+delta stacked on the right — delta is the
+// percent change vs the same metric's value 30 days ago (null = no 30-day-old
+// baseline to compare against yet).
+const Kpi = ({ icon: Icon, label, value, delta, sub }) => (
   <Card sx={{ height: '100%' }}>
-    <CardContent sx={{ py: 1.25 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-        <Box sx={{ width: 32, height: 32, borderRadius: 1.5, bgcolor: '#eef2f8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Icon sx={{ fontSize: 18, color: 'primary.main' }} />
-        </Box>
+    <CardContent sx={{ py: 1.5, display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
+      <Box sx={{ width: 36, height: 36, borderRadius: 1.5, bgcolor: '#eef2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon sx={{ fontSize: 18, color: 'primary.main' }} />
       </Box>
-      <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.4rem', md: '1.3rem' } }}>
-        {value}
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
-        {label}
-      </Typography>
-      {sub && (
-        <Typography variant="caption" sx={{ color: '#2e7d32', fontWeight: 600 }}>
-          {sub}
+      <Box sx={{ minWidth: 0 }}>
+        <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.4rem', md: '1.3rem' } }}>
+          {value}
         </Typography>
-      )}
+        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
+          {label}
+        </Typography>
+        {delta != null && (
+          <Typography variant="caption" sx={{ color: delta >= 0 ? '#2e7d32' : '#c0392b', fontWeight: 600, display: 'block' }}>
+            {delta >= 0 ? '+' : ''}{delta}% vs last 30 days
+          </Typography>
+        )}
+        {sub && (
+          <Typography variant="caption" sx={{ color: '#2e7d32', fontWeight: 600, display: 'block' }}>
+            {sub}
+          </Typography>
+        )}
+      </Box>
     </CardContent>
   </Card>
 );
@@ -114,25 +122,67 @@ const Donut = ({ segments }) => {
 };
 
 // SVG line chart for [{date,count}] series.
+// Rounds a chart max up to a "nice" number (1/2/5 x 10^n) so 5 evenly-spaced
+// gridlines land on round values like 20K/40K/60K instead of odd fractions.
+const niceStep = (max) => {
+  if (max <= 0) return 1;
+  const rough = max / 5;
+  const magnitude = 10 ** Math.floor(Math.log10(rough));
+  const residual = rough / magnitude;
+  if (residual > 5) return 10 * magnitude;
+  if (residual > 2) return 5 * magnitude;
+  if (residual > 1) return 2 * magnitude;
+  return magnitude;
+};
+const formatShort = (n) => (n >= 1000 ? `${Math.round(n / 1000)}K` : `${Math.round(n)}`);
+
+// Area chart with Y-axis gridlines/labels and periodic X-axis date labels.
 const LineChart = ({ data }) => {
-  const width = 320;
-  const height = 110;
-  const max = Math.max(1, ...data.map((d) => d.count));
-  const points = data.map((d, i) => {
-    const x = (i / Math.max(1, data.length - 1)) * width;
-    const y = height - (d.count / max) * height;
-    return `${x},${y}`;
-  });
+  const plotWidth = 280;
+  const plotHeight = 120;
+  const leftPad = 34;
+  const bottomPad = 18;
+  const width = leftPad + plotWidth;
+  const height = plotHeight + bottomPad;
+
+  const rawMax = Math.max(1, ...data.map((d) => d.count));
+  const step = niceStep(rawMax);
+  const niceMax = step * 5;
+  const ticks = [0, 1, 2, 3, 4, 5].map((i) => i * step);
+
+  const xAt = (i) => leftPad + (i / Math.max(1, data.length - 1)) * plotWidth;
+  const yAt = (v) => plotHeight - (v / niceMax) * plotHeight;
+
+  const linePoints = data.map((d, i) => `${xAt(i)},${yAt(d.count)}`).join(' ');
+  const areaPoints = data.length
+    ? `${xAt(0)},${plotHeight} ${linePoints} ${xAt(data.length - 1)},${plotHeight}`
+    : '';
+
+  // One label per week across a 30-day series (matches the target's weekly cadence).
+  const labelIndices = data.length
+    ? Array.from({ length: Math.ceil((data.length - 1) / 7) + 1 }, (_, i) => Math.min(i * 7, data.length - 1))
+    : [];
+
   return (
     <Box sx={{ width: '100%', overflowX: 'auto' }}>
-      <svg width="100%" height={height + 20} viewBox={`0 0 ${width} ${height + 20}`} preserveAspectRatio="none">
-        <polyline points={points.join(' ')} fill="none" stroke={COLORS[0]} strokeWidth="2" />
+      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
+        {ticks.map((tick) => (
+          <g key={tick}>
+            <line x1={leftPad} x2={width} y1={yAt(tick)} y2={yAt(tick)} stroke="#eef1f6" strokeWidth="1" />
+            <text x={leftPad - 6} y={yAt(tick) + 3} fontSize="8" fill="#6b7a93" textAnchor="end">
+              {formatShort(tick)}
+            </text>
+          </g>
+        ))}
         {data.length > 0 && (
-          <>
-            <text x="0" y={height + 15} fontSize="8" fill="#6b7a93">{data[0].date.slice(5)}</text>
-            <text x={width - 30} y={height + 15} fontSize="8" fill="#6b7a93">{data[data.length - 1].date.slice(5)}</text>
-          </>
+          <polygon points={areaPoints} fill={COLORS[0]} opacity="0.12" />
         )}
+        <polyline points={linePoints} fill="none" stroke={COLORS[0]} strokeWidth="2" />
+        {labelIndices.map((i) => (
+          <text key={i} x={xAt(i)} y={height - 2} fontSize="8" fill="#6b7a93" textAnchor="middle">
+            {data[i].date.slice(5)}
+          </text>
+        ))}
       </svg>
     </Box>
   );
@@ -191,11 +241,11 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
   return (
     <Box sx={{ mt: { xs: 3, md: 1.5 } }}>
       <Grid container spacing={1} sx={{ mb: 1.5 }}>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCodeScannerIcon} label="Total Scans" value={t.scans ?? 0} /></Grid>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={CheckroomIcon} label="Unique Items" value={t.uniqueItems ?? 0} /></Grid>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={SellIcon} label="Unique SKUs" value={t.uniqueSkus ?? 0} /></Grid>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={StorefrontIcon} label="Retail Stores" value={t.retailStores ?? 0} /></Grid>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={PublicIcon} label="Countries" value={t.countries ?? 0} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCodeScannerIcon} label="Total Scans" value={t.scans ?? 0} delta={t.deltas?.scans} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={CheckroomIcon} label="Unique Items" value={t.uniqueItems ?? 0} delta={t.deltas?.uniqueItems} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={SellIcon} label="Unique SKUs" value={t.uniqueSkus ?? 0} delta={t.deltas?.uniqueSkus} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={StorefrontIcon} label="Retail Stores" value={t.retailStores ?? 0} delta={t.deltas?.retailStores} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={PublicIcon} label="Countries" value={t.countries ?? 0} delta={t.deltas?.countries} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={VerifiedIcon} label="Data Integrity" value={`${t.dataIntegrity ?? 100}%`} sub="Verified" /></Grid>
       </Grid>
 
@@ -283,14 +333,19 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell>Item Category</TableCell>
-                <TableCell>SKU / Style No.</TableCell>
-                <TableCell>Origin Country</TableCell>
-                <TableCell align="right">Total Scanned (PCS)</TableCell>
+                <TableCell rowSpan={2}>Item Category</TableCell>
+                <TableCell rowSpan={2}>SKU / Style No.</TableCell>
+                <TableCell rowSpan={2}>Origin Country</TableCell>
+                <TableCell rowSpan={2} align="right">Total Scanned (PCS)</TableCell>
+                <TableCell align="center" colSpan={traceabilityColumns.length + 1} sx={{ borderBottom: 'none' }}>
+                  Destination (Country)
+                </TableCell>
+                <TableCell rowSpan={2}>City (Top)</TableCell>
+                <TableCell rowSpan={2} align="right">Stores</TableCell>
+              </TableRow>
+              <TableRow>
                 {traceabilityColumns.map((c) => <TableCell key={c} align="right">{c}</TableCell>)}
                 <TableCell align="right">Others</TableCell>
-                <TableCell>City (Top)</TableCell>
-                <TableCell align="right">Stores</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -318,7 +373,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
               })}
               {!(a.traceabilityOverview || []).length && (
                 <TableRow>
-                  <TableCell colSpan={8 + traceabilityColumns.length}>
+                  <TableCell colSpan={7 + traceabilityColumns.length}>
                     <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
                       No scan activity yet.
                     </Typography>
