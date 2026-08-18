@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Grid, Stack, TextField, MenuItem, Button, Table,
-  TableHead, TableRow, TableCell, TableBody, Paper,
+  TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Tooltip,
 } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import SellIcon from '@mui/icons-material/Sell';
@@ -14,6 +15,9 @@ import Loader from '../../components/Loader';
 
 // Blue / gray / white family only.
 const COLORS = ['#1b4f72', '#4a96dd', '#5b9bd8', '#8aa0c4', '#6b7a93', '#aab6c8'];
+
+// Matches the backend's DEFAULT_DESTINATION_COUNTRIES in qrcodeController.ts.
+const DEFAULT_DESTINATION_COUNTRIES = ['Germany', 'France', 'Netherlands', 'Spain', 'United Kingdom'];
 
 const CATEGORY_LABELS = {
   denim: 'Denim',
@@ -227,10 +231,9 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
     getAnalytics(ownerKind, ownerId, cleaned).then(setA);
   }, [ownerKind, ownerId, appliedFilters]);
 
-  const traceabilityColumns = useMemo(() => {
-    if (!a?.countryBreakdown) return [];
-    return a.countryBreakdown.slice(0, 5).map((c) => c.country);
-  }, [a]);
+  // Matches the backend's DEFAULT_DESTINATION_COUNTRIES — always these 5
+  // columns (+ Others), not derived from actual scan volume.
+  const traceabilityColumns = DEFAULT_DESTINATION_COUNTRIES;
 
   if (!a) {
     return <Loader label="Loading analytics…" />;
@@ -314,7 +317,11 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
             <MenuItem value="">All</MenuItem>
             {(a.filterOptions?.cities || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
           </TextField>
-          <Button variant="contained" onClick={() => setAppliedFilters(filters)}>Apply</Button>
+          <Tooltip title="Refresh">
+            <IconButton onClick={() => setAppliedFilters(filters)} color="primary">
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
           <Button
             variant="text"
             onClick={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); }}

@@ -1449,13 +1449,12 @@ const InnerPage = () => {
     '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 24, [compactMediaQuery]: { fontSize: 19 } },
     '& .MuiListItemText-primary': { fontSize: '1.02rem', fontWeight: 400, [compactMediaQuery]: { fontSize: '0.85rem' } },
     '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.14)' },
-    // Selected item: white pill with a blue border/icon/text, standing out
-    // against the still-blue sidebar (rather than the previous translucent
-    // white overlay).
-    '& .MuiListItemButton-root.Mui-selected': { backgroundColor: '#ffffff', borderColor: '#1b4f72' },
-    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: '#f0f4fa' },
-    '& .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root': { color: '#1b4f72' },
-    '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { color: '#1b4f72' },
+    // Selected item: solid dark-navy fill (standing out against the lighter
+    // blue sidebar) with white icon/text.
+    '& .MuiListItemButton-root.Mui-selected': { backgroundColor: '#1b4f72', borderColor: '#1b4f72' },
+    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: '#123a56' },
+    '& .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root': { color: '#ffffff' },
+    '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { color: '#ffffff' },
   };
   const navList = (
     <List>
@@ -1824,7 +1823,7 @@ const InnerPage = () => {
                 }}
               />
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} sx={{ mb: 2 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} justifyContent="flex-end" sx={{ mb: 2 }}>
                 <TextField
                   label="Name"
                   size="small"

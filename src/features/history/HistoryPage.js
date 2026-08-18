@@ -65,21 +65,15 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
     security: '',
     reaction: '',
     loggedIn: '',
-    q: '',
     username: '',
     location: '',
     product_id: '',
   });
-  const [qInput, setQInput] = useState('');
   const [usernameInput, setUsernameInput] = useState('');
   const [locationInput, setLocationInput] = useState('');
   const [productOptions, setProductOptions] = useState([]);
 
   // Debounce the free-text searches.
-  useEffect(() => {
-    const t = setTimeout(() => setFilters((f) => ({ ...f, q: qInput })), 400);
-    return () => clearTimeout(t);
-  }, [qInput]);
   useEffect(() => {
     const t = setTimeout(() => setFilters((f) => ({ ...f, username: usernameInput })), 400);
     return () => clearTimeout(t);
@@ -260,7 +254,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
   return (
     <Box>
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} flexWrap="wrap" useFlexGap>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} flexWrap="wrap" useFlexGap justifyContent="flex-end">
           <TextField
             label="From"
             type="date"
@@ -328,14 +322,6 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
               <MenuItem key={p._id} value={p._id}>{p.name || p._id}</MenuItem>
             ))}
           </TextField>
-          <TextField
-            label="Search"
-            size="small"
-            placeholder="user, product, city, IP…"
-            value={qInput}
-            onChange={(e) => setQInput(e.target.value)}
-            sx={{ minWidth: { xs: '100%', sm: 200 }, flexGrow: 1 }}
-          />
           <Tooltip title="Refresh">
             <IconButton onClick={fetchData} color="primary">
               <RefreshIcon />

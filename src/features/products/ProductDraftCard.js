@@ -34,8 +34,10 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
 
   return (
     <Box sx={{ bgcolor: '#fff', borderRadius: 2, border: '2px solid', borderColor: 'primary.main', boxShadow: 1, p: 2.5, mb: 2 }}>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+      {/* 1/3 detail : 2/3 images, both stretched to the same height so the
+          images fill the card's full height (not just their own content). */}
+      <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="stretch">
+        <Box sx={{ flex: { md: '1 1 33.333%' }, minWidth: 0 }}>
           {/* Brand identity, top-left */}
           <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mb: 2 }}>
             {brand.logoUrl ? (
@@ -78,9 +80,10 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
           </Stack>
         </Box>
 
-        {/* Images — side by side, horizontal scroll if they overflow. */}
+        {/* Images — 2/3 of the card, split evenly so each fills the full
+            height; only scrolls horizontally past 4 images. */}
         {images.length > 0 && (
-          <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 0.5, flexShrink: 0 }}>
+          <Box sx={{ flex: { md: '1 1 66.666%' }, display: 'flex', gap: 1, overflowX: 'auto', minHeight: 260 }}>
             {images.map((img, i) => (
               <Box
                 key={i}
@@ -88,7 +91,10 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
                 src={getFileUrl(img)}
                 alt=""
                 sx={{
-                  width: 130, height: 150, flexShrink: 0, objectFit: 'cover',
+                  flex: images.length <= 4 ? '1 1 0' : '0 0 22%',
+                  minWidth: 0,
+                  height: '100%',
+                  objectFit: 'cover',
                   borderRadius: 1.5, border: '2px solid', borderColor: 'primary.main', bgcolor: '#fafafa',
                 }}
               />

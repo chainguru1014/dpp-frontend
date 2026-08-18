@@ -19,7 +19,7 @@ export default function ProductsTable({
       headerName: 'Name',
       width: 200,
       renderCell: (p) => (
-        <Box sx={{ py: 0.5, cursor: 'pointer' }} onClick={() => onSelectProduct && onSelectProduct(p.row)}>
+        <Box sx={{ py: 0.5 }}>
           <Typography variant="body2" sx={{ fontWeight: 400 }}>
             {p.row.name || '—'}
           </Typography>
@@ -71,7 +71,10 @@ export default function ProductsTable({
             component="button"
             type="button"
             underline="hover"
-            onClick={() => onOwnerClick && onOwnerClick(p.row)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOwnerClick && onOwnerClick(p.row);
+            }}
             sx={{ textAlign: 'left' }}
           >
             {label}
@@ -93,7 +96,11 @@ export default function ProductsTable({
         return (
           <Box
             sx={{ py: 0.5, cursor: c ? 'pointer' : 'default' }}
-            onClick={() => c && onOwnerClick && onOwnerClick(p.row)}
+            onClick={(e) => {
+              if (!c) return;
+              e.stopPropagation();
+              onOwnerClick && onOwnerClick(p.row);
+            }}
           >
             <Typography variant="body2" sx={{ fontWeight: 400 }}>{name}</Typography>
             {c?.email && (
@@ -141,10 +148,12 @@ export default function ProductsTable({
         initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
         pageSizeOptions={[10, 25, 50]}
         disableRowSelectionOnClick
+        onRowClick={(params) => onSelectProduct && onSelectProduct(params.row)}
         sx={{
           border: 0,
           '& .MuiDataGrid-columnHeaders': { backgroundColor: '#eef1f6' },
           '& .MuiDataGrid-cell': { py: 1, alignItems: 'center' },
+          '& .MuiDataGrid-row': { cursor: 'pointer' },
         }}
       />
     </Box>
