@@ -968,6 +968,14 @@ const InnerPage = () => {
           ...p,
         }));
         setProducts(ptmp);
+        // Default the Products page's info card to the most recently added
+        // product (Mongo ObjectIds sort chronologically) — only when nothing
+        // is already selected, so this never clobbers a selection the user
+        // (or another page, e.g. mint/print) is actively using.
+        if (!selectedProduct) {
+          const latest = ptmp.reduce((a, b) => (String(b._id) > String(a._id) ? b : a));
+          productSelectHandler(latest);
+        }
       } else {
         setProducts([]);
       }
