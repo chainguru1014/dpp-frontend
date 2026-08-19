@@ -39,9 +39,9 @@ const CATEGORY_ICONS = {
 // baseline to compare against yet).
 const Kpi = ({ icon: Icon, label, value, delta, sub }) => (
   <Card sx={{ height: '100%' }}>
-    <CardContent sx={{ py: 1.5, display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
-      <Box sx={{ width: 36, height: 36, borderRadius: 1.5, bgcolor: '#eef2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon sx={{ fontSize: 18, color: 'primary.main' }} />
+    <CardContent sx={{ py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+      <Box sx={{ width: 52, height: 52, borderRadius: 2, bgcolor: '#eef2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon sx={{ fontSize: 28, color: 'primary.main' }} />
       </Box>
       <Box sx={{ minWidth: 0 }}>
         <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.4rem', md: '1.3rem' } }}>
@@ -79,14 +79,14 @@ const Section = ({ title, children, sx }) => (
 // SVG donut chart for [{category,count}] segments.
 const Donut = ({ segments }) => {
   const total = segments.reduce((s, x) => s + (x.count || 0), 0);
-  const r = 34;
+  const r = 48;
   const circumference = 2 * Math.PI * r;
   let offset = 0;
   return (
     <Stack direction="row" spacing={2} alignItems="center">
-      <Box sx={{ position: 'relative', width: 100, height: 100, flexShrink: 0 }}>
-        <svg width="100" height="100" viewBox="0 0 100 100">
-          <circle cx="50" cy="50" r={r} fill="none" stroke="#eef1f6" strokeWidth="14" />
+      <Box sx={{ position: 'relative', width: 140, height: 140, flexShrink: 0 }}>
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r={r} fill="none" stroke="#eef1f6" strokeWidth="18" />
           {total > 0 &&
             segments.map((s, i) => {
               if (!s.count) return null;
@@ -95,12 +95,12 @@ const Donut = ({ segments }) => {
               const el = (
                 <circle
                   key={s.category}
-                  cx="50" cy="50" r={r} fill="none"
+                  cx="70" cy="70" r={r} fill="none"
                   stroke={COLORS[i % COLORS.length]}
-                  strokeWidth="14"
+                  strokeWidth="18"
                   strokeDasharray={`${dash} ${circumference - dash}`}
                   strokeDashoffset={-offset}
-                  transform="rotate(-90 50 50)"
+                  transform="rotate(-90 70 70)"
                 />
               );
               offset += dash;
