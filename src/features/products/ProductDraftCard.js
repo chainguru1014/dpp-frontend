@@ -80,8 +80,9 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
           </Stack>
         </Box>
 
-        {/* Images — 2/3 of the card, split evenly so each fills the full
-            height; only scrolls horizontally past 4 images. */}
+        {/* Images — 2/3 of the card. Fixed size per image (not flexed to
+            divide the row), 4 fit without scrolling at typical widths;
+            horizontal scroll kicks in once they overflow. */}
         {images.length > 0 && (
           <Box sx={{ flex: { md: '1 1 66.666%' }, display: 'flex', gap: 1, overflowX: 'auto', minHeight: 260 }}>
             {images.map((img, i) => (
@@ -91,9 +92,9 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
                 src={getFileUrl(img)}
                 alt=""
                 sx={{
-                  flex: images.length <= 4 ? '1 1 0' : '0 0 22%',
-                  minWidth: 0,
-                  height: '100%',
+                  width: 170,
+                  height: 260,
+                  flexShrink: 0,
                   objectFit: 'cover',
                   borderRadius: 1.5, border: '2px solid', borderColor: 'primary.main', bgcolor: '#fafafa',
                 }}

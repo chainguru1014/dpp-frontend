@@ -8,7 +8,7 @@ import background3 from '../../assets/background-3.png';
 // Background slideshow — cycles through the three brand photos, each shown
 // for SLIDE_DURATION_MS, cross-fading via opacity over FADE_DURATION_MS.
 const SLIDER_IMAGES = [background1, background2, background3];
-const SLIDE_DURATION_MS = 3000;
+const SLIDE_DURATION_MS = 6000;
 const FADE_DURATION_MS = 1000;
 
 // Cochin is a macOS/iOS system serif — falls through to the nearest

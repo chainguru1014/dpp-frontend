@@ -1451,8 +1451,8 @@ const InnerPage = () => {
     '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.14)' },
     // Selected item: solid dark-navy fill (standing out against the lighter
     // blue sidebar) with white icon/text.
-    '& .MuiListItemButton-root.Mui-selected': { backgroundColor: '#1b4f72', borderColor: '#1b4f72' },
-    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: '#123a56' },
+    '& .MuiListItemButton-root.Mui-selected': { backgroundColor: '#3682FC', borderColor: '#3682FC' },
+    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: '#2a6fdb' },
     '& .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root': { color: '#ffffff' },
     '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { color: '#ffffff' },
   };

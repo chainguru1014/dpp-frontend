@@ -64,7 +64,6 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
     source: '',
     security: '',
     reaction: '',
-    loggedIn: '',
     username: '',
     location: '',
     product_id: '',
@@ -287,11 +286,6 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             <MenuItem value="like">Like</MenuItem>
             <MenuItem value="dislike">Dislike</MenuItem>
             <MenuItem value="buy">Buy</MenuItem>
-          </TextField>
-          <TextField select label="User" size="small" sx={{ minWidth: 130 }} value={filters.loggedIn} onChange={setF('loggedIn')}>
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="true">Logged in</MenuItem>
-            <MenuItem value="false">Guest</MenuItem>
           </TextField>
           <TextField
             label="Username"
