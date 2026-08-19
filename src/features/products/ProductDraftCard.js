@@ -84,7 +84,7 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
             divide the row), 4 fit without scrolling at typical widths;
             horizontal scroll kicks in once they overflow. */}
         {images.length > 0 && (
-          <Box sx={{ flex: { md: '1 1 66.666%' }, display: 'flex', gap: 1, overflowX: 'auto', minHeight: 260 }}>
+          <Box sx={{ flex: { md: '1 1 66.666%' }, display: 'flex', justifyContent: 'flex-end', gap: 1, overflowX: 'auto', minHeight: 260 }}>
             {images.map((img, i) => (
               <Box
                 key={i}
