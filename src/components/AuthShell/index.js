@@ -108,6 +108,13 @@ const AuthShell = ({ children, cardSx }) => {
         textShadow: '0 2px 8px rgba(0,0,0,0.55)',
         maxWidth: 420,
         fontFamily: taglineFontFamily,
+        // Establishes its own stacking context so it paints above the
+        // absolutely-positioned slideshow layer regardless of DOM order —
+        // without this, a plain (position:static) box paints BEHIND any
+        // positioned sibling per CSS stacking rules, which is why this was
+        // getting covered by the background slides.
+        position: 'relative',
+        zIndex: 1,
       }}
     >
       <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
@@ -163,6 +170,9 @@ const AuthShell = ({ children, cardSx }) => {
         // width since this phrase has fewer characters.
         maxWidth: 340,
         fontFamily: taglineFontFamily,
+        // See the left tagline's comment — same stacking-context fix.
+        position: 'relative',
+        zIndex: 1,
       }}
     >
       <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
