@@ -285,6 +285,7 @@ const GenerateAndPrintPanel = ({
           lockedSourceType="rfid"
           product={selectedProduct}
           onProductChange={setSelectedProduct}
+          enableCsvImport
         />
       )}
       {tab === 'nfc' && (

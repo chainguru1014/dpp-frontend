@@ -572,6 +572,23 @@ export const registerProductIdentifier = async (product_id, company_id, source_t
     }
 }
 
+// Bulk variant of registerProductIdentifier — used by the RFID tab's CSV
+// import (a hardware vendor's pre-generated tag list) so a whole file is
+// registered in one request instead of one per row. `rows` is
+// [{ raw_value, note }]; returns { inserted, skipped, errors } so the UI can
+// report exactly what happened (skipped = already-registered duplicates).
+export const bulkRegisterProductIdentifiers = async (product_id, company_id, source_type, rows) => {
+    try {
+        const res = await axios.post(`${Backend_URL}product-identifier/bulk`, {
+            product_id, company_id, source_type, rows
+        });
+        return res.data.data;
+    } catch (err) {
+        alert(err.response?.data?.message || 'Failed to import identifiers');
+        return null;
+    }
+}
+
 export const listProductIdentifiers = async (product_id) => {
     try {
         const res = await axios.get(`${Backend_URL}product-identifier`, { params: { product_id } });
