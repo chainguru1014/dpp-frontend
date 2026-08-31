@@ -2,14 +2,17 @@ import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import background1 from '../../assets/background-1.jpg';
-import background2 from '../../assets/background-2.png';
-import background3 from '../../assets/background-3.png';
+import background2 from '../../assets/background-2.jpg';
+import background3 from '../../assets/background-3.jpg';
 
-// Background slideshow — cycles through the three brand photos, each shown
-// for SLIDE_DURATION_MS, cross-fading via opacity over FADE_DURATION_MS.
-const SLIDER_IMAGES = [background1, background2, background3];
-const SLIDE_DURATION_MS = 6000;
-const FADE_DURATION_MS = 1000;
+// Background slideshow — steps through the brand photos in a fixed order
+// (1 → 3 → 2), cross-fading via opacity over FADE_DURATION_MS, then STOPS on
+// the final image (background-2) rather than looping forever.
+// Images are pre-compressed JPEGs (~200–700 KB) and preloaded on mount so the
+// first frame paints fast and each transition is instant.
+const SLIDER_IMAGES = [background1, background3, background2];
+const SLIDE_DURATION_MS = 3500;
+const FADE_DURATION_MS = 900;
 
 // Cochin is a macOS/iOS system serif — falls through to the nearest
 // look-alikes on Windows/Linux/Android, where it isn't installed.
@@ -30,12 +33,21 @@ const taglineFontSize = 'clamp(0.6rem, calc(0.39rem + 0.26vw), 0.8rem)';
 const AuthShell = ({ children, cardSx }) => {
   const [activeSlide, setActiveSlide] = React.useState(0);
 
+  // Preload every slide up front so switching to it is instant (no blank flash
+  // while the browser fetches a multi-hundred-KB photo mid-transition).
   React.useEffect(() => {
-    const id = setInterval(() => {
-      setActiveSlide((i) => (i + 1) % SLIDER_IMAGES.length);
-    }, SLIDE_DURATION_MS);
-    return () => clearInterval(id);
+    SLIDER_IMAGES.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
   }, []);
+
+  // Advance once per SLIDE_DURATION_MS and stop on the last image — no wrap.
+  React.useEffect(() => {
+    if (activeSlide >= SLIDER_IMAGES.length - 1) return undefined;
+    const id = setTimeout(() => setActiveSlide((i) => i + 1), SLIDE_DURATION_MS);
+    return () => clearTimeout(id);
+  }, [activeSlide]);
 
   return (
   <Box
@@ -124,7 +136,7 @@ const AuthShell = ({ children, cardSx }) => {
         for
       </Typography>
       <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
-        Circular Economy &amp; Environment
+        Circular Economy Environment
       </Typography>
     </Box>
 

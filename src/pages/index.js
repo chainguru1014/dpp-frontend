@@ -103,6 +103,9 @@ const serialTypes = [{ label: 'Serial Number', value: 'serial' }];
 const DEFAULT_BRAND_NAME = 'Yometel';
 // Single source of truth for the left bar width — shared by the Drawer and the
 // logo container so the logo is always centered over the bar at every breakpoint.
+// Kept deliberately narrow so the content area gets more room.
+const LEFT_BAR_WIDTH = { md: 200, xl: 232 };
+const MOBILE_NAV_WIDTH = 232;
 const DEFAULT_BRAND_DETAIL = 'Developing innovative "real-time and automatic" digital twins IoT /RFID technologies';
 const DEFAULT_BRAND_WEBSITE = 'https://www.yometel.jp/';
 
@@ -1437,7 +1440,7 @@ const InnerPage = () => {
 
   // Shared styling for both the desktop sidebar and the mobile overlay drawer.
   const drawerPaperSx = {
-    backgroundColor: '#4a96dd',
+    backgroundColor: '#123a5c',
     color: '#ffffff',
     borderRight: 'none',
     overflowX: 'hidden',
@@ -1446,16 +1449,16 @@ const InnerPage = () => {
   const navSx = {
     '& .MuiListItemButton-root': {
       borderRadius: 999,
-      border: '1px solid rgba(255,255,255,0.55)',
-      mx: 1.5,
-      my: 0.75,
-      py: 1,
-      px: 2,
-      [compactMediaQuery]: { mx: 1, my: 0.4, py: 0.6, px: 1.5 },
+      border: '1px solid rgba(255,255,255,0.45)',
+      mx: 1,
+      my: 0.5,
+      py: 0.7,
+      px: 1.5,
+      [compactMediaQuery]: { mx: 0.75, my: 0.35, py: 0.5, px: 1.25 },
     },
-    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 40, justifyContent: 'center', [compactMediaQuery]: { minWidth: 30 } },
-    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 24, [compactMediaQuery]: { fontSize: 19 } },
-    '& .MuiListItemText-primary': { fontSize: '1.02rem', fontWeight: 400, [compactMediaQuery]: { fontSize: '0.85rem' } },
+    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 32, justifyContent: 'center', [compactMediaQuery]: { minWidth: 28 } },
+    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 20, [compactMediaQuery]: { fontSize: 18 } },
+    '& .MuiListItemText-primary': { fontSize: '0.9rem', fontWeight: 400, [compactMediaQuery]: { fontSize: '0.82rem' } },
     '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.14)' },
     // Selected item: solid dark-navy fill (standing out against the lighter
     // blue sidebar) with white icon/text.
@@ -1585,7 +1588,8 @@ const InnerPage = () => {
         position="fixed"
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
-          backgroundImage: 'linear-gradient(135deg, #4a96dd 0%, #1b4f72 100%)',
+          backgroundImage:
+            'linear-gradient(100deg, #4f9ee0 0%, #3a86d0 38%, #23608f 72%, #143a5a 100%)',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
@@ -1599,9 +1603,9 @@ const InnerPage = () => {
           </IconButton>
           <Box
             sx={{
-              // Matches the sidebar Drawer's width below (240 md-lg, 280 xl+)
+              // Matches the sidebar Drawer's width below (LEFT_BAR_WIDTH)
               // so the logo stays centered over the bar at every breakpoint.
-              width: { xs: 'auto', md: 240, xl: 280 },
+              width: { xs: 'auto', ...LEFT_BAR_WIDTH },
               flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
@@ -1665,9 +1669,9 @@ const InnerPage = () => {
           variant="permanent"
           sx={{
             display: { xs: 'none', md: 'block' },
-            width: { md: 240, xl: 280 },
+            width: LEFT_BAR_WIDTH,
             flexShrink: 0,
-            '& .MuiDrawer-paper': { width: { md: 240, xl: 280 }, boxSizing: 'border-box', ...drawerPaperSx },
+            '& .MuiDrawer-paper': { width: LEFT_BAR_WIDTH, boxSizing: 'border-box', ...drawerPaperSx },
             ...navSx,
           }}
         >
@@ -1687,7 +1691,7 @@ const InnerPage = () => {
           sx={{
             display: { xs: 'block', md: 'none' },
             zIndex: (theme) => theme.zIndex.drawer,
-            '& .MuiDrawer-paper': { width: 264, boxSizing: 'border-box', ...drawerPaperSx },
+            '& .MuiDrawer-paper': { width: MOBILE_NAV_WIDTH, boxSizing: 'border-box', ...drawerPaperSx },
             ...navSx,
           }}
         >

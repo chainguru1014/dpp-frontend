@@ -341,7 +341,6 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
             <TableHead>
               <TableRow>
                 <TableCell rowSpan={2}>Item Category</TableCell>
-                <TableCell rowSpan={2}>SKU / Style No.</TableCell>
                 <TableCell rowSpan={2}>Origin Country</TableCell>
                 <TableCell rowSpan={2} align="right">Total Scanned (PCS)</TableCell>
                 <TableCell align="center" colSpan={traceabilityColumns.length + 1} sx={{ borderBottom: 'none' }}>
@@ -359,14 +358,13 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
               {(a.traceabilityOverview || []).map((row) => {
                 const CategoryIcon = CATEGORY_ICONS[row.itemCategory] || SellIcon;
                 return (
-                  <TableRow key={`${row.skuStyleNumber}-${row.itemCategory}`} hover>
+                  <TableRow key={`${row.skuStyleNumber || row.originCountry}-${row.itemCategory}`} hover>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                         <CategoryIcon sx={{ fontSize: 16, color: 'primary.main' }} />
                         {CATEGORY_LABELS[row.itemCategory] || row.itemCategory}
                       </Box>
                     </TableCell>
-                    <TableCell>{row.skuStyleNumber || '—'}</TableCell>
                     <TableCell>{row.originCountry || '—'}</TableCell>
                     <TableCell align="right">{row.totalScanned}</TableCell>
                     {traceabilityColumns.map((c) => (
@@ -380,7 +378,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
               })}
               {!(a.traceabilityOverview || []).length && (
                 <TableRow>
-                  <TableCell colSpan={7 + traceabilityColumns.length}>
+                  <TableCell colSpan={6 + traceabilityColumns.length}>
                     <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
                       No scan activity yet.
                     </Typography>

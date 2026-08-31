@@ -31,6 +31,32 @@ export const getFileUrl = (filename) => {
     return buildUrl(FILE_BASE_URL, encodeURIComponent(cleanFilename));
 };
 
+// Pull the 11-char video id out of any common YouTube URL shape
+// (watch?v=, youtu.be/, /embed/, /shorts/). Returns '' when it isn't one.
+export const getYoutubeVideoId = (url) => {
+    if (!url) return '';
+    const m = String(url).match(
+        /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|v\/))([A-Za-z0-9_-]{11})/,
+    );
+    if (m) return m[1];
+    const bare = String(url).trim();
+    return /^[A-Za-z0-9_-]{11}$/.test(bare) ? bare : '';
+};
+
+// Normalize whatever the API returns for a product's `videos` field into a
+// clean [{ url, description, videoId }] list, dropping anything non-YouTube.
+export const normalizeProductVideos = (videos) => {
+    if (!videos) return [];
+    const arr = Array.isArray(videos) ? videos : Object.values(videos);
+    return arr
+        .map((v) => {
+            const url = typeof v === 'string' ? v : v?.url || '';
+            const videoId = getYoutubeVideoId(url);
+            return videoId ? { url, description: (typeof v === 'object' && v?.description) || '', videoId } : null;
+        })
+        .filter(Boolean);
+};
+
 export const getCompanyInfo = async (wallet) => {
     const res = await axios.get(`${Backend_URL}company/info/${wallet}`);
     // console.log(res);

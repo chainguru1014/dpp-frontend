@@ -13,8 +13,9 @@ import { Slide } from 'react-slideshow-image';
 import 'react-slideshow-image/dist/styles.css';
 import YouTube from 'react-youtube';
 import CameraIcon from '../../assets/camera_icon.png';
+import YoutubeIcon from '../../assets/youtube-icon.png';
 import PDFIcon from '../../assets/pdf.png';
-import { getFileUrl } from '../../helper';
+import { getFileUrl, normalizeProductVideos } from '../../helper';
 import { CareSymbol } from '../CareSymbols';
 import { Worker, Viewer } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
@@ -59,15 +60,19 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
   const [viewPDF, setViewPDF] = useState(false);
   const [currentPDF, setCurrentPDF] = useState(null);
 
-  const getYoutubeVideoIDFromUrl = (url) => {
-    const videoid = url && url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/);
-    return videoid ? videoid[1] : null;
-  };
-
   const opts = { width: '100%', height: 240, playerVars: { autoplay: 0 } };
+  const sliderVideoOpts = { width: '100%', height: 180, playerVars: { autoplay: 0 } };
 
   const info = productInfo || {};
   const images = info.images || [];
+  const videos = normalizeProductVideos(info.videos);
+  // One flat slide list: every product image first, then each YouTube video.
+  const slides = [
+    ...images.map((src) => ({ type: 'image', src })),
+    ...videos.map((video) => ({ type: 'video', video })),
+  ];
+  const safeSlideIndex = Math.min(currentSlideIndex, Math.max(slides.length - 1, 0));
+  const activeSlide = slides[safeSlideIndex] || slides[0];
   const materialSize = info.materialSize || { size: '', materials: [] };
   const maintenance = info.maintenance || { iconIds: [], description: '' };
   const disposal = info.disposal || { repairUrl: '', reuseUrl: '', rentalUrl: '', disposeUrl: '' };
@@ -110,27 +115,35 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
           </Typography>
         </Box>
 
-        {/* Image slider */}
-        <Box sx={{ position: 'relative', width: '100%', minHeight: 140, bgcolor: '#e8eef2' }}>
-          {images.length > 0 ? (
+        {/* Media slider — product images first, then YouTube videos (playable
+            inline) at the end. The bottom pill shows a camera icon on image
+            slides and the YouTube glyph on video slides. */}
+        <Box sx={{ position: 'relative', width: '100%', minHeight: 180, bgcolor: '#e8eef2' }}>
+          {slides.length > 0 ? (
             <Slide transitionDuration={200} autoplay={false} onChange={(_, next) => setCurrentSlideIndex(next)}>
-              {images.map((slideImage, index) => (
+              {slides.map((slide, index) => (
                 <div key={index}>
-                  <Box sx={{ width: '100%', height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#e8eef2' }}>
-                    <img src={getFileUrl(slideImage)} alt="" style={{ maxWidth: '100%', maxHeight: 140, objectFit: 'contain' }} />
+                  <Box sx={{ width: '100%', height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+                    {slide.type === 'video' ? (
+                      <Box sx={{ width: '100%' }}>
+                        <YouTube videoId={slide.video.videoId} opts={sliderVideoOpts} />
+                      </Box>
+                    ) : (
+                      <img src={getFileUrl(slide.src)} alt="" style={{ maxWidth: '100%', maxHeight: 180, objectFit: 'contain' }} />
+                    )}
                   </Box>
                 </div>
               ))}
             </Slide>
           ) : (
-            <Box sx={{ width: '100%', height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box sx={{ width: '100%', height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>No image</Typography>
             </Box>
           )}
-          {images.length > 0 && (
-            <Box sx={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 0.5, color: '#fff', bgcolor: 'rgba(0,0,0,0.4)', px: 1, py: 0.5, borderRadius: 2 }}>
-              <img src={CameraIcon} alt="" style={{ height: 14, width: 14 }} />
-              <Typography sx={{ fontSize: 12 }}>{currentSlideIndex + 1}/{images.length}</Typography>
+          {slides.length > 0 && (
+            <Box sx={{ position: 'absolute', bottom: 12, right: 12, display: 'flex', alignItems: 'center', gap: 0.5, color: '#fff', bgcolor: 'rgba(0,0,0,0.5)', px: 1, py: 0.5, borderRadius: 2 }}>
+              <img src={activeSlide?.type === 'video' ? YoutubeIcon : CameraIcon} alt="" style={{ height: 14, width: 14 }} />
+              <Typography sx={{ fontSize: 12 }}>{safeSlideIndex + 1}/{slides.length}</Typography>
             </Box>
           )}
         </Box>
@@ -152,13 +165,16 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
                   ))}
                 </Box>
               )}
-              {(info.videos || []).length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  {(info.videos || []).map((video, idx) => {
-                    const videoId = getYoutubeVideoIDFromUrl(video?.url);
-                    if (!videoId) return null;
-                    return <YouTube key={idx} videoId={videoId} opts={opts} />;
-                  })}
+              {videos.length > 0 && (
+                <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  {videos.map((video, idx) => (
+                    <Box key={idx}>
+                      <YouTube videoId={video.videoId} opts={opts} />
+                      {video.description ? (
+                        <Typography sx={{ fontSize: 12, color: 'text.secondary', mt: 0.5 }}>{video.description}</Typography>
+                      ) : null}
+                    </Box>
+                  ))}
                 </Box>
               )}
               {(info.files || []).length > 0 && (
