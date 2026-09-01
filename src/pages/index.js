@@ -1593,7 +1593,7 @@ const InnerPage = () => {
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           backgroundImage:
-            'linear-gradient(100deg, #2a6398 0%, #276093 38%, #23608f 72%, #143a5a 100%)',
+            'linear-gradient(100deg, #1a5684 0%, #1d5580 38%, #1b4f78 72%, #1a4a70 100%)',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
