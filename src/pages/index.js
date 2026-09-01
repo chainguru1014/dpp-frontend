@@ -1442,8 +1442,11 @@ const InnerPage = () => {
   };
 
   // Shared styling for both the desktop sidebar and the mobile overlay drawer.
+  // Vertical blue gradient — deeper at the top, fading to a light blue at the
+  // bottom (matches the reference design).
   const drawerPaperSx = {
-    backgroundColor: '#1f5885',
+    backgroundImage: 'linear-gradient(180deg, #3a82db 0%, #5c9ae4 38%, #a9c9ec 100%)',
+    backgroundColor: '#5c9ae4',
     color: '#ffffff',
     borderRight: 'none',
     overflowX: 'hidden',
@@ -1451,24 +1454,36 @@ const InnerPage = () => {
   };
   const navSx = {
     '& .MuiListItemButton-root': {
-      borderRadius: 999,
-      border: '1px solid rgba(255,255,255,0.45)',
+      borderRadius: 2,
+      border: '1px solid transparent',
       mx: 1,
-      my: 0.5,
+      my: 0.4,
       py: 0.7,
-      px: 1.5,
-      [compactMediaQuery]: { mx: 0.75, my: 0.35, py: 0.5, px: 1.25 },
+      px: 1.25,
+      [compactMediaQuery]: { mx: 0.75, my: 0.3, py: 0.5, px: 1 },
     },
-    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 32, justifyContent: 'center', [compactMediaQuery]: { minWidth: 28 } },
+    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 34, justifyContent: 'center', [compactMediaQuery]: { minWidth: 30 } },
     '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 20, [compactMediaQuery]: { fontSize: 18 } },
-    '& .MuiListItemText-primary': { fontSize: '0.9rem', fontWeight: 400, [compactMediaQuery]: { fontSize: '0.82rem' } },
-    '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.14)' },
-    // Selected item: solid dark-navy fill (standing out against the lighter
-    // blue sidebar) with white icon/text.
-    '& .MuiListItemButton-root.Mui-selected': { backgroundColor: '#3682FC', borderColor: '#3682FC' },
-    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: '#2a6fdb' },
-    '& .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root': { color: '#ffffff' },
-    '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { color: '#ffffff' },
+    '& .MuiListItemText-primary': { fontSize: '0.9rem', fontWeight: 500, color: '#ffffff', [compactMediaQuery]: { fontSize: '0.82rem' } },
+    '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.16)' },
+    // Selected item: a translucent white "card" with a light border, and the
+    // icon in a small rounded badge — per the reference design.
+    '& .MuiListItemButton-root.Mui-selected': {
+      backgroundColor: 'rgba(255,255,255,0.22)',
+      borderColor: 'rgba(255,255,255,0.75)',
+    },
+    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.3)' },
+    '& .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root': {
+      color: '#ffffff',
+      backgroundColor: 'rgba(255,255,255,0.28)',
+      borderRadius: 1.5,
+      width: 30,
+      height: 30,
+      minWidth: 30,
+      mr: 1,
+      alignItems: 'center',
+    },
+    '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { color: '#ffffff', fontWeight: 700 },
   };
   const navList = (
     <List>
@@ -1584,7 +1599,7 @@ const InnerPage = () => {
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           backgroundImage:
-            'linear-gradient(100deg, #1a5684 0%, #1d5580 38%, #1b4f78 72%, #1a4a70 100%)',
+            'linear-gradient(90deg, #2c6ccf 0%, #3f88e0 60%, #4c95ea 100%)',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
