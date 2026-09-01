@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppBar,
   Avatar,
@@ -69,8 +69,6 @@ import {
   checkUsernameExists,
 } from '../helper';
 import QRCode from '../components/displayQRCode';
-import PrintModal from '../components/printModal';
-import PreviewModal from '../components/PreviewModal';
 import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
 import AuthPage from '../components/AuthPage';
@@ -98,6 +96,12 @@ import ProductTransferDialog from '../features/products/ProductTransferDialog';
 import { getFileUrl } from '../helper';
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
 import { compactMediaQuery } from '../theme';
+
+// PreviewModal and PrintModal pull in the heavy PDF stack (@react-pdf-viewer /
+// pdfjs-dist / @react-pdf/renderer) plus react-youtube — lazy-loaded so that
+// weight only downloads when a user actually opens the preview or print dialog.
+const PreviewModal = React.lazy(() => import('../components/PreviewModal'));
+const PrintModal = React.lazy(() => import('../components/printModal'));
 
 const serialTypes = [{ label: 'Serial Number', value: 'serial' }];
 const DEFAULT_BRAND_NAME = 'Yometel';
@@ -1440,7 +1444,7 @@ const InnerPage = () => {
 
   // Shared styling for both the desktop sidebar and the mobile overlay drawer.
   const drawerPaperSx = {
-    backgroundColor: '#123a5c',
+    backgroundColor: '#1a4a70',
     color: '#ffffff',
     borderRight: 'none',
     overflowX: 'hidden',
@@ -1589,7 +1593,7 @@ const InnerPage = () => {
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           backgroundImage:
-            'linear-gradient(100deg, #4f9ee0 0%, #3a86d0 38%, #23608f 72%, #143a5a 100%)',
+            'linear-gradient(100deg, #2d6ca6 0%, #2a6299 38%, #23608f 72%, #143a5a 100%)',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
@@ -2627,14 +2631,16 @@ const InnerPage = () => {
         </Box>
       </Box>
 
-      {selectedProduct && (
-        <PrintModal
-          open={openPrintModal}
-          setOpen={setOpenPrintModal}
-          totalAmount={totalAmount}
-          product={selectedProduct}
-          setProduct={setSelectedProduct}
-        />
+      {selectedProduct && openPrintModal && (
+        <Suspense fallback={null}>
+          <PrintModal
+            open={openPrintModal}
+            setOpen={setOpenPrintModal}
+            totalAmount={totalAmount}
+            product={selectedProduct}
+            setProduct={setSelectedProduct}
+          />
+        </Suspense>
       )}
       {openOwnerDialog && ownerInfo && (
         <Dialog open={openOwnerDialog} onClose={() => setOpenOwnerDialog(false)} maxWidth="sm" fullWidth>
@@ -2668,7 +2674,8 @@ const InnerPage = () => {
           loadProductsForCurrentCompany();
         }}
       />
-      {company && (
+      {company && openPreviewModal && (
+        <Suspense fallback={null}>
         <PreviewModal
           open={openPreviewModal}
           setOpen={setOpenPreviewModal}
@@ -2717,6 +2724,7 @@ const InnerPage = () => {
                 }
           }
         />
+        </Suspense>
       )}
     </Box>
   );

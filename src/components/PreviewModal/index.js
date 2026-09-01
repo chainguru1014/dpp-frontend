@@ -9,6 +9,7 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import { useState } from 'react';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 import { Slide } from 'react-slideshow-image';
 import 'react-slideshow-image/dist/styles.css';
 import YouTube from 'react-youtube';
@@ -16,6 +17,7 @@ import CameraIcon from '../../assets/camera_icon.png';
 import YoutubeIcon from '../../assets/youtube-icon.png';
 import PDFIcon from '../../assets/pdf.png';
 import { getFileUrl, normalizeProductVideos } from '../../helper';
+import VideoPlayerDialog from '../VideoPlayerDialog';
 import { CareSymbol } from '../CareSymbols';
 import { Worker, Viewer } from '@react-pdf-viewer/core';
 import '@react-pdf-viewer/core/lib/styles/index.css';
@@ -59,9 +61,9 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [viewPDF, setViewPDF] = useState(false);
   const [currentPDF, setCurrentPDF] = useState(null);
+  const [dialogVideoId, setDialogVideoId] = useState(null);
 
   const opts = { width: '100%', height: 240, playerVars: { autoplay: 0 } };
-  const sliderVideoOpts = { width: '100%', height: 180, playerVars: { autoplay: 0 } };
 
   const info = productInfo || {};
   const images = info.images || [];
@@ -115,18 +117,30 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
           </Typography>
         </Box>
 
-        {/* Media slider — product images first, then YouTube videos (playable
-            inline) at the end. The bottom pill shows a camera icon on image
-            slides and the YouTube glyph on video slides. */}
+        {/* Media slider — product images first, then YouTube videos at the end.
+            Tapping a video slide's play icon opens the near-fullscreen player
+            dialog. The bottom pill shows a camera icon on image slides and the
+            YouTube glyph on video slides. */}
         <Box sx={{ position: 'relative', width: '100%', minHeight: 180, bgcolor: '#e8eef2' }}>
           {slides.length > 0 ? (
             <Slide transitionDuration={200} autoplay={false} onChange={(_, next) => setCurrentSlideIndex(next)}>
               {slides.map((slide, index) => (
                 <div key={index}>
-                  <Box sx={{ width: '100%', height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+                  <Box sx={{ position: 'relative', width: '100%', height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
                     {slide.type === 'video' ? (
-                      <Box sx={{ width: '100%' }}>
-                        <YouTube videoId={slide.video.videoId} opts={sliderVideoOpts} />
+                      <Box
+                        role="button"
+                        onClick={() => setDialogVideoId(slide.video.videoId)}
+                        sx={{ position: 'relative', width: '100%', height: '100%', cursor: 'pointer' }}
+                      >
+                        <img
+                          src={`https://img.youtube.com/vi/${slide.video.videoId}/hqdefault.jpg`}
+                          alt={slide.video.description || 'Product video'}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                        <PlayCircleFilledIcon
+                          sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: 56, color: '#fff', filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))' }}
+                        />
                       </Box>
                     ) : (
                       <img src={getFileUrl(slide.src)} alt="" style={{ maxWidth: '100%', maxHeight: 180, objectFit: 'contain' }} />
@@ -277,6 +291,12 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
             </AccordionDetails>
           </Accordion>
         </Box>
+
+        <VideoPlayerDialog
+          open={Boolean(dialogVideoId)}
+          onClose={() => setDialogVideoId(null)}
+          videoId={dialogVideoId}
+        />
       </Box>
     </Modal>
   );

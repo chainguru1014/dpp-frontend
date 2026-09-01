@@ -12,8 +12,8 @@ import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import ShieldIcon from '@mui/icons-material/Shield';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import YouTube from 'react-youtube';
 import { getFileUrl, normalizeProductVideos } from '../../helper';
+import VideoPlayerDialog from '../../components/VideoPlayerDialog';
 import youtubeIcon from '../../assets/youtube-icon.png';
 
 const DETAIL_FACT_ROWS = [
@@ -67,41 +67,34 @@ function MediaBadge({ type }) {
 }
 
 function VideoCell({ video }) {
-  const [playing, setPlaying] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
   return (
     <Box sx={cellSx}>
-      {playing ? (
-        <YouTube
-          videoId={video.videoId}
-          opts={{ width: '100%', height: '100%', playerVars: { autoplay: 1 } }}
-          style={{ width: '100%', height: '100%' }}
-        />
-      ) : (
+      <Box
+        role="button"
+        onClick={() => setOpen(true)}
+        sx={{ width: '100%', height: '100%', cursor: 'pointer' }}
+      >
         <Box
-          role="button"
-          onClick={() => setPlaying(true)}
-          sx={{ width: '100%', height: '100%', cursor: 'pointer' }}
-        >
-          <Box
-            component="img"
-            src={`https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`}
-            alt={video.description || 'Product video'}
-            sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-          <PlayCircleFilledIcon
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              fontSize: 44,
-              color: '#fff',
-              filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))',
-            }}
-          />
-        </Box>
-      )}
+          component="img"
+          src={`https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`}
+          alt={video.description || 'Product video'}
+          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+        <PlayCircleFilledIcon
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontSize: 44,
+            color: '#fff',
+            filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))',
+          }}
+        />
+      </Box>
       <MediaBadge type="video" />
+      <VideoPlayerDialog open={open} onClose={() => setOpen(false)} videoId={video.videoId} />
     </Box>
   );
 }
