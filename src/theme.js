@@ -106,8 +106,10 @@ const theme = createTheme({
     MuiAppBar: {
       defaultProps: { elevation: 0 },
       styleOverrides: {
+        // Applied to the root <header> — keep in sync with the AppBar `sx` in
+        // pages/index.js (this override otherwise wins over an inline `sx`).
         colorPrimary: {
-          backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navy} 100%)`,
+          backgroundImage: 'linear-gradient(90deg, #4584db 0%, #4585db 60%, #4787d1 100%)',
         },
       },
     },

@@ -1445,9 +1445,9 @@ const InnerPage = () => {
   // Vertical blue gradient — deeper at the top, fading to a light blue at the
   // bottom (matches the reference design).
   const drawerPaperSx = {
-    // Top stop matches the AppBar gradient's left-edge colour (#3e7ed8) so the
+    // Top stop matches the AppBar gradient's left-edge colour (#4584db) so the
     // two meet seamlessly at the top-left corner.
-    backgroundImage: 'linear-gradient(180deg, #3e7ed8 0%, #5c9ae4 42%, #a9c9ec 100%)',
+    backgroundImage: 'linear-gradient(180deg, #4584db 0%, #5c9ae4 42%, #a9c9ec 100%)',
     backgroundColor: '#5c9ae4',
     color: '#ffffff',
     borderRight: 'none',
@@ -1593,7 +1593,7 @@ const InnerPage = () => {
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           backgroundImage:
-            'linear-gradient(90deg, #3e7ed8 0%, #3676d3 60%, #4787d1 100%)',
+            'linear-gradient(90deg, #4584db 0%, #4585db 60%, #4787d1 100%)',
         }}
       >
         <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
