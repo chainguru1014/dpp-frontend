@@ -1443,7 +1443,7 @@ const InnerPage = () => {
 
   // Shared styling for both the desktop sidebar and the mobile overlay drawer.
   const drawerPaperSx = {
-    backgroundColor: '#1a4a70',
+    backgroundColor: '#1f5885',
     color: '#ffffff',
     borderRight: 'none',
     overflowX: 'hidden',

@@ -103,7 +103,7 @@ function VideoCell({ video }) {
 // row is selected — brand identity top-left, media strip on the right (images
 // first, then any YouTube videos, all quarter-width so four are always fully
 // visible; horizontal-scrolls past four), the 5 structured detail facts, and
-// the 5 row-level actions (Preview DPP / Transfer History / Print Code /
+// the 5 row-level actions (Preview DPP / Transfer History / Generate Code /
 // Edit / Remove) bottom-right.
 export default function ProductDraftCard({ product, onPreview, onTransferHistory, onPrintCode, onEdit, onRemove }) {
   if (!product) return null;
@@ -198,7 +198,7 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
       <Stack direction="row" spacing={1.25} justifyContent="flex-end" flexWrap="wrap" useFlexGap sx={{ mt: 2.5 }}>
         <Button variant="outlined" color="primary" startIcon={<VisibilityIcon />} onClick={onPreview}>Preview DPP</Button>
         <Button variant="outlined" color="primary" startIcon={<HistoryIcon />} onClick={onTransferHistory}>Transfer History</Button>
-        <Button variant="outlined" color="primary" startIcon={<PrintIcon />} onClick={onPrintCode}>Print Code</Button>
+        <Button variant="outlined" color="primary" startIcon={<PrintIcon />} onClick={onPrintCode}>Generate Code</Button>
         <Button variant="outlined" color="primary" startIcon={<EditIcon />} onClick={onEdit}>Edit Product</Button>
         <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={onRemove}>Remove Product</Button>
       </Stack>
