@@ -1445,7 +1445,9 @@ const InnerPage = () => {
   // Vertical blue gradient — deeper at the top, fading to a light blue at the
   // bottom (matches the reference design).
   const drawerPaperSx = {
-    backgroundImage: 'linear-gradient(180deg, #3a82db 0%, #5c9ae4 38%, #a9c9ec 100%)',
+    // Top stop matches the AppBar gradient's left-edge colour (#2c6ccf) so the
+    // two meet seamlessly at the top-left corner.
+    backgroundImage: 'linear-gradient(180deg, #2c6ccf 0%, #5c9ae4 42%, #a9c9ec 100%)',
     backgroundColor: '#5c9ae4',
     color: '#ffffff',
     borderRight: 'none',
@@ -1466,23 +1468,14 @@ const InnerPage = () => {
     '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 20, [compactMediaQuery]: { fontSize: 18 } },
     '& .MuiListItemText-primary': { fontSize: '0.9rem', fontWeight: 500, color: '#ffffff', [compactMediaQuery]: { fontSize: '0.82rem' } },
     '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.16)' },
-    // Selected item: a translucent white "card" with a light border, and the
-    // icon in a small rounded badge — per the reference design.
+    // Selected item: a translucent white "card" with a light border — per the
+    // reference design. Icon stays a plain glyph (no badge behind it).
     '& .MuiListItemButton-root.Mui-selected': {
       backgroundColor: 'rgba(255,255,255,0.22)',
       borderColor: 'rgba(255,255,255,0.75)',
     },
     '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.3)' },
-    '& .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root': {
-      color: '#ffffff',
-      backgroundColor: 'rgba(255,255,255,0.28)',
-      borderRadius: 1.5,
-      width: 30,
-      height: 30,
-      minWidth: 30,
-      mr: 1,
-      alignItems: 'center',
-    },
+    '& .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root': { color: '#ffffff' },
     '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { color: '#ffffff', fontWeight: 700 },
   };
   const navList = (
