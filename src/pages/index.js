@@ -77,7 +77,6 @@ import yometelLogoWhite from '../assets/yometel-logo-white.png';
 import ProfilePage from '../features/profile/ProfilePage';
 import EmployeeManagementPage from '../features/employee-audit/EmployeeManagementPage';
 import ProcessStepsPage from '../features/process-steps/ProcessStepsPage';
-import ConsumerLocationStepsPage from '../features/consumer-steps/ConsumerLocationStepsPage';
 import CaptureHistoryPage from '../features/capture-history/CaptureHistoryPage';
 import ProductsTable from '../features/products/ProductsTable';
 import ProductDraftCard from '../features/products/ProductDraftCard';
@@ -1519,14 +1518,6 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
-      {isAdmin && !isEmployeeActor && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'consumerLocationSteps'} onClick={() => go('consumerLocationSteps')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><FormatListNumberedIcon /></ListItemIcon>
-            <ListItemText primary="Process Step Labels (Consumer)" />
-          </ListItemButton>
-        </ListItem>
-      )}
       {/* Capture History: a Supervisor (or a plain Company/brand account)
           reviewing every working employee's capture activity for their
           company. */}
@@ -1778,10 +1769,6 @@ const InnerPage = () => {
 
           {activePage === 'captureHistory' && !isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
             <CaptureHistoryPage token={token} />
-          )}
-
-          {activePage === 'consumerLocationSteps' && isAdmin && !isEmployeeActor && (
-            <ConsumerLocationStepsPage token={token} />
           )}
 
           {activePage === 'products' && (
