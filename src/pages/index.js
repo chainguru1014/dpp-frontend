@@ -193,8 +193,13 @@ const InnerPage = () => {
     detail: DEFAULT_BRAND_DETAIL,
     websiteUrl: DEFAULT_BRAND_WEBSITE,
     logoUrl: '',
+    coverUrl: '',
   });
   const [isUploadingBrandLogo, setIsUploadingBrandLogo] = useState(false);
+  const [isUploadingBrandCover, setIsUploadingBrandCover] = useState(false);
+  // Lifecycle extras (app: Product Lifecycle screen). All optional.
+  const [certifications, setCertifications] = useState([]);
+  const [sustainabilityImpact, setSustainabilityImpact] = useState({ co2Avoided: '', waterSaved: '', energySaved: '' });
   // selectedProduct is initialized above with localStorage
   const [mintAmount, setMintAmount] = useState(0);
   const [qrcodes, setQrCodes] = useState([]);
@@ -256,7 +261,7 @@ const InnerPage = () => {
   const [isEditing, setIsEditing] = useState(0);
 
   const [materialSize, setMaterialSize] = useState({ size: '', materials: [] });
-  const [maintenance, setMaintenance] = useState({ iconIds: [], description: '' });
+  const [maintenance, setMaintenance] = useState({ iconIds: [], description: '', tips: [] });
   const [disposal, setDisposal] = useState({
     repairUrl: '',
     reuseUrl: '',
@@ -265,11 +270,13 @@ const InnerPage = () => {
   });
   const [traceabilityEsg, setTraceabilityEsg] = useState({
     madeIn: '',
+    originCountry: '',
     materialOrigins: [],
     shippingLog: '',
     distance: '',
     co2Production: '',
     co2Transportation: '',
+    route: { origin: '', destination: '', mode: '', emissions: '' },
   });
 
   const [openPrintModal, setOpenPrintModal] = useState(false);
@@ -543,8 +550,12 @@ const InnerPage = () => {
       detail: DEFAULT_BRAND_DETAIL,
       websiteUrl: DEFAULT_BRAND_WEBSITE,
       logoUrl: '',
+      coverUrl: '',
     });
     setIsUploadingBrandLogo(false);
+    setIsUploadingBrandCover(false);
+    setCertifications([]);
+    setSustainabilityImpact({ co2Avoided: '', waterSaved: '', energySaved: '' });
     setProductImages([]);
     setWGImages([]);
     setMCImages([]);
@@ -580,15 +591,17 @@ const InnerPage = () => {
     setIsEditing(0);
     setUpdates(0);
     setMaterialSize({ size: '', materials: [] });
-    setMaintenance({ iconIds: [], description: '' });
+    setMaintenance({ iconIds: [], description: '', tips: [] });
     setDisposal({ repairUrl: '', reuseUrl: '', rentalUrl: '', disposeUrl: '' });
     setTraceabilityEsg({
       madeIn: '',
+      originCountry: '',
       materialOrigins: [],
       shippingLog: '',
       distance: '',
       co2Production: '',
       co2Transportation: '',
+      route: { origin: '', destination: '', mode: '', emissions: '' },
     });
   };
 
@@ -611,6 +624,29 @@ const InnerPage = () => {
       alert('Failed to upload brand logo');
     } finally {
       setIsUploadingBrandLogo(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleBrandCoverChange = async (event) => {
+    event.stopPropagation();
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingBrandCover(true);
+      const body = new FormData();
+      body.append('file', file);
+      const uploadedUrl = await uploadFile(body);
+      if (uploadedUrl) {
+        setBrandInfo((prev) => ({ ...prev, coverUrl: uploadedUrl }));
+      } else {
+        alert('Failed to upload brand cover image');
+      }
+    } catch (error) {
+      console.error('Brand cover upload failed:', error);
+      alert('Failed to upload brand cover image');
+    } finally {
+      setIsUploadingBrandCover(false);
       event.target.value = '';
     }
   };
@@ -643,6 +679,8 @@ const InnerPage = () => {
       maintenance,
       disposal,
       traceabilityEsg,
+      certifications,
+      sustainabilityImpact,
       warrantyAndGuarantee: {
         images: wgImages,
         files: wgFiles,
@@ -704,6 +742,8 @@ const InnerPage = () => {
       maintenance,
       disposal,
       traceabilityEsg,
+      certifications,
+      sustainabilityImpact,
       warrantyAndGuarantee: {
         images: wgImages,
         files: wgFiles,
@@ -772,6 +812,13 @@ const InnerPage = () => {
       detail: prod.brandInfo?.detail || DEFAULT_BRAND_DETAIL,
       websiteUrl: prod.brandInfo?.websiteUrl || DEFAULT_BRAND_WEBSITE,
       logoUrl: prod.brandInfo?.logoUrl || '',
+      coverUrl: prod.brandInfo?.coverUrl || '',
+    });
+    setCertifications(Array.isArray(prod.certifications) ? prod.certifications : []);
+    setSustainabilityImpact({
+      co2Avoided: prod.sustainabilityImpact?.co2Avoided || '',
+      waterSaved: prod.sustainabilityImpact?.waterSaved || '',
+      energySaved: prod.sustainabilityImpact?.energySaved || '',
     });
     setProductImages(Array.isArray(prod.images) ? prod.images : []);
     setWGImages(Array.isArray(wg.images) ? wg.images : []);
@@ -807,21 +854,32 @@ const InnerPage = () => {
       ? { size: prod.materialSize.size || '', materials: Array.isArray(prod.materialSize.materials) ? prod.materialSize.materials : [] }
       : { size: '', materials: [] });
     setMaintenance(prod.maintenance
-      ? { iconIds: Array.isArray(prod.maintenance.iconIds) ? prod.maintenance.iconIds : [], description: prod.maintenance.description || '' }
-      : { iconIds: [], description: '' });
+      ? {
+          iconIds: Array.isArray(prod.maintenance.iconIds) ? prod.maintenance.iconIds : [],
+          description: prod.maintenance.description || '',
+          tips: Array.isArray(prod.maintenance.tips) ? prod.maintenance.tips : [],
+        }
+      : { iconIds: [], description: '', tips: [] });
     setDisposal(prod.disposal
       ? { repairUrl: prod.disposal.repairUrl || '', reuseUrl: prod.disposal.reuseUrl || '', rentalUrl: prod.disposal.rentalUrl || '', disposeUrl: prod.disposal.disposeUrl || '' }
       : { repairUrl: '', reuseUrl: '', rentalUrl: '', disposeUrl: '' });
     setTraceabilityEsg(prod.traceabilityEsg
       ? {
           madeIn: prod.traceabilityEsg.madeIn || '',
+          originCountry: prod.traceabilityEsg.originCountry || '',
           materialOrigins: Array.isArray(prod.traceabilityEsg.materialOrigins) ? prod.traceabilityEsg.materialOrigins : [],
           shippingLog: prod.traceabilityEsg.shippingLog || '',
           distance: prod.traceabilityEsg.distance || '',
           co2Production: prod.traceabilityEsg.co2Production || '',
           co2Transportation: prod.traceabilityEsg.co2Transportation || '',
+          route: {
+            origin: prod.traceabilityEsg.route?.origin || '',
+            destination: prod.traceabilityEsg.route?.destination || '',
+            mode: prod.traceabilityEsg.route?.mode || '',
+            emissions: prod.traceabilityEsg.route?.emissions || '',
+          },
         }
-      : { madeIn: '', materialOrigins: [], shippingLog: '', distance: '', co2Production: '', co2Transportation: '' });
+      : { madeIn: '', originCountry: '', materialOrigins: [], shippingLog: '', distance: '', co2Production: '', co2Transportation: '', route: { origin: '', destination: '', mode: '', emissions: '' } });
     setActivePage('newProduct');
   };
 
@@ -2194,6 +2252,22 @@ const InnerPage = () => {
                         sx={{ width: 92, height: 92, objectFit: 'contain', border: '1px solid #ccc', borderRadius: 1, mb: 2 }}
                       />
                     ) : null}
+                    <Typography sx={{ mb: 1 }}>Brand Cover Image (Optional)</Typography>
+                    <Button variant="outlined" component="label" disabled={isUploadingBrandCover}>
+                      {isUploadingBrandCover ? 'Uploading...' : 'Upload Brand Cover'}
+                      <input type="file" accept="image/*" hidden onChange={handleBrandCoverChange} />
+                    </Button>
+                    <Typography sx={{ mt: 1, mb: 2, color: 'text.secondary' }}>
+                      {brandInfo.coverUrl ? `Uploaded: ${brandInfo.coverUrl}` : 'No brand cover uploaded'}
+                    </Typography>
+                    {brandInfo.coverUrl ? (
+                      <Box
+                        component="img"
+                        src={getFileUrl(brandInfo.coverUrl)}
+                        alt="Brand cover"
+                        sx={{ width: '100%', maxWidth: 320, height: 100, objectFit: 'cover', border: '1px solid #ccc', borderRadius: 1, mb: 2 }}
+                      />
+                    ) : null}
                     <Typography sx={{ mb: 1 }}>Images</Typography>
                     <Typography sx={{ ml: 2, display: 'inline-block' }}>
                       Select images:
@@ -2451,6 +2525,18 @@ const InnerPage = () => {
                           }}
                           sx={{ width: 80 }}
                         />
+                        <TextField
+                          label="Origin (optional)"
+                          variant="outlined"
+                          size="small"
+                          value={row.origin || ''}
+                          onChange={(e) => {
+                            const next = [...materialSize.materials];
+                            next[i] = { ...next[i], origin: e.target.value };
+                            setMaterialSize((prev) => ({ ...prev, materials: next }));
+                          }}
+                          sx={{ minWidth: 120 }}
+                        />
                       </Box>
                     ))}
                   </Box>
@@ -2617,6 +2703,54 @@ const InnerPage = () => {
                       value={traceabilityEsg.co2Transportation}
                       onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Transportation: e.target.value }))}
                     />
+
+                    <Typography sx={{ mt: 3, mb: 1, fontWeight: 600 }}>App Lifecycle extras (optional)</Typography>
+                    <TextField
+                      label="Country of Origin"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ mb: 2 }}
+                      value={traceabilityEsg.originCountry}
+                      onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, originCountry: e.target.value }))}
+                    />
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                      <TextField label="Route origin" size="small" value={traceabilityEsg.route.origin}
+                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, origin: e.target.value } }))} />
+                      <TextField label="Route destination" size="small" value={traceabilityEsg.route.destination}
+                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, destination: e.target.value } }))} />
+                      <TextField label="Transport mode" size="small" value={traceabilityEsg.route.mode}
+                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, mode: e.target.value } }))} />
+                      <TextField label="Route emissions (e.g. 18.6 kg CO2e)" size="small" value={traceabilityEsg.route.emissions}
+                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, emissions: e.target.value } }))} />
+                    </Box>
+                    <TextField
+                      label="Certifications (comma-separated)"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ mb: 2 }}
+                      value={certifications.join(', ')}
+                      onChange={(e) => setCertifications(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                    />
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                      <TextField label="CO2 avoided (e.g. 12.4 kg)" size="small" value={sustainabilityImpact.co2Avoided}
+                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, co2Avoided: e.target.value }))} />
+                      <TextField label="Water saved (e.g. 320 L)" size="small" value={sustainabilityImpact.waterSaved}
+                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, waterSaved: e.target.value }))} />
+                      <TextField label="Energy saved (e.g. 18.7 MJ)" size="small" value={sustainabilityImpact.energySaved}
+                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, energySaved: e.target.value }))} />
+                    </Box>
+                    <TextField
+                      label="Care tips (one per line)"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      multiline
+                      minRows={3}
+                      value={(maintenance.tips || []).join('\n')}
+                      onChange={(e) => setMaintenance((prev) => ({ ...prev, tips: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) }))}
+                    />
                   </Box>
                 )}
                 </>
@@ -2694,6 +2828,8 @@ const InnerPage = () => {
                   maintenance,
                   disposal,
                   traceabilityEsg,
+                  certifications,
+                  sustainabilityImpact,
                   warrantyAndGuarantee: {
                     images: wgImages,
                     files: wgFiles,
