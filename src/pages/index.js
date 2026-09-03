@@ -205,7 +205,7 @@ const InnerPage = () => {
   const [isUploadingBrandCover, setIsUploadingBrandCover] = useState(false);
   // Lifecycle extras (app: Product Lifecycle screen). All optional.
   const [certifications, setCertifications] = useState([]);
-  const [sustainabilityImpact, setSustainabilityImpact] = useState({ co2Avoided: '', waterSaved: '', energySaved: '' });
+  const [sustainabilityImpact, setSustainabilityImpact] = useState({ co2Avoided: '', waterSaved: '', energySaved: '', items: [] });
   // selectedProduct is initialized above with localStorage
   const [mintAmount, setMintAmount] = useState(0);
   const [qrcodes, setQrCodes] = useState([]);
@@ -567,7 +567,7 @@ const InnerPage = () => {
     setIsUploadingBrandLogo(false);
     setIsUploadingBrandCover(false);
     setCertifications([]);
-    setSustainabilityImpact({ co2Avoided: '', waterSaved: '', energySaved: '' });
+    setSustainabilityImpact({ co2Avoided: '', waterSaved: '', energySaved: '', items: [] });
     setProductImages([]);
     setWGImages([]);
     setMCImages([]);
@@ -663,6 +663,23 @@ const InnerPage = () => {
     }
   };
 
+  // Generic small-icon upload for certification / material-origin / impact rows.
+  const uploadRowIcon = async (event, apply) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const url = await uploadFile(body);
+      if (url) apply(url);
+      else alert('Failed to upload icon');
+    } catch (e) {
+      alert('Failed to upload icon');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
   const addProductHandler = async () => {
     if (
       productName === ''
@@ -722,7 +739,7 @@ const InnerPage = () => {
     await loadProductsForCurrentCompany();
     resetFields();
     // Redirect to previous page (dashboard or products)
-    setActivePage(previousPage);
+    setActivePage(previousPage === 'newProduct' ? 'products' : (previousPage || 'products'));
   };
 
   const updateProductHandler = async () => {
@@ -785,7 +802,7 @@ const InnerPage = () => {
     await loadProductsForCurrentCompany();
     resetFields();
     // Close the form and go back to where we came from (same as Add).
-    setActivePage(previousPage);
+    setActivePage(previousPage === 'newProduct' ? 'products' : (previousPage || 'products'));
   };
 
   useEffect(() => {
@@ -834,11 +851,16 @@ const InnerPage = () => {
       logoUrl: prod.brandInfo?.logoUrl || '',
       coverUrl: prod.brandInfo?.coverUrl || '',
     });
-    setCertifications(Array.isArray(prod.certifications) ? prod.certifications : []);
+    setCertifications(
+      Array.isArray(prod.certifications)
+        ? prod.certifications.map((c) => (typeof c === 'string' ? { icon: '', title: c, content: '' } : { icon: c.icon || '', title: c.title || '', content: c.content || '' }))
+        : []
+    );
     setSustainabilityImpact({
       co2Avoided: prod.sustainabilityImpact?.co2Avoided || '',
       waterSaved: prod.sustainabilityImpact?.waterSaved || '',
       energySaved: prod.sustainabilityImpact?.energySaved || '',
+      items: Array.isArray(prod.sustainabilityImpact?.items) ? prod.sustainabilityImpact.items : [],
     });
     setProductImages(Array.isArray(prod.images) ? prod.images : []);
     setWGImages(Array.isArray(wg.images) ? wg.images : []);
@@ -2705,8 +2727,26 @@ const InnerPage = () => {
                             next[i] = { ...next[i], companyName: e.target.value };
                             setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
                           }}
-                          sx={{ minWidth: 160 }}
+                          sx={{ minWidth: 140 }}
                         />
+                        <TextField
+                          label="Country" size="small"
+                          value={row.country || ''}
+                          onChange={(e) => {
+                            const next = [...traceabilityEsg.materialOrigins];
+                            next[i] = { ...next[i], country: e.target.value };
+                            setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
+                          }}
+                          sx={{ minWidth: 100 }}
+                        />
+                        <Button variant="outlined" component="label" size="small">
+                          {row.icon ? 'Icon ✓' : 'Icon'}
+                          <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
+                            const next = [...traceabilityEsg.materialOrigins];
+                            next[i] = { ...next[i], icon: url };
+                            setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
+                          })} />
+                        </Button>
                       </Box>
                     ))}
                     <Typography sx={{ mb: 1, mt: 2 }}>Shipping log (e.g. Sri Lanka to Italy)</Typography>
@@ -2769,21 +2809,53 @@ const InnerPage = () => {
                       <TextField label="Route emissions (e.g. 18.6 kg CO2e)" size="small" value={traceabilityEsg.route.emissions}
                         onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, emissions: e.target.value } }))} />
                     </Box>
-                    <TextField
-                      label="Certifications (comma-separated)"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      sx={{ mb: 2 }}
-                      value={certifications.join(', ')}
-                      onChange={(e) => setCertifications(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
-                    />
+                    <Typography sx={{ mb: 1, fontWeight: 600 }}>Certifications</Typography>
+                    <Button variant="outlined" size="small" sx={{ mb: 1 }}
+                      onClick={() => setCertifications((prev) => [...prev, { icon: '', title: '', content: '' }])}>+ Certification</Button>
+                    {certifications.map((c, i) => (
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Button variant="outlined" component="label" size="small">
+                          {c.icon ? 'Icon ✓' : 'Icon'}
+                          <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
+                            const next = [...certifications]; next[i] = { ...next[i], icon: url }; setCertifications(next);
+                          })} />
+                        </Button>
+                        <TextField label="Title" size="small" value={c.title || ''}
+                          onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], title: e.target.value }; setCertifications(next); }} />
+                        <TextField label="Content" size="small" value={c.content || ''} sx={{ flex: 1 }}
+                          onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], content: e.target.value }; setCertifications(next); }} />
+                        <Button size="small" color="error" onClick={() => setCertifications(certifications.filter((_, x) => x !== i))}>×</Button>
+                      </Box>
+                    ))}
+
+                    <Typography sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Sustainability Impact (Dispose tab)</Typography>
+                    <Button variant="outlined" size="small" sx={{ mb: 1 }}
+                      onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: [...(prev.items || []), { icon: '', value: '', label: '', description: '' }] }))}>+ Impact item</Button>
+                    {(sustainabilityImpact.items || []).map((it, i) => (
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
+                        <Button variant="outlined" component="label" size="small">
+                          {it.icon ? 'Icon ✓' : 'Icon'}
+                          <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
+                            const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], icon: url };
+                            setSustainabilityImpact((prev) => ({ ...prev, items: next }));
+                          })} />
+                        </Button>
+                        <TextField label="Value (e.g. 12.4 kg)" size="small" value={it.value || ''}
+                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], value: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
+                        <TextField label="Label (e.g. CO2e Avoided)" size="small" value={it.label || ''}
+                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], label: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
+                        <TextField label="Description" size="small" value={it.description || ''} sx={{ flex: 1 }}
+                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], description: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
+                        <Button size="small" color="error" onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: prev.items.filter((_, x) => x !== i) }))}>×</Button>
+                      </Box>
+                    ))}
+                    <Typography variant="caption" color="text.secondary">Legacy quick fields (still shown if no items above):</Typography>
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                      <TextField label="CO2 avoided (e.g. 12.4 kg)" size="small" value={sustainabilityImpact.co2Avoided}
+                      <TextField label="CO2 avoided" size="small" value={sustainabilityImpact.co2Avoided}
                         onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, co2Avoided: e.target.value }))} />
-                      <TextField label="Water saved (e.g. 320 L)" size="small" value={sustainabilityImpact.waterSaved}
+                      <TextField label="Water saved" size="small" value={sustainabilityImpact.waterSaved}
                         onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, waterSaved: e.target.value }))} />
-                      <TextField label="Energy saved (e.g. 18.7 MJ)" size="small" value={sustainabilityImpact.energySaved}
+                      <TextField label="Energy saved" size="small" value={sustainabilityImpact.energySaved}
                         onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, energySaved: e.target.value }))} />
                     </Box>
                     <TextField
