@@ -23,6 +23,9 @@ import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturi
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import RecyclingIcon from '@mui/icons-material/Recycling';
+import GridViewIcon from '@mui/icons-material/GridView';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import CameraIcon from '../../assets/camera_icon.png';
 import YoutubeIcon from '../../assets/youtube-icon.png';
 import { getFileUrl, normalizeProductVideos } from '../../helper';
@@ -338,6 +341,38 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
               Scan Another Product
             </Box>
           </Box>
+        </Box>
+
+        {/* Product bottom bar — Overview / Lifecycle / More (matches AppLayout) */}
+        <Box
+          sx={{
+            flexShrink: 0,
+            height: 58,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-around',
+            px: 1,
+            bgcolor: C.surface,
+            borderTop: `1px solid ${C.border}`,
+            borderTopLeftRadius: 24,
+            borderTopRightRadius: 24,
+          }}
+        >
+          {[
+            { label: 'Overview', Icon: GridViewIcon, active: true },
+            { label: 'Lifecycle', Icon: AutorenewIcon, active: false },
+            { label: 'More', Icon: MoreHorizIcon, active: false },
+          ].map((tab) => (
+            <Box key={tab.label} sx={{ flex: 1, position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <tab.Icon sx={{ fontSize: 22, color: tab.active ? C.primary : '#7a8aa3' }} />
+              <Typography sx={{ fontSize: 10, mt: 0.4, color: tab.active ? C.primary : '#333', fontWeight: tab.active ? 600 : 400 }}>
+                {tab.label}
+              </Typography>
+              {tab.active && (
+                <Box sx={{ position: 'absolute', bottom: 0, width: 34, height: 3, borderRadius: 1, bgcolor: C.primary }} />
+              )}
+            </Box>
+          ))}
         </Box>
 
         <VideoPlayerDialog open={Boolean(dialogVideoId)} onClose={() => setDialogVideoId(null)} videoId={dialogVideoId} />
