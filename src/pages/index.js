@@ -187,6 +187,12 @@ const InnerPage = () => {
   const [productName, setProductName] = useState('');
   const [productModel, setProductModel] = useState('');
   const [productDetail, setProductDetail] = useState('');
+  const [productType, setProductType] = useState('');
+  const [color, setColor] = useState('');
+  const [size, setSize] = useState('');
+  const [manufactureDate, setManufactureDate] = useState('');
+  const [warrantyStatus, setWarrantyStatus] = useState('');
+  const [warrantyValidYears, setWarrantyValidYears] = useState(0);
   const [detailFacts, setDetailFacts] = useState({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
   const [brandInfo, setBrandInfo] = useState({
     name: DEFAULT_BRAND_NAME,
@@ -544,6 +550,12 @@ const InnerPage = () => {
     setProductName('');
     setProductModel('');
     setProductDetail('');
+    setProductType('');
+    setColor('');
+    setSize('');
+    setManufactureDate('');
+    setWarrantyStatus('');
+    setWarrantyValidYears(0);
     setDetailFacts({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
     setBrandInfo({
       name: DEFAULT_BRAND_NAME,
@@ -654,7 +666,6 @@ const InnerPage = () => {
   const addProductHandler = async () => {
     if (
       productName === ''
-      || productDetail === ''
       || productImages.length === 0
       || !brandInfo.name.trim()
       || !brandInfo.detail.trim()
@@ -668,6 +679,7 @@ const InnerPage = () => {
       name: productName,
       model: productModel,
       detail: productDetail,
+      productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
       detailFacts,
       brandInfo,
       company_id: company._id,
@@ -716,7 +728,6 @@ const InnerPage = () => {
   const updateProductHandler = async () => {
     if (
       productName === ''
-      || productDetail === ''
       || productImages.length === 0
       || !brandInfo.name.trim()
       || !brandInfo.detail.trim()
@@ -731,6 +742,7 @@ const InnerPage = () => {
       name: productName,
       model: productModel,
       detail: productDetail,
+      productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
       detailFacts,
       brandInfo,
       company_id: company._id,
@@ -772,6 +784,8 @@ const InnerPage = () => {
     });
     await loadProductsForCurrentCompany();
     resetFields();
+    // Close the form and go back to where we came from (same as Add).
+    setActivePage(previousPage);
   };
 
   useEffect(() => {
@@ -800,6 +814,12 @@ const InnerPage = () => {
     setProductName(prod.name || '');
     setProductModel(prod.model || '');
     setProductDetail(prod.detail || '');
+    setProductType(prod.productType || '');
+    setColor(prod.color || '');
+    setSize(prod.size || '');
+    setManufactureDate(prod.manufactureDate || '');
+    setWarrantyStatus(prod.warrantyStatus || '');
+    setWarrantyValidYears(Number(prod.warrantyValidYears) || 0);
     setDetailFacts({
       material: prod.detailFacts?.material || '',
       fit: prod.detailFacts?.fit || '',
@@ -2034,7 +2054,6 @@ const InnerPage = () => {
                     disabled={
                       !(
                         productName !== '' &&
-                        productDetail !== '' &&
                         productImages.length > 0 &&
                         brandInfo.name.trim() !== '' &&
                         brandInfo.detail.trim() !== '' &&
@@ -2052,7 +2071,6 @@ const InnerPage = () => {
                       disabled={
                         !(
                           productName !== '' &&
-                          productDetail !== '' &&
                           productImages.length > 0 &&
                           brandInfo.name.trim() !== '' &&
                           brandInfo.detail.trim() !== '' &&
@@ -2070,7 +2088,6 @@ const InnerPage = () => {
                       disabled={
                         !(
                           productName !== '' &&
-                          productDetail !== '' &&
                           productImages.length > 0
                         )
                       }
@@ -2153,19 +2170,32 @@ const InnerPage = () => {
                       multiline
                       sx={{ mb: 2 }}
                     />
-                    <Typography sx={{ mb: 1 }}>Details (Description)</Typography>
-                    <TextField
-                      label="Details"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={productDetail}
-                      onChange={(e) => setProductDetail(e.target.value)}
-                      multiline
-                      sx={{ mb: 2 }}
-                    />
                     <Typography sx={{ mb: 1 }}>Product Details</Typography>
                     <Stack spacing={1.5} sx={{ mb: 2 }}>
+                      <TextField
+                        label="Product Type" placeholder="e.g. Men's Outerwear"
+                        variant="outlined" size="small" fullWidth
+                        value={productType}
+                        onChange={(e) => setProductType(e.target.value)}
+                      />
+                      <TextField
+                        label="Color" placeholder="e.g. Midnight Black"
+                        variant="outlined" size="small" fullWidth
+                        value={color}
+                        onChange={(e) => setColor(e.target.value)}
+                      />
+                      <TextField
+                        label="Size" placeholder="e.g. M"
+                        variant="outlined" size="small" fullWidth
+                        value={size}
+                        onChange={(e) => setSize(e.target.value)}
+                      />
+                      <TextField
+                        label="Manufacture Date" placeholder="e.g. 2024-08-10"
+                        variant="outlined" size="small" fullWidth
+                        value={manufactureDate}
+                        onChange={(e) => setManufactureDate(e.target.value)}
+                      />
                       <TextField
                         label="Material" placeholder="e.g. 99% Cotton, 1% Elastane"
                         variant="outlined" size="small" fullWidth
@@ -2195,6 +2225,21 @@ const InnerPage = () => {
                         variant="outlined" size="small" fullWidth
                         value={detailFacts.traceableIdentity}
                         onChange={(e) => setDetailFacts((prev) => ({ ...prev, traceableIdentity: e.target.value }))}
+                      />
+                    </Stack>
+                    <Typography sx={{ mb: 1 }}>Warranty</Typography>
+                    <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+                      <TextField
+                        label="Warranty Status" placeholder="e.g. Active"
+                        variant="outlined" size="small"
+                        value={warrantyStatus}
+                        onChange={(e) => setWarrantyStatus(e.target.value)}
+                      />
+                      <TextField
+                        label="Valid for (years)" type="number"
+                        variant="outlined" size="small"
+                        value={warrantyValidYears}
+                        onChange={(e) => setWarrantyValidYears(Number(e.target.value) || 0)}
                       />
                     </Stack>
                     <Typography sx={{ mb: 1 }}>Brand Name (Required)</Typography>
@@ -2818,6 +2863,7 @@ const InnerPage = () => {
                   name: productName,
                   model: productModel,
                   detail: productDetail,
+                  productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
                   detailFacts,
                   brandInfo,
                   company_id: company._id,
