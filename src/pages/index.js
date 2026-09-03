@@ -2167,6 +2167,7 @@ const InnerPage = () => {
                   <Tab label="Maintenance" />
                   <Tab label="Dispose" />
                   <Tab label="Traceability/ESG" />
+                  <Tab label="Warranty" />
                 </Tabs>
                 {detailTab === 0 && (
                   <Box>
@@ -2249,21 +2250,26 @@ const InnerPage = () => {
                         onChange={(e) => setDetailFacts((prev) => ({ ...prev, traceableIdentity: e.target.value }))}
                       />
                     </Stack>
-                    <Typography sx={{ mb: 1 }}>Warranty</Typography>
-                    <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
-                      <TextField
-                        label="Warranty Status" placeholder="e.g. Active"
-                        variant="outlined" size="small"
-                        value={warrantyStatus}
-                        onChange={(e) => setWarrantyStatus(e.target.value)}
-                      />
-                      <TextField
-                        label="Valid for (years)" type="number"
-                        variant="outlined" size="small"
-                        value={warrantyValidYears}
-                        onChange={(e) => setWarrantyValidYears(Number(e.target.value) || 0)}
-                      />
-                    </Stack>
+                    <Typography sx={{ mt: 2, mb: 1, fontWeight: 600 }}>App Lifecycle extras (optional)</Typography>
+                    <TextField
+                      label="Country of Origin"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      sx={{ mb: 2 }}
+                      value={traceabilityEsg.originCountry}
+                      onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, originCountry: e.target.value }))}
+                    />
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                      <TextField label="Route origin" size="small" value={traceabilityEsg.route.origin}
+                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, origin: e.target.value } }))} />
+                      <TextField label="Route destination" size="small" value={traceabilityEsg.route.destination}
+                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, destination: e.target.value } }))} />
+                      <TextField label="Transport mode" size="small" value={traceabilityEsg.route.mode}
+                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, mode: e.target.value } }))} />
+                      <TextField label="Route emissions (e.g. 18.6 kg CO2e)" size="small" value={traceabilityEsg.route.emissions}
+                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, emissions: e.target.value } }))} />
+                    </Box>
                     <Typography sx={{ mb: 1 }}>Brand Name (Required)</Typography>
                     <TextField
                       label="Brand Name"
@@ -2606,6 +2612,24 @@ const InnerPage = () => {
                         />
                       </Box>
                     ))}
+                    <Typography sx={{ mt: 3, mb: 1, fontWeight: 600 }}>Certifications (Materials tab)</Typography>
+                    <Button variant="outlined" size="small" sx={{ mb: 1 }}
+                      onClick={() => setCertifications((prev) => [...prev, { icon: '', title: '', content: '' }])}>+ Certification</Button>
+                    {certifications.map((c, i) => (
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Button variant="outlined" component="label" size="small">
+                          {c.icon ? 'Icon ✓' : 'Icon'}
+                          <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
+                            const next = [...certifications]; next[i] = { ...next[i], icon: url }; setCertifications(next);
+                          })} />
+                        </Button>
+                        <TextField label="Title" size="small" value={c.title || ''}
+                          onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], title: e.target.value }; setCertifications(next); }} />
+                        <TextField label="Content" size="small" value={c.content || ''} sx={{ flex: 1 }}
+                          onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], content: e.target.value }; setCertifications(next); }} />
+                        <Button size="small" color="error" onClick={() => setCertifications(certifications.filter((_, x) => x !== i))}>×</Button>
+                      </Box>
+                    ))}
                   </Box>
                 )}
                 {detailTab === 2 && (
@@ -2630,6 +2654,17 @@ const InnerPage = () => {
                       multiline
                       value={maintenance.description}
                       onChange={(e) => setMaintenance((prev) => ({ ...prev, description: e.target.value }))}
+                    />
+                    <Typography sx={{ mt: 3, mb: 1 }}>Care tips (one per line — used on the app Care tab; auto-generated from the icons above when left blank)</Typography>
+                    <TextField
+                      label="Care tips (one per line)"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      multiline
+                      minRows={3}
+                      value={(maintenance.tips || []).join('\n')}
+                      onChange={(e) => setMaintenance((prev) => ({ ...prev, tips: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) }))}
                     />
                   </Box>
                 )}
@@ -2671,6 +2706,36 @@ const InnerPage = () => {
                       value={disposal.disposeUrl}
                       onChange={(e) => setDisposal((prev) => ({ ...prev, disposeUrl: e.target.value }))}
                     />
+                    <Typography sx={{ mt: 3, mb: 1, fontWeight: 600 }}>Sustainability Impact (Dispose tab)</Typography>
+                    <Button variant="outlined" size="small" sx={{ mb: 1 }}
+                      onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: [...(prev.items || []), { icon: '', value: '', label: '', description: '' }] }))}>+ Impact item</Button>
+                    {(sustainabilityImpact.items || []).map((it, i) => (
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
+                        <Button variant="outlined" component="label" size="small">
+                          {it.icon ? 'Icon ✓' : 'Icon'}
+                          <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
+                            const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], icon: url };
+                            setSustainabilityImpact((prev) => ({ ...prev, items: next }));
+                          })} />
+                        </Button>
+                        <TextField label="Value (e.g. 12.4 kg)" size="small" value={it.value || ''}
+                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], value: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
+                        <TextField label="Label (e.g. CO2e Avoided)" size="small" value={it.label || ''}
+                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], label: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
+                        <TextField label="Description" size="small" value={it.description || ''} sx={{ flex: 1 }}
+                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], description: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
+                        <Button size="small" color="error" onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: prev.items.filter((_, x) => x !== i) }))}>×</Button>
+                      </Box>
+                    ))}
+                    <Typography variant="caption" color="text.secondary">Legacy quick fields (still shown if no items above):</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                      <TextField label="CO2 avoided" size="small" value={sustainabilityImpact.co2Avoided}
+                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, co2Avoided: e.target.value }))} />
+                      <TextField label="Water saved" size="small" value={sustainabilityImpact.waterSaved}
+                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, waterSaved: e.target.value }))} />
+                      <TextField label="Energy saved" size="small" value={sustainabilityImpact.energySaved}
+                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, energySaved: e.target.value }))} />
+                    </Box>
                   </Box>
                 )}
                 {detailTab === 4 && (
@@ -2788,86 +2853,28 @@ const InnerPage = () => {
                       value={traceabilityEsg.co2Transportation}
                       onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Transportation: e.target.value }))}
                     />
-
-                    <Typography sx={{ mt: 3, mb: 1, fontWeight: 600 }}>App Lifecycle extras (optional)</Typography>
-                    <TextField
-                      label="Country of Origin"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      sx={{ mb: 2 }}
-                      value={traceabilityEsg.originCountry}
-                      onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, originCountry: e.target.value }))}
-                    />
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                      <TextField label="Route origin" size="small" value={traceabilityEsg.route.origin}
-                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, origin: e.target.value } }))} />
-                      <TextField label="Route destination" size="small" value={traceabilityEsg.route.destination}
-                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, destination: e.target.value } }))} />
-                      <TextField label="Transport mode" size="small" value={traceabilityEsg.route.mode}
-                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, mode: e.target.value } }))} />
-                      <TextField label="Route emissions (e.g. 18.6 kg CO2e)" size="small" value={traceabilityEsg.route.emissions}
-                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, emissions: e.target.value } }))} />
-                    </Box>
-                    <Typography sx={{ mb: 1, fontWeight: 600 }}>Certifications</Typography>
-                    <Button variant="outlined" size="small" sx={{ mb: 1 }}
-                      onClick={() => setCertifications((prev) => [...prev, { icon: '', title: '', content: '' }])}>+ Certification</Button>
-                    {certifications.map((c, i) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Button variant="outlined" component="label" size="small">
-                          {c.icon ? 'Icon ✓' : 'Icon'}
-                          <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
-                            const next = [...certifications]; next[i] = { ...next[i], icon: url }; setCertifications(next);
-                          })} />
-                        </Button>
-                        <TextField label="Title" size="small" value={c.title || ''}
-                          onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], title: e.target.value }; setCertifications(next); }} />
-                        <TextField label="Content" size="small" value={c.content || ''} sx={{ flex: 1 }}
-                          onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], content: e.target.value }; setCertifications(next); }} />
-                        <Button size="small" color="error" onClick={() => setCertifications(certifications.filter((_, x) => x !== i))}>×</Button>
-                      </Box>
-                    ))}
-
-                    <Typography sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Sustainability Impact (Dispose tab)</Typography>
-                    <Button variant="outlined" size="small" sx={{ mb: 1 }}
-                      onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: [...(prev.items || []), { icon: '', value: '', label: '', description: '' }] }))}>+ Impact item</Button>
-                    {(sustainabilityImpact.items || []).map((it, i) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-                        <Button variant="outlined" component="label" size="small">
-                          {it.icon ? 'Icon ✓' : 'Icon'}
-                          <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
-                            const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], icon: url };
-                            setSustainabilityImpact((prev) => ({ ...prev, items: next }));
-                          })} />
-                        </Button>
-                        <TextField label="Value (e.g. 12.4 kg)" size="small" value={it.value || ''}
-                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], value: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
-                        <TextField label="Label (e.g. CO2e Avoided)" size="small" value={it.label || ''}
-                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], label: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
-                        <TextField label="Description" size="small" value={it.description || ''} sx={{ flex: 1 }}
-                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], description: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
-                        <Button size="small" color="error" onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: prev.items.filter((_, x) => x !== i) }))}>×</Button>
-                      </Box>
-                    ))}
-                    <Typography variant="caption" color="text.secondary">Legacy quick fields (still shown if no items above):</Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                      <TextField label="CO2 avoided" size="small" value={sustainabilityImpact.co2Avoided}
-                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, co2Avoided: e.target.value }))} />
-                      <TextField label="Water saved" size="small" value={sustainabilityImpact.waterSaved}
-                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, waterSaved: e.target.value }))} />
-                      <TextField label="Energy saved" size="small" value={sustainabilityImpact.energySaved}
-                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, energySaved: e.target.value }))} />
-                    </Box>
-                    <TextField
-                      label="Care tips (one per line)"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      multiline
-                      minRows={3}
-                      value={(maintenance.tips || []).join('\n')}
-                      onChange={(e) => setMaintenance((prev) => ({ ...prev, tips: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) }))}
-                    />
+                  </Box>
+                )}
+                {detailTab === 5 && (
+                  <Box>
+                    <Typography sx={{ mb: 1, fontWeight: 600 }}>Warranty</Typography>
+                    <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+                      <TextField
+                        label="Warranty Status" placeholder="e.g. Active"
+                        variant="outlined" size="small"
+                        value={warrantyStatus}
+                        onChange={(e) => setWarrantyStatus(e.target.value)}
+                      />
+                      <TextField
+                        label="Valid for (years)" type="number"
+                        variant="outlined" size="small"
+                        value={warrantyValidYears}
+                        onChange={(e) => setWarrantyValidYears(Number(e.target.value) || 0)}
+                      />
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary">
+                      Shown on the app Product Summary (status + valid-until, computed from the date added).
+                    </Typography>
                   </Box>
                 )}
                 </>
