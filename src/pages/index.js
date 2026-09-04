@@ -187,6 +187,7 @@ const InnerPage = () => {
   const [productName, setProductName] = useState('');
   const [productModel, setProductModel] = useState('');
   const [productDetail, setProductDetail] = useState('');
+  const [aboutProduct, setAboutProduct] = useState('');
   const [productType, setProductType] = useState('');
   const [color, setColor] = useState('');
   const [size, setSize] = useState('');
@@ -550,6 +551,7 @@ const InnerPage = () => {
     setProductName('');
     setProductModel('');
     setProductDetail('');
+    setAboutProduct('');
     setProductType('');
     setColor('');
     setSize('');
@@ -696,6 +698,7 @@ const InnerPage = () => {
       name: productName,
       model: productModel,
       detail: productDetail,
+      aboutProduct,
       productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
       detailFacts,
       brandInfo,
@@ -759,6 +762,7 @@ const InnerPage = () => {
       name: productName,
       model: productModel,
       detail: productDetail,
+      aboutProduct,
       productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
       detailFacts,
       brandInfo,
@@ -831,6 +835,7 @@ const InnerPage = () => {
     setProductName(prod.name || '');
     setProductModel(prod.model || '');
     setProductDetail(prod.detail || '');
+    setAboutProduct(prod.aboutProduct || '');
     setProductType(prod.productType || '');
     setColor(prod.color || '');
     setSize(prod.size || '');
@@ -2192,6 +2197,19 @@ const InnerPage = () => {
                       multiline
                       sx={{ mb: 2 }}
                     />
+                    <Typography sx={{ mb: 1 }}>About This Product</Typography>
+                    <TextField
+                      label="About This Product" placeholder="Design, features, and intended use of this product."
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      multiline
+                      minRows={3}
+                      value={aboutProduct}
+                      onChange={(e) => setAboutProduct(e.target.value)}
+                      helperText="Shown on the app's Product Lifecycle > Details > About This Product."
+                      sx={{ mb: 2 }}
+                    />
                     <Typography sx={{ mb: 1 }}>Product Details</Typography>
                     <Stack spacing={1.5} sx={{ mb: 2 }}>
                       <TextField
@@ -2941,7 +2959,8 @@ const InnerPage = () => {
                   name: productName,
                   model: productModel,
                   detail: productDetail,
-                  productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
+                  aboutProduct,
+      productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
                   detailFacts,
                   brandInfo,
                   company_id: company._id,
