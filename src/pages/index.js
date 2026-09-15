@@ -1433,6 +1433,7 @@ const InnerPage = () => {
                 <Box sx={{ marginLeft: 'auto' }}>
                   <IconButton
                     size="small"
+                    aria-label={`Edit ${item.name}`}
                     onClick={() =>
                       editProductHandler(
                         products.findIndex((product) => product._id === item._id),
@@ -1443,6 +1444,7 @@ const InnerPage = () => {
                   </IconButton>
                   <IconButton
                     size="small"
+                    aria-label={`Delete ${item.name}`}
                     onClick={() =>
                       deleteProductHandler(
                         products.findIndex((product) => product._id === item._id),
@@ -1736,6 +1738,7 @@ const InnerPage = () => {
           </Typography>
           <IconButton
             color="inherit"
+            aria-label="Account menu"
             onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
           >
             <Avatar src={getFileUrl(company.avatar)}>
@@ -1962,7 +1965,7 @@ const InnerPage = () => {
                   sx={{ minWidth: 180 }}
                 />
                 <Tooltip title="Refresh">
-                  <IconButton onClick={loadProductsForCurrentCompany} color="primary">
+                  <IconButton onClick={loadProductsForCurrentCompany} color="primary" aria-label="Refresh products">
                     <RefreshIcon />
                   </IconButton>
                 </Tooltip>
@@ -2114,7 +2117,11 @@ const InnerPage = () => {
                       disabled={
                         !(
                           productName !== '' &&
-                          productImages.length > 0
+                          productImages.length > 0 &&
+                          brandInfo.name.trim() !== '' &&
+                          brandInfo.detail.trim() !== '' &&
+                          brandInfo.websiteUrl.trim() !== '' &&
+                          brandInfo.logoUrl.trim() !== ''
                         )
                       }
                     >
@@ -2122,6 +2129,22 @@ const InnerPage = () => {
                     </Button>
                   )}
                 </Box>
+                {(() => {
+                  const missing = [
+                    productName === '' && 'Product Name',
+                    productImages.length === 0 && 'at least one Product Photo',
+                    brandInfo.name.trim() === '' && 'Brand Name',
+                    brandInfo.detail.trim() === '' && 'Brand Detail',
+                    brandInfo.websiteUrl.trim() === '' && 'Brand Website URL',
+                    brandInfo.logoUrl.trim() === '' && 'Brand Logo',
+                  ].filter(Boolean);
+                  if (missing.length === 0) return null;
+                  return (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
+                      Still needed before you can save: {missing.join(', ')}.
+                    </Typography>
+                  );
+                })()}
                 </>
                 )}
 
@@ -2463,6 +2486,7 @@ const InnerPage = () => {
                         </Select>
                         <IconButton
                           sx={{ ml: 5 }}
+                          aria-label={`Remove ${item.type || 'serial'} entry`}
                           onClick={() =>
                             setSerials(
                               serials.filter((_, index) => index !== i),

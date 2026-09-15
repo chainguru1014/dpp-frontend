@@ -130,10 +130,10 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
             flexShrink: 0,
           }}
         >
-          <Button onClick={() => setOpen(false)} sx={{ minWidth: 40, color: '#fff' }}>
+          <Button onClick={() => setOpen(false)} aria-label="Close preview" sx={{ minWidth: 40, color: '#fff' }}>
             <ArrowBackIcon fontSize="small" />
           </Button>
-          <Typography sx={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>Product Overview</Typography>
+          <Typography id="preview-modal-title" sx={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>Product Overview</Typography>
           <Box sx={{ width: 40, display: 'flex', justifyContent: 'center', color: '#fff' }}>
             <NotificationsNoneIcon fontSize="small" />
           </Box>
