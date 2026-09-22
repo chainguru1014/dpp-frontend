@@ -4,7 +4,7 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import ShieldIcon from '@mui/icons-material/Shield';
 import PeopleIcon from '@mui/icons-material/People';
 import LockIcon from '@mui/icons-material/Lock';
-import AuthShell from '../AuthShell';
+import AuthShell, { useAuthShellBright } from '../AuthShell';
 
 const FEATURES = [
   {
@@ -31,7 +31,10 @@ const FEATURES = [
 
 // Card background is transparent (see AuthShell) so the forest photo shows
 // through — text sitting directly on it needs to be white with a shadow.
-const whiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
+// Over the bright alpine slide (background-3) that flips to dark navy
+// instead — see useAuthShellBright.
+const defaultWhiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
+const darkTextSx = { color: '#1b4f72', textShadow: 'none' };
 
 // Matches AuthPage's SMALL_CONTROL_HEIGHT (2/3 of its old 40px control
 // height) — same height as the Send code/Verify/Google/Apple buttons there,
@@ -57,6 +60,8 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
   // button disabled below. A prior local choice (either mode) starts
   // pre-selected so the user sees what they picked last time.
   const [consent, setConsent] = useState(initialConsent != null ? !!initialConsent : null);
+  const isBright = useAuthShellBright();
+  const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
 
   const handleSubmit = () => {
     onSubmit(consent);

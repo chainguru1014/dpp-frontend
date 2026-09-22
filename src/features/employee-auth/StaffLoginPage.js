@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { Box, Typography, TextField, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useEmployeeAuth, bridgeEmployeeSession } from './EmployeeAuthContext';
-import AuthShell from '../../components/AuthShell';
+import AuthShell, { useAuthShellBright } from '../../components/AuthShell';
 import AudienceToggle from '../../components/AudienceToggle';
 import { smallFieldSx, compactButtonSx } from '../../components/AuthPage';
 
 // Card background is transparent (see AuthShell) so the forest photo shows
 // through — text sitting directly on it needs to be white with a shadow.
-const whiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
+// Over the bright alpine slide (background-3) that flips to dark navy
+// instead — see useAuthShellBright.
+const defaultWhiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
+const darkTextSx = { color: '#1b4f72', textShadow: 'none' };
 
 // Same visual shell as the consumer/brand AuthPage (background, tagline,
 // logo, card frame) — only the card's inner content differs: a corporate
@@ -24,6 +27,8 @@ const StaffLoginPage = () => {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [noticeIsError, setNoticeIsError] = useState(false);
+  const isBright = useAuthShellBright();
+  const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
 
   const handleSendCode = async (e) => {
     e.preventDefault();

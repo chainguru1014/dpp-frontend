@@ -1913,34 +1913,41 @@ const InnerPage = () => {
                 )}
               </Box>
 
-              <ProductDraftCard
-                product={selectedProduct}
-                onPreview={() => setOpenPreviewModal(true)}
-                onTransferHistory={() => {
-                  setHistoryProduct(selectedProduct);
-                  setOpenProductHistory(true);
-                }}
-                onPrintCode={() => {
-                  const index = products.findIndex((p) => p._id === selectedProduct._id);
-                  if (index >= 0) {
-                    setProductPanelMode('print');
-                    setPreviousPage('products');
-                    editProductHandler(index);
-                  }
-                }}
-                onEdit={() => {
-                  const index = products.findIndex((p) => p._id === selectedProduct._id);
-                  if (index >= 0) {
-                    setProductPanelMode('edit');
-                    setPreviousPage('products');
-                    editProductHandler(index);
-                  }
-                }}
-                onRemove={() => {
-                  const index = products.findIndex((p) => p._id === selectedProduct._id);
-                  if (index >= 0) deleteProductHandler(index);
-                }}
-              />
+              {/* Guarded on the product actually being in the current (filtered)
+                  list — selectedProduct persists to localStorage across
+                  sessions/companies, so without this a stale selection kept
+                  showing the summary card even when the table below it was
+                  empty ("No rows"). */}
+              {selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) && (
+                <ProductDraftCard
+                  product={selectedProduct}
+                  onPreview={() => setOpenPreviewModal(true)}
+                  onTransferHistory={() => {
+                    setHistoryProduct(selectedProduct);
+                    setOpenProductHistory(true);
+                  }}
+                  onPrintCode={() => {
+                    const index = products.findIndex((p) => p._id === selectedProduct._id);
+                    if (index >= 0) {
+                      setProductPanelMode('print');
+                      setPreviousPage('products');
+                      editProductHandler(index);
+                    }
+                  }}
+                  onEdit={() => {
+                    const index = products.findIndex((p) => p._id === selectedProduct._id);
+                    if (index >= 0) {
+                      setProductPanelMode('edit');
+                      setPreviousPage('products');
+                      editProductHandler(index);
+                    }
+                  }}
+                  onRemove={() => {
+                    const index = products.findIndex((p) => p._id === selectedProduct._id);
+                    if (index >= 0) deleteProductHandler(index);
+                  }}
+                />
+              )}
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} justifyContent="flex-end" sx={{ mb: 2 }}>
                 <TextField

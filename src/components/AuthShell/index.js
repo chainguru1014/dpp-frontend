@@ -14,6 +14,16 @@ const SLIDER_IMAGES = [background1, background3, background2];
 const SLIDE_DURATION_MS = 3500;
 const FADE_DURATION_MS = 900;
 
+// background-3 (the alpine lake photo) is far brighter than the other two —
+// white text/logo that reads fine over background-1/2 nearly disappears over
+// it. Exposed via context so every card (AuthPage, AudienceToggle,
+// StaffLoginPage, AiConciergeConsentPage) can swap to dark-blue text/logo
+// only while this specific slide is showing, without each one re-deriving
+// which slide index that is.
+const BRIGHT_SLIDE_INDEX = 1; // background3's position in SLIDER_IMAGES below
+const AuthShellBrightContext = React.createContext(false);
+export const useAuthShellBright = () => React.useContext(AuthShellBrightContext);
+
 // Cochin is a macOS/iOS system serif — falls through to the nearest
 // look-alikes on Windows/Linux/Android, where it isn't installed.
 const taglineFontFamily = 'Cochin, Georgia, "Times New Roman", Times, serif';
@@ -32,6 +42,7 @@ const taglineFontSize = 'clamp(0.6rem, calc(0.39rem + 0.26vw), 0.8rem)';
 // differs per caller, passed as `children`.
 const AuthShell = ({ children, cardSx }) => {
   const [activeSlide, setActiveSlide] = React.useState(0);
+  const isBright = activeSlide === BRIGHT_SLIDE_INDEX;
 
   // Preload every slide up front so switching to it is instant (no blank flash
   // while the browser fetches a multi-hundred-KB photo mid-transition).
@@ -161,7 +172,9 @@ const AuthShell = ({ children, cardSx }) => {
         ...cardSx,
       }}
     >
-      {children}
+      <AuthShellBrightContext.Provider value={isBright}>
+        {children}
+      </AuthShellBrightContext.Provider>
     </Box>
 
     {/* Right tagline — mirrors the left column so the card in between is

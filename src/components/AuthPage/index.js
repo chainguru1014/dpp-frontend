@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { useNavigate } from 'react-router-dom';
 import AppleIcon from '@mui/icons-material/Apple';
 import { useGoogleAuth } from '../../features/auth/useGoogleAuth';
 import { useAppleAuth } from '../../features/auth/useAppleAuth';
-import AuthShell from '../AuthShell';
+import AuthShell, { useAuthShellBright } from '../AuthShell';
 import AudienceToggle from '../AudienceToggle';
 import yometelLogoWhite from '../../assets/yometel-logo-white.png';
+import yometelLogoTrans from '../../assets/yometel-logo-trans.png';
 import theme from '../../theme';
 
 // Monochrome Google "G" mark (Simple Icons, CC0) — black to match this
@@ -61,8 +63,11 @@ const compactLinkSx = { fontWeight: 400, fontSize: '0.8rem', lineHeight: 1.2, fo
 // Card background is deliberately transparent (see AuthShell) so the forest
 // photo shows through — any text sitting directly on it (not on a solid
 // button/field surface) needs to be white with a shadow to stay legible
-// against a busy, variable-brightness photo.
-const whiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
+// against a busy, variable-brightness photo. Over the bright alpine slide
+// (background-3) that same white text nearly vanishes, so it swaps to the
+// app's dark navy there instead — see useAuthShellBright.
+const defaultWhiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
+const darkTextSx = { color: theme.palette.primary.main, textShadow: 'none' };
 
 const AuthPage = ({
   needsProfileCompletion,
@@ -88,6 +93,8 @@ const AuthPage = ({
 
   const { buttonContainerRef: googleButtonRef } = useGoogleAuth(onGoogleCredential);
   const { signIn: appleSignIn } = useAppleAuth();
+  const isBright = useAuthShellBright();
+  const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
 
   // Counts the resend cooldown down to 0 once a code has been (re)sent.
   useEffect(() => {
@@ -163,7 +170,7 @@ const AuthPage = ({
         <Box sx={{ textAlign: 'center', mb: 2, flexShrink: 0 }}>
           <Box
             component="img"
-            src={yometelLogoWhite}
+            src={isBright ? yometelLogoTrans : yometelLogoWhite}
             alt="Yometel"
             sx={{ width: { xs: 130, sm: 160 }, height: 'auto', display: 'inline-block' }}
           />
@@ -396,7 +403,9 @@ const AuthPage = ({
                     sx={{
                       ...whiteTextSx,
                       ...compactLinkSx,
-                      color: resendCooldown > 0 || otpBusy ? 'rgba(255,255,255,0.6)' : '#fff',
+                      color: resendCooldown > 0 || otpBusy
+                        ? (isBright ? alpha(theme.palette.primary.main, 0.6) : 'rgba(255,255,255,0.6)')
+                        : whiteTextSx.color,
                       cursor: resendCooldown > 0 || otpBusy ? 'default' : 'pointer',
                       '&:hover': resendCooldown > 0 || otpBusy ? undefined : { textDecoration: 'underline' },
                     }}
