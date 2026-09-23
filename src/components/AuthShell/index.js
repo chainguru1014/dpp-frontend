@@ -14,13 +14,14 @@ const SLIDER_IMAGES = [background1, background3, background2];
 const SLIDE_DURATION_MS = 3500;
 const FADE_DURATION_MS = 900;
 
-// background-3 (the alpine lake photo) is far brighter than the other two —
-// white text/logo that reads fine over background-1/2 nearly disappears over
-// it. Exposed via context so every card (AuthPage, AudienceToggle,
+// background-3 (alpine lake) and background-2 (boutique interior) are both
+// far brighter than background-1 (a dark forest, where white text/logo
+// already reads fine) — white text/logo over either of the bright two nearly
+// disappears. Exposed via context so every card (AuthPage, AudienceToggle,
 // StaffLoginPage, AiConciergeConsentPage) can swap to dark-blue text/logo
-// only while this specific slide is showing, without each one re-deriving
-// which slide index that is.
-const BRIGHT_SLIDE_INDEX = 1; // background3's position in SLIDER_IMAGES below
+// only while one of these specific slides is showing, without each one
+// re-deriving which slide indices those are.
+const BRIGHT_SLIDE_INDICES = [1, 2]; // background3 and background2's positions in SLIDER_IMAGES below
 const AuthShellBrightContext = React.createContext(false);
 export const useAuthShellBright = () => React.useContext(AuthShellBrightContext);
 
@@ -42,7 +43,7 @@ const taglineFontSize = 'clamp(0.6rem, calc(0.39rem + 0.26vw), 0.8rem)';
 // differs per caller, passed as `children`.
 const AuthShell = ({ children, cardSx }) => {
   const [activeSlide, setActiveSlide] = React.useState(0);
-  const isBright = activeSlide === BRIGHT_SLIDE_INDEX;
+  const isBright = BRIGHT_SLIDE_INDICES.includes(activeSlide);
 
   // Preload every slide up front so switching to it is instant (no blank flash
   // while the browser fetches a multi-hundred-KB photo mid-transition).
