@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Box, Typography, TextField, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useEmployeeAuth, bridgeEmployeeSession } from './EmployeeAuthContext';
-import AuthShell, { useAuthShellBright } from '../../components/AuthShell';
+import AuthShell from '../../components/AuthShell';
 import AudienceToggle from '../../components/AudienceToggle';
 import { smallFieldSx, compactButtonSx } from '../../components/AuthPage';
 
@@ -27,8 +27,6 @@ const StaffLoginPage = () => {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [noticeIsError, setNoticeIsError] = useState(false);
-  const isBright = useAuthShellBright();
-  const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
 
   const handleSendCode = async (e) => {
     e.preventDefault();
@@ -72,6 +70,14 @@ const StaffLoginPage = () => {
 
   return (
     <AuthShell>
+      {(isBright) => {
+        // Computed here (inside AuthShell's render-prop), not at this
+        // component's own top level — see AuthShell's doc comment on why
+        // useAuthShellBright() only works for a genuine descendant of its
+        // Provider, which this render function's return value is and this
+        // component's own top level never was.
+        const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
+        return (
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, justifyContent: 'center', gap: 1.5 }}>
         <Typography variant="body2" sx={{ textAlign: 'center', mb: 0.5, ...whiteTextSx }}>
           Sign in with your corporate email
@@ -154,6 +160,8 @@ const StaffLoginPage = () => {
 
         <AudienceToggle value="staff" onSelectConsumer={() => navigate('/')} onSelectStaff={() => {}} />
       </Box>
+        );
+      }}
     </AuthShell>
   );
 };

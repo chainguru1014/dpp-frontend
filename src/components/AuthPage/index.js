@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import AppleIcon from '@mui/icons-material/Apple';
 import { useGoogleAuth } from '../../features/auth/useGoogleAuth';
 import { useAppleAuth } from '../../features/auth/useAppleAuth';
-import AuthShell, { useAuthShellBright } from '../AuthShell';
+import AuthShell from '../AuthShell';
 import AudienceToggle from '../AudienceToggle';
 import yometelLogoWhite from '../../assets/yometel-logo-white.png';
 import yometelLogoTrans from '../../assets/yometel-logo-trans.png';
@@ -60,11 +60,11 @@ export const compactButtonSx = {
 // not like the tagline.
 const compactLinkSx = { fontWeight: 400, fontSize: '0.8rem', lineHeight: 1.2, fontFamily: theme.typography.fontFamily };
 
-// Card background is deliberately transparent (see AuthShell) so the forest
-// photo shows through — any text sitting directly on it (not on a solid
+// Card background is deliberately transparent (see AuthShell) so the photo
+// shows through — any text sitting directly on it (not on a solid
 // button/field surface) needs to be white with a shadow to stay legible
-// against a busy, variable-brightness photo. Over the bright alpine slide
-// (background-3) that same white text nearly vanishes, so it swaps to the
+// against a busy, variable-brightness photo. Over the bright final slide
+// (background-2) that same white text nearly vanishes, so it swaps to the
 // app's dark navy there instead — see useAuthShellBright.
 const defaultWhiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
 const darkTextSx = { color: theme.palette.primary.main, textShadow: 'none' };
@@ -80,6 +80,7 @@ const AuthPage = ({
   onRequestOtp,
   onVerifyOtp,
   onOpenPrivacyPreferences,
+  activeSlide,
 }) => {
   // OTP flow's own local UI state — nothing here needs to be lifted up, the
   // parent only cares once verification actually succeeds.
@@ -93,8 +94,6 @@ const AuthPage = ({
 
   const { buttonContainerRef: googleButtonRef } = useGoogleAuth(onGoogleCredential);
   const { signIn: appleSignIn } = useAppleAuth();
-  const isBright = useAuthShellBright();
-  const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
 
   // Counts the resend cooldown down to 0 once a code has been (re)sent.
   useEffect(() => {
@@ -166,7 +165,16 @@ const AuthPage = ({
   const navigate = useNavigate();
 
   return (
-    <AuthShell>
+    <AuthShell activeSlide={activeSlide}>
+      {(isBright) => {
+        // Computed here (inside AuthShell's render-prop), not at this
+        // component's own top level — see AuthShell's doc comment on why
+        // useAuthShellBright() only works for a genuine descendant of its
+        // Provider, which this render function's return value is and this
+        // component's own top level never was.
+        const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
+        return (
+        <>
         <Box sx={{ textAlign: 'center', mb: 2, flexShrink: 0 }}>
           <Box
             component="img"
@@ -545,6 +553,9 @@ const AuthPage = ({
             </Box>
           </Box>
         )}
+        </>
+        );
+      }}
     </AuthShell>
   );
 };

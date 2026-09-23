@@ -14,16 +14,48 @@ const SLIDER_IMAGES = [background1, background3, background2];
 const SLIDE_DURATION_MS = 3500;
 const FADE_DURATION_MS = 900;
 
-// background-3 (alpine lake) and background-2 (boutique interior) are both
-// far brighter than background-1 (a dark forest, where white text/logo
-// already reads fine) — white text/logo over either of the bright two nearly
-// disappears. Exposed via context so every card (AuthPage, AudienceToggle,
+// Only the LAST slide the slideshow settles on and stays (background-2, the
+// boutique interior — index 2 of SLIDER_IMAGES below, since the order is
+// 1 -> 3 -> 2) is bright enough that white text/logo becomes hard to read.
+// The first two slides shown (background-1's dark forest, then
+// background-3's alpine lake) keep the current white styling unchanged —
+// explicit "for 1st and 2nd image showing case, keep current UI color"
+// feedback. Exposed via context so every card (AuthPage, AudienceToggle,
 // StaffLoginPage, AiConciergeConsentPage) can swap to dark-blue text/logo
-// only while one of these specific slides is showing, without each one
-// re-deriving which slide indices those are.
-const BRIGHT_SLIDE_INDICES = [1, 2]; // background3 and background2's positions in SLIDER_IMAGES below
+// only while this one slide is showing, without each one re-deriving which
+// slide index that is.
+const BRIGHT_SLIDE_INDEX = 2; // background2's position in SLIDER_IMAGES below
 const AuthShellBrightContext = React.createContext(false);
 export const useAuthShellBright = () => React.useContext(AuthShellBrightContext);
+
+// AuthPage and AiConciergeConsentPage (Privacy Preferences) are two
+// SEPARATE conditional early-returns in pages/index.js's render — not a
+// single persistent tree — so each one mounting its own <AuthShell> used to
+// reset the slideshow back to slide 1 every time Privacy Preferences was
+// opened or closed, instead of continuing wherever it was. Callers that need
+// the slideshow to persist across that swap call this hook ONCE in their own
+// stable parent (pages/index.js) and pass the result down as AuthShell's
+// `activeSlide` prop; AuthShell falls back to managing its own internal
+// slide when no `activeSlide` prop is given (e.g. StaffLoginPage, which
+// mounts standalone and has no such swap to persist across).
+export function useAuthBackgroundSlide() {
+  const [activeSlide, setActiveSlide] = React.useState(0);
+
+  React.useEffect(() => {
+    SLIDER_IMAGES.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
+
+  React.useEffect(() => {
+    if (activeSlide >= SLIDER_IMAGES.length - 1) return undefined;
+    const id = setTimeout(() => setActiveSlide((i) => i + 1), SLIDE_DURATION_MS);
+    return () => clearTimeout(id);
+  }, [activeSlide]);
+
+  return activeSlide;
+}
 
 // Cochin is a macOS/iOS system serif — falls through to the nearest
 // look-alikes on Windows/Linux/Android, where it isn't installed.
@@ -36,14 +68,23 @@ const taglineFontFamily = 'Cochin, Georgia, "Times New Roman", Times, serif';
 // (70% of the original 0.85/1/1.15rem scale, per request).
 const taglineFontSize = 'clamp(0.6rem, calc(0.39rem + 0.26vw), 0.8rem)';
 
-// Shared visual shell for every sign-in surface (consumer/brand AuthPage and
-// the Staff Login page) — same background, flanking taglines, and card frame
-// everywhere. Card background is deliberately near-transparent so the forest
-// photo shows through. Only the card's inner content (the actual form)
-// differs per caller, passed as `children`.
-const AuthShell = ({ children, cardSx }) => {
-  const [activeSlide, setActiveSlide] = React.useState(0);
-  const isBright = BRIGHT_SLIDE_INDICES.includes(activeSlide);
+// Shared visual shell for every sign-in surface (consumer/brand AuthPage,
+// the Staff Login page, and the AI Concierge consent/privacy-preferences
+// page) — same background, flanking taglines, and card frame everywhere.
+// Card background is deliberately near-transparent so the photo shows
+// through. Only the card's inner content (the actual form) differs per
+// caller, passed as `children`.
+const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => {
+  // Controlled (activeSlide passed in, from useAuthBackgroundSlide called by
+  // a stable parent) vs uncontrolled (AuthShell manages its own slide —
+  // StaffLoginPage's case, a standalone mount with nothing to persist
+  // across). Always call useState so hook order stays stable regardless of
+  // which mode this render is in; the internal state simply goes unused
+  // when controlled.
+  const [internalSlide, setInternalSlide] = React.useState(0);
+  const isControlled = controlledActiveSlide != null;
+  const activeSlide = isControlled ? controlledActiveSlide : internalSlide;
+  const isBright = activeSlide === BRIGHT_SLIDE_INDEX;
 
   // Preload every slide up front so switching to it is instant (no blank flash
   // while the browser fetches a multi-hundred-KB photo mid-transition).
@@ -55,11 +96,14 @@ const AuthShell = ({ children, cardSx }) => {
   }, []);
 
   // Advance once per SLIDE_DURATION_MS and stop on the last image — no wrap.
+  // No-ops when controlled: the parent's useAuthBackgroundSlide call owns
+  // advancing in that case.
   React.useEffect(() => {
-    if (activeSlide >= SLIDER_IMAGES.length - 1) return undefined;
-    const id = setTimeout(() => setActiveSlide((i) => i + 1), SLIDE_DURATION_MS);
+    if (isControlled) return undefined;
+    if (internalSlide >= SLIDER_IMAGES.length - 1) return undefined;
+    const id = setTimeout(() => setInternalSlide((i) => i + 1), SLIDE_DURATION_MS);
     return () => clearTimeout(id);
-  }, [activeSlide]);
+  }, [internalSlide, isControlled]);
 
   return (
   <Box
@@ -161,6 +205,9 @@ const AuthShell = ({ children, cardSx }) => {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        // Fixed regardless of slide/text color — only the content's own
+        // font color changes (see useAuthShellBright), never the card
+        // container itself.
         bgcolor: alpha('#f3f4f6', 0.2),
         backdropFilter: 'blur(3px)',
         WebkitBackdropFilter: 'blur(3px)',
@@ -174,7 +221,19 @@ const AuthShell = ({ children, cardSx }) => {
       }}
     >
       <AuthShellBrightContext.Provider value={isBright}>
-        {children}
+        {/* `children` may be a render function — (isBright) => node — for
+            callers (AuthPage, StaffLoginPage, AiConciergeConsentPage) that
+            need isBright themselves to style what they render here. Calling
+            useAuthShellBright() at THEIR OWN top level doesn't work: those
+            components render <AuthShell> as their own child, so they sit
+            ABOVE the Provider in the tree, not below it — the hook always
+            reads the context default there, never the real value (this was
+            a real, long-standing bug: AudienceToggle, rendered as plain JSX
+            children here and therefore a true descendant of the Provider,
+            always worked; everything computed by the parent's own top-level
+            hook call never did). The render-function form sidesteps that
+            entirely by passing isBright straight in as an argument. */}
+        {typeof children === 'function' ? children(isBright) : children}
       </AuthShellBrightContext.Provider>
     </Box>
 

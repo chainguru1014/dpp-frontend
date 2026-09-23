@@ -73,6 +73,7 @@ import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
 import AuthPage from '../components/AuthPage';
 import AiConciergeConsentPage from '../components/AiConciergeConsentPage';
+import { useAuthBackgroundSlide } from '../components/AuthShell';
 import yometelLogoWhite from '../assets/yometel-logo-white.png';
 import ProfilePage from '../features/profile/ProfilePage';
 import EmployeeManagementPage from '../features/employee-audit/EmployeeManagementPage';
@@ -158,6 +159,14 @@ const InnerPage = () => {
   // 'supervisor' so a working_employee can't reach it.
   const isEmployeeActor = company?.actorKind === 'Employee';
   const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history', 'captureHistory', 'recommendations', 'chat', 'trace', 'employeeAuditLog'];
+
+  // AuthPage and AiConciergeConsentPage are separate conditional
+  // early-returns below, each mounting its own <AuthShell> — called once
+  // here (a stable parent across those swaps) and passed down as
+  // `activeSlide` so the background slideshow continues from wherever it
+  // was instead of resetting to slide 1 every time Privacy Preferences (or
+  // the post-signup consent gate) opens or closes.
+  const authBgSlide = useAuthBackgroundSlide();
 
   // GDPR: the "Privacy Preferences" link (on AuthPage) can reopen the AI
   // Concierge consent screen at any time, independent of the login/profile
@@ -1486,6 +1495,7 @@ const InnerPage = () => {
           onClose={() => { setShowPrivacyPreferences(false); setAiConsentError(''); }}
           saving={aiConsentBusy}
           apiError={aiConsentError}
+          activeSlide={authBgSlide}
         />
       </Box>
     );
@@ -1511,6 +1521,7 @@ const InnerPage = () => {
           onRequestOtp={requestOtpHandler}
           onVerifyOtp={verifyOtpHandler}
           onOpenPrivacyPreferences={() => setShowPrivacyPreferences(true)}
+          activeSlide={authBgSlide}
         />
       </Box>
     );
@@ -1537,6 +1548,7 @@ const InnerPage = () => {
           onSubmit={handleAiConsentGateSubmit}
           saving={aiConsentBusy}
           apiError={aiConsentError}
+          activeSlide={authBgSlide}
         />
       </Box>
     );

@@ -7,10 +7,9 @@ import { useAuthShellBright } from '../AuthShell';
 // (consumer/brand AuthPage and StaffLoginPage), same pattern as the
 // Sign In/Sign Up switch right below it: one question, one tap to switch.
 // White + shadow (not primary blue) because the card background is
-// transparent (see AuthShell) — plain blue text disappears into the forest photo.
-// Over the bright alpine background (background-3) that white becomes
-// unreadable instead, so it flips to the app's dark navy there — see
-// useAuthShellBright.
+// transparent (see AuthShell) — plain blue text disappears into the photo.
+// Over the bright final slide (background-2) that white becomes unreadable
+// instead, so it flips to the app's dark navy there — see useAuthShellBright.
 const AudienceToggle = ({ value, onSelectConsumer, onSelectStaff }) => {
   const isBright = useAuthShellBright();
   return (

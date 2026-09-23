@@ -4,7 +4,7 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import ShieldIcon from '@mui/icons-material/Shield';
 import PeopleIcon from '@mui/icons-material/People';
 import LockIcon from '@mui/icons-material/Lock';
-import AuthShell, { useAuthShellBright } from '../AuthShell';
+import AuthShell from '../AuthShell';
 
 const FEATURES = [
   {
@@ -29,9 +29,9 @@ const FEATURES = [
   },
 ];
 
-// Card background is transparent (see AuthShell) so the forest photo shows
+// Card background is transparent (see AuthShell) so the photo shows
 // through — text sitting directly on it needs to be white with a shadow.
-// Over the bright alpine slide (background-3) that flips to dark navy
+// Over the bright final slide (background-2) that flips to dark navy
 // instead — see useAuthShellBright.
 const defaultWhiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
 const darkTextSx = { color: '#1b4f72', textShadow: 'none' };
@@ -55,13 +55,11 @@ const CONSENT_BUTTON_HEIGHT = 27;
 // GDPR even pre-account; that path stays device-local (localStorage) since
 // there's no account yet to attach it to — submitting (or Cancel) there
 // returns to wherever the link was opened from.
-const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, saving, apiError }) => {
+const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, saving, apiError, activeSlide }) => {
   // `null` = no explicit choice made yet, which is what keeps the primary
   // button disabled below. A prior local choice (either mode) starts
   // pre-selected so the user sees what they picked last time.
   const [consent, setConsent] = useState(initialConsent != null ? !!initialConsent : null);
-  const isBright = useAuthShellBright();
-  const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
 
   const handleSubmit = () => {
     onSubmit(consent);
@@ -73,7 +71,15 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
   // scrolling, while still capping/scrolling as a fallback on very short
   // screens (see cardScroll-equivalent `overflowY: 'auto'` below).
   return (
-    <AuthShell cardSx={{ height: 'auto', maxHeight: { xs: '94dvh', sm: '88dvh' }, width: { xs: '100%', sm: 540 } }}>
+    <AuthShell activeSlide={activeSlide} cardSx={{ height: 'auto', maxHeight: { xs: '94dvh', sm: '88dvh' }, width: { xs: '100%', sm: 540 } }}>
+      {(isBright) => {
+        // Computed here (inside AuthShell's render-prop), not at this
+        // component's own top level — see AuthShell's doc comment on why
+        // useAuthShellBright() only works for a genuine descendant of its
+        // Provider, which this render function's return value is and this
+        // component's own top level never was.
+        const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
+        return (
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}>
           {/* Smaller font sizes + tighter line-heights/paragraph spacing than
@@ -89,9 +95,9 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
           </Typography>
 
           <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
-            <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.35)' }} />
-            <Box sx={{ width: 6, height: 6, mx: 1, bgcolor: 'rgba(255,255,255,0.55)', transform: 'rotate(45deg)' }} />
-            <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.35)' }} />
+            <Box sx={{ flex: 1, height: '1px', bgcolor: isBright ? 'rgba(27,79,114,0.3)' : 'rgba(255,255,255,0.35)' }} />
+            <Box sx={{ width: 6, height: 6, mx: 1, bgcolor: isBright ? 'rgba(27,79,114,0.5)' : 'rgba(255,255,255,0.55)', transform: 'rotate(45deg)' }} />
+            <Box sx={{ flex: 1, height: '1px', bgcolor: isBright ? 'rgba(27,79,114,0.3)' : 'rgba(255,255,255,0.35)' }} />
           </Box>
 
           {FEATURES.map(({ icon: FeatureIcon, title, description }) => (
@@ -102,13 +108,13 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                   height: 51,
                   flexShrink: 0,
                   borderRadius: '50%',
-                  bgcolor: 'rgba(255,255,255,0.18)',
+                  bgcolor: isBright ? 'rgba(27,79,114,0.12)' : 'rgba(255,255,255,0.18)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <FeatureIcon sx={{ fontSize: 27, color: '#fff' }} />
+                <FeatureIcon sx={{ fontSize: 27, color: isBright ? '#1b4f72' : '#fff' }} />
               </Box>
               <Box>
                 <Typography sx={{ ...whiteTextSx, fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.25, mb: 0.2 }}>
@@ -122,9 +128,9 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
           ))}
 
           <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
-            <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.35)' }} />
-            <Box sx={{ width: 6, height: 6, mx: 1, bgcolor: 'rgba(255,255,255,0.55)', transform: 'rotate(45deg)' }} />
-            <Box sx={{ flex: 1, height: '1px', bgcolor: 'rgba(255,255,255,0.35)' }} />
+            <Box sx={{ flex: 1, height: '1px', bgcolor: isBright ? 'rgba(27,79,114,0.3)' : 'rgba(255,255,255,0.35)' }} />
+            <Box sx={{ width: 6, height: 6, mx: 1, bgcolor: isBright ? 'rgba(27,79,114,0.5)' : 'rgba(255,255,255,0.55)', transform: 'rotate(45deg)' }} />
+            <Box sx={{ flex: 1, height: '1px', bgcolor: isBright ? 'rgba(27,79,114,0.3)' : 'rgba(255,255,255,0.35)' }} />
           </Box>
 
           {/* Placed after all the explanatory content, on purpose — the user
@@ -223,6 +229,8 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
           )}
         </Box>
       </Box>
+        );
+      }}
     </AuthShell>
   );
 };
