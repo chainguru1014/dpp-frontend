@@ -11,14 +11,14 @@ import yometelLogoWhite from '../../assets/yometel-logo-white.png';
 import yometelLogoTrans from '../../assets/yometel-logo-trans.png';
 import theme from '../../theme';
 
-// Monochrome Google "G" mark (Simple Icons, CC0) — black to match this
-// button's white background (was the official 4-color "G").
+// Monochrome Google "G" mark (Simple Icons, CC0) — dark navy to match this
+// button's text color (was the official 4-color "G").
 // Sized to fit inside the compact Send-code-height buttons (see
 // SMALL_CONTROL_HEIGHT) without crowding them.
-const GoogleIcon = () => (
+const GoogleIcon = ({ color = theme.palette.primary.main }) => (
   <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
     <path
-      fill="#000000"
+      fill={color}
       d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
     />
   </svg>
@@ -465,7 +465,7 @@ const AuthPage = ({
                     ...compactButtonSx,
                     px: 1,
                     bgcolor: '#fff',
-                    color: '#000',
+                    color: theme.palette.primary.main,
                     borderColor: '#d9dce1',
                     '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
                   }}
@@ -485,17 +485,17 @@ const AuthPage = ({
                 />
               </Box>
 
-              {/* White background, app-blue label, black Apple glyph. */}
+              {/* White background, app-blue label and Apple glyph. */}
               <Button
                 fullWidth
                 onClick={handleAppleClick}
-                startIcon={<AppleIcon sx={{ fontSize: 14, color: '#000' }} />}
+                startIcon={<AppleIcon sx={{ fontSize: 14, color: theme.palette.primary.main }} />}
                 sx={{
                   ...compactButtonSx,
                   flex: 1,
                   px: 1,
                   bgcolor: '#fff',
-                  color: '#000',
+                  color: theme.palette.primary.main,
                   border: '1px solid #d9dce1',
                   '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
                 }}

@@ -24,6 +24,8 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Divider,
+  Grid,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
@@ -2094,76 +2096,6 @@ const InnerPage = () => {
                     />
                   </Box>
                 </Box>
-
-                <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => setOpenPreviewModal(true)}
-                    disabled={
-                      !(
-                        productName !== '' &&
-                        productImages.length > 0 &&
-                        brandInfo.name.trim() !== '' &&
-                        brandInfo.detail.trim() !== '' &&
-                        brandInfo.websiteUrl.trim() !== '' &&
-                        brandInfo.logoUrl.trim() !== ''
-                      )
-                    }
-                  >
-                    Preview
-                  </Button>
-                  {!isEditing ? (
-                    <Button
-                      variant="contained"
-                      onClick={addProductHandler}
-                      disabled={
-                        !(
-                          productName !== '' &&
-                          productImages.length > 0 &&
-                          brandInfo.name.trim() !== '' &&
-                          brandInfo.detail.trim() !== '' &&
-                          brandInfo.websiteUrl.trim() !== '' &&
-                          brandInfo.logoUrl.trim() !== ''
-                        )
-                      }
-                    >
-                      Add Product
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      onClick={updateProductHandler}
-                      disabled={
-                        !(
-                          productName !== '' &&
-                          productImages.length > 0 &&
-                          brandInfo.name.trim() !== '' &&
-                          brandInfo.detail.trim() !== '' &&
-                          brandInfo.websiteUrl.trim() !== '' &&
-                          brandInfo.logoUrl.trim() !== ''
-                        )
-                      }
-                    >
-                      Update Product
-                    </Button>
-                  )}
-                </Box>
-                {(() => {
-                  const missing = [
-                    productName === '' && 'Product Name',
-                    productImages.length === 0 && 'at least one Product Photo',
-                    brandInfo.name.trim() === '' && 'Brand Name',
-                    brandInfo.detail.trim() === '' && 'Brand Detail',
-                    brandInfo.websiteUrl.trim() === '' && 'Brand Website URL',
-                    brandInfo.logoUrl.trim() === '' && 'Brand Logo',
-                  ].filter(Boolean);
-                  if (missing.length === 0) return null;
-                  return (
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-                      Still needed before you can save: {missing.join(', ')}.
-                    </Typography>
-                  );
-                })()}
                 </>
                 )}
 
@@ -2217,200 +2149,171 @@ const InnerPage = () => {
                 </Tabs>
                 {detailTab === 0 && (
                   <Box>
-                    <Typography sx={{ mb: 1 }}>Product Name</Typography>
-                    <TextField
-                      label="Product Name"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={productName}
-                      onChange={(e) => setProductName(e.target.value)}
-                      multiline
-                      sx={{ mb: 2 }}
-                    />
-                    <Typography sx={{ mb: 1 }}>Model Designation</Typography>
-                    <TextField
-                      label="Model Designation"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={productModel}
-                      onChange={(e) => setProductModel(e.target.value)}
-                      multiline
-                      sx={{ mb: 2 }}
-                    />
-                    <Typography sx={{ mb: 1 }}>About This Product</Typography>
-                    <TextField
-                      label="About This Product" placeholder="Design, features, and intended use of this product."
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      multiline
-                      minRows={3}
-                      value={aboutProduct}
-                      onChange={(e) => setAboutProduct(e.target.value)}
-                      helperText="Shown on the app's Product Lifecycle > Details > About This Product."
-                      sx={{ mb: 2 }}
-                    />
-                    <Typography sx={{ mb: 1 }}>Product Details</Typography>
-                    <Stack spacing={1.5} sx={{ mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Basic Information</Typography>
+                    <Stack spacing={2} sx={{ mb: 3 }}>
                       <TextField
-                        label="Product Type" placeholder="e.g. Men's Outerwear"
-                        variant="outlined" size="small" fullWidth
-                        value={productType}
-                        onChange={(e) => setProductType(e.target.value)}
+                        label="Product Name"
+                        variant="outlined" size="small" fullWidth required
+                        value={productName}
+                        onChange={(e) => setProductName(e.target.value)}
                       />
                       <TextField
-                        label="Color" placeholder="e.g. Midnight Black"
+                        label="Model Designation"
                         variant="outlined" size="small" fullWidth
-                        value={color}
-                        onChange={(e) => setColor(e.target.value)}
+                        value={productModel}
+                        onChange={(e) => setProductModel(e.target.value)}
                       />
                       <TextField
-                        label="Size" placeholder="e.g. M"
+                        label="About This Product" placeholder="Design, features, and intended use of this product."
                         variant="outlined" size="small" fullWidth
-                        value={size}
-                        onChange={(e) => setSize(e.target.value)}
-                      />
-                      <TextField
-                        label="Manufacture Date" placeholder="e.g. 2024-08-10"
-                        variant="outlined" size="small" fullWidth
-                        value={manufactureDate}
-                        onChange={(e) => setManufactureDate(e.target.value)}
-                      />
-                      <TextField
-                        label="Material" placeholder="e.g. 99% Cotton, 1% Elastane"
-                        variant="outlined" size="small" fullWidth
-                        value={detailFacts.material}
-                        onChange={(e) => setDetailFacts((prev) => ({ ...prev, material: e.target.value }))}
-                      />
-                      <TextField
-                        label="Fit" placeholder="e.g. Straight Leg, Mid Rise"
-                        variant="outlined" size="small" fullWidth
-                        value={detailFacts.fit}
-                        onChange={(e) => setDetailFacts((prev) => ({ ...prev, fit: e.target.value }))}
-                      />
-                      <TextField
-                        label="Wash" placeholder="e.g. Medium Blue, Vintage Fade"
-                        variant="outlined" size="small" fullWidth
-                        value={detailFacts.wash}
-                        onChange={(e) => setDetailFacts((prev) => ({ ...prev, wash: e.target.value }))}
-                      />
-                      <TextField
-                        label="Durability" placeholder="e.g. Reinforced Seams, Long Lasting"
-                        variant="outlined" size="small" fullWidth
-                        value={detailFacts.durability}
-                        onChange={(e) => setDetailFacts((prev) => ({ ...prev, durability: e.target.value }))}
-                      />
-                      <TextField
-                        label="Traceable Product Identity" placeholder="e.g. Traceable product identity"
-                        variant="outlined" size="small" fullWidth
-                        value={detailFacts.traceableIdentity}
-                        onChange={(e) => setDetailFacts((prev) => ({ ...prev, traceableIdentity: e.target.value }))}
+                        multiline minRows={3}
+                        value={aboutProduct}
+                        onChange={(e) => setAboutProduct(e.target.value)}
+                        helperText="Shown on the app's Product Lifecycle > Details > About This Product."
                       />
                     </Stack>
-                    <Typography sx={{ mt: 2, mb: 1, fontWeight: 600 }}>App Lifecycle extras (optional)</Typography>
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Product Facts</Typography>
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Product Type" placeholder="e.g. Men's Outerwear" variant="outlined" size="small" fullWidth
+                          value={productType} onChange={(e) => setProductType(e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Color" placeholder="e.g. Midnight Black" variant="outlined" size="small" fullWidth
+                          value={color} onChange={(e) => setColor(e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Size" placeholder="e.g. M" variant="outlined" size="small" fullWidth
+                          value={size} onChange={(e) => setSize(e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Manufacture Date" placeholder="e.g. 2024-08-10" variant="outlined" size="small" fullWidth
+                          value={manufactureDate} onChange={(e) => setManufactureDate(e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Material" placeholder="e.g. 99% Cotton, 1% Elastane" variant="outlined" size="small" fullWidth
+                          value={detailFacts.material} onChange={(e) => setDetailFacts((prev) => ({ ...prev, material: e.target.value }))} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Fit" placeholder="e.g. Straight Leg, Mid Rise" variant="outlined" size="small" fullWidth
+                          value={detailFacts.fit} onChange={(e) => setDetailFacts((prev) => ({ ...prev, fit: e.target.value }))} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Wash" placeholder="e.g. Medium Blue, Vintage Fade" variant="outlined" size="small" fullWidth
+                          value={detailFacts.wash} onChange={(e) => setDetailFacts((prev) => ({ ...prev, wash: e.target.value }))} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Durability" placeholder="e.g. Reinforced Seams, Long Lasting" variant="outlined" size="small" fullWidth
+                          value={detailFacts.durability} onChange={(e) => setDetailFacts((prev) => ({ ...prev, durability: e.target.value }))} />
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField label="Traceable Product Identity" placeholder="e.g. Traceable product identity" variant="outlined" size="small" fullWidth
+                          value={detailFacts.traceableIdentity} onChange={(e) => setDetailFacts((prev) => ({ ...prev, traceableIdentity: e.target.value }))} />
+                      </Grid>
+                    </Grid>
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>App Lifecycle Extras</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>Optional</Typography>
                     <TextField
                       label="Country of Origin"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
+                      variant="outlined" size="small" fullWidth
                       sx={{ mb: 2 }}
                       value={traceabilityEsg.originCountry}
                       onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, originCountry: e.target.value }))}
                     />
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                      <TextField label="Route origin" size="small" value={traceabilityEsg.route.origin}
-                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, origin: e.target.value } }))} />
-                      <TextField label="Route destination" size="small" value={traceabilityEsg.route.destination}
-                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, destination: e.target.value } }))} />
-                      <TextField label="Transport mode" size="small" value={traceabilityEsg.route.mode}
-                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, mode: e.target.value } }))} />
-                      <TextField label="Route emissions (e.g. 18.6 kg CO2e)" size="small" value={traceabilityEsg.route.emissions}
-                        onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, emissions: e.target.value } }))} />
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Route origin" size="small" fullWidth value={traceabilityEsg.route.origin}
+                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, origin: e.target.value } }))} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Route destination" size="small" fullWidth value={traceabilityEsg.route.destination}
+                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, destination: e.target.value } }))} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Transport mode" size="small" fullWidth value={traceabilityEsg.route.mode}
+                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, mode: e.target.value } }))} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Route emissions (e.g. 18.6 kg CO2e)" size="small" fullWidth value={traceabilityEsg.route.emissions}
+                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, emissions: e.target.value } }))} />
+                      </Grid>
+                    </Grid>
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Brand Information</Typography>
+                    <Stack spacing={2} sx={{ mb: 2 }}>
+                      <TextField
+                        label="Brand Name" variant="outlined" size="small" fullWidth required
+                        value={brandInfo.name}
+                        onChange={(e) => setBrandInfo((prev) => ({ ...prev, name: e.target.value }))}
+                      />
+                      <TextField
+                        label="Brand Detail" variant="outlined" size="small" fullWidth required multiline
+                        value={brandInfo.detail}
+                        onChange={(e) => setBrandInfo((prev) => ({ ...prev, detail: e.target.value }))}
+                      />
+                      <TextField
+                        label="Brand Website URL" variant="outlined" size="small" fullWidth required
+                        value={brandInfo.websiteUrl}
+                        onChange={(e) => setBrandInfo((prev) => ({ ...prev, websiteUrl: e.target.value }))}
+                      />
+                    </Stack>
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Brand Logo (Required)</Typography>
+                        <Button variant="outlined" component="label" disabled={isUploadingBrandLogo} size="small">
+                          {isUploadingBrandLogo ? 'Uploading...' : 'Upload Brand Logo'}
+                          <input type="file" accept="image/*" hidden onChange={handleBrandLogoChange} />
+                        </Button>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                          {brandInfo.logoUrl ? `Uploaded: ${brandInfo.logoUrl}` : 'No brand logo uploaded'}
+                        </Typography>
+                        {brandInfo.logoUrl ? (
+                          <Box
+                            component="img"
+                            src={getFileUrl(brandInfo.logoUrl)}
+                            alt="Brand logo"
+                            sx={{ width: 92, height: 92, objectFit: 'contain', border: '1px solid #ccc', borderRadius: 1, mt: 1 }}
+                          />
+                        ) : null}
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Brand Cover Image (Optional)</Typography>
+                        <Button variant="outlined" component="label" disabled={isUploadingBrandCover} size="small">
+                          {isUploadingBrandCover ? 'Uploading...' : 'Upload Brand Cover'}
+                          <input type="file" accept="image/*" hidden onChange={handleBrandCoverChange} />
+                        </Button>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                          {brandInfo.coverUrl ? `Uploaded: ${brandInfo.coverUrl}` : 'No brand cover uploaded'}
+                        </Typography>
+                        {brandInfo.coverUrl ? (
+                          <Box
+                            component="img"
+                            src={getFileUrl(brandInfo.coverUrl)}
+                            alt="Brand cover"
+                            sx={{ width: '100%', maxWidth: 320, height: 100, objectFit: 'cover', border: '1px solid #ccc', borderRadius: 1, mt: 1 }}
+                          />
+                        ) : null}
+                      </Grid>
+                    </Grid>
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Product Images</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <Button variant="outlined" size="small" onClick={handleProductImageAddClick}>
+                        + Add Image Group
+                      </Button>
                     </Box>
-                    <Typography sx={{ mb: 1 }}>Brand Name (Required)</Typography>
-                    <TextField
-                      label="Brand Name"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      required
-                      value={brandInfo.name}
-                      onChange={(e) => setBrandInfo((prev) => ({ ...prev, name: e.target.value }))}
-                      sx={{ mb: 2 }}
-                    />
-                    <Typography sx={{ mb: 1 }}>Brand Detail (Required)</Typography>
-                    <TextField
-                      label="Brand Detail"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      required
-                      multiline
-                      value={brandInfo.detail}
-                      onChange={(e) => setBrandInfo((prev) => ({ ...prev, detail: e.target.value }))}
-                      sx={{ mb: 2 }}
-                    />
-                    <Typography sx={{ mb: 1 }}>Brand Website URL (Required)</Typography>
-                    <TextField
-                      label="Brand Website URL"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      required
-                      value={brandInfo.websiteUrl}
-                      onChange={(e) => setBrandInfo((prev) => ({ ...prev, websiteUrl: e.target.value }))}
-                      sx={{ mb: 2 }}
-                    />
-                    <Typography sx={{ mb: 1 }}>Brand Logo (Required)</Typography>
-                    <Button variant="outlined" component="label" disabled={isUploadingBrandLogo}>
-                      {isUploadingBrandLogo ? 'Uploading...' : 'Upload Brand Logo'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        hidden
-                        onChange={handleBrandLogoChange}
-                      />
-                    </Button>
-                    <Typography sx={{ mt: 1, mb: 2, color: 'text.secondary' }}>
-                      {brandInfo.logoUrl ? `Uploaded: ${brandInfo.logoUrl}` : 'No brand logo uploaded'}
-                    </Typography>
-                    {brandInfo.logoUrl ? (
-                      <Box
-                        component="img"
-                        src={getFileUrl(brandInfo.logoUrl)}
-                        alt="Brand logo"
-                        sx={{ width: 92, height: 92, objectFit: 'contain', border: '1px solid #ccc', borderRadius: 1, mb: 2 }}
-                      />
-                    ) : null}
-                    <Typography sx={{ mb: 1 }}>Brand Cover Image (Optional)</Typography>
-                    <Button variant="outlined" component="label" disabled={isUploadingBrandCover}>
-                      {isUploadingBrandCover ? 'Uploading...' : 'Upload Brand Cover'}
-                      <input type="file" accept="image/*" hidden onChange={handleBrandCoverChange} />
-                    </Button>
-                    <Typography sx={{ mt: 1, mb: 2, color: 'text.secondary' }}>
-                      {brandInfo.coverUrl ? `Uploaded: ${brandInfo.coverUrl}` : 'No brand cover uploaded'}
-                    </Typography>
-                    {brandInfo.coverUrl ? (
-                      <Box
-                        component="img"
-                        src={getFileUrl(brandInfo.coverUrl)}
-                        alt="Brand cover"
-                        sx={{ width: '100%', maxWidth: 320, height: 100, objectFit: 'cover', border: '1px solid #ccc', borderRadius: 1, mb: 2 }}
-                      />
-                    ) : null}
-                    <Typography sx={{ mb: 1 }}>Images</Typography>
-                    <Typography sx={{ ml: 2, display: 'inline-block' }}>
-                      Select images:
-                    </Typography>{' '}
-                    <Button variant="outlined" onClick={handleProductImageAddClick}>
-                      +
-                    </Button>
-                    <br />
-                    <br />
                     {productImageInputs.map((images, i) => (
-                      <React.Fragment key={i}>
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
                         <input
                           ref={productImageInputRefs.current[i]}
                           type="file"
@@ -2421,43 +2324,31 @@ const InnerPage = () => {
                         />
                         <Button
                           variant="outlined"
-                          onClick={() =>
-                            productImageInputRefs.current[i]?.current?.click()
-                          }
                           size="small"
-                          sx={{ ml: 8 }}
+                          onClick={() => productImageInputRefs.current[i]?.current?.click()}
                         >
                           Choose Files
                         </Button>
-                        <span>
+                        <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
                           {Array.isArray(productImageInputs[i]) && productImageInputs[i].length > 0
-                            ? ` ${productImageInputs[i].length} files`
-                            : ' No file chosen'}
-                        </span>
+                            ? `${productImageInputs[i].length} files`
+                            : 'No file chosen'}
+                        </Typography>
                         {Array.isArray(productImageInputs[i]) && productImageInputs[i].length > 0 && (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1, ml: 8 }}>
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, width: '100%' }}>
                             {productImageInputs[i].map((img, idx) => (
                               <Box key={idx} component="img" src={getFileUrl(img)} alt="" sx={{ width: 64, height: 64, objectFit: 'cover', border: '1px solid #ccc', borderRadius: 1 }} />
                             ))}
                           </Box>
                         )}
-                        <br />
-                        <br />
-                      </React.Fragment>
+                      </Box>
                     ))}
-                    <Typography sx={{ ml: 2, display: 'inline-block' }}>
-                      Capture images:
-                    </Typography>{' '}
-                    <Button
-                      variant="outlined"
-                      onClick={productCapturePhoto}
-                      size="small"
-                    >
-                      {!captureStart[0] ? 'Start Capture' : 'Capture'}
-                    </Button>
-                    <span> {productCaptureImages.length} Images captured</span>
-                    <br />
-                    <br />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+                      <Button variant="outlined" size="small" onClick={productCapturePhoto}>
+                        {!captureStart[0] ? 'Start Capture' : 'Capture'}
+                      </Button>
+                      <Typography variant="body2" color="text.secondary">{productCaptureImages.length} images captured</Typography>
+                    </Box>
                     {captureStart[0] && (
                       <Webcam
                         audio={false}
@@ -2467,36 +2358,25 @@ const InnerPage = () => {
                         height={360}
                       />
                     )}
-                    <br />
-                    <br />
-                    <span>
-                      Additional Identifiers:{' '}
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Additional Identifiers</Typography>
                       <Button
                         variant="outlined"
-                        onClick={() =>
-                          setSerials([
-                            { type: enabledSerialTypes[0] },
-                            ...serials,
-                          ])
-                        }
+                        size="small"
+                        onClick={() => setSerials([{ type: enabledSerialTypes[0] }, ...serials])}
                         disabled={enabledSerialTypes.length === 0}
                       >
-                        +
+                        + Add Identifier
                       </Button>
-                    </span>
-                    <br />
+                    </Box>
                     {serials.map((item, i) => (
-                      <Box
-                        key={i}
-                        sx={{ display: 'flex', alignItems: 'center', mt: 2 }}
-                      >
-                        <Select value={item.type} size="small">
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Select value={item.type} size="small" sx={{ minWidth: 180 }}>
                           {serialTypes
-                            .filter(
-                              (type) =>
-                                enabledSerialTypes.includes(type.value) ||
-                                type.value === item.type,
-                            )
+                            .filter((type) => enabledSerialTypes.includes(type.value) || type.value === item.type)
                             .map((type) => (
                               <MenuItem key={type.value} value={type.value}>
                                 {type.label}
@@ -2504,31 +2384,24 @@ const InnerPage = () => {
                             ))}
                         </Select>
                         <IconButton
-                          sx={{ ml: 5 }}
                           aria-label={`Remove ${item.type || 'serial'} entry`}
-                          onClick={() =>
-                            setSerials(
-                              serials.filter((_, index) => index !== i),
-                            )
-                          }
+                          onClick={() => setSerials(serials.filter((_, index) => index !== i))}
                         >
                           <DeleteIcon />
                         </IconButton>
                       </Box>
                     ))}
-                    <br />
-                    <br />
-                    <Typography sx={{ mb: 1 }}>Files</Typography>
-                    <Button variant="outlined" onClick={handleProductFileAddClick}>
-                      +
-                    </Button>
-                    <br />
-                    <br />
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Files</Typography>
+                      <Button variant="outlined" size="small" onClick={handleProductFileAddClick}>
+                        + Add File Group
+                      </Button>
+                    </Box>
                     {productFileInputs.map((files, i) => (
-                      <React.Fragment key={i}>
-                        <Typography sx={{ ml: 2, display: 'inline-block' }}>
-                          Select files:
-                        </Typography>{' '}
+                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1, flexWrap: 'wrap' }}>
                         <input
                           ref={productFileInputRefs.current[i]}
                           type="file"
@@ -2539,98 +2412,81 @@ const InnerPage = () => {
                         />
                         <Button
                           variant="outlined"
-                          onClick={() =>
-                            productFileInputRefs.current[i]?.current.click()
-                          }
                           size="small"
+                          onClick={() => productFileInputRefs.current[i]?.current.click()}
                         >
                           Choose Files
                         </Button>
-                        <span>
-                          {productFileInputs[i]?.length > 0
-                            ? ` ${productFileInputs[i].length} files`
-                            : ' No file chosen'}
-                        </span>
-                        <br />
-                        <br />
-                      </React.Fragment>
+                        <Typography variant="body2" color="text.secondary">
+                          {productFileInputs[i]?.length > 0 ? `${productFileInputs[i].length} files` : 'No file chosen'}
+                        </Typography>
+                      </Box>
                     ))}
-                    <Typography sx={{ mb: 1 }}>Youtube Videos</Typography>
-                    <Button variant="outlined" onClick={handleProductVideoAddClick}>
-                      +
-                    </Button>
-                    <br />
-                    <br />
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>YouTube Videos</Typography>
+                      <Button variant="outlined" size="small" onClick={handleProductVideoAddClick}>
+                        + Add Video
+                      </Button>
+                    </Box>
                     {productVideos.map((video, i) => (
-                      <React.Fragment key={i}>
+                      <Box key={i} sx={{ display: 'flex', gap: 1.5, mb: 1.5, flexWrap: 'wrap' }}>
                         <TextField
-                          label="Url..."
+                          label="URL"
                           variant="outlined"
                           size="small"
+                          sx={{ flex: 1, minWidth: 200 }}
                           value={video.url}
-                          onChange={(e) =>
-                            handleVideoFieldChange(
-                              setProductVideos,
-                              productVideos,
-                              i,
-                              'url',
-                              e.target.value,
-                            )
-                          }
-                        />{' '}
+                          onChange={(e) => handleVideoFieldChange(setProductVideos, productVideos, i, 'url', e.target.value)}
+                        />
                         <TextField
                           label="Description"
                           variant="outlined"
                           size="small"
+                          sx={{ flex: 1, minWidth: 200 }}
                           value={video.description}
-                          onChange={(e) =>
-                            handleVideoFieldChange(
-                              setProductVideos,
-                              productVideos,
-                              i,
-                              'description',
-                              e.target.value,
-                            )
-                          }
+                          onChange={(e) => handleVideoFieldChange(setProductVideos, productVideos, i, 'description', e.target.value)}
                         />
-                        <br />
-                        <br />
-                      </React.Fragment>
+                      </Box>
                     ))}
-                    <br />
-                    <br />
                   </Box>
                 )}
                 {detailTab === 1 && (
                   <Box>
-                    <Typography sx={{ mb: 1 }}>Size</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Size</Typography>
                     <TextField
                       label="Size"
                       variant="outlined"
                       size="small"
                       value={materialSize.size}
                       onChange={(e) => setMaterialSize((prev) => ({ ...prev, size: e.target.value }))}
-                      sx={{ mb: 2 }}
+                      sx={{ mb: 3 }}
                     />
-                    <Typography sx={{ mb: 1 }}>Materials (material, percent)</Typography>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => setMaterialSize((prev) => ({ ...prev, materials: [...prev.materials, { material: '', percent: 0 }] }))}
-                      sx={{ mr: 1 }}
-                    >
-                      +
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => setMaterialSize((prev) => ({ ...prev, materials: prev.materials.slice(0, -1) }))}
-                      disabled={materialSize.materials.length === 0}
-                    >
-                      -
-                    </Button>
-                    <br />
-                    <br />
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Materials</Typography>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => setMaterialSize((prev) => ({ ...prev, materials: [...prev.materials, { material: '', percent: 0 }] }))}
+                        >
+                          + Add Material
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => setMaterialSize((prev) => ({ ...prev, materials: prev.materials.slice(0, -1) }))}
+                          disabled={materialSize.materials.length === 0}
+                        >
+                          Remove Last
+                        </Button>
+                      </Box>
+                    </Box>
                     {materialSize.materials.map((row, i) => (
                       <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                         <TextField
@@ -2672,9 +2528,14 @@ const InnerPage = () => {
                         />
                       </Box>
                     ))}
-                    <Typography sx={{ mt: 3, mb: 1, fontWeight: 600 }}>Certifications (Materials tab)</Typography>
-                    <Button variant="outlined" size="small" sx={{ mb: 1 }}
-                      onClick={() => setCertifications((prev) => [...prev, { icon: '', title: '', content: '' }])}>+ Certification</Button>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Certifications</Typography>
+                      <Button variant="outlined" size="small"
+                        onClick={() => setCertifications((prev) => [...prev, { icon: '', title: '', content: '' }])}>+ Add Certification</Button>
+                    </Box>
                     {certifications.map((c, i) => (
                       <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                         <Button variant="outlined" component="label" size="small">
@@ -2694,7 +2555,8 @@ const InnerPage = () => {
                 )}
                 {detailTab === 2 && (
                   <Box>
-                    <Typography sx={{ mb: 1 }}>Maintenance icons (multi-select)</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Maintenance Icons</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>Select all that apply</Typography>
                     <CareSymbols
                       selectedIds={maintenance.iconIds}
                       onToggle={(id) => {
@@ -2705,7 +2567,10 @@ const InnerPage = () => {
                       }}
                       size={52}
                     />
-                    <Typography sx={{ mb: 1 }}>Description</Typography>
+
+                    <Divider sx={{ my: 3 }} />
+
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Description</Typography>
                     <TextField
                       label="Maintenance description"
                       variant="outlined"
@@ -2714,8 +2579,15 @@ const InnerPage = () => {
                       multiline
                       value={maintenance.description}
                       onChange={(e) => setMaintenance((prev) => ({ ...prev, description: e.target.value }))}
+                      sx={{ mb: 3 }}
                     />
-                    <Typography sx={{ mt: 3, mb: 1 }}>Care tips (one per line — used on the app Care tab; auto-generated from the icons above when left blank)</Typography>
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>Care Tips</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                      One per line — used on the app's Care tab; auto-generated from the icons above when left blank.
+                    </Typography>
                     <TextField
                       label="Care tips (one per line)"
                       variant="outlined"
@@ -2730,45 +2602,49 @@ const InnerPage = () => {
                 )}
                 {detailTab === 3 && (
                   <Box>
-                    <Typography sx={{ mb: 1 }}>Disposal URLs</Typography>
-                    <TextField
-                      label="Repair URL"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={disposal.repairUrl}
-                      onChange={(e) => setDisposal((prev) => ({ ...prev, repairUrl: e.target.value }))}
-                      sx={{ mb: 1 }}
-                    />
-                    <TextField
-                      label="Reuse URL"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={disposal.reuseUrl}
-                      onChange={(e) => setDisposal((prev) => ({ ...prev, reuseUrl: e.target.value }))}
-                      sx={{ mb: 1 }}
-                    />
-                    <TextField
-                      label="Rental URL"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={disposal.rentalUrl}
-                      onChange={(e) => setDisposal((prev) => ({ ...prev, rentalUrl: e.target.value }))}
-                      sx={{ mb: 1 }}
-                    />
-                    <TextField
-                      label="Dispose URL"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={disposal.disposeUrl}
-                      onChange={(e) => setDisposal((prev) => ({ ...prev, disposeUrl: e.target.value }))}
-                    />
-                    <Typography sx={{ mt: 3, mb: 1, fontWeight: 600 }}>Sustainability Impact (Dispose tab)</Typography>
-                    <Button variant="outlined" size="small" sx={{ mb: 1 }}
-                      onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: [...(prev.items || []), { icon: '', value: '', label: '', description: '' }] }))}>+ Impact item</Button>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Disposal URLs</Typography>
+                    <Grid container spacing={2} sx={{ mb: 3 }}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Repair URL"
+                          variant="outlined" size="small" fullWidth
+                          value={disposal.repairUrl}
+                          onChange={(e) => setDisposal((prev) => ({ ...prev, repairUrl: e.target.value }))}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Reuse URL"
+                          variant="outlined" size="small" fullWidth
+                          value={disposal.reuseUrl}
+                          onChange={(e) => setDisposal((prev) => ({ ...prev, reuseUrl: e.target.value }))}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Rental URL"
+                          variant="outlined" size="small" fullWidth
+                          value={disposal.rentalUrl}
+                          onChange={(e) => setDisposal((prev) => ({ ...prev, rentalUrl: e.target.value }))}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Dispose URL"
+                          variant="outlined" size="small" fullWidth
+                          value={disposal.disposeUrl}
+                          onChange={(e) => setDisposal((prev) => ({ ...prev, disposeUrl: e.target.value }))}
+                        />
+                      </Grid>
+                    </Grid>
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Sustainability Impact</Typography>
+                      <Button variant="outlined" size="small"
+                        onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: [...(prev.items || []), { icon: '', value: '', label: '', description: '' }] }))}>+ Add Impact Item</Button>
+                    </Box>
                     {(sustainabilityImpact.items || []).map((it, i) => (
                       <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
                         <Button variant="outlined" component="label" size="small">
@@ -2787,20 +2663,30 @@ const InnerPage = () => {
                         <Button size="small" color="error" onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: prev.items.filter((_, x) => x !== i) }))}>×</Button>
                       </Box>
                     ))}
-                    <Typography variant="caption" color="text.secondary">Legacy quick fields (still shown if no items above):</Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                      <TextField label="CO2 avoided" size="small" value={sustainabilityImpact.co2Avoided}
-                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, co2Avoided: e.target.value }))} />
-                      <TextField label="Water saved" size="small" value={sustainabilityImpact.waterSaved}
-                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, waterSaved: e.target.value }))} />
-                      <TextField label="Energy saved" size="small" value={sustainabilityImpact.energySaved}
-                        onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, energySaved: e.target.value }))} />
-                    </Box>
+                    <Divider sx={{ my: 3 }} />
+
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                      Legacy quick fields — still shown if no impact items are added above.
+                    </Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={4}>
+                        <TextField label="CO2 avoided" size="small" fullWidth value={sustainabilityImpact.co2Avoided}
+                          onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, co2Avoided: e.target.value }))} />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <TextField label="Water saved" size="small" fullWidth value={sustainabilityImpact.waterSaved}
+                          onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, waterSaved: e.target.value }))} />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <TextField label="Energy saved" size="small" fullWidth value={sustainabilityImpact.energySaved}
+                          onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, energySaved: e.target.value }))} />
+                      </Grid>
+                    </Grid>
                   </Box>
                 )}
                 {detailTab === 4 && (
                   <Box>
-                    <Typography sx={{ mb: 1 }}>Made in</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Origin</Typography>
                     <TextField
                       label="Made in"
                       variant="outlined"
@@ -2808,26 +2694,34 @@ const InnerPage = () => {
                       fullWidth
                       value={traceabilityEsg.madeIn}
                       onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, madeIn: e.target.value }))}
-                      sx={{ mb: 2 }}
+                      sx={{ mb: 3 }}
                     />
-                    <Typography sx={{ mb: 1 }}>Material origins (from Material/Size, with company name)</Typography>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: [...prev.materialOrigins, { material: '', companyName: '' }] }))}
-                      sx={{ mr: 1, mb: 1 }}
-                    >
-                      +
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: prev.materialOrigins.slice(0, -1) }))}
-                      disabled={traceabilityEsg.materialOrigins.length === 0}
-                      sx={{ mb: 1 }}
-                    >
-                      -
-                    </Button>
+
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Material Origins</Typography>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: [...prev.materialOrigins, { material: '', companyName: '' }] }))}
+                        >
+                          + Add Origin
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={() => setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: prev.materialOrigins.slice(0, -1) }))}
+                          disabled={traceabilityEsg.materialOrigins.length === 0}
+                        >
+                          Remove Last
+                        </Button>
+                      </Box>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                      From Material/Size, with company name
+                    </Typography>
                     {traceabilityEsg.materialOrigins.map((row, i) => (
                       <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                         <TextField
@@ -2874,64 +2768,66 @@ const InnerPage = () => {
                         </Button>
                       </Box>
                     ))}
-                    <Typography sx={{ mb: 1, mt: 2 }}>Shipping log (e.g. Sri Lanka to Italy)</Typography>
-                    <TextField
-                      label="Shipping log"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={traceabilityEsg.shippingLog}
-                      onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, shippingLog: e.target.value }))}
-                      sx={{ mb: 1 }}
-                    />
-                    <Typography sx={{ mb: 1 }}>Distance</Typography>
-                    <TextField
-                      label="Distance (e.g. 7,300 km)"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={traceabilityEsg.distance}
-                      onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, distance: e.target.value }))}
-                      sx={{ mb: 1 }}
-                    />
-                    <Typography sx={{ mb: 1 }}>CO2 by Production</Typography>
-                    <TextField
-                      label="CO2 by Production (e.g. 25 kg)"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={traceabilityEsg.co2Production}
-                      onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Production: e.target.value }))}
-                      sx={{ mb: 1 }}
-                    />
-                    <Typography sx={{ mb: 1 }}>CO2 by Transportation</Typography>
-                    <TextField
-                      label="CO2 by Transportation (e.g. 200 kg)"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={traceabilityEsg.co2Transportation}
-                      onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Transportation: e.target.value }))}
-                    />
+                    <Divider sx={{ my: 3 }} />
+
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Shipping &amp; Emissions</Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12}>
+                        <TextField
+                          label="Shipping log" placeholder="e.g. Sri Lanka to Italy"
+                          variant="outlined" size="small" fullWidth
+                          value={traceabilityEsg.shippingLog}
+                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, shippingLog: e.target.value }))}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          label="Distance" placeholder="e.g. 7,300 km"
+                          variant="outlined" size="small" fullWidth
+                          value={traceabilityEsg.distance}
+                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, distance: e.target.value }))}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          label="CO2 by Production" placeholder="e.g. 25 kg"
+                          variant="outlined" size="small" fullWidth
+                          value={traceabilityEsg.co2Production}
+                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Production: e.target.value }))}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={4}>
+                        <TextField
+                          label="CO2 by Transportation" placeholder="e.g. 200 kg"
+                          variant="outlined" size="small" fullWidth
+                          value={traceabilityEsg.co2Transportation}
+                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Transportation: e.target.value }))}
+                        />
+                      </Grid>
+                    </Grid>
                   </Box>
                 )}
                 {detailTab === 5 && (
                   <Box>
-                    <Typography sx={{ mb: 1, fontWeight: 600 }}>Warranty</Typography>
-                    <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
-                      <TextField
-                        label="Warranty Status" placeholder="e.g. Active"
-                        variant="outlined" size="small"
-                        value={warrantyStatus}
-                        onChange={(e) => setWarrantyStatus(e.target.value)}
-                      />
-                      <TextField
-                        label="Valid for (years)" type="number"
-                        variant="outlined" size="small"
-                        value={warrantyValidYears}
-                        onChange={(e) => setWarrantyValidYears(Number(e.target.value) || 0)}
-                      />
-                    </Stack>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Warranty</Typography>
+                    <Grid container spacing={2} sx={{ mb: 1.5 }}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Warranty Status" placeholder="e.g. Active"
+                          variant="outlined" size="small" fullWidth
+                          value={warrantyStatus}
+                          onChange={(e) => setWarrantyStatus(e.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          label="Valid for (years)" type="number"
+                          variant="outlined" size="small" fullWidth
+                          value={warrantyValidYears}
+                          onChange={(e) => setWarrantyValidYears(Number(e.target.value) || 0)}
+                        />
+                      </Grid>
+                    </Grid>
                     <Typography variant="caption" color="text.secondary">
                       Shown on the app Product Summary (status + valid-until, computed from the date added).
                     </Typography>
@@ -2941,6 +2837,83 @@ const InnerPage = () => {
                 )}
               </Box>
             </DialogContent>
+            {/* Pinned footer (not scrolled with the tab content above) — the
+                save action used to sit above the tabs, so filling in fields
+                on any tab past the first meant scrolling all the way back up
+                just to reach Add/Update Product. */}
+            {productPanelMode === 'edit' && (
+              <DialogActions sx={{ flexDirection: 'column', alignItems: 'stretch', px: 3, py: 2, gap: 1, borderTop: 1, borderColor: 'divider' }}>
+                {(() => {
+                  const missing = [
+                    productName === '' && 'Product Name',
+                    productImages.length === 0 && 'at least one Product Photo',
+                    brandInfo.name.trim() === '' && 'Brand Name',
+                    brandInfo.detail.trim() === '' && 'Brand Detail',
+                    brandInfo.websiteUrl.trim() === '' && 'Brand Website URL',
+                    brandInfo.logoUrl.trim() === '' && 'Brand Logo',
+                  ].filter(Boolean);
+                  if (missing.length === 0) return null;
+                  return (
+                    <Typography variant="caption" color="text.secondary">
+                      Still needed before you can save: {missing.join(', ')}.
+                    </Typography>
+                  );
+                })()}
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setOpenPreviewModal(true)}
+                    disabled={
+                      !(
+                        productName !== '' &&
+                        productImages.length > 0 &&
+                        brandInfo.name.trim() !== '' &&
+                        brandInfo.detail.trim() !== '' &&
+                        brandInfo.websiteUrl.trim() !== '' &&
+                        brandInfo.logoUrl.trim() !== ''
+                      )
+                    }
+                  >
+                    Preview
+                  </Button>
+                  {!isEditing ? (
+                    <Button
+                      variant="contained"
+                      onClick={addProductHandler}
+                      disabled={
+                        !(
+                          productName !== '' &&
+                          productImages.length > 0 &&
+                          brandInfo.name.trim() !== '' &&
+                          brandInfo.detail.trim() !== '' &&
+                          brandInfo.websiteUrl.trim() !== '' &&
+                          brandInfo.logoUrl.trim() !== ''
+                        )
+                      }
+                    >
+                      Add Product
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="contained"
+                      onClick={updateProductHandler}
+                      disabled={
+                        !(
+                          productName !== '' &&
+                          productImages.length > 0 &&
+                          brandInfo.name.trim() !== '' &&
+                          brandInfo.detail.trim() !== '' &&
+                          brandInfo.websiteUrl.trim() !== '' &&
+                          brandInfo.logoUrl.trim() !== ''
+                        )
+                      }
+                    >
+                      Update Product
+                    </Button>
+                  )}
+                </Box>
+              </DialogActions>
+            )}
           </Dialog>
         </Box>
       </Box>
