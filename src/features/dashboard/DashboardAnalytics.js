@@ -10,14 +10,14 @@ import SellIcon from '@mui/icons-material/Sell';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import PublicIcon from '@mui/icons-material/Public';
 import VerifiedIcon from '@mui/icons-material/Verified';
-import { getAnalytics } from '../../helper';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import { getAnalytics, getCapturesCount } from '../../helper';
+import { useAuth } from '../auth/AuthContext';
 import Loader from '../../components/Loader';
 
 // Blue / gray / white family only.
 const COLORS = ['#1b4f72', '#4a96dd', '#5b9bd8', '#8aa0c4', '#6b7a93', '#aab6c8'];
 
-// Matches the backend's DEFAULT_DESTINATION_COUNTRIES in qrcodeController.ts.
-const DEFAULT_DESTINATION_COUNTRIES = ['Germany', 'France', 'Netherlands', 'Spain', 'United Kingdom'];
 
 const CATEGORY_LABELS = {
   denim: 'Denim',
@@ -77,7 +77,7 @@ const Section = ({ title, children, sx }) => (
 );
 
 // SVG donut chart for [{category,count}] segments.
-const Donut = ({ segments }) => {
+const Donut = ({ segments, labels = CATEGORY_LABELS }) => {
   const total = segments.reduce((s, x) => s + (x.count || 0), 0);
   const r = 48;
   const circumference = 2 * Math.PI * r;
@@ -113,7 +113,7 @@ const Donut = ({ segments }) => {
           <Box key={s.category} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
             <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: COLORS[i % COLORS.length], flexShrink: 0 }} />
             <Typography variant="caption" color="text.secondary" noWrap sx={{ flex: 1 }}>
-              {CATEGORY_LABELS[s.category] || s.category}
+              {labels[s.category] || s.category}
             </Typography>
             <Typography variant="caption" sx={{ fontWeight: 600 }}>
               {total ? `${Math.round((s.count / total) * 1000) / 10}%` : '0%'} ({s.count})
@@ -231,9 +231,25 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
     getAnalytics(ownerKind, ownerId, cleaned).then(setA);
   }, [ownerKind, ownerId, appliedFilters]);
 
-  // Matches the backend's DEFAULT_DESTINATION_COUNTRIES — always these 5
-  // columns (+ Others), not derived from actual scan volume.
-  const traceabilityColumns = DEFAULT_DESTINATION_COUNTRIES;
+  // Total Captures card: super admin — every capture; company / Supervisor —
+  // its company's; working employee — their own. Not shown to app users.
+  const { token, company, isAppUser } = useAuth();
+  const isWorkingEmployee = company?.actorKind === 'Employee' && company?.employeeType !== 'supervisor';
+  const showCaptures = !isAppUser;
+  const [capturesTotal, setCapturesTotal] = useState(null);
+  useEffect(() => {
+    if (!showCaptures || !token) return;
+    getCapturesCount(token, { mine: isWorkingEmployee }).then(setCapturesTotal);
+  }, [showCaptures, token, isWorkingEmployee]);
+
+  // Countries with at least one scan (from the backend, most-scanned first).
+  // Older backends don't send destinationColumns — fall back to the country
+  // keys they already put in each row's destinationBreakdown (incl. Others).
+  const traceabilityColumns = a?.destinationColumns
+    || Object.keys(a?.traceabilityOverview?.[0]?.destinationBreakdown || {});
+  // Managed category names (super admin > Manage Categories), with the
+  // built-in names as a fallback for older backends.
+  const categoryLabels = { ...CATEGORY_LABELS, ...(a?.filterOptions?.itemCategoryLabels || {}) };
 
   if (!a) {
     return <Loader label="Loading analytics…" />;
@@ -243,8 +259,13 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
 
   return (
     <Box sx={{ mt: { xs: 3, md: 1.5 } }}>
-      <Grid container spacing={1} sx={{ mb: 1.5 }}>
+      {/* 14 columns at md when the 7th (Total Captures) card shows, so all
+          cards still fit one row. */}
+      <Grid container spacing={1} columns={{ xs: 12, md: showCaptures ? 14 : 12 }} sx={{ mb: 1.5 }}>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCodeScannerIcon} label="Total Scans" value={t.scans ?? 0} delta={t.deltas?.scans} /></Grid>
+        {showCaptures && (
+          <Grid item xs={6} sm={4} md={2}><Kpi icon={CameraAltIcon} label="Total Captures" value={capturesTotal ?? 0} /></Grid>
+        )}
         <Grid item xs={6} sm={4} md={2}><Kpi icon={CheckroomIcon} label="Unique Items" value={t.uniqueItems ?? 0} delta={t.deltas?.uniqueItems} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={SellIcon} label="Unique SKUs" value={t.uniqueSkus ?? 0} delta={t.deltas?.uniqueSkus} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={StorefrontIcon} label="Retail Stores" value={t.retailStores ?? 0} delta={t.deltas?.retailStores} /></Grid>
@@ -255,7 +276,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
       <Grid container spacing={1.25} sx={{ mb: 1.25 }}>
         <Grid item xs={12} md={4}>
           <Section title="Scans by Item Category">
-            <Donut segments={a.categoryBreakdown || []} />
+            <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
           </Section>
         </Grid>
         <Grid item xs={12} md={4}>
@@ -290,7 +311,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
           >
             <MenuItem value="">All</MenuItem>
             {(a.filterOptions?.itemCategories || []).map((k) => (
-              <MenuItem key={k} value={k}>{CATEGORY_LABELS[k] || k}</MenuItem>
+              <MenuItem key={k} value={k}>{categoryLabels[k] || k}</MenuItem>
             ))}
           </TextField>
           <TextField
@@ -302,7 +323,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
             {(a.filterOptions?.originCountries || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
           </TextField>
           <TextField
-            select label="Destination Country" size="small" value={filters.destination_country}
+            select label="Scanned Country" size="small" value={filters.destination_country}
             onChange={(e) => setFilters((f) => ({ ...f, destination_country: e.target.value }))}
             sx={{ minWidth: 170 }}
           >
@@ -343,15 +364,16 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
                 <TableCell rowSpan={2}>Item Category</TableCell>
                 <TableCell rowSpan={2}>Origin Country</TableCell>
                 <TableCell rowSpan={2} align="right">Total Scanned (PCS)</TableCell>
-                <TableCell align="center" colSpan={traceabilityColumns.length + 1} sx={{ borderBottom: 'none' }}>
-                  Destination (Country)
-                </TableCell>
+                {traceabilityColumns.length > 0 && (
+                  <TableCell align="center" colSpan={traceabilityColumns.length} sx={{ borderBottom: 'none' }}>
+                    Scanned Location (Country)
+                  </TableCell>
+                )}
                 <TableCell rowSpan={2}>City (Top)</TableCell>
                 <TableCell rowSpan={2} align="right">Stores</TableCell>
               </TableRow>
               <TableRow>
                 {traceabilityColumns.map((c) => <TableCell key={c} align="right">{c}</TableCell>)}
-                <TableCell align="right">Others</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -362,7 +384,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                         <CategoryIcon sx={{ fontSize: 16, color: 'primary.main' }} />
-                        {CATEGORY_LABELS[row.itemCategory] || row.itemCategory}
+                        {categoryLabels[row.itemCategory] || row.itemCategory}
                       </Box>
                     </TableCell>
                     <TableCell>{row.originCountry || '—'}</TableCell>
@@ -370,7 +392,6 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
                     {traceabilityColumns.map((c) => (
                       <TableCell key={c} align="right">{row.destinationBreakdown?.[c] || 0}</TableCell>
                     ))}
-                    <TableCell align="right">{row.destinationBreakdown?.Others || 0}</TableCell>
                     <TableCell>{(row.topCities || []).join(', ') || '—'}</TableCell>
                     <TableCell align="right">{row.stores}</TableCell>
                   </TableRow>
@@ -378,7 +399,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
               })}
               {!(a.traceabilityOverview || []).length && (
                 <TableRow>
-                  <TableCell colSpan={6 + traceabilityColumns.length}>
+                  <TableCell colSpan={5 + traceabilityColumns.length}>
                     <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
                       No scan activity yet.
                     </Typography>

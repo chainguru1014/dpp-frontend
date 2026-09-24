@@ -10,15 +10,29 @@ import {
 
 const AuthContext = createContext(null);
 
-// Exported so the employee login flow (features/employee-auth) can bridge any
-// Employee session (working_employee or supervisor) into this same storage —
-// see StaffLoginPage's bridgeEmployeeSession call. Company/User sessions
-// never share a token or storage key with an Employee session (see
-// EmployeeAuthContext), except for this one deliberate, one-way bridge.
 export const STORAGE_KEY = 'dpp_company';
 // JWT issued by the passwordless auth endpoints (google/apple/otp-verify).
 // Needed as a Bearer token for the profile-completion call.
 export const TOKEN_STORAGE_KEY = 'dpp_auth_token';
+
+// An Employee (working_employee or supervisor) signed in through the normal
+// login — stored in the same `company` slot as a Company session (role
+// 'company', so canManageProducts/isAdmin compute correctly) and scoped to
+// its company, so the dashboard pages work unmodified. pages/index.js gates
+// what each employeeType may see via actorKind/employeeType.
+const buildEmployeeSession = (employee) => ({
+  _id: employee.company_id,
+  name: employee.companyName || employee.emailDomain,
+  // Shown in the top bar next to the avatar — the employee's own name, not
+  // the brand's (anything reading `company.name` as "the brand" is unaffected).
+  displayName: employee.name || (employee.email ? employee.email.split('@')[0] : (employee.companyName || employee.emailDomain)),
+  email: employee.email || '',
+  role: 'company',
+  profileCompleted: true,
+  actorKind: 'Employee',
+  employeeType: employee.employeeType || 'working_employee',
+  employeeId: employee._id,
+});
 
 const safeStorageGet = (storage, key) => {
   try {
@@ -141,12 +155,16 @@ export const AuthProvider = ({ children }) => {
   // actor + JWT the same way regardless of which method was used.
   const applyAuthResult = (res) => {
     if (!res || !res.user) return null;
+    // A staff employee's email signs in as that employee (the backend checks
+    // Employee first) — store it in the company slot as an Employee session.
     // The built-in "admin" account is the super admin. Back-compat: if it predates
     // the role field, treat it as 'super'. Otherwise keep the role from the backend
     // ('super' | 'company' for companies, 'User' for app users).
-    const normalized = res.user?.name === 'admin' && !res.user?.role
-      ? { ...res.user, role: 'super' }
-      : res.user;
+    const normalized = res.actorKind === 'Employee'
+      ? buildEmployeeSession(res.user)
+      : res.user?.name === 'admin' && !res.user?.role
+        ? { ...res.user, role: 'super' }
+        : res.user;
     setCompany(normalized);
     if (res.token) setToken(res.token);
     return normalized;

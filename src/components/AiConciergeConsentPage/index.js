@@ -209,9 +209,9 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
               height: CONSENT_BUTTON_HEIGHT,
               minHeight: CONSENT_BUTTON_HEIGHT,
               py: 0,
-              // Same dark blue as the I Agree active state above.
-              bgcolor: '#123a56',
-              '&:hover': { bgcolor: '#1f5688' },
+              // Same azure as every other button (theme.js).
+              bgcolor: '#4585db',
+              '&:hover': { bgcolor: '#3a72c0' },
             }}
           >
             {saving ? 'Saving…' : mode === 'review' ? 'Save Preferences' : 'Continue'}

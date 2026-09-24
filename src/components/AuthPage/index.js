@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import { useNavigate } from 'react-router-dom';
 import AppleIcon from '@mui/icons-material/Apple';
 import { useGoogleAuth } from '../../features/auth/useGoogleAuth';
 import { useAppleAuth } from '../../features/auth/useAppleAuth';
 import AuthShell from '../AuthShell';
-import AudienceToggle from '../AudienceToggle';
 import yometelLogoWhite from '../../assets/yometel-logo-white.png';
 import yometelLogoTrans from '../../assets/yometel-logo-trans.png';
 import theme from '../../theme';
@@ -161,8 +159,6 @@ const AuthPage = ({
     e.preventDefault();
     onCompleteProfile(registerData);
   };
-
-  const navigate = useNavigate();
 
   return (
     <AuthShell activeSlide={activeSlide}>
@@ -508,10 +504,6 @@ const AuthPage = ({
                 gap, not the parent's larger gap:1.5) so they read as one
                 "auxiliary links" group instead of three widely-spaced rows. */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              {/* Consumer/Staff and Sign In/Sign Up each show only the single
-                  relevant question — one tap to switch, no pill toggle. */}
-              <AudienceToggle value="consumer" onSelectConsumer={() => {}} onSelectStaff={() => navigate('/staff')} />
-
               <Box sx={{ textAlign: 'center' }}>
                 <Typography
                   component="span"

@@ -97,7 +97,7 @@ export const registerCompany = async (data) => {
     try {
         const res = await axios.post(`${Backend_URL}company`, data);
         if (res.data.status === 'success') {
-            alert('Successfully registered');
+            alert(res.data.warning ? `Successfully registered.\n\n${res.data.warning}` : 'Successfully registered');
             // Return the company document from response
             return res.data.data.doc || res.data.data;
         } else {
@@ -143,7 +143,13 @@ export const loginCompany = async (data) => {
 // 'Company') and `profileCompleted`.
 const normalizeAuthResponse = (res) => {
     if (res?.data?.status === 'success' && res.data.user) {
-        return { user: res.data.user, token: res.data.token || '', message: res.data.message || '' };
+        return {
+            user: res.data.user,
+            token: res.data.token || '',
+            message: res.data.message || '',
+            // 'Employee' when the email belongs to a staff employee.
+            actorKind: res.data.actorKind || res.data.user.actorKind || '',
+        };
     }
     return null;
 };
@@ -203,17 +209,8 @@ export const requestOtp = async (email, mode = 'signin') => {
 export const verifyOtp = async (email, code) => {
     try {
         const res = await axios.post(`${Backend_URL}auth/otp/verify`, { email, code });
-        // The backend's /auth/otp/* endpoints recognize a corporate Employee
-        // address too (the mobile app's unified login screen relies on that —
-        // see project memory), but on this web admin panel a Supervisor/
-        // working_employee must sign in at the dedicated Staff Login page
-        // (/staff) instead, so their session gets bridged correctly. Reject
-        // here rather than establishing a session, since otherwise the
-        // resulting `user` record has no reliable actorKind for this page to
-        // gate on (see EmployeeAuthContext's bridgeSupervisorSession).
-        if (res?.data?.actorKind === 'Employee') {
-            return { ok: false, message: 'Staff accounts must sign in from the Staff Login page.' };
-        }
+        // A staff employee's email comes back with actorKind 'Employee' and is
+        // signed in as that employee (see AuthContext.applyAuthResult).
         const normalized = normalizeAuthResponse(res);
         if (!normalized) return { ok: false, message: res?.data?.message || 'Invalid or expired code' };
         return { ok: true, ...normalized };
@@ -686,7 +683,9 @@ export const verifyCompany = async(id) => {
 
 export const updateCompany = async(id, data) => {
     try {
-        await axios.put(`${Backend_URL}company/${id}`, data);
+        const res = await axios.put(`${Backend_URL}company/${id}`, data);
+        // Set when the admin email couldn't be made this company's Supervisor.
+        if (res.data?.warning) alert(res.data.warning);
         return true;
     } catch (err) {
         console.log(err);
@@ -795,9 +794,48 @@ export const updateProcessSteps = async (token, processSteps) => {
 };
 
 // ----- Corporate capture audit trail (Capture History page, Supervisor-only) -----
-export const getCaptures = async (token) => {
+// ----- Product item categories (super-admin managed, platform-wide) -----
+// [{ key, label, skuPrefix, productCount }] — [] on failure.
+export const getItemCategories = async () => {
     try {
-        const res = await axios.get(`${Backend_URL}captures?date=all`, {
+        const res = await axios.get(`${Backend_URL}platform-settings/item-categories`);
+        return res.data?.data?.itemCategories || [];
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+};
+
+// Saves the whole list (display order). Entries without a `key` are new;
+// categories left out are removed (their products move to "Others").
+export const saveItemCategories = async (token, itemCategories) => {
+    try {
+        const res = await axios.put(`${Backend_URL}platform-settings/item-categories`, { itemCategories }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, ...res.data?.data };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Failed to save categories' };
+    }
+};
+
+// Total captures in the requester's scope (super admin: all; company /
+// Supervisor: its company; `mine`: that employee's own). null on failure.
+export const getCapturesCount = async (token, { mine = false } = {}) => {
+    try {
+        const res = await axios.get(`${Backend_URL}captures/count${mine ? '?mine=true' : ''}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return res.data?.data?.total ?? null;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+};
+
+export const getCaptures = async (token, { mine = false } = {}) => {
+    try {
+        const res = await axios.get(`${Backend_URL}captures?date=all${mine ? '&mine=true' : ''}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return res.data?.data?.docs || [];
@@ -826,36 +864,6 @@ export const updateConsumerLocationSteps = async (token, processSteps) => {
         return { ok: true, data: res.data?.data?.processSteps || [] };
     } catch (err) {
         return { ok: false, message: err.response?.data?.message || err.message || 'Failed to save location steps' };
-    }
-};
-
-// ----- Employee's own passwordless login (corporate SSO) -----
-// Mirrors requestOtp/verifyOtp above but hits /employee-auth/*, a completely
-// separate collection/route from the consumer and company auth flows.
-export const requestEmployeeOtp = async (email) => {
-    try {
-        const res = await axios.post(`${Backend_URL}employee-auth/otp/request`, { email });
-        return { ok: true, message: res?.data?.message || 'Code sent — check your email.' };
-    } catch (err) {
-        const message =
-            err.response?.data?.message ||
-            (err.response?.status === 429 ? 'Please wait before requesting another code' : null) ||
-            err.message ||
-            'Failed to send code';
-        return { ok: false, message };
-    }
-};
-
-export const verifyEmployeeOtp = async (email, code) => {
-    try {
-        const res = await axios.post(`${Backend_URL}employee-auth/otp/verify`, { email, code });
-        if (res?.data?.status === 'success' && res.data.employee) {
-            return { ok: true, employee: res.data.employee, token: res.data.token || '' };
-        }
-        return { ok: false, message: res?.data?.message || 'Invalid or expired code' };
-    } catch (err) {
-        const message = err.response?.data?.message || err.message || 'Invalid or expired code';
-        return { ok: false, message };
     }
 };
 

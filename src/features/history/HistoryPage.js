@@ -13,7 +13,7 @@ import {
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { DataGrid } from '@mui/x-data-grid';
-import { getScanHistory, getProductsByUser } from '../../helper';
+import { getScanHistory, getProductsByUser, getOwnedProducts } from '../../helper';
 
 const fmt = (d) => {
   try {
@@ -82,16 +82,18 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
     return () => clearTimeout(t);
   }, [locationInput]);
 
-  // Product dropdown options. The scan-history query itself is still scoped
-  // server-side by ownerKind/ownerId regardless of what's selected here, so
-  // it's safe to just list every product rather than needing an owner-scoped
-  // fetch (picking one the account doesn't own simply returns no rows).
+  // Product dropdown options: a company / Supervisor only lists the products
+  // it owns — the same set the scan-history query is scoped to server-side.
+  // A normal DPP user sees every scan they made (owned or not), and the super
+  // admin sees everything, so both list all products.
   useEffect(() => {
     (async () => {
-      const list = await getProductsByUser();
+      const list = ownerKind === 'Company' && ownerId
+        ? await getOwnedProducts(ownerKind, ownerId)
+        : await getProductsByUser();
       setProductOptions(Array.isArray(list) ? list : []);
     })();
-  }, []);
+  }, [ownerKind, ownerId]);
 
   const fetchData = async () => {
     setLoading(true);

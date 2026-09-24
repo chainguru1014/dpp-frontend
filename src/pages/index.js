@@ -47,6 +47,7 @@ import CampaignIcon from '@mui/icons-material/Campaign';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
 import Webcam from 'react-webcam';
 import io from 'socket.io-client';
 
@@ -95,7 +96,8 @@ import SystemNotificationsPage from '../features/notifications/SystemNotificatio
 import AllNotificationsPage from '../features/notifications/AllNotificationsPage';
 import ProductHistoryDialog from '../features/products/ProductHistoryDialog';
 import ProductTransferDialog from '../features/products/ProductTransferDialog';
-import { getFileUrl } from '../helper';
+import { getFileUrl, getItemCategories } from '../helper';
+import ManageCategoriesDialog from '../features/products/ManageCategoriesDialog';
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
 import { compactMediaQuery } from '../theme';
 
@@ -107,6 +109,15 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 
 const serialTypes = [{ label: 'Serial Number', value: 'serial' }];
 const DEFAULT_BRAND_NAME = 'Yometel';
+// Default item categories — only used until the managed list (super admin,
+// Products > Manage Categories) loads from the backend.
+const ITEM_CATEGORY_OPTIONS = [
+  { value: 'denim', label: 'Denim' },
+  { value: 'tops', label: 'Tops (T-Shirts / Knit)' },
+  { value: 'bottoms', label: 'Bottoms' },
+  { value: 'outerwear', label: 'Outerwear' },
+  { value: 'others', label: 'Others' },
+];
 // Single source of truth for the left bar width — shared by the Drawer and the
 // logo container so the logo is always centered over the bar at every breakpoint.
 // Kept deliberately narrow so the content area gets more room.
@@ -149,18 +160,39 @@ const InnerPage = () => {
   const ownerScopeKind = isAppUser ? 'User' : 'Company';
   const ownerScopeId = company?._id || company?.id;
 
-  // A corporate employee (working_employee or supervisor), bridged in here
-  // from the Staff Login flow (see StaffLoginPage's bridgeEmployeeSession
-  // call). Their session reuses this same `company` slot (role: 'company',
-  // so canManageProducts/isAdmin above already compute correctly) purely so
-  // Dashboard/Products/Scan History can be reused unmodified — but they must
-  // only ever see these listed pages, never Users/ESG/Notifications, which a
-  // real Company session can reach. Staff Management (employeeAuditLog) is
-  // included so a Supervisor can manage their own company's roster, but the
-  // nav item/page render still additionally gate it to employeeType ===
-  // 'supervisor' so a working_employee can't reach it.
+  // A corporate employee (working_employee or supervisor) — signed in through
+  // the normal login when their email is a staff employee's (see
+  // AuthContext.buildEmployeeSession). Their session reuses this same
+  // `company` slot (role: 'company', so canManageProducts/isAdmin above
+  // already compute correctly) so the dashboard pages work unmodified, but
+  // they only ever see the pages listed below, never Users/ESG.
   const isEmployeeActor = company?.actorKind === 'Employee';
-  const EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'newProduct', 'profile', 'processSteps', 'history', 'captureHistory', 'recommendations', 'chat', 'trace', 'employeeAuditLog'];
+  // Shared by every non-admin role: LCA, Notifications, Recommendations, Chat.
+  const COMMON_PAGES = ['dashboard', 'products', 'profile', 'trace', 'allNotifications', 'recommendations', 'chat'];
+  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog'];
+  const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
+  const isWorkingEmployee = isEmployeeActor && !isSupervisor;
+  // A working employee: the common pages (Products read-only), plus Generate
+  // Code and their own Capture History.
+  const WORKING_EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'generateCode', 'captureHistory'];
+  // A normal DPP (app) user: the common pages (Products read-only), plus
+  // Scan History.
+  const APP_USER_ALLOWED_PAGES = [...COMMON_PAGES, 'history'];
+  // Create/edit/delete products — never a working employee or an app user.
+  const canEditProducts = canManageProducts && !isWorkingEmployee;
+  // A company login (its admin email) acts as that company's Supervisor.
+  const isCompanyAccount = !isAdmin && !isAppUser && !isEmployeeActor;
+  // Generate Code page: super admin (every product), a company account /
+  // Supervisor and a working employee (their own company's products —
+  // `products` is scoped that way).
+  const canSeeGenerateCode = !isAppUser;
+  // Staff Management: super admin (every company), a company account or a
+  // Supervisor (their own company's staff).
+  const canSeeStaffManagement = isAdmin || isSupervisor || isCompanyAccount;
+  // Capture History: super admin (every company), a Supervisor or a plain
+  // Company account (their company's working employees), or a working
+  // employee (their own captures only).
+  const canSeeCaptureHistory = !isAppUser;
 
   // AuthPage and AiConciergeConsentPage are separate conditional
   // early-returns below, each mounting its own <AuthShell> — called once
@@ -205,6 +237,19 @@ const InnerPage = () => {
   const [manufactureDate, setManufactureDate] = useState('');
   const [warrantyStatus, setWarrantyStatus] = useState('');
   const [warrantyValidYears, setWarrantyValidYears] = useState(0);
+  const [itemCategory, setItemCategory] = useState('');
+  const [skuStyleNumber, setSkuStyleNumber] = useState('');
+  // Managed item categories (product form options). Reloaded after the super
+  // admin edits them in Manage Categories.
+  const [itemCategoryOptions, setItemCategoryOptions] = useState(ITEM_CATEGORY_OPTIONS);
+  const [openManageCategories, setOpenManageCategories] = useState(false);
+  const loadItemCategoryOptions = async () => {
+    const list = await getItemCategories();
+    if (list.length) setItemCategoryOptions(list.map((c) => ({ value: c.key, label: c.label })));
+  };
+  useEffect(() => {
+    loadItemCategoryOptions();
+  }, []);
   const [detailFacts, setDetailFacts] = useState({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
   const [brandInfo, setBrandInfo] = useState({
     name: DEFAULT_BRAND_NAME,
@@ -335,11 +380,20 @@ const InnerPage = () => {
   // page (Chat, Users, ESG…) a previous Company session left behind on this
   // browser. Force them back to Dashboard the moment that happens.
   useEffect(() => {
-    if (isEmployeeActor && !EMPLOYEE_ALLOWED_PAGES.includes(activePage)) {
+    const allowed = isWorkingEmployee
+      ? WORKING_EMPLOYEE_ALLOWED_PAGES
+      : isEmployeeActor
+        ? EMPLOYEE_ALLOWED_PAGES
+        : isAppUser
+          ? APP_USER_ALLOWED_PAGES
+          : null;
+    // Opening a product's own code panel ('newProduct' in print mode) stays
+    // reachable from the Products page for read-only roles.
+    if (allowed && !allowed.includes(activePage) && activePage !== 'newProduct') {
       setActivePage('dashboard');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEmployeeActor, activePage]);
+  }, [isEmployeeActor, isWorkingEmployee, isAppUser, activePage]);
   const [previousPage, setPreviousPage] = useState(() => loadStateFromStorage('previousPage', 'dashboard'));
   const [selectedProduct, setSelectedProduct] = useState(() => loadStateFromStorage('selectedProduct', null));
   const [detailTab, setDetailTab] = useState(0);
@@ -569,6 +623,8 @@ const InnerPage = () => {
     setManufactureDate('');
     setWarrantyStatus('');
     setWarrantyValidYears(0);
+    setItemCategory('');
+    setSkuStyleNumber('');
     setDetailFacts({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
     setBrandInfo({
       name: DEFAULT_BRAND_NAME,
@@ -696,13 +752,14 @@ const InnerPage = () => {
   const addProductHandler = async () => {
     if (
       productName === ''
+      || !itemCategory
       || productImages.length === 0
       || !brandInfo.name.trim()
       || !brandInfo.detail.trim()
       || !brandInfo.websiteUrl.trim()
       || !brandInfo.logoUrl.trim()
     ) {
-      alert('Please fill all required fields including brand information and upload brand logo');
+      alert('Please fill all required fields (including Item Category), brand information and upload brand logo');
       return;
     }
     await addProduct({
@@ -711,6 +768,7 @@ const InnerPage = () => {
       detail: productDetail,
       aboutProduct,
       productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
+      itemCategory, skuStyleNumber: skuStyleNumber.trim(),
       detailFacts,
       brandInfo,
       company_id: company._id,
@@ -759,13 +817,14 @@ const InnerPage = () => {
   const updateProductHandler = async () => {
     if (
       productName === ''
+      || !itemCategory
       || productImages.length === 0
       || !brandInfo.name.trim()
       || !brandInfo.detail.trim()
       || !brandInfo.websiteUrl.trim()
       || !brandInfo.logoUrl.trim()
     ) {
-      alert('Please fill all required fields including brand information and upload brand logo');
+      alert('Please fill all required fields (including Item Category), brand information and upload brand logo');
       return;
     }
     await updateProduct({
@@ -775,6 +834,7 @@ const InnerPage = () => {
       detail: productDetail,
       aboutProduct,
       productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
+      itemCategory, skuStyleNumber: skuStyleNumber.trim(),
       detailFacts,
       brandInfo,
       company_id: company._id,
@@ -853,6 +913,8 @@ const InnerPage = () => {
     setManufactureDate(prod.manufactureDate || '');
     setWarrantyStatus(prod.warrantyStatus || '');
     setWarrantyValidYears(Number(prod.warrantyValidYears) || 0);
+    setItemCategory(prod.itemCategory || '');
+    setSkuStyleNumber(prod.skuStyleNumber || '');
     setDetailFacts({
       material: prod.detailFacts?.material || '',
       fit: prod.detailFacts?.fit || '',
@@ -1156,6 +1218,33 @@ const InnerPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, selectedProduct]);
 
+  // Generate Code page — reuses selectedProduct (so the QR/identifier loading
+  // effects above run as-is), but only counts it when it's in this account's
+  // own `products` list.
+  const generateCodeProduct = selectedProduct && products.some((p) => p._id === selectedProduct._id)
+    ? selectedProduct
+    : null;
+  const selectGenerateCodeProduct = (prod) => {
+    if (!prod) return;
+    setSelectedProduct(prod);
+    setTotalAmount(prod.total_minted_amount || 0);
+    setOwnerInfo(prod.company_id || null);
+    setPage(1);
+  };
+  // Opening the page always starts on the first product; also covers the
+  // product list arriving after the page is already open.
+  const generateCodeDefaultedRef = useRef(false);
+  useEffect(() => {
+    if (activePage !== 'generateCode') {
+      generateCodeDefaultedRef.current = false;
+      return;
+    }
+    if (generateCodeDefaultedRef.current || !products.length) return;
+    generateCodeDefaultedRef.current = true;
+    selectGenerateCodeProduct(products[0]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePage, products]);
+
   const base64ToFile = (base64String, filename) => {
     const arr = base64String.split(',');
     const mime = arr[0].match(/:(.*?);/)[1];
@@ -1441,6 +1530,7 @@ const InnerPage = () => {
             label={
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <span>{item.name}</span>
+                {canEditProducts && (
                 <Box sx={{ marginLeft: 'auto' }}>
                   <IconButton
                     size="small"
@@ -1465,6 +1555,7 @@ const InnerPage = () => {
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </Box>
+                )}
               </Box>
             }
           >
@@ -1613,6 +1704,14 @@ const InnerPage = () => {
           <ListItemText primary="Products" />
         </ListItemButton>
       </ListItem>
+      {canSeeGenerateCode && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'generateCode'} onClick={() => go('generateCode')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><QrCode2Icon /></ListItemIcon>
+            <ListItemText primary="Generate Code" />
+          </ListItemButton>
+        </ListItem>
+      )}
       {isAdmin && !isEmployeeActor && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'users'} onClick={() => go('users')}>
@@ -1626,7 +1725,7 @@ const InnerPage = () => {
           their own company's roster (see EmployeeManagementPage's isAdmin
           prop). A plain Company/brand account and a working_employee never
           see it. */}
-      {(isAdmin || (isEmployeeActor && company?.employeeType === 'supervisor')) && (
+      {canSeeStaffManagement && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'employeeAuditLog'} onClick={() => go('employeeAuditLog')}>
             <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
@@ -1650,7 +1749,7 @@ const InnerPage = () => {
       {/* Capture History: a Supervisor (or a plain Company/brand account)
           reviewing every working employee's capture activity for their
           company. */}
-      {!isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
+      {canSeeCaptureHistory && (
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'captureHistory'} onClick={() => go('captureHistory')}>
             <ListItemIcon sx={{ color: 'inherit' }}><AssessmentIcon /></ListItemIcon>
@@ -1658,17 +1757,19 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
-      {/* Scan History is shared with employees (see EMPLOYEE_ALLOWED_PAGES) —
-          everything else below is Company/User-session only. */}
-      <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
-          <ListItemText primary="Scan History" />
-        </ListItemButton>
-      </ListItem>
-      {/* LCA: Company/User accounts and the super admin only — not shown to
-          any employee actor (including a Supervisor). */}
-      {!isEmployeeActor && (
+      {/* Scan History: everyone except a working employee (a Supervisor sees
+          their company's products' scans, an app user their own products'). */}
+      {!isWorkingEmployee && (
+        <ListItem disablePadding>
+          <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
+            <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
+            <ListItemText primary="Scan History" />
+          </ListItemButton>
+        </ListItem>
+      )}
+      {/* LCA: every role. */}
+      {(
+
         <ListItem disablePadding>
           <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
             <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
@@ -1676,9 +1777,8 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
-      {/* Notifications: everyone except a working_employee (a Supervisor gets
-          their own company's notifications same as a plain Company account). */}
-      {(!isEmployeeActor || company?.employeeType === 'supervisor') && (
+      {/* Notifications: every role. */}
+      {(
         <ListItem disablePadding>
           <ListItemButton
             selected={activePage === 'notifications' || activePage === 'allNotifications'}
@@ -1689,20 +1789,23 @@ const InnerPage = () => {
           </ListItemButton>
         </ListItem>
       )}
-      {/* Recommendations and Chat are available to every role, including
-          working_employee and Supervisor — see EMPLOYEE_ALLOWED_PAGES. */}
-      <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'recommendations'} onClick={() => go('recommendations')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><AutoAwesomeIcon /></ListItemIcon>
-          <ListItemText primary="Recommendations" />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'chat'} onClick={() => go('chat')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><ChatBubbleOutlineIcon /></ListItemIcon>
-          <ListItemText primary="Chat" />
-        </ListItemButton>
-      </ListItem>
+      {/* Recommendations and Chat: every role. */}
+      {(
+        <>
+          <ListItem disablePadding>
+            <ListItemButton selected={activePage === 'recommendations'} onClick={() => go('recommendations')}>
+              <ListItemIcon sx={{ color: 'inherit' }}><AutoAwesomeIcon /></ListItemIcon>
+              <ListItemText primary="Recommendations" />
+            </ListItemButton>
+          </ListItem>
+          <ListItem disablePadding>
+            <ListItemButton selected={activePage === 'chat'} onClick={() => go('chat')}>
+              <ListItemIcon sx={{ color: 'inherit' }}><ChatBubbleOutlineIcon /></ListItemIcon>
+              <ListItemText primary="Chat" />
+            </ListItemButton>
+          </ListItem>
+        </>
+      )}
     </List>
   );
 
@@ -1863,7 +1966,7 @@ const InnerPage = () => {
             <HistoryPage ownerKind={isAdmin ? null : ownerScopeKind} ownerId={isAdmin ? null : ownerScopeId} />
           )}
 
-          {activePage === 'trace' && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
+          {activePage === 'trace' && (
             <TracePage ownerKind={isAdmin ? null : ownerScopeKind} ownerId={isAdmin ? null : ownerScopeId} />
           )}
 
@@ -1889,7 +1992,7 @@ const InnerPage = () => {
             </Box>
           )}
 
-          {activePage === 'employeeAuditLog' && (isAdmin || (isEmployeeActor && company?.employeeType === 'supervisor')) && (
+          {activePage === 'employeeAuditLog' && canSeeStaffManagement && (
             <EmployeeManagementPage token={token} isAdmin={isAdmin} />
           )}
 
@@ -1897,8 +2000,70 @@ const InnerPage = () => {
             <ProcessStepsPage token={token} />
           )}
 
-          {activePage === 'captureHistory' && !isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
-            <CaptureHistoryPage token={token} />
+          {activePage === 'captureHistory' && canSeeCaptureHistory && (
+            <CaptureHistoryPage
+              token={token}
+              isAdmin={isAdmin}
+              selfEmployee={isWorkingEmployee
+                ? { _id: company?.employeeId, name: company?.displayName, company_id: company?._id, employeeType: 'working_employee' }
+                : null}
+            />
+          )}
+
+          {/* Generate Code: the product dialog's Generate & Print panel as a
+              full page, with the product picked from a select box at the top. */}
+          {activePage === 'generateCode' && canSeeGenerateCode && (
+            <Box>
+              <Typography variant="h6" sx={{ mb: 2 }}>Generate Code</Typography>
+              <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
+                <TextField
+                  select
+                  label="Product"
+                  size="small"
+                  fullWidth
+                  value={generateCodeProduct?._id || ''}
+                  onChange={(e) => selectGenerateCodeProduct(products.find((p) => p._id === e.target.value))}
+                  disabled={!products.length}
+                  helperText={!products.length && !productsLoading ? 'No products yet.' : ' '}
+                >
+                  {products.map((p) => (
+                    <MenuItem key={p._id} value={p._id}>
+                      {p.name}{p.model ? ` — ${p.model}` : ''}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+              {generateCodeProduct && (
+                <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
+                  <ProductOwnerSection
+                    company={company}
+                    ownerInfo={ownerInfo}
+                    onClick={() => setOpenOwnerDialog(true)}
+                  />
+                  <GenerateAndPrintPanel
+                    selectedProduct={generateCodeProduct}
+                    setSelectedProduct={setSelectedProduct}
+                    companyId={company?._id || company?.id}
+                    mintAmount={mintAmount}
+                    setMintAmount={setMintAmount}
+                    isMinting={isMinting}
+                    mintingProgress={mintingProgress}
+                    totalAmount={totalAmount}
+                    page={page}
+                    setPage={setPage}
+                    batchMintHandler={batchMintHandler}
+                    qrcodes={qrcodes}
+                    identifiers={identifiers}
+                    onOpenPrint={() => setOpenPrintModal(true)}
+                    securityQRCodes={securityQRCodes}
+                    onGenerateSecurityQR={generateSecurityQRHandler}
+                    onDeleteQrCode={deleteQrCodeHandler}
+                    onDeleteSecurityQrCode={deleteSecurityQrCodeHandler}
+                    canGenerate={canManageProducts}
+                  />
+                </Box>
+              )}
+            </Box>
           )}
 
           {activePage === 'products' && (
@@ -1912,20 +2077,40 @@ const InnerPage = () => {
                 }}
               >
                 <Typography variant="h6">Products</Typography>
-                {canManageProducts && (
-                  <Button
-                    variant="contained"
-                    onClick={() => {
-                      resetFields();
-                      setProductPanelMode('edit');
-                      setPreviousPage(activePage);
-                      setActivePage('newProduct');
-                    }}
-                  >
-                    New Product
-                  </Button>
-                )}
+                <Stack direction="row" spacing={1}>
+                  {/* Super admin only: platform-wide item categories. */}
+                  {isAdmin && (
+                    <Button variant="outlined" onClick={() => setOpenManageCategories(true)}>
+                      Manage Categories
+                    </Button>
+                  )}
+                  {canEditProducts && (
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        resetFields();
+                        setProductPanelMode('edit');
+                        setPreviousPage(activePage);
+                        setActivePage('newProduct');
+                      }}
+                    >
+                      New Product
+                    </Button>
+                  )}
+                </Stack>
               </Box>
+              {isAdmin && (
+                <ManageCategoriesDialog
+                  open={openManageCategories}
+                  onClose={() => setOpenManageCategories(false)}
+                  token={token}
+                  onSaved={(res) => {
+                    loadItemCategoryOptions();
+                    // Products of removed categories were moved to "Others".
+                    if (res?.movedProducts) loadProductsForCurrentCompany();
+                  }}
+                />
+              )}
 
               {/* Guarded on the product actually being in the current (filtered)
                   list — selectedProduct persists to localStorage across
@@ -1948,18 +2133,18 @@ const InnerPage = () => {
                       editProductHandler(index);
                     }
                   }}
-                  onEdit={() => {
+                  onEdit={canEditProducts ? () => {
                     const index = products.findIndex((p) => p._id === selectedProduct._id);
                     if (index >= 0) {
                       setProductPanelMode('edit');
                       setPreviousPage('products');
                       editProductHandler(index);
                     }
-                  }}
-                  onRemove={() => {
+                  } : undefined}
+                  onRemove={canEditProducts ? () => {
                     const index = products.findIndex((p) => p._id === selectedProduct._id);
                     if (index >= 0) deleteProductHandler(index);
-                  }}
+                  } : undefined}
                 />
               )}
 
@@ -2009,7 +2194,9 @@ const InnerPage = () => {
           )}
 
           <Dialog
-            open={activePage === 'newProduct'}
+            // Read-only roles may only open a product's code panel ('print'),
+            // never the create/edit form.
+            open={activePage === 'newProduct' && (canEditProducts || productPanelMode === 'print')}
             onClose={() => setActivePage('products')}
             fullWidth
             maxWidth={productPanelMode === 'print' ? 'lg' : 'md'}
@@ -2177,6 +2364,20 @@ const InnerPage = () => {
 
                     <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Product Facts</Typography>
                     <Grid container spacing={2} sx={{ mb: 3 }}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField select label="Item Category" variant="outlined" size="small" fullWidth required
+                          value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}
+                          helperText="Used by the dashboard's category breakdown and filter.">
+                          {itemCategoryOptions.map((opt) => (
+                            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField label="Style / SKU Number" placeholder="e.g. DNM-2501-01" variant="outlined" size="small" fullWidth
+                          value={skuStyleNumber} onChange={(e) => setSkuStyleNumber(e.target.value)}
+                          helperText="Leave empty to auto-generate from the category." />
+                      </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField label="Product Type" placeholder="e.g. Men's Outerwear" variant="outlined" size="small" fullWidth
                           value={productType} onChange={(e) => setProductType(e.target.value)} />
@@ -2977,6 +3178,7 @@ const InnerPage = () => {
                   detail: productDetail,
                   aboutProduct,
       productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
+      itemCategory, skuStyleNumber: skuStyleNumber.trim(),
                   detailFacts,
                   brandInfo,
                   company_id: company._id,

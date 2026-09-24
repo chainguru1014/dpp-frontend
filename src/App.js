@@ -9,11 +9,10 @@ import Loader from './components/Loader';
 
 // Route-level code splitting. The consumer scan landing (PublicProductPage) is
 // by far the most-hit "first visit", so the heavy admin panel (`./pages` — MUI
-// DataGrid, PDF tooling, socket.io, the whole dashboard) and the staff app are
-// pulled only when their route is actually entered, not on every page load.
+// DataGrid, PDF tooling, socket.io, the whole dashboard) is pulled only when
+// its route is actually entered, not on every page load.
 const Page = lazy(() => import('./pages'));
 const PublicProductPage = lazy(() => import('./pages/PublicProductPage'));
-const StaffApp = lazy(() => import('./features/employee-auth/StaffApp'));
 
 const RouteFallback = () => <Loader label="Loading…" minHeight="100vh" />;
 
@@ -52,7 +51,10 @@ function App() {
                 <Route path="/product/:productId/:qrcodeId" element={<PublicProductPageWrapper />} />
                 <Route path="/" element={<PublicProductRoute />} />
                 <Route path="/admin/*" element={<Page />} />
-                <Route path="/staff/*" element={<StaffApp />} />
+                {/* The separate Staff Login is gone — staff sign in on the
+                    normal login (their email is detected as an employee). Old
+                    /staff links land there. */}
+                <Route path="/staff/*" element={<Navigate to="/admin" replace />} />
               </Routes>
             </Suspense>
           </BrowserRouter>

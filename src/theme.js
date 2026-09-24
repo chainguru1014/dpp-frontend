@@ -6,6 +6,8 @@ const navy = '#1b4f72';     // dark navy (primary — matches app top bar/icons/
 const navyDark = '#123a56'; // darkest navy (hover / gradient dark stop)
 const blue = '#4a96dd';     // lighter azure (gradient light stop / accents)
 const gray = '#6b7a93';     // gray (secondary)
+const buttonBlue = '#4585db';     // button azure (matches the top bar)
+const buttonBlueDark = '#3a72c0'; // button hover
 const bg = '#f5f7fa';       // near-white / light gray canvas
 const border = '#e6eaf0';
 
@@ -70,6 +72,21 @@ const theme = createTheme({
           minHeight: 36,
           paddingInline: 14,
           [`@media (max-width:${COMPACT_MAX_WIDTH}px)`]: { minHeight: 30, paddingInline: 10 },
+        },
+        // All primary buttons use the top-bar azure instead of the navy primary.
+        containedPrimary: {
+          backgroundColor: buttonBlue,
+          color: '#ffffff',
+          '&:hover': { backgroundColor: buttonBlueDark },
+        },
+        outlinedPrimary: {
+          color: buttonBlue,
+          borderColor: buttonBlue,
+          '&:hover': { borderColor: buttonBlueDark, backgroundColor: 'rgba(69,133,219,0.08)' },
+        },
+        textPrimary: {
+          color: buttonBlue,
+          '&:hover': { backgroundColor: 'rgba(69,133,219,0.08)' },
         },
       },
     },
