@@ -806,6 +806,19 @@ export const getItemCategories = async () => {
     }
 };
 
+// Adds one category (anyone who can edit products). Returns
+// { ok, category: { key, label, skuPrefix }, created } or { ok: false, message }.
+export const addItemCategory = async (token, label, skuPrefix = '') => {
+    try {
+        const res = await axios.post(`${Backend_URL}platform-settings/item-categories`, { label, skuPrefix }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, ...res.data?.data };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Failed to add category' };
+    }
+};
+
 // Saves the whole list (display order). Entries without a `key` are new;
 // categories left out are removed (their products move to "Others").
 export const saveItemCategories = async (token, itemCategories) => {

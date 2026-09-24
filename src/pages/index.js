@@ -2080,7 +2080,7 @@ const InnerPage = () => {
                 <Stack direction="row" spacing={1}>
                   {/* Super admin only: platform-wide item categories. */}
                   {isAdmin && (
-                    <Button variant="outlined" onClick={() => setOpenManageCategories(true)}>
+                    <Button variant="outlined" onClick={() => setOpenManageCategories('page')}>
                       Manage Categories
                     </Button>
                   )}
@@ -2099,18 +2099,6 @@ const InnerPage = () => {
                   )}
                 </Stack>
               </Box>
-              {isAdmin && (
-                <ManageCategoriesDialog
-                  open={openManageCategories}
-                  onClose={() => setOpenManageCategories(false)}
-                  token={token}
-                  onSaved={(res) => {
-                    loadItemCategoryOptions();
-                    // Products of removed categories were moved to "Others".
-                    if (res?.movedProducts) loadProductsForCurrentCompany();
-                  }}
-                />
-              )}
 
               {/* Guarded on the product actually being in the current (filtered)
                   list — selectedProduct persists to localStorage across
@@ -2365,13 +2353,20 @@ const InnerPage = () => {
                     <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Product Facts</Typography>
                     <Grid container spacing={2} sx={{ mb: 3 }}>
                       <Grid item xs={12} sm={6}>
-                        <TextField select label="Item Category" variant="outlined" size="small" fullWidth required
-                          value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}
-                          helperText="Used by the dashboard's category breakdown and filter.">
-                          {itemCategoryOptions.map((opt) => (
-                            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
-                          ))}
-                        </TextField>
+                        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                          <TextField select label="Item Category" variant="outlined" size="small" fullWidth required
+                            value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}
+                            helperText="Used by the dashboard's category breakdown and filter.">
+                            {itemCategoryOptions.map((opt) => (
+                              <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                            ))}
+                          </TextField>
+                          {/* Add new categories without leaving the form. */}
+                          <Button variant="outlined" size="small" onClick={() => setOpenManageCategories('form')}
+                            sx={{ flexShrink: 0, height: 40 }}>
+                            Manage
+                          </Button>
+                        </Box>
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField label="Style / SKU Number" placeholder="e.g. DNM-2501-01" variant="outlined" size="small" fullWidth
@@ -3119,6 +3114,26 @@ const InnerPage = () => {
         </Box>
       </Box>
 
+      {/* Manage Categories — opened from the Products page (super admin: full
+          management) or from the product form's Manage button (add new
+          categories; full management for the super admin). */}
+      {canEditProducts && (
+        <ManageCategoriesDialog
+          open={!!openManageCategories}
+          onClose={() => setOpenManageCategories(false)}
+          token={token}
+          canManageAll={isAdmin}
+          onSaved={(res) => {
+            loadItemCategoryOptions();
+            // Products of removed categories were moved to "Others".
+            if (res?.movedProducts) loadProductsForCurrentCompany();
+            // Opened from the product form: select the category just added.
+            if (openManageCategories === 'form' && res?.addedKeys?.length) {
+              setItemCategory(res.addedKeys[res.addedKeys.length - 1]);
+            }
+          }}
+        />
+      )}
       {selectedProduct && openPrintModal && (
         <Suspense fallback={null}>
           <PrintModal
