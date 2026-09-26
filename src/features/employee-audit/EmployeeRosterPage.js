@@ -35,6 +35,9 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
   const [name, setName] = useState('');
   const [employeeType, setEmployeeType] = useState('working_employee');
   const [employeeCode, setEmployeeCode] = useState('');
+  const [yometelReaderId, setYometelReaderId] = useState('');
+  const [impinjReaderId, setImpinjReaderId] = useState('');
+  const [zebraReaderId, setZebraReaderId] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -54,6 +57,11 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
       name: name.trim(),
       employeeType,
       employeeCode: employeeCode.trim() || undefined,
+      rfidReaderIds: {
+        yometel: yometelReaderId.trim(),
+        impinj: impinjReaderId.trim(),
+        zebra: zebraReaderId.trim(),
+      },
     });
     setSaving(false);
     if (!res.ok) {
@@ -64,6 +72,9 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
     setName('');
     setEmployeeType('working_employee');
     setEmployeeCode('');
+    setYometelReaderId('');
+    setImpinjReaderId('');
+    setZebraReaderId('');
     onInvited();
     onClose();
   };
@@ -104,6 +115,30 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
           onChange={(e) => setEmployeeCode(e.target.value)}
           fullWidth
         />
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
+          RFID Reader IDs (optional) — the physical reader assigned to this employee, per brand.
+          Leave blank for a brand they don't carry a reader for.
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <TextField
+            label="Yometel Reader ID"
+            value={yometelReaderId}
+            onChange={(e) => setYometelReaderId(e.target.value)}
+            fullWidth
+          />
+          <TextField
+            label="Impinj Reader ID"
+            value={impinjReaderId}
+            onChange={(e) => setImpinjReaderId(e.target.value)}
+            fullWidth
+          />
+          <TextField
+            label="Zebra Reader ID"
+            value={zebraReaderId}
+            onChange={(e) => setZebraReaderId(e.target.value)}
+            fullWidth
+          />
+        </Box>
         {!!error && <Alert severity="error">{error}</Alert>}
         <Typography variant="caption" color="text.secondary">
           The email's domain is automatically matched against each registered company's Allowed
@@ -126,7 +161,14 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [draft, setDraft] = useState({ email: '', name: '', employeeType: 'working_employee' });
+  const [draft, setDraft] = useState({
+    email: '',
+    name: '',
+    employeeType: 'working_employee',
+    yometelReaderId: '',
+    impinjReaderId: '',
+    zebraReaderId: '',
+  });
   const [rowError, setRowError] = useState('');
 
   const reload = () => {
@@ -149,7 +191,14 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
   const startEdit = (employee) => {
     setRowError('');
     setEditingId(employee._id);
-    setDraft({ email: employee.email || '', name: employee.name || '', employeeType: employee.employeeType || 'working_employee' });
+    setDraft({
+      email: employee.email || '',
+      name: employee.name || '',
+      employeeType: employee.employeeType || 'working_employee',
+      yometelReaderId: employee.rfidReaderIds?.yometel || '',
+      impinjReaderId: employee.rfidReaderIds?.impinj || '',
+      zebraReaderId: employee.rfidReaderIds?.zebra || '',
+    });
   };
 
   const cancelEdit = () => {
@@ -159,7 +208,16 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
 
   const saveEdit = async (employee) => {
     setRowError('');
-    const res = await updateEmployee(token, employee._id, { email: draft.email.trim(), name: draft.name.trim(), employeeType: draft.employeeType });
+    const res = await updateEmployee(token, employee._id, {
+      email: draft.email.trim(),
+      name: draft.name.trim(),
+      employeeType: draft.employeeType,
+      rfidReaderIds: {
+        yometel: draft.yometelReaderId.trim(),
+        impinj: draft.impinjReaderId.trim(),
+        zebra: draft.zebraReaderId.trim(),
+      },
+    });
     if (!res.ok) {
       setRowError(res.message || 'Failed to save changes.');
       return;
@@ -237,6 +295,54 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
           'Supervisor'
         ) : (
           'Working Employee'
+        ),
+    },
+    {
+      field: 'yometelReaderId',
+      headerName: 'Yometel Reader ID',
+      width: 160,
+      renderCell: (p) =>
+        editingId === p.row._id ? (
+          <TextField
+            size="small"
+            fullWidth
+            value={draft.yometelReaderId}
+            onChange={(e) => setDraft((d) => ({ ...d, yometelReaderId: e.target.value }))}
+          />
+        ) : (
+          p.row.rfidReaderIds?.yometel || '—'
+        ),
+    },
+    {
+      field: 'impinjReaderId',
+      headerName: 'Impinj Reader ID',
+      width: 160,
+      renderCell: (p) =>
+        editingId === p.row._id ? (
+          <TextField
+            size="small"
+            fullWidth
+            value={draft.impinjReaderId}
+            onChange={(e) => setDraft((d) => ({ ...d, impinjReaderId: e.target.value }))}
+          />
+        ) : (
+          p.row.rfidReaderIds?.impinj || '—'
+        ),
+    },
+    {
+      field: 'zebraReaderId',
+      headerName: 'Zebra Reader ID',
+      width: 160,
+      renderCell: (p) =>
+        editingId === p.row._id ? (
+          <TextField
+            size="small"
+            fullWidth
+            value={draft.zebraReaderId}
+            onChange={(e) => setDraft((d) => ({ ...d, zebraReaderId: e.target.value }))}
+          />
+        ) : (
+          p.row.rfidReaderIds?.zebra || '—'
         ),
     },
     {
