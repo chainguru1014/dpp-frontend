@@ -69,7 +69,10 @@ const generateRandomValue = (sourceType) => {
     case 'nfc':
       return `NFC-${randomHex(7)}`;
     case 'rfid':
-      return `RFID-${randomHex(12)}`;
+      // Plain hex, no prefix — matches a real EPC's shape (a 96-bit EPC is
+      // 12 bytes / 24 hex chars), so a generated tag looks like one a real
+      // reader would actually report, not an internal placeholder string.
+      return randomHex(12);
     default:
       return '';
   }
