@@ -271,9 +271,15 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
         {/* Distinct icons from the category breakdown below (which already
             owns Checkroom/Sell for denim/tops/etc.) so these two don't look
             like they're repeating a category -- a box for "a product," a QR
-            code for "a code," matching what each count actually represents. */}
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={Inventory2Icon} label="Unique Products" value={t.uniqueItems ?? 0} delta={t.deltas?.uniqueItems} /></Grid>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCode2Icon} label="Unique Product Codes" value={t.uniqueSkus ?? 0} delta={t.deltas?.uniqueSkus} /></Grid>
+            code for "a code," matching what each count actually represents.
+            Field mapping (see backend qrcodeController): `uniqueItems` is
+            actually distinct {product_id, qrcode_id} pairs scanned -- i.e.
+            distinct scanned item/code instances -- while `uniqueSkus` is
+            distinct skuStyleNumber values -- i.e. distinct product types.
+            So "Unique Products" reads uniqueSkus, and "Unique Product Codes"
+            reads uniqueItems, despite what the field names alone suggest. */}
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={Inventory2Icon} label="Unique Products" value={t.uniqueSkus ?? 0} delta={t.deltas?.uniqueSkus} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCode2Icon} label="Unique Product Codes" value={t.uniqueItems ?? 0} delta={t.deltas?.uniqueItems} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={PublicIcon} label="Scanned Countries" value={t.countries ?? 0} delta={t.deltas?.countries} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={VerifiedIcon} label="Data Integrity" value={`${t.dataIntegrity ?? 100}%`} sub="Verified" /></Grid>
       </Grid>

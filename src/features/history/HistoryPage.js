@@ -314,13 +314,13 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             placeholder="Country, state, city…"
             value={locationInput}
             onChange={(e) => setLocationInput(e.target.value)}
-            sx={{ minWidth: 170, flexShrink: 0 }}
+            sx={{ minWidth: 57, flexShrink: 0 }}
           />
           <TextField
             select
             label="Product"
             size="small"
-            sx={{ minWidth: 53, flexShrink: 0 }}
+            sx={{ minWidth: 106, flexShrink: 0 }}
             value={filters.product_id}
             onChange={setF('product_id')}
           >
