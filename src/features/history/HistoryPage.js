@@ -306,7 +306,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             placeholder="Name or email"
             value={usernameInput}
             onChange={(e) => setUsernameInput(e.target.value)}
-            sx={{ minWidth: 150, flexShrink: 0 }}
+            sx={{ minWidth: 50, flexShrink: 0 }}
           />
           <TextField
             label="Location"
@@ -320,7 +320,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             select
             label="Product"
             size="small"
-            sx={{ minWidth: 160, flexShrink: 0 }}
+            sx={{ minWidth: 53, flexShrink: 0 }}
             value={filters.product_id}
             onChange={setF('product_id')}
           >

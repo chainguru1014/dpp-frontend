@@ -266,8 +266,8 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
         {showCaptures && (
           <Grid item xs={6} sm={4} md={2}><Kpi icon={CameraAltIcon} label="Total Captures" value={capturesTotal ?? 0} /></Grid>
         )}
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={CheckroomIcon} label="Unique Products" value={t.uniqueItems ?? 0} delta={t.deltas?.uniqueItems} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={SellIcon} label="Unique Product Codes" value={t.uniqueSkus ?? 0} delta={t.deltas?.uniqueSkus} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={CheckroomIcon} label="Unique Products" value={t.uniqueItems ?? 0} delta={t.deltas?.uniqueItems} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={PublicIcon} label="Scanned Countries" value={t.countries ?? 0} delta={t.deltas?.countries} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={VerifiedIcon} label="Data Integrity" value={`${t.dataIntegrity ?? 100}%`} sub="Verified" /></Grid>
       </Grid>
