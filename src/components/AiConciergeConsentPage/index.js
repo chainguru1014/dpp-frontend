@@ -154,11 +154,11 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                 height: CONSENT_BUTTON_HEIGHT,
                 minHeight: CONSENT_BUTTON_HEIGHT,
                 py: 0,
-                // The app's dark blue (theme.palette.primary.dark, #123a56) —
-                // matches the Continue/Save Preferences/Close button below
-                // and the app project's equivalent.
+                // Same azure as the Continue/Save Preferences button below,
+                // so the selected "I Agree" state reads as the same action
+                // color instead of a visually different dark navy.
                 ...(consent === true
-                  ? { bgcolor: '#123a56', borderColor: '#123a56', color: '#fff', '&:hover': { bgcolor: '#1f5688', borderColor: '#1f5688' } }
+                  ? { bgcolor: '#4585db', borderColor: '#4585db', color: '#fff', '&:hover': { bgcolor: '#3a72c0', borderColor: '#3a72c0' } }
                   : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
               }}
             >

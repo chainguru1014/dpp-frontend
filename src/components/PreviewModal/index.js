@@ -4,8 +4,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -445,7 +444,11 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
               </Box>
               <Typography sx={{ fontSize: 11, color: C.muted, mt: 0.25 }}>{s.desc}</Typography>
               {isOpen && (
-                <Box sx={{ mt: 1, bgcolor: C.surfaceAlt, borderRadius: 1.5, p: 1 }}>
+                // Journey rows sit directly on the tab's own background (not
+                // inside a white card), so the expanded detail matches that
+                // background instead of an unrelated gray block -- mirrors
+                // the app's jDetail/cardDetail split.
+                <Box sx={{ mt: 1, bgcolor: C.bg, borderRadius: 1.5, p: 1 }}>
                   {s.key === 'materials' && (materials.length ? materials.map((m, mi) => (
                     <Row key={mi} label={m.material || '—'} value={m.percent != null ? `${m.percent}%` : ''} />
                   )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>)}
@@ -562,7 +565,10 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
                     {isOpen ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
                   </Box>
                   {isOpen && (
-                    <Box sx={{ bgcolor: C.surfaceAlt, borderRadius: 1.5, p: 1, mb: 1 }}>
+                    // Lives inside a white card, so it matches the card's own
+                    // white instead of an unrelated gray fill -- with a
+                    // hairline border so it still reads as a grouped section.
+                    <Box sx={{ bgcolor: C.surface, border: `1px solid ${C.border}`, borderRadius: 1.5, p: 1, mb: 1 }}>
                       <Row label="Material" value={o.material || '—'} />
                       <Row label="Company" value={o.companyName || '—'} />
                       <Row label="Country" value={o.country || o.origin || '—'} />
@@ -658,7 +664,7 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
             {shippingOpen ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
           </Box>
           {shippingOpen && (
-            <Box sx={{ bgcolor: C.surfaceAlt, borderRadius: 1.5, p: 1, mb: 1 }}>
+            <Box sx={{ bgcolor: C.surface, border: `1px solid ${C.border}`, borderRadius: 1.5, p: 1, mb: 1 }}>
               <Row label="Shipping Log" value={esg.shippingLog || ''} />
               <Row label="Distance" value={esg.distance || ''} />
               <Row label="Est. Emissions" value={formatUnitSpacing(routeInfo.emissions || esg.co2Transportation || '')} />
@@ -706,15 +712,17 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
             gradients read as a visible seam even when the colors match. */}
         <Box sx={{ background: GRADIENT, flexShrink: 0 }}>
           <Box sx={{ height: 50, px: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Button onClick={() => setOpen(false)} aria-label="Close preview" sx={{ minWidth: 40, color: '#fff' }}>
-              <ArrowBackIcon fontSize="small" />
-            </Button>
+            {/* Empty spacer matching the Close button's width, so the title
+                stays centered via space-between symmetry now that there's no
+                back button on the left (this is a top-level preview, not a
+                navigable screen -- closing the dialog is the only exit). */}
+            <Box sx={{ width: 40 }} />
             <Typography id="preview-modal-title" sx={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>
               {view === 'lifecycle' ? 'Product Lifecycle' : 'Product Overview'}
             </Typography>
-            <Box sx={{ width: 40, display: 'flex', justifyContent: 'center', color: '#fff' }}>
-              <NotificationsNoneIcon fontSize="small" />
-            </Box>
+            <Button onClick={() => setOpen(false)} aria-label="Close preview" sx={{ minWidth: 40, color: '#fff' }}>
+              <CloseIcon fontSize="small" />
+            </Button>
           </Box>
 
           {view === 'lifecycle' && (

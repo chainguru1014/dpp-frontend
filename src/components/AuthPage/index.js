@@ -142,9 +142,10 @@ const AuthPage = ({
     await sendOtp(otpEmail.trim());
   };
 
-  const handleVerifyCode = async (e) => {
-    e.preventDefault();
-    const code = otpCode.trim();
+  // Takes the code explicitly (not read from `otpCode` state) so the
+  // auto-verify-on-6-digits path below can call it with the just-typed
+  // value directly, instead of racing React's async state update.
+  const verifyCode = async (code) => {
     if (code.length !== 6) return;
     setOtpBusy(true);
     setOtpNotice('');
@@ -153,6 +154,11 @@ const AuthPage = ({
     if (!res?.ok) {
       setOtpNotice(res?.message || 'Invalid or expired code. Please try again.');
     }
+  };
+
+  const handleVerifyCode = (e) => {
+    e.preventDefault();
+    verifyCode(otpCode.trim());
   };
 
   const handleProfileSubmit = (e) => {
@@ -378,7 +384,16 @@ const AuthPage = ({
                 <TextField
                   placeholder="123456"
                   value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setOtpCode(digits);
+                    // Auto-submit once all 6 digits are in -- the Verify
+                    // button stays as an explicit fallback for anyone who'd
+                    // rather click it (matches the app project's OTP field).
+                    if (digits.length === 6 && !otpBusy) {
+                      verifyCode(digits);
+                    }
+                  }}
                   required
                   autoFocus
                   fullWidth

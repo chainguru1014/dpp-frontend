@@ -2015,7 +2015,7 @@ const InnerPage = () => {
           {activePage === 'generateCode' && canSeeGenerateCode && (
             <Box>
               <Typography variant="h6" sx={{ mb: 2 }}>Generate Code</Typography>
-              <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
+              <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider', width: { xs: '100%', md: '50%' } }}>
                 <TextField
                   select
                   label="Product"
@@ -2025,12 +2025,46 @@ const InnerPage = () => {
                   onChange={(e) => selectGenerateCodeProduct(products.find((p) => p._id === e.target.value))}
                   disabled={!products.length}
                   helperText={!products.length && !productsLoading ? 'No products yet.' : ' '}
+                  SelectProps={{
+                    // The closed field's own display -- "selected product
+                    // showing" -- also gets the thumbnail, not just the
+                    // dropdown list.
+                    renderValue: (id) => {
+                      const p = products.find((pr) => pr._id === id);
+                      if (!p) return '';
+                      const thumb = Array.isArray(p.images) ? p.images[0] : null;
+                      return (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Box
+                            component="img"
+                            src={thumb ? getFileUrl(thumb) : undefined}
+                            sx={{
+                              width: 28, height: 28, borderRadius: 0.5, objectFit: 'cover', flexShrink: 0,
+                              bgcolor: 'action.hover', visibility: thumb ? 'visible' : 'hidden',
+                            }}
+                          />
+                          <span>{p.name}{p.model ? ` — ${p.model}` : ''}</span>
+                        </Box>
+                      );
+                    },
+                  }}
                 >
-                  {products.map((p) => (
-                    <MenuItem key={p._id} value={p._id}>
-                      {p.name}{p.model ? ` — ${p.model}` : ''}
-                    </MenuItem>
-                  ))}
+                  {products.map((p) => {
+                    const thumb = Array.isArray(p.images) ? p.images[0] : null;
+                    return (
+                      <MenuItem key={p._id} value={p._id} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          component="img"
+                          src={thumb ? getFileUrl(thumb) : undefined}
+                          sx={{
+                            width: 28, height: 28, borderRadius: 0.5, objectFit: 'cover', flexShrink: 0,
+                            bgcolor: 'action.hover', visibility: thumb ? 'visible' : 'hidden',
+                          }}
+                        />
+                        {p.name}{p.model ? ` — ${p.model}` : ''}
+                      </MenuItem>
+                    );
+                  })}
                 </TextField>
               </Box>
               {generateCodeProduct && (
@@ -2138,21 +2172,21 @@ const InnerPage = () => {
 
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} justifyContent="flex-end" sx={{ mb: 2 }}>
                 <TextField
-                  label="Name"
+                  label="Product Name"
                   size="small"
                   value={productNameFilter}
                   onChange={(e) => setProductNameFilter(e.target.value)}
                   sx={{ minWidth: 180 }}
                 />
                 <TextField
-                  label="Brand Name"
+                  label="Brand"
                   size="small"
                   value={productBrandFilter}
                   onChange={(e) => setProductBrandFilter(e.target.value)}
                   sx={{ minWidth: 180 }}
                 />
                 <TextField
-                  label="Owner Name"
+                  label="Owner"
                   size="small"
                   value={productOwnerFilter}
                   onChange={(e) => setProductOwnerFilter(e.target.value)}

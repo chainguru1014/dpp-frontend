@@ -7,7 +7,6 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import SellIcon from '@mui/icons-material/Sell';
-import StorefrontIcon from '@mui/icons-material/Storefront';
 import PublicIcon from '@mui/icons-material/Public';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
@@ -259,23 +258,23 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
 
   return (
     <Box sx={{ mt: { xs: 3, md: 1.5 } }}>
-      {/* 14 columns at md when the 7th (Total Captures) card shows, so all
-          cards still fit one row. */}
-      <Grid container spacing={1} columns={{ xs: 12, md: showCaptures ? 14 : 12 }} sx={{ mb: 1.5 }}>
+      {/* 12 columns at md when the 6th (Total Captures) card shows, so all
+          cards still fit one row (Retail Stores removed -- wasn't
+          meaningful to a newly-visiting user -- so one fewer card now). */}
+      <Grid container spacing={1} columns={{ xs: 12, md: showCaptures ? 12 : 10 }} sx={{ mb: 1.5 }}>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCodeScannerIcon} label="Total Scans" value={t.scans ?? 0} delta={t.deltas?.scans} /></Grid>
         {showCaptures && (
           <Grid item xs={6} sm={4} md={2}><Kpi icon={CameraAltIcon} label="Total Captures" value={capturesTotal ?? 0} /></Grid>
         )}
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={CheckroomIcon} label="Unique Items" value={t.uniqueItems ?? 0} delta={t.deltas?.uniqueItems} /></Grid>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={SellIcon} label="Unique SKUs" value={t.uniqueSkus ?? 0} delta={t.deltas?.uniqueSkus} /></Grid>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={StorefrontIcon} label="Retail Stores" value={t.retailStores ?? 0} delta={t.deltas?.retailStores} /></Grid>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={PublicIcon} label="Countries" value={t.countries ?? 0} delta={t.deltas?.countries} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={CheckroomIcon} label="Unique Products" value={t.uniqueItems ?? 0} delta={t.deltas?.uniqueItems} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={SellIcon} label="Unique Product Codes" value={t.uniqueSkus ?? 0} delta={t.deltas?.uniqueSkus} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={PublicIcon} label="Scanned Countries" value={t.countries ?? 0} delta={t.deltas?.countries} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={VerifiedIcon} label="Data Integrity" value={`${t.dataIntegrity ?? 100}%`} sub="Verified" /></Grid>
       </Grid>
 
       <Grid container spacing={1.25} sx={{ mb: 1.25 }}>
         <Grid item xs={12} md={4}>
-          <Section title="Scans by Item Category">
+          <Section title="Scans by Product Category">
             <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
           </Section>
         </Grid>
@@ -325,7 +324,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
           <TextField
             select label="Scanned Country" size="small" value={filters.destination_country}
             onChange={(e) => setFilters((f) => ({ ...f, destination_country: e.target.value }))}
-            sx={{ minWidth: 170 }}
+            sx={{ minWidth: 210 }}
           >
             <MenuItem value="">All</MenuItem>
             {(a.filterOptions?.destinationCountries || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
@@ -361,7 +360,7 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell rowSpan={2}>Item Category</TableCell>
+                <TableCell rowSpan={2}>Product Category</TableCell>
                 <TableCell rowSpan={2}>Origin Country</TableCell>
                 <TableCell rowSpan={2} align="right">Total Scanned (PCS)</TableCell>
                 {traceabilityColumns.length > 0 && (
@@ -370,7 +369,6 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
                   </TableCell>
                 )}
                 <TableCell rowSpan={2}>City (Top)</TableCell>
-                <TableCell rowSpan={2} align="right">Stores</TableCell>
               </TableRow>
               <TableRow>
                 {traceabilityColumns.map((c) => <TableCell key={c} align="right">{c}</TableCell>)}
@@ -393,13 +391,12 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
                       <TableCell key={c} align="right">{row.destinationBreakdown?.[c] || 0}</TableCell>
                     ))}
                     <TableCell>{(row.topCities || []).join(', ') || '—'}</TableCell>
-                    <TableCell align="right">{row.stores}</TableCell>
                   </TableRow>
                 );
               })}
               {!(a.traceabilityOverview || []).length && (
                 <TableRow>
-                  <TableCell colSpan={5 + traceabilityColumns.length}>
+                  <TableCell colSpan={4 + traceabilityColumns.length}>
                     <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
                       No scan activity yet.
                     </Typography>

@@ -255,7 +255,16 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
   return (
     <Box>
       <Paper sx={{ p: 2, mb: 2 }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} flexWrap="wrap" useFlexGap justifyContent="flex-end">
+        {/* Single line, always -- horizontal scroll (not wrap) is the
+            overflow strategy on narrower widths, so the row never breaks to
+            a second line no matter how many filters are added. */}
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={2}
+          flexWrap="nowrap"
+          alignItems={{ md: 'center' }}
+          sx={{ overflowX: { md: 'auto' }, pb: { md: 0.5 } }}
+        >
           <TextField
             label="From"
             type="date"
@@ -263,6 +272,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             InputLabelProps={{ shrink: true }}
             value={filters.from}
             onChange={setF('from')}
+            sx={{ flexShrink: 0 }}
           />
           <TextField
             label="To"
@@ -271,19 +281,20 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             InputLabelProps={{ shrink: true }}
             value={filters.to}
             onChange={setF('to')}
+            sx={{ flexShrink: 0 }}
           />
-          <TextField select label="Source" size="small" sx={{ minWidth: 120 }} value={filters.source} onChange={setF('source')}>
+          <TextField select label="Source" size="small" sx={{ minWidth: 120, flexShrink: 0 }} value={filters.source} onChange={setF('source')}>
             <MenuItem value="">All</MenuItem>
             <MenuItem value="scan">Scan</MenuItem>
             <MenuItem value="visit">Visit</MenuItem>
           </TextField>
-          <TextField select label="Security" size="small" sx={{ minWidth: 130 }} value={filters.security} onChange={setF('security')}>
+          <TextField select label="Security" size="small" sx={{ minWidth: 130, flexShrink: 0 }} value={filters.security} onChange={setF('security')}>
             <MenuItem value="">All</MenuItem>
             <MenuItem value="verified">Verified</MenuItem>
             <MenuItem value="failed">Failed</MenuItem>
             <MenuItem value="na">N/A</MenuItem>
           </TextField>
-          <TextField select label="Action" size="small" sx={{ minWidth: 120 }} value={filters.reaction} onChange={setF('reaction')}>
+          <TextField select label="Action" size="small" sx={{ minWidth: 120, flexShrink: 0 }} value={filters.reaction} onChange={setF('reaction')}>
             <MenuItem value="">All</MenuItem>
             <MenuItem value="like">Like</MenuItem>
             <MenuItem value="dislike">Dislike</MenuItem>
@@ -295,7 +306,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             placeholder="Name or email"
             value={usernameInput}
             onChange={(e) => setUsernameInput(e.target.value)}
-            sx={{ minWidth: 150 }}
+            sx={{ minWidth: 150, flexShrink: 0 }}
           />
           <TextField
             label="Location"
@@ -303,13 +314,13 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             placeholder="Country, state, city…"
             value={locationInput}
             onChange={(e) => setLocationInput(e.target.value)}
-            sx={{ minWidth: 170 }}
+            sx={{ minWidth: 170, flexShrink: 0 }}
           />
           <TextField
             select
             label="Product"
             size="small"
-            sx={{ minWidth: 160 }}
+            sx={{ minWidth: 160, flexShrink: 0 }}
             value={filters.product_id}
             onChange={setF('product_id')}
           >
@@ -319,7 +330,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
             ))}
           </TextField>
           <Tooltip title="Refresh">
-            <IconButton onClick={fetchData} color="primary">
+            <IconButton onClick={fetchData} color="primary" sx={{ flexShrink: 0 }}>
               <RefreshIcon />
             </IconButton>
           </Tooltip>

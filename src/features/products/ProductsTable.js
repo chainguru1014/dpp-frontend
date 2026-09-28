@@ -16,7 +16,7 @@ export default function ProductsTable({
   const columns = [
     {
       field: 'name',
-      headerName: 'Name',
+      headerName: 'Product Name',
       width: 200,
       renderCell: (p) => (
         <Box sx={{ py: 0.5 }}>
@@ -32,29 +32,16 @@ export default function ProductsTable({
       ),
     },
     {
-      field: 'items',
-      headerName: 'Items',
-      width: 90,
-      type: 'number',
-      // Units the current account owns in the ownership ledger.
-      valueGetter: (p) =>
-        typeof p.row.ownedQuantity === 'number'
-          ? p.row.ownedQuantity
-          : Array.isArray(p.row.serials)
-          ? p.row.serials.length
-          : 0,
-    },
-    {
       field: 'minted',
-      headerName: 'Issued',
-      width: 90,
+      headerName: 'Issued Codes',
+      width: 110,
       type: 'number',
       valueGetter: (p) => p.row.total_minted_amount || 0,
     },
     {
       field: 'printed',
-      headerName: 'Printed',
-      width: 90,
+      headerName: 'Printed Codes',
+      width: 110,
       type: 'number',
       valueGetter: (p) => p.row.printed_amount || 0,
     },
@@ -85,6 +72,30 @@ export default function ProductsTable({
       },
     },
     {
+      field: 'website',
+      headerName: 'Brand Website',
+      width: 220,
+      sortable: false,
+      valueGetter: (p) => p.row.brandInfo?.websiteUrl || '',
+      renderCell: (p) => {
+        const url = p.row.brandInfo?.websiteUrl;
+        if (!url) return <span>—</span>;
+        return (
+          <Link
+            href={normalizeUrl(url)}
+            target="_blank"
+            rel="noopener noreferrer"
+            underline="hover"
+            sx={{ display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          >
+            {url}
+          </Link>
+        );
+      },
+    },
+    // Kept last, per request -- ownership is secondary to the product's own
+    // identity/brand info, which reads more naturally first in the row.
+    {
       field: 'owner',
       headerName: 'Owner',
       width: 200,
@@ -109,28 +120,6 @@ export default function ProductsTable({
               </Typography>
             )}
           </Box>
-        );
-      },
-    },
-    {
-      field: 'website',
-      headerName: 'Brand Website',
-      width: 220,
-      sortable: false,
-      valueGetter: (p) => p.row.brandInfo?.websiteUrl || '',
-      renderCell: (p) => {
-        const url = p.row.brandInfo?.websiteUrl;
-        if (!url) return <span>—</span>;
-        return (
-          <Link
-            href={normalizeUrl(url)}
-            target="_blank"
-            rel="noopener noreferrer"
-            underline="hover"
-            sx={{ display: 'inline-block', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-          >
-            {url}
-          </Link>
         );
       },
     },
