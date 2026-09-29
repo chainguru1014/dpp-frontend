@@ -37,8 +37,18 @@ const EmployeeAuditLogPage = ({ token, showCompanyColumn }) => {
       width: 190,
       valueGetter: (p) => (p.row.createdAt ? new Date(p.row.createdAt).toLocaleString() : ''),
     },
-    { field: 'action', headerName: 'Action', width: 160 },
-    { field: 'email', headerName: 'Corporate Email', width: 220, valueGetter: (p) => p.row.employee_id?.email || '—' },
+    {
+      field: 'action',
+      headerName: 'What happened',
+      width: 170,
+      // Stored as short codes (login, logout, ...); show them as words.
+      valueGetter: (p) => {
+        const a = String(p.row.action || '');
+        const words = a.replace(/[_-]+/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+        return a === 'login' ? 'Signed in' : a === 'logout' ? 'Signed out' : words.charAt(0).toUpperCase() + words.slice(1);
+      },
+    },
+    { field: 'email', headerName: 'Work email', width: 220, valueGetter: (p) => p.row.employee_id?.email || '—' },
     ...(showCompanyColumn
       ? [{
           field: 'companyName',
@@ -49,29 +59,29 @@ const EmployeeAuditLogPage = ({ token, showCompanyColumn }) => {
       : []),
     {
       field: 'employeeCode',
-      headerName: 'Employee',
-      width: 160,
-      valueGetter: (p) => p.row.employee_id?.employeeCode || p.row.employee_id?._id || '',
+      headerName: 'Employee code',
+      width: 150,
+      valueGetter: (p) => p.row.employee_id?.employeeCode || '—',
     },
-    { field: 'emailDomain', headerName: 'Domain', width: 140, valueGetter: (p) => p.row.employee_id?.emailDomain || '' },
-    { field: 'role', headerName: 'Role', width: 110, valueGetter: (p) => p.row.employee_id?.role || '' },
-    { field: 'ip', headerName: 'IP', width: 140 },
-    {
-      field: 'entryHash',
-      headerName: 'Entry Hash (tamper check)',
-      width: 260,
-      valueGetter: (p) => (p.row.entryHash || '').slice(0, 16),
-    },
+    // Technical columns only for the platform admin.
+    ...(showCompanyColumn
+      ? [
+          { field: 'ip', headerName: 'IP address', width: 140 },
+          {
+            field: 'entryHash',
+            headerName: 'Tamper check',
+            description: 'Each row is chained to the one before it, so edits or deletions would be detectable.',
+            width: 190,
+            valueGetter: (p) => (p.row.entryHash || '').slice(0, 16),
+          },
+        ]
+      : []),
   ];
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        Staff Audit Log
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Append-only record of staff sign-ins and operations. Each row's hash chains from the one
-        before it, so any edit or deletion in the database would break the chain.
+      <Typography color="text.secondary" sx={{ mb: 2 }}>
+        When staff signed in and what they did. This record cannot be edited or deleted.
       </Typography>
       <Box sx={{ bgcolor: '#fff', borderRadius: 1, boxShadow: 1 }}>
         <DataGrid

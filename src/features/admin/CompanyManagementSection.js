@@ -10,11 +10,14 @@ import {
   TextField,
   IconButton,
   CircularProgress,
+  Tooltip,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { Delete, Edit, RemoveRedEye } from '@mui/icons-material';
+import { Delete, Edit, Visibility, Add, Close } from '@mui/icons-material';
 import CompanyPreview from '../../components/PreviewModal/companyPreview';
 import UserEditDialog from '../../components/UserEditDialog';
+import PageHeader from '../../components/PageHeader';
+import { confirmAction, notify, notifySuccess } from '../../utils/feedbackBus';
 import {
   getAdminUserData,
   updateCompany,
@@ -42,28 +45,25 @@ const AdminLoadingOverlay = () => (
     }}
   >
     <CircularProgress />
-    <Typography variant="body2" color="text.secondary">
-      Loading companies…
-    </Typography>
+    <Typography color="text.secondary">Loading companies…</Typography>
+  </Box>
+);
+
+const NoCompanies = () => (
+  <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', px: 3, textAlign: 'center' }}>
+    <Typography color="text.secondary">No companies yet. Click "Create company" to add the first one.</Typography>
   </Box>
 );
 
 const CompanyUsersTable = ({ companies, loading, onView, onEdit, onRemove }) => {
   const columns = [
-    {
-      field: 'name',
-      headerName: 'Company Name',
-      width: 150,
-      renderCell: (data) => (
-        <span style={{ whiteSpace: 'pre-line', padding: 10 }}>{data.value}</span>
-      ),
-    },
-    { field: 'email', headerName: 'Corporate Admin Email', width: 200 },
-    { field: 'location', headerName: 'Location', width: 180 },
+    { field: 'name', headerName: 'Company', flex: 1, minWidth: 160 },
+    { field: 'email', headerName: 'Admin email', flex: 1.2, minWidth: 200 },
     {
       field: 'allowedEmailDomains',
-      headerName: 'Allowed Staff Email Domains',
-      width: 220,
+      headerName: 'Staff email domains',
+      flex: 1,
+      minWidth: 160,
       valueGetter: (p) => (p.row.allowedEmailDomains || []).join(', ') || '—',
     },
     {
@@ -81,48 +81,48 @@ const CompanyUsersTable = ({ companies, loading, onView, onEdit, onRemove }) => 
       valueGetter: (p) => p.row.scanCount || 0,
     },
     {
-      field: 'uniqueScannerCount',
-      headerName: 'Scanned by',
-      width: 110,
-      type: 'number',
-      valueGetter: (p) => p.row.uniqueScannerCount || 0,
-    },
-    {
       field: 'actions',
       headerName: 'Actions',
-      width: 160,
+      width: 170,
+      sortable: false,
       renderCell: (data) => (
-        <Box sx={{ display: 'flex' }}>
-          <IconButton onClick={() => onEdit(data.row)}>
-            <Edit />
-          </IconButton>
-          <IconButton onClick={() => onRemove(data.id)}>
-            <Delete />
-          </IconButton>
-          <IconButton onClick={() => onView(data.id)}>
-            <RemoveRedEye />
-          </IconButton>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Tooltip title="View details">
+            <IconButton aria-label={`View ${data.row.name}`} onClick={() => onView(data.id)}>
+              <Visibility />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Edit">
+            <IconButton aria-label={`Edit ${data.row.name}`} onClick={() => onEdit(data.row)}>
+              <Edit />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Remove">
+            <IconButton aria-label={`Remove ${data.row.name}`} color="error" onClick={() => onRemove(data.row)}>
+              <Delete />
+            </IconButton>
+          </Tooltip>
         </Box>
       ),
     },
   ];
 
   return (
-    <DataGrid
-      loading={loading}
-      slots={{ loadingOverlay: AdminLoadingOverlay }}
-      columns={columns}
-      rows={companies}
-      initialState={{
-        pagination: {
-          paginationModel: { page: 0, pageSize: 5 },
-        },
-      }}
-      pageSizeOptions={[5, 10, 25]}
-      autoHeight
-      sx={{ minHeight: 260, '& .MuiDataGrid-overlayWrapper': { minHeight: 180 } }}
-      getRowId={(data) => data._id}
-    />
+    <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
+      <DataGrid
+        loading={loading}
+        slots={{ loadingOverlay: AdminLoadingOverlay, noRowsOverlay: NoCompanies }}
+        columns={columns}
+        rows={companies}
+        initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
+        pageSizeOptions={[10, 25, 50]}
+        autoHeight
+        disableRowSelectionOnClick
+        disableColumnMenu
+        sx={{ border: 0, minHeight: 220, '& .MuiDataGrid-columnHeaders': { backgroundColor: '#eef1f6' } }}
+        getRowId={(data) => data._id}
+      />
+    </Box>
   );
 };
 
@@ -134,7 +134,14 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) {
+      notify('Please enter the company name.', 'warning');
+      return;
+    }
+    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      notify('Please enter a valid admin email address.', 'warning');
+      return;
+    }
     setSaving(true);
     const doc = await registerCompany({
       name: form.name.trim(),
@@ -154,50 +161,55 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Create Company</DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
+      <DialogTitle>
+        Create company
+        <IconButton onClick={onClose} color="inherit" aria-label="Close" disabled={saving}><Close /></IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField
-          label="Company Name"
+          label="Company name"
+          required
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           fullWidth
+          autoFocus
         />
         <TextField
-          label="Corporate Admin Email"
-          helperText="A Supervisor account is auto-created with this email, named after the company (e.g. 'Acme admin'), so it can sign in immediately at the Staff Login page."
+          label="Company admin email"
+          type="email"
+          helperText="This person can sign in right away as the company's Supervisor, using a code sent to this email."
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           fullWidth
         />
         <TextField
-          label="Title"
+          label="Short tagline (optional)"
           value={form.title}
           onChange={(e) => setForm({ ...form, title: e.target.value })}
           fullWidth
         />
         <TextField
-          label="Allowed Staff Email Domains"
-          helperText="Comma-separated corporate domains (e.g. hm.com) for this company's Staff Login. Can be left blank and set later."
+          label="Staff email domains (optional)"
+          placeholder="e.g. hm.com"
+          helperText="Staff with an email at these domains belong to this company. Separate several with commas. You can add this later."
           value={form.allowedEmailDomains}
           onChange={(e) => setForm({ ...form, allowedEmailDomains: e.target.value })}
           fullWidth
         />
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button variant="contained" onClick={handleSave} disabled={saving || !form.name.trim()}>
-          Create
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} disabled={saving}>Cancel</Button>
+        <Button variant="contained" onClick={handleSave} disabled={saving}>
+          {saving ? 'Creating…' : 'Create company'}
         </Button>
       </DialogActions>
     </Dialog>
   );
 };
 
-// Registered-companies management, moved here from the old Users page so
-// Staff Management owns everything company-related (including who's allowed
-// to invite staff) in one place. The built-in admin account never appears in
-// this table.
+// Companies page (super admin): create, view, edit and remove brand/company
+// accounts. Staff are managed on the separate Staff page.
 const CompanyManagementSection = () => {
   const [companies, setCompanies] = useState([]);
   const [companyInfo, setCompanyInfo] = useState(undefined);
@@ -221,19 +233,22 @@ const CompanyManagementSection = () => {
   const handleCompanyEditSave = async () => {
     if (!editingCompany) return;
     const { _id, ...payload } = editingCompany;
-    await updateCompany(_id, payload);
+    if (await updateCompany(_id, payload)) notifySuccess('Company saved.');
     setEditingCompany(null);
     reloadCompanies();
   };
 
   return (
-    <Box sx={{ mb: 4 }}>
-      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant="h6">Registered Companies</Typography>
-        <Button variant="contained" onClick={() => setCreateCompanyOpen(true)}>
-          Create Company
-        </Button>
-      </Box>
+    <Box>
+      <PageHeader
+        title="Companies"
+        description="Brands that use the platform. Each company's admin email signs in as its Supervisor."
+        actions={(
+          <Button variant="contained" startIcon={<Add />} onClick={() => setCreateCompanyOpen(true)}>
+            Create company
+          </Button>
+        )}
+      />
       <CreateCompanyDialog
         open={createCompanyOpen}
         onClose={() => setCreateCompanyOpen(false)}
@@ -244,9 +259,16 @@ const CompanyManagementSection = () => {
         loading={loading}
         onView={(id) => setCompanyInfo(companies.find((item) => item._id === id))}
         onEdit={(company) => setEditingCompany(company)}
-        onRemove={async (id) => {
-          if (!window.confirm('Remove this company? This cannot be undone.')) return;
-          await removeCompany(id);
+        onRemove={async (company) => {
+          const sure = await confirmAction({
+            title: `Remove ${company.name}?`,
+            message: 'The company account will be removed. This cannot be undone.',
+            confirmText: 'Remove company',
+            danger: true,
+          });
+          if (!sure) return;
+          await removeCompany(company._id);
+          notifySuccess('Company removed.');
           reloadCompanies();
         }}
       />

@@ -2,34 +2,28 @@ import React, { useState } from 'react';
 import { Box, Tabs, Tab } from '@mui/material';
 import EmployeeRosterPage from './EmployeeRosterPage';
 import EmployeeAuditLogPage from './EmployeeAuditLogPage';
-import CompanyManagementSection from '../admin/CompanyManagementSection';
+import PageHeader from '../../components/PageHeader';
 
-// Staff Management view of the employee route: provision staff accounts and
-// review their tamper-evident audit trail. Reached by the platform super
-// admin (isAdmin=true, sees every company's roster plus company management)
-// and by a per-company Supervisor (isAdmin=false, sees only their own
-// company's roster — see pages/index.js's nav/render gating on
-// company?.employeeType === 'supervisor'). A Supervisor may only manage
-// working employees, never other Supervisors (restrictToWorkingEmployee,
-// enforced here in the UI and again in employeeController.ts). Both tabs are
-// scoped server-side
-// to the logged-in company's own employees, unless the caller is the
-// platform "super" account, which sees every company's employees (see
-// backend/controllers/employeeController.ts's resolveRosterActor). For
-// admins, the full company-management UI (create/edit/remove — formerly the
-// "Company Users" table on the Users page) is shown here instead. Inviting
-// staff no longer requires picking a company: the invited email's domain is
-// matched against each company's Allowed Staff Email Domains automatically.
+// Staff page: add and manage staff accounts, and see their sign-in history.
+// Reached by the platform super admin (isAdmin=true, every company's staff)
+// and by a company's Supervisor / company account (isAdmin=false, their own
+// company's staff; a Supervisor may only manage working employees —
+// restrictToWorkingEmployee, enforced again in employeeController.ts).
+// Company accounts themselves are managed on the separate Companies page.
 const EmployeeManagementPage = ({ token, isAdmin }) => {
   const [tab, setTab] = useState('roster');
 
   return (
     <Box>
-      {isAdmin && <CompanyManagementSection />}
-
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
-        <Tab value="roster" label="Roster" />
-        <Tab value="auditLog" label="Audit Log" />
+      <PageHeader
+        title="Staff"
+        description={isAdmin
+          ? 'Staff accounts for every company. Staff sign in with a code sent to their work email.'
+          : 'Your company’s staff. Add people here so they can sign in to the mobile app with their work email.'}
+      />
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab value="roster" label="Staff list" />
+        <Tab value="auditLog" label="Sign-in history" />
       </Tabs>
       {tab === 'roster' && (
         <EmployeeRosterPage token={token} showCompanyColumn={isAdmin} restrictToWorkingEmployee={!isAdmin} />

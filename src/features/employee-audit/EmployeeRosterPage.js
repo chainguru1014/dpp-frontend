@@ -14,12 +14,19 @@ import {
   MenuItem,
   Alert,
   IconButton,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  FormHelperText,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import { confirmAction } from '../../utils/feedbackBus';
 import { listEmployees, inviteEmployee, updateEmployee, deleteEmployee } from '../../helper';
 
 // Admin-provisioning UI for the employee/staff route (backend/controllers/employeeController.ts).
@@ -78,76 +85,71 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Invite Employee</DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
+      <DialogTitle>
+        Add a staff member
+        <IconButton onClick={onClose} color="inherit" aria-label="Close"><CloseIcon /></IconButton>
+      </DialogTitle>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Typography color="text.secondary">
+          They sign in with a code sent to this email. Use their work email: its domain decides which company they belong to.
+        </Typography>
         <TextField
-          label="Corporate Email"
+          label="Work email"
+          required
+          type="email"
           placeholder="jane.doe@company.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           fullWidth
+          autoFocus
         />
         <TextField
           label="Name"
+          required
           placeholder="Jane Doe"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          helperText="Shown as the worker on captures in the mobile app."
           fullWidth
         />
         <FormControl fullWidth disabled={restrictToWorkingEmployee}>
-          <InputLabel>Employee Type</InputLabel>
-          <Select label="Employee Type" value={employeeType} onChange={(e) => setEmployeeType(e.target.value)}>
+          <InputLabel>Role</InputLabel>
+          <Select label="Role" value={employeeType} onChange={(e) => setEmployeeType(e.target.value)}>
             <MenuItem value="working_employee">Working Employee</MenuItem>
             {!restrictToWorkingEmployee && <MenuItem value="supervisor">Supervisor</MenuItem>}
           </Select>
+          <FormHelperText>
+            {restrictToWorkingEmployee
+              ? 'Working Employees use the mobile app to record work steps.'
+              : 'Working Employees use the mobile app. Supervisors also manage products and staff on this website.'}
+          </FormHelperText>
         </FormControl>
-        <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
-          {restrictToWorkingEmployee
-            ? 'A Supervisor may only invite Working Employees, who sign in on the mobile app with their corporate email.'
-            : 'Working Employee signs in on the mobile app with their corporate email. Supervisor signs in on this dashboard and can manage products and view the Dashboard page.'}
-        </Typography>
-        <TextField
-          label="Employee Code (optional)"
-          value={employeeCode}
-          onChange={(e) => setEmployeeCode(e.target.value)}
-          fullWidth
-        />
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-          RFID Reader IDs (optional) — the physical reader assigned to this employee, per brand.
-          Leave blank for a brand they don't carry a reader for.
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <TextField
-            label="Yometel Reader ID"
-            value={yometelReaderId}
-            onChange={(e) => setYometelReaderId(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label="Impinj Reader ID"
-            value={impinjReaderId}
-            onChange={(e) => setImpinjReaderId(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label="Zebra Reader ID"
-            value={zebraReaderId}
-            onChange={(e) => setZebraReaderId(e.target.value)}
-            fullWidth
-          />
-        </Box>
+        <Accordion disableGutters variant="outlined" sx={{ borderRadius: 2, '&:before': { display: 'none' } }}>
+          <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+            <Typography>More options: employee code and RFID readers</Typography>
+          </AccordionSummary>
+          <AccordionDetails sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              label="Employee code (optional)"
+              value={employeeCode}
+              onChange={(e) => setEmployeeCode(e.target.value)}
+              fullWidth
+            />
+            <Typography color="text.secondary">
+              RFID reader IDs (optional): the handheld reader this person uses, for each reader brand. Leave empty if they don't use one.
+            </Typography>
+            <TextField label="Yometel reader ID" value={yometelReaderId} onChange={(e) => setYometelReaderId(e.target.value)} fullWidth />
+            <TextField label="Impinj reader ID" value={impinjReaderId} onChange={(e) => setImpinjReaderId(e.target.value)} fullWidth />
+            <TextField label="Zebra reader ID" value={zebraReaderId} onChange={(e) => setZebraReaderId(e.target.value)} fullWidth />
+          </AccordionDetails>
+        </Accordion>
         {!!error && <Alert severity="error">{error}</Alert>}
-        <Typography variant="caption" color="text.secondary">
-          The email's domain is automatically matched against each registered company's Allowed
-          Staff Email Domains (set on the company record in the Users tab) to find who this
-          employee belongs to.
-        </Typography>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={handleSave} disabled={saving}>
-          Invite
+          {saving ? 'Adding…' : 'Add staff member'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -240,7 +242,13 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
   };
 
   const handleRemove = async (employee) => {
-    if (!window.confirm(`Remove ${employee.email || 'this employee'} from the roster?`)) return;
+    const sure = await confirmAction({
+      title: 'Remove this staff member?',
+      message: `${employee.name || employee.email || 'This person'} will no longer be able to sign in. Their past captures stay in Capture History.`,
+      confirmText: 'Remove',
+      danger: true,
+    });
+    if (!sure) return;
     setRowError('');
     const res = await deleteEmployee(token, employee._id);
     if (!res.ok) {
@@ -388,9 +396,9 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Staff Roster</Typography>
-        <Button variant="contained" onClick={() => setInviteOpen(true)}>
-          Invite Employee
+        <Typography variant="h6" component="h2">Staff list</Typography>
+        <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => setInviteOpen(true)}>
+          Add a staff member
         </Button>
       </Box>
       {!!rowError && (

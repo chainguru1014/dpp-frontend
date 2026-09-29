@@ -12,6 +12,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Delete, Edit, Refresh } from '@mui/icons-material';
 import UserEditDialog from '../../components/UserEditDialog';
 import { getAdminUserData, removeUser, updateUserProfile } from '../../helper';
+import { confirmAction, notifySuccess } from '../../utils/feedbackBus';
 
 const AdminLoadingOverlay = () => (
   <Box
@@ -47,14 +48,19 @@ const NormalUsersTable = ({ users, loading, onEdit, onRemove }) => {
       field: 'actions',
       headerName: 'Actions',
       width: 220,
+      sortable: false,
       renderCell: (data) => (
-        <Box sx={{ display: 'flex' }}>
-          <IconButton onClick={() => onEdit(data.row)}>
-            <Edit />
-          </IconButton>
-          <IconButton onClick={() => onRemove(data.id)}>
-            <Delete />
-          </IconButton>
+        <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Tooltip title="Edit">
+            <IconButton aria-label={`Edit ${data.row.name || 'user'}`} onClick={() => onEdit(data.row)}>
+              <Edit />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Remove">
+            <IconButton aria-label={`Remove ${data.row.name || 'user'}`} color="error" onClick={() => onRemove(data.row)}>
+              <Delete />
+            </IconButton>
+          </Tooltip>
         </Box>
       ),
     },
@@ -68,10 +74,10 @@ const NormalUsersTable = ({ users, loading, onEdit, onRemove }) => {
       rows={users}
       initialState={{
         pagination: {
-          paginationModel: { page: 0, pageSize: 5 },
+          paginationModel: { page: 0, pageSize: 10 },
         },
       }}
-      pageSizeOptions={[5, 10]}
+      pageSizeOptions={[10, 25, 50]}
       autoHeight
       sx={{ minHeight: 260, '& .MuiDataGrid-overlayWrapper': { minHeight: 180 } }}
       getRowId={(data) => data._id}
@@ -180,8 +186,8 @@ const AdminUsersPage = () => {
           onChange={(e) => setPhoneNumberFilter(e.target.value)}
           sx={{ width: 140, flexShrink: 0 }}
         />
-        <Tooltip title="Refresh">
-          <IconButton onClick={reloadUsers} color="primary" sx={{ flexShrink: 0 }}>
+        <Tooltip title="Reload the list">
+          <IconButton aria-label="Reload users" onClick={reloadUsers} color="primary" sx={{ flexShrink: 0 }}>
             <Refresh />
           </IconButton>
         </Tooltip>
@@ -190,9 +196,16 @@ const AdminUsersPage = () => {
         users={filteredUsers}
         loading={loading}
         onEdit={(user) => setEditingUser(user)}
-        onRemove={async (id) => {
-          if (!window.confirm('Remove this user? This cannot be undone.')) return;
-          await removeUser(id);
+        onRemove={async (user) => {
+          const sure = await confirmAction({
+            title: 'Remove this app user?',
+            message: `${user.name || user.email || 'This user'} will be removed. This cannot be undone.`,
+            confirmText: 'Remove user',
+            danger: true,
+          });
+          if (!sure) return;
+          await removeUser(user._id);
+          notifySuccess('User removed.');
           reloadUsers();
         }}
       />
