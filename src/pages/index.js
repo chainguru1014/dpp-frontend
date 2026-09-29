@@ -1,21 +1,28 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Alert,
   AppBar,
   Avatar,
   Box,
   Button,
-  Checkbox,
   Drawer,
   IconButton,
+  InputAdornment,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  ListSubheader,
   Menu,
   MenuItem,
-  Select,
   Stack,
+  Step,
+  StepButton,
+  Stepper,
   TextField,
   Toolbar,
   Tooltip,
@@ -24,30 +31,38 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Divider,
   Grid,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import { useLocation, useNavigate } from 'react-router-dom';
 import RefreshIcon from '@mui/icons-material/Refresh';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import { TreeItem, SimpleTreeView } from '@mui/x-tree-view';
-import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
-import PeopleIcon from '@mui/icons-material/People';
+import PersonIcon from '@mui/icons-material/Person';
+import BadgeIcon from '@mui/icons-material/Badge';
+import BusinessIcon from '@mui/icons-material/Business';
+import HomeWorkIcon from '@mui/icons-material/HomeWork';
 import HistoryIcon from '@mui/icons-material/History';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import TimelineIcon from '@mui/icons-material/Timeline';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import CampaignIcon from '@mui/icons-material/Campaign';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import AddIcon from '@mui/icons-material/Add';
+import LogoutIcon from '@mui/icons-material/Logout';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Webcam from 'react-webcam';
 import io from 'socket.io-client';
 
@@ -64,14 +79,12 @@ import {
   updateProduct,
   uploadFile,
   uploadFiles,
-  updateCompanyAvatar,
   generateSecurityQRCodes,
   getSecurityQRCodes,
   deleteQrCode,
   deleteSecurityQrCode,
   checkUsernameExists,
 } from '../helper';
-import QRCode from '../components/displayQRCode';
 import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
 import AuthPage from '../components/AuthPage';
@@ -98,8 +111,12 @@ import ProductHistoryDialog from '../features/products/ProductHistoryDialog';
 import ProductTransferDialog from '../features/products/ProductTransferDialog';
 import { getFileUrl, getItemCategories } from '../helper';
 import ManageCategoriesDialog from '../features/products/ManageCategoriesDialog';
+import ConsumerLocationStepsPage from '../features/consumer-steps/ConsumerLocationStepsPage';
+import CompanyManagementSection from '../features/admin/CompanyManagementSection';
+import PageHeader from '../components/PageHeader';
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
 import { compactMediaQuery } from '../theme';
+import { confirmAction, notify, notifyError, notifySuccess } from '../utils/feedbackBus';
 
 // PreviewModal and PrintModal pull in the heavy PDF stack (@react-pdf-viewer /
 // pdfjs-dist / @react-pdf/renderer) plus react-youtube — lazy-loaded so that
@@ -107,8 +124,29 @@ import { compactMediaQuery } from '../theme';
 const PreviewModal = React.lazy(() => import('../components/PreviewModal'));
 const PrintModal = React.lazy(() => import('../components/printModal'));
 
-const serialTypes = [{ label: 'Serial Number', value: 'serial' }];
-const DEFAULT_BRAND_NAME = 'Yometel';
+
+// Every page the shell can show. Each one has its own web address
+// (/admin/<page>) so the browser Back/Forward buttons and bookmarks work.
+const KNOWN_PAGES = [
+  'dashboard', 'products', 'newProduct', 'generateCode', 'users', 'companies', 'employeeAuditLog',
+  'processSteps', 'consumerSteps', 'captureHistory', 'history', 'trace', 'notifications',
+  'allNotifications', 'recommendations', 'chat', 'profile',
+];
+const pageFromPath = (pathname) => {
+  const match = String(pathname || '').match(/^\/admin\/([^/?#]+)/);
+  return match && KNOWN_PAGES.includes(match[1]) ? match[1] : null;
+};
+
+// Product form steps (was 6 unlabeled tabs) — shown as a numbered stepper
+// with Back / Next so a first-time user always knows where they are.
+const PRODUCT_FORM_STEPS = [
+  'Basics & photos',
+  'Materials & size',
+  'Care',
+  'Repair & disposal',
+  'Origin & shipping',
+  'Warranty',
+];
 // Default item categories — only used until the managed list (super admin,
 // Products > Manage Categories) loads from the backend.
 const ITEM_CATEGORY_OPTIONS = [
@@ -121,10 +159,8 @@ const ITEM_CATEGORY_OPTIONS = [
 // Single source of truth for the left bar width — shared by the Drawer and the
 // logo container so the logo is always centered over the bar at every breakpoint.
 // Kept deliberately narrow so the content area gets more room.
-const LEFT_BAR_WIDTH = { md: 200, xl: 232 };
-const MOBILE_NAV_WIDTH = 232;
-const DEFAULT_BRAND_DETAIL = 'Developing innovative "real-time and automatic" digital twins IoT /RFID technologies';
-const DEFAULT_BRAND_WEBSITE = 'https://www.yometel.jp/';
+const LEFT_BAR_WIDTH = { md: 236, xl: 260 };
+const MOBILE_NAV_WIDTH = 260;
 
 const InnerPage = () => {
   const [registerData, setRegisterData] = useState({
@@ -172,9 +208,11 @@ const InnerPage = () => {
   const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog'];
   const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
   const isWorkingEmployee = isEmployeeActor && !isSupervisor;
-  // A working employee: the common pages (Products read-only), plus Generate
-  // Code and their own Capture History.
-  const WORKING_EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'generateCode', 'captureHistory'];
+  // A working employee: only what their job needs — Dashboard, Products
+  // (read-only), Generate Code and their own Capture History (plus Profile
+  // and their notification inbox). Transfers/Recommendations/Chat are for
+  // brands and shoppers and only cluttered their menu.
+  const WORKING_EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'profile', 'allNotifications', 'generateCode', 'captureHistory'];
   // A normal DPP (app) user: the common pages (Products read-only), plus
   // Scan History.
   const APP_USER_ALLOWED_PAGES = [...COMMON_PAGES, 'history'];
@@ -225,8 +263,6 @@ const InnerPage = () => {
   const [products, setProducts] = useState([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productNameFilter, setProductNameFilter] = useState('');
-  const [productBrandFilter, setProductBrandFilter] = useState('');
-  const [productOwnerFilter, setProductOwnerFilter] = useState('');
   const [productName, setProductName] = useState('');
   const [productModel, setProductModel] = useState('');
   const [productDetail, setProductDetail] = useState('');
@@ -252,9 +288,9 @@ const InnerPage = () => {
   }, []);
   const [detailFacts, setDetailFacts] = useState({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
   const [brandInfo, setBrandInfo] = useState({
-    name: DEFAULT_BRAND_NAME,
-    detail: DEFAULT_BRAND_DETAIL,
-    websiteUrl: DEFAULT_BRAND_WEBSITE,
+    name: '',
+    detail: '',
+    websiteUrl: '',
     logoUrl: '',
     coverUrl: '',
   });
@@ -314,6 +350,7 @@ const InnerPage = () => {
   const mcImageInputRefs = useRef([]);
   const mcFileInputRefs = useRef([]);
 
+  const productCardRef = useRef(null);
   const productWebcamRef = useRef(null);
   const wgWebcamRef = useRef(null);
   const mcWebcamRef = useRef(null);
@@ -373,32 +410,80 @@ const InnerPage = () => {
     }
   };
 
-  const [activePage, setActivePage] = useState(() => loadStateFromStorage('activePage', 'dashboard'));
+  const navigate = useNavigate();
+  const location = useLocation();
+  // The URL wins (so a bookmark or the browser Back button lands on the
+  // right page); localStorage is only the fallback for a bare /admin visit.
+  const [activePage, setActivePage] = useState(
+    () => pageFromPath(location.pathname) || loadStateFromStorage('activePage', 'dashboard')
+  );
+
+  // Keep the address bar in step with the page (push, so Back works). The
+  // product dialog ('newProduct') is an overlay on Products, not a page of
+  // its own, so it doesn't get an address.
+  useEffect(() => {
+    if (!company || activePage === 'newProduct') return;
+    if (pageFromPath(location.pathname) !== activePage) {
+      navigate(`/admin/${activePage}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePage, company]);
+
+  // Browser Back / Forward: follow the address bar.
+  useEffect(() => {
+    const fromUrl = pageFromPath(location.pathname);
+    if (fromUrl && fromUrl !== activePage) setActivePage(fromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   // activePage persists across sessions via localStorage (see saveStateToStorage
   // below), so a Supervisor employee could otherwise land straight back on a
   // page (Chat, Users, ESG…) a previous Company session left behind on this
   // browser. Force them back to Dashboard the moment that happens.
   useEffect(() => {
+    if (!company) return;
+    // Pages only the super admin manages, and the one page (worker app
+    // steps, a per-company setting) the super admin has no company for.
+    const ADMIN_ONLY = ['users', 'companies', 'notifications', 'consumerSteps'];
     const allowed = isWorkingEmployee
       ? WORKING_EMPLOYEE_ALLOWED_PAGES
       : isEmployeeActor
         ? EMPLOYEE_ALLOWED_PAGES
         : isAppUser
           ? APP_USER_ALLOWED_PAGES
-          : null;
+          : isAdmin
+            ? KNOWN_PAGES.filter((p) => p !== 'processSteps')
+            : KNOWN_PAGES.filter((p) => !ADMIN_ONLY.includes(p));
     // Opening a product's own code panel ('newProduct' in print mode) stays
     // reachable from the Products page for read-only roles.
-    if (allowed && !allowed.includes(activePage) && activePage !== 'newProduct') {
+    if (!allowed.includes(activePage) && activePage !== 'newProduct') {
       setActivePage('dashboard');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEmployeeActor, isWorkingEmployee, isAppUser, activePage]);
+  }, [company, isAdmin, isEmployeeActor, isWorkingEmployee, isAppUser, activePage]);
   const [previousPage, setPreviousPage] = useState(() => loadStateFromStorage('previousPage', 'dashboard'));
   const [selectedProduct, setSelectedProduct] = useState(() => loadStateFromStorage('selectedProduct', null));
   const [detailTab, setDetailTab] = useState(0);
   // Which product panel to show: 'edit' (product form) or 'print' (QR generate/print).
   const [productPanelMode, setProductPanelMode] = useState('edit');
+
+  // Unsaved-changes guard for the product form: remember what the form held
+  // when it opened, and ask before closing if anything differs.
+  const productFormOpen = activePage === 'newProduct' && productPanelMode === 'edit';
+  const productFormSignature = JSON.stringify([
+    productName, productModel, aboutProduct, productType, color, size, manufactureDate,
+    warrantyStatus, warrantyValidYears, itemCategory, skuStyleNumber, detailFacts, brandInfo,
+    productImages, productFiles, productVideos, materialSize, maintenance, disposal,
+    traceabilityEsg, certifications, sustainabilityImpact, parentProduct, parentProductCount,
+  ]);
+  const productFormSnapshotRef = useRef(null);
+  useEffect(() => {
+    productFormSnapshotRef.current = productFormOpen ? productFormSignature : null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productFormOpen, isEditing]);
+  const isProductFormDirty = productFormOpen
+    && productFormSnapshotRef.current !== null
+    && productFormSnapshotRef.current !== productFormSignature;
   const [sidebarOpen, setSidebarOpen] = useState(() => loadStateFromStorage('sidebarOpen', true));
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
   // Mobile/tablet: the left nav becomes a toggleable overlay drawer.
@@ -441,13 +526,6 @@ const InnerPage = () => {
   mcFileInputRefs.current = mcFileInputs.map(
     (_, i) => mcFileInputRefs.current[i] ?? React.createRef(),
   );
-
-  const canAddSerialNumber = () =>
-    serialTypes
-      .map((item) => item.value)
-      .filter((item) => !serials.map((serial) => serial.type).includes(item));
-
-  const enabledSerialTypes = canAddSerialNumber();
 
   useEffect(() => {
     if (!selectedProduct || !company) return;
@@ -541,14 +619,14 @@ const InnerPage = () => {
       !data?.gender ||
       !data?.dateOfBirth
     ) {
-      alert('Please fill in all required fields');
+      notify('Please fill in every field marked with *.', 'warning');
       return;
     }
 
     try {
       const usernameExists = await checkUsernameExists(normalizedName);
       if (usernameExists) {
-        alert('Username already exists. Please choose a different username.');
+        notify('That username is already taken. Please choose a different one.', 'warning');
         return;
       }
 
@@ -627,9 +705,12 @@ const InnerPage = () => {
     setSkuStyleNumber('');
     setDetailFacts({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
     setBrandInfo({
-      name: DEFAULT_BRAND_NAME,
-      detail: DEFAULT_BRAND_DETAIL,
-      websiteUrl: DEFAULT_BRAND_WEBSITE,
+      // Starts from the signed-in company's own name — never another
+      // brand's (it used to pre-fill Yometel's name/detail/website for
+      // every company). The super admin types the brand in.
+      name: isAdmin ? '' : (company?.name || ''),
+      detail: '',
+      websiteUrl: '',
       logoUrl: '',
       coverUrl: '',
     });
@@ -671,6 +752,7 @@ const InnerPage = () => {
     setParentProductCount(0);
     setIsEditing(0);
     setUpdates(0);
+    setDetailTab(0);
     setMaterialSize({ size: '', materials: [] });
     setMaintenance({ iconIds: [], description: '', tips: [] });
     setDisposal({ repairUrl: '', reuseUrl: '', rentalUrl: '', disposeUrl: '' });
@@ -698,11 +780,11 @@ const InnerPage = () => {
       if (uploadedUrl) {
         setBrandInfo((prev) => ({ ...prev, logoUrl: uploadedUrl }));
       } else {
-        alert('Failed to upload brand logo');
+        notifyError('The logo could not be uploaded. Please try another image.');
       }
     } catch (error) {
       console.error('Brand logo upload failed:', error);
-      alert('Failed to upload brand logo');
+      notifyError('The logo could not be uploaded. Please try another image.');
     } finally {
       setIsUploadingBrandLogo(false);
       event.target.value = '';
@@ -721,11 +803,11 @@ const InnerPage = () => {
       if (uploadedUrl) {
         setBrandInfo((prev) => ({ ...prev, coverUrl: uploadedUrl }));
       } else {
-        alert('Failed to upload brand cover image');
+        notifyError('The cover image could not be uploaded. Please try another image.');
       }
     } catch (error) {
       console.error('Brand cover upload failed:', error);
-      alert('Failed to upload brand cover image');
+      notifyError('The cover image could not be uploaded. Please try another image.');
     } finally {
       setIsUploadingBrandCover(false);
       event.target.value = '';
@@ -741,28 +823,36 @@ const InnerPage = () => {
       body.append('file', file);
       const url = await uploadFile(body);
       if (url) apply(url);
-      else alert('Failed to upload icon');
+      else notifyError('The icon could not be uploaded.');
     } catch (e) {
-      alert('Failed to upload icon');
+      notifyError('The icon could not be uploaded.');
     } finally {
       event.target.value = '';
     }
   };
 
+  // Required fields, in the order they appear in the form. Drives both the
+  // Save button and the "Still needed" hint so the two never disagree.
+  const missingProductFields = () => [
+    !productName.trim() && 'Product name',
+    !itemCategory && 'Item category',
+    productImages.length === 0 && 'At least one product photo',
+    !brandInfo.name.trim() && 'Brand name',
+    !brandInfo.detail.trim() && 'Brand description',
+    !brandInfo.websiteUrl.trim() && 'Brand website',
+    !brandInfo.logoUrl.trim() && 'Brand logo',
+  ].filter(Boolean);
+
+  const [savingProduct, setSavingProduct] = useState(false);
+
   const addProductHandler = async () => {
-    if (
-      productName === ''
-      || !itemCategory
-      || productImages.length === 0
-      || !brandInfo.name.trim()
-      || !brandInfo.detail.trim()
-      || !brandInfo.websiteUrl.trim()
-      || !brandInfo.logoUrl.trim()
-    ) {
-      alert('Please fill all required fields (including Item Category), brand information and upload brand logo');
+    const missing = missingProductFields();
+    if (missing.length) {
+      notify(`Please add: ${missing.join(', ')}.`, 'warning');
       return;
     }
-    await addProduct({
+    setSavingProduct(true);
+    const ok = await addProduct({
       name: productName,
       model: productModel,
       detail: productDetail,
@@ -808,6 +898,9 @@ const InnerPage = () => {
       parent: parentProduct,
       parentCount: parentProductCount,
     });
+    setSavingProduct(false);
+    // Keep the form (and everything typed) open if saving failed.
+    if (!ok) return;
     await loadProductsForCurrentCompany();
     resetFields();
     // Redirect to previous page (dashboard or products)
@@ -815,19 +908,13 @@ const InnerPage = () => {
   };
 
   const updateProductHandler = async () => {
-    if (
-      productName === ''
-      || !itemCategory
-      || productImages.length === 0
-      || !brandInfo.name.trim()
-      || !brandInfo.detail.trim()
-      || !brandInfo.websiteUrl.trim()
-      || !brandInfo.logoUrl.trim()
-    ) {
-      alert('Please fill all required fields (including Item Category), brand information and upload brand logo');
+    const missing = missingProductFields();
+    if (missing.length) {
+      notify(`Please add: ${missing.join(', ')}.`, 'warning');
       return;
     }
-    await updateProduct({
+    setSavingProduct(true);
+    const ok = await updateProduct({
       _id: isEditing,
       name: productName,
       model: productModel,
@@ -874,6 +961,8 @@ const InnerPage = () => {
       parent: parentProduct,
       parentCount: parentProductCount,
     });
+    setSavingProduct(false);
+    if (!ok) return;
     await loadProductsForCurrentCompany();
     resetFields();
     // Close the form and go back to where we came from (same as Add).
@@ -903,6 +992,7 @@ const InnerPage = () => {
     const g = wg.guarantee || {};
     const mc = prod.manualsAndCerts || {};
     setIsEditing(prod._id);
+    setDetailTab(0);
     setProductName(prod.name || '');
     setProductModel(prod.model || '');
     setProductDetail(prod.detail || '');
@@ -923,9 +1013,9 @@ const InnerPage = () => {
       traceableIdentity: prod.detailFacts?.traceableIdentity || '',
     });
     setBrandInfo({
-      name: prod.brandInfo?.name || DEFAULT_BRAND_NAME,
-      detail: prod.brandInfo?.detail || DEFAULT_BRAND_DETAIL,
-      websiteUrl: prod.brandInfo?.websiteUrl || DEFAULT_BRAND_WEBSITE,
+      name: prod.brandInfo?.name || '',
+      detail: prod.brandInfo?.detail || '',
+      websiteUrl: prod.brandInfo?.websiteUrl || '',
       logoUrl: prod.brandInfo?.logoUrl || '',
       coverUrl: prod.brandInfo?.coverUrl || '',
     });
@@ -1006,9 +1096,15 @@ const InnerPage = () => {
   const deleteProductHandler = async (index) => {
     const target = products[index];
     if (!target) return;
-    if (!window.confirm(`Remove "${target.name || 'this product'}"? This cannot be undone.`)) return;
+    const sure = await confirmAction({
+      title: 'Remove product?',
+      message: `"${target.name || 'This product'}" and its product page will be removed. This cannot be undone.`,
+      confirmText: 'Remove product',
+      danger: true,
+    });
+    if (!sure) return;
     const deletedProductId = target._id;
-    await removeProduct(deletedProductId);
+    if (!(await removeProduct(deletedProductId))) return;
     await loadProductsForCurrentCompany();
     // Clear selected product if it was the deleted one
     if (selectedProduct && selectedProduct._id === deletedProductId) {
@@ -1031,8 +1127,20 @@ const InnerPage = () => {
     // opens the modal explicitly for the fuller multi-section view.
   };
 
+  // Creating codes can't be undone in bulk, so double-check big batches.
+  const confirmLargeBatch = async (what) => {
+    const n = Number(mintAmount) || 0;
+    if (n <= 100) return true;
+    return confirmAction({
+      title: `Create ${n} ${what}?`,
+      message: `This creates ${n} new ${what} for "${selectedProduct?.name || 'this product'}".`,
+      confirmText: `Create ${n}`,
+    });
+  };
+
   const batchMintHandler = async () => {
     if (!selectedProduct) return;
+    if (!(await confirmLargeBatch('QR codes'))) return;
     setIsMinting(true);
     setStartAmount(totalAmount);
     setMintingProgress(0);
@@ -1047,18 +1155,21 @@ const InnerPage = () => {
     setIdentifiers(identiferRes);
     setPage(1);
     setIsMinting(false);
+    const created = (Number(totalAmount1) || 0) - (Number(totalAmount) || 0);
+    if (created > 0) notifySuccess(`${created} QR code${created === 1 ? '' : 's'} created.`);
   };
 
   const generateSecurityQRHandler = async () => {
     if (!selectedProduct || !mintAmount || mintAmount <= 0) {
-      alert('Please enter a valid amount');
+      notify('Enter how many codes you need (1 or more).', 'warning');
       return;
     }
     
     if (!company || !company._id) {
-      alert('Company information not available');
+      notifyError('Your company details could not be loaded. Please sign out and in again.');
       return;
     }
+    if (!(await confirmLargeBatch('Security QR codes'))) return;
 
     try {
       setIsMinting(true);
@@ -1076,7 +1187,7 @@ const InnerPage = () => {
         // Load security QR codes for current page
         const res = await getSecurityQRCodes(selectedProduct._id, 1);
         setSecurityQRCodes(res);
-        alert(`Successfully generated ${encryptedKeys.length} Security QR code(s)`);
+        notifySuccess(`${encryptedKeys.length} Security QR code${encryptedKeys.length === 1 ? '' : 's'} created.`);
       }
       
       setIsMinting(false);
@@ -1092,8 +1203,16 @@ const InnerPage = () => {
   // dialog. Removed locally on success rather than re-fetching the whole
   // page — cheaper, and getQRcodesWithProductId/getSerials only return
   // still-existing ids anyway so a re-fetch would show the same result.
+  const confirmDeleteCode = (label) => confirmAction({
+    title: 'Delete this code?',
+    message: `${label} will stop working. Any label already printed with it will no longer open the product page.`,
+    confirmText: 'Delete code',
+    danger: true,
+  });
+
   const deleteQrCodeHandler = async (qrcodeId) => {
     if (!selectedProduct) return;
+    if (!(await confirmDeleteCode('This QR code'))) return;
     if (await deleteQrCode(selectedProduct._id, qrcodeId)) {
       setQrCodes((prev) => prev.filter((item) => item.qrcode_id !== qrcodeId));
       setIdentifiers((prev) => prev.filter((item) => item.qrcode_id !== qrcodeId));
@@ -1102,6 +1221,7 @@ const InnerPage = () => {
 
   const deleteSecurityQrCodeHandler = async (securityQrcodeId) => {
     if (!selectedProduct) return;
+    if (!(await confirmDeleteCode('This Security QR code'))) return;
     if (await deleteSecurityQrCode(selectedProduct._id, securityQrcodeId)) {
       setSecurityQRCodes((prev) => prev.filter((item) => item.security_qrcode_id !== securityQrcodeId));
     }
@@ -1275,60 +1395,14 @@ const InnerPage = () => {
     setProductImages(images);
   };
 
-  const wgCapturePhoto = async () => {
-    if (!captureStart[1]) {
-      const next = [...captureStart];
-      next[1] = true;
-      setCaptureStart(next);
-      return;
-    }
-    const imageSrc = wgWebcamRef.current.getScreenshot();
-    const file = base64ToFile(imageSrc, 'webcam-photo.jpg');
-    const body = new FormData();
-    body.append('file', file);
-    const res = await uploadFile(body);
-    const temp = [...wgCaptureImages, res];
-    setWGCaptureImages(temp);
-    const images = [...wgImageInputs.flat(), ...temp];
-    setWGImages(images);
-  };
-
-  const mcCapturePhoto = async () => {
-    if (!captureStart[2]) {
-      const next = [...captureStart];
-      next[2] = true;
-      setCaptureStart(next);
-      return;
-    }
-    const imageSrc = mcWebcamRef.current.getScreenshot();
-    const file = base64ToFile(imageSrc, 'webcam-photo.jpg');
-    const body = new FormData();
-    body.append('file', file);
-    const res = await uploadFile(body);
-    const temp = [...mcCaptureImages, res];
-    setMCCaptureImages(temp);
-    const images = [...mcImageInputs.flat(), ...temp];
-    setMCImages(images);
-  };
-
-  const childrenProducts = useMemo(() => {
-    if (!selectedProduct) return [];
-    return products.filter((product) => product.parent === selectedProduct._id);
-  }, [selectedProduct, products]);
-
-  // Products page filter: separate name/brand/owner keyword inputs.
+  // Products page search: one box that matches product name, model, brand
+  // or owner (was three separate fields).
   const filteredProducts = useMemo(() => {
-    const name = productNameFilter.trim().toLowerCase();
-    const brand = productBrandFilter.trim().toLowerCase();
-    const owner = productOwnerFilter.trim().toLowerCase();
-    if (!name && !brand && !owner) return products;
-    return products.filter((p) => {
-      if (name && !(p.name || '').toLowerCase().includes(name)) return false;
-      if (brand && !(p.brandInfo?.name || '').toLowerCase().includes(brand)) return false;
-      if (owner && !(p.company_id?.name || '').toLowerCase().includes(owner)) return false;
-      return true;
-    });
-  }, [products, productNameFilter, productBrandFilter, productOwnerFilter]);
+    const q = productNameFilter.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => [p.name, p.model, p.brandInfo?.name, p.company_id?.name, p.company_id?.email]
+      .some((v) => String(v || '').toLowerCase().includes(q)));
+  }, [products, productNameFilter]);
 
   const disabledProducts = useMemo(() => {
     function getChildrenProducts(id) {
@@ -1347,112 +1421,60 @@ const InnerPage = () => {
     return [];
   }, [isEditing, products]);
 
-  const handleProductImageChange = async (event, i) => {
+  // One click: pick photos and they're added (the old flow needed
+  // "+ Add Image Group" and then "Choose Files").
+  const handleAddProductPhotos = async (event) => {
     event.stopPropagation();
-    if (event.target.files && event.target.files.length) {
-      const body = new FormData();
-      for (const singleFile of event.target.files) {
-        body.append('files', singleFile);
-      }
-      const res = await uploadFiles(body);
-      const fileList = Array.isArray(res) ? res : (res ? [res] : []);
-      const tempInputs = [...productImageInputs];
-      tempInputs[i] = fileList;
-      setProductImageInputs(tempInputs);
-      const images = [...tempInputs.flat().filter(Boolean), ...productCaptureImages];
-      setProductImages(images);
-      event.target.value = '';
+    const picked = event.target.files;
+    if (!picked || !picked.length) return;
+    const body = new FormData();
+    for (const singleFile of picked) body.append('files', singleFile);
+    const res = await uploadFiles(body);
+    event.target.value = '';
+    const fileList = (Array.isArray(res) ? res : (res ? [res] : [])).filter(Boolean);
+    if (!fileList.length) {
+      notifyError('The photos could not be uploaded. Please try again.');
+      return;
     }
+    const tempInputs = [...productImageInputs, fileList];
+    setProductImageInputs(tempInputs);
+    setProductImages([...tempInputs.flat().filter(Boolean), ...productCaptureImages]);
   };
 
-  const handleWGImageChange = async (event, i) => {
-    event.stopPropagation();
-    if (event.target.files && event.target.files.length) {
-      const body = new FormData();
-      for (const singleFile of event.target.files) {
-        body.append('files', singleFile);
-      }
-      const res = await uploadFiles(body);
-      const fileList = Array.isArray(res) ? res : (res ? [res] : []);
-      const tempInputs = [...wgImageInputs];
-      tempInputs[i] = fileList;
-      setWGImageInputs(tempInputs);
-      const images = [...tempInputs.flat().filter(Boolean), ...wgCaptureImages];
-      setWGImages(images);
-      event.target.value = '';
-    }
+  const removeProductPhoto = (url) => {
+    const tempInputs = productImageInputs
+      .map((group) => (Array.isArray(group) ? group.filter((img) => img !== url) : group))
+      .filter((group) => Array.isArray(group) && group.length);
+    const captures = productCaptureImages.filter((img) => img !== url);
+    setProductImageInputs(tempInputs);
+    setProductCaptureImages(captures);
+    setProductImages([...tempInputs.flat().filter(Boolean), ...captures]);
   };
 
-  const handleMCImageChange = async (event, i) => {
+  const handleAddProductPdfs = async (event) => {
     event.stopPropagation();
-    if (event.target.files && event.target.files.length) {
-      const body = new FormData();
-      for (const singleFile of event.target.files) {
-        body.append('files', singleFile);
-      }
-      const res = await uploadFiles(body);
-      const fileList = Array.isArray(res) ? res : (res ? [res] : []);
-      const tempInputs = [...mcImageInputs];
-      tempInputs[i] = fileList;
-      setMCImageInputs(tempInputs);
-      const images = [...tempInputs.flat().filter(Boolean), ...mcCaptureImages];
-      setMCImages(images);
-      event.target.value = '';
+    const picked = event.target.files;
+    if (!picked || !picked.length) return;
+    const body = new FormData();
+    for (const singleFile of picked) body.append('files', singleFile);
+    const res = await uploadFiles(body);
+    event.target.value = '';
+    const fileList = (Array.isArray(res) ? res : (res ? [res] : [])).filter(Boolean);
+    if (!fileList.length) {
+      notifyError('The PDF files could not be uploaded. Please try again.');
+      return;
     }
+    const tempInputs = [...productFileInputs, fileList];
+    setProductFileInputs(tempInputs);
+    setProductFiles(tempInputs.flat().filter(Boolean));
   };
 
-  const handleProductFilesChange = async (event, i) => {
-    event.stopPropagation();
-    if (event.target.files && event.target.files.length) {
-      const body = new FormData();
-      for (const singleFile of event.target.files) {
-        body.append('files', singleFile);
-      }
-      const res = await uploadFiles(body);
-      const fileList = Array.isArray(res) ? res : (res ? [res] : []);
-      const tempInputs = [...productFileInputs];
-      tempInputs[i] = fileList;
-      setProductFileInputs(tempInputs);
-      const files = tempInputs.flat().filter(Boolean);
-      setProductFiles(files);
-      event.target.value = '';
-    }
-  };
-
-  const handleWGFilesChange = async (event, i) => {
-    event.stopPropagation();
-    if (event.target.files && event.target.files.length) {
-      const body = new FormData();
-      for (const singleFile of event.target.files) {
-        body.append('files', singleFile);
-      }
-      const res = await uploadFiles(body);
-      const fileList = Array.isArray(res) ? res : (res ? [res] : []);
-      const tempInputs = [...wgFileInputs];
-      tempInputs[i] = fileList;
-      setWGFileInputs(tempInputs);
-      const files = tempInputs.flat().filter(Boolean);
-      setWGFiles(files);
-      event.target.value = '';
-    }
-  };
-
-  const handleMCFilesChange = async (event, i) => {
-    event.stopPropagation();
-    if (event.target.files && event.target.files.length) {
-      const body = new FormData();
-      for (const singleFile of event.target.files) {
-        body.append('files', singleFile);
-      }
-      const res = await uploadFiles(body);
-      const fileList = Array.isArray(res) ? res : (res ? [res] : []);
-      const tempInputs = [...mcFileInputs];
-      tempInputs[i] = fileList;
-      setMCFileInputs(tempInputs);
-      const files = tempInputs.flat().filter(Boolean);
-      setMCFiles(files);
-      event.target.value = '';
-    }
+  const removeProductPdf = (url) => {
+    const tempInputs = productFileInputs
+      .map((group) => (Array.isArray(group) ? group.filter((f) => f !== url) : group))
+      .filter((group) => Array.isArray(group) && group.length);
+    setProductFileInputs(tempInputs);
+    setProductFiles(tempInputs.flat().filter(Boolean));
   };
 
   const handleProductVideoAddClick = () => {
@@ -1461,109 +1483,11 @@ const InnerPage = () => {
     setUpdates(updates + 1);
   };
 
-  const handleWGVideoAddClick = () => {
-    const temp = [...wgVideos, { url: '', description: '' }];
-    setWGVideos(temp);
-    setUpdates(updates + 1);
-  };
-
-  const handleMCVideoAddClick = () => {
-    const temp = [...mcVideos, { url: '', description: '' }];
-    setMCVideos(temp);
-    setUpdates(updates + 1);
-  };
-
-  const handleProductImageAddClick = () => {
-    const temp = [...productImageInputs, []];
-    setProductImageInputs(temp);
-    setUpdates(updates + 1);
-  };
-
-  const handleWGImageAddClick = () => {
-    const temp = [...wgImageInputs, []];
-    setWGImageInputs(temp);
-    setUpdates(updates + 1);
-  };
-
-  const handleMCImageAddClick = () => {
-    const temp = [...mcImageInputs, []];
-    setMCImageInputs(temp);
-    setUpdates(updates + 1);
-  };
-
-  const handleProductFileAddClick = () => {
-    const temp = [...productFileInputs, []];
-    setProductFileInputs(temp);
-    setUpdates(updates + 1);
-  };
-
-  const handleWGFileAddClick = () => {
-    const temp = [...wgFileInputs, []];
-    setWGFileInputs(temp);
-    setUpdates(updates + 1);
-  };
-
-  const handleMCFileAddClick = () => {
-    const temp = [...mcFileInputs, []];
-    setMCFileInputs(temp);
-    setUpdates(updates + 1);
-  };
-
   const handleVideoFieldChange = (setter, videos, index, field, value) => {
     const temp = [...videos];
     temp[index][field] = value;
     setter(temp);
     setUpdates(updates + 1);
-  };
-
-  const renderChildren = (productInfo) => {
-    const childrenItems = products.filter(
-      (product) => product.parent === productInfo._id,
-    );
-    if (childrenItems.length === 0) return null;
-    return (
-      <>
-        {childrenItems.map((item) => (
-          <TreeItem
-            key={item._id}
-            itemId={item._id}
-            label={
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <span>{item.name}</span>
-                {canEditProducts && (
-                <Box sx={{ marginLeft: 'auto' }}>
-                  <IconButton
-                    size="small"
-                    aria-label={`Edit ${item.name}`}
-                    onClick={() =>
-                      editProductHandler(
-                        products.findIndex((product) => product._id === item._id),
-                      )
-                    }
-                  >
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    aria-label={`Delete ${item.name}`}
-                    onClick={() =>
-                      deleteProductHandler(
-                        products.findIndex((product) => product._id === item._id),
-                      )
-                    }
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-                )}
-              </Box>
-            }
-          >
-            {renderChildren(item)}
-          </TreeItem>
-        ))}
-      </>
-    );
   };
 
   const handleLogout = () => {
@@ -1631,7 +1555,10 @@ const InnerPage = () => {
   // persistAiConsentChoice) sets both, which clears this condition and falls
   // through to the dashboard below on the next render — the gate's own
   // button is what sends the user there.
-  const aiConciergeAlreadyDecided = isAppUser ? !!company?.aiConciergeConsentAt : !!aiConsentChoice;
+  // Only shoppers (app users) are asked: the AI Concierge personalises
+  // shopping from their scans, so the question means nothing to a company
+  // admin or staff member.
+  const aiConciergeAlreadyDecided = isAppUser ? !!company?.aiConciergeConsentAt : true;
   if (!aiConciergeAlreadyDecided) {
     return (
       <Box sx={{ width: '100%', height: '100%', minHeight: '100vh', p: 0 }}>
@@ -1647,19 +1574,37 @@ const InnerPage = () => {
     );
   }
 
+  // Closing the product window: a click outside it never closes it, and
+  // unsaved changes need a confirmation (they used to vanish silently).
+  const closeProductDialog = async (event, reason) => {
+    if (reason === 'backdropClick') return;
+    if (isProductFormDirty) {
+      const discard = await confirmAction({
+        title: 'Discard your changes?',
+        message: 'You have changes to this product that are not saved yet. If you close now, they will be lost.',
+        confirmText: 'Discard changes',
+        cancelText: 'Keep editing',
+        danger: true,
+      });
+      if (!discard) return;
+    }
+    setCaptureStart([false, false, false]);
+    setActivePage(previousPage && previousPage !== 'newProduct' ? previousPage : 'products');
+  };
+
   const go = (page) => {
     setActivePage(page);
     setMobileNavOpen(false);
   };
 
   // Shared styling for both the desktop sidebar and the mobile overlay drawer.
-  // Vertical blue gradient — deeper at the top, fading to a light blue at the
-  // bottom (matches the reference design).
+  // Vertical blue gradient, kept deep enough at the bottom that the white
+  // labels stay readable (the old light-blue bottom stop was ~1.8:1).
   const drawerPaperSx = {
     // Top stop matches the AppBar gradient's left-edge colour (#4584db) so the
     // two meet seamlessly at the top-left corner.
-    backgroundImage: 'linear-gradient(180deg, #4584db 0%, #5c9ae4 42%, #a9c9ec 100%)',
-    backgroundColor: '#5c9ae4',
+    backgroundImage: 'linear-gradient(180deg, #4584db 0%, #3a78c9 55%, #2f68b3 100%)',
+    backgroundColor: '#3a78c9',
     color: '#ffffff',
     borderRight: 'none',
     overflowX: 'hidden',
@@ -1670,142 +1615,112 @@ const InnerPage = () => {
       borderRadius: 2,
       border: '1px solid transparent',
       mx: 1,
-      my: 0.4,
-      py: 0.7,
+      my: 0.25,
+      py: 0.8,
       px: 1.25,
-      [compactMediaQuery]: { mx: 0.75, my: 0.3, py: 0.5, px: 1 },
+      [compactMediaQuery]: { mx: 0.75, my: 0.2, py: 0.6, px: 1 },
     },
-    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 34, justifyContent: 'center', [compactMediaQuery]: { minWidth: 30 } },
-    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 20, [compactMediaQuery]: { fontSize: 18 } },
-    '& .MuiListItemText-primary': { fontSize: '0.9rem', fontWeight: 500, color: '#ffffff', [compactMediaQuery]: { fontSize: '0.82rem' } },
+    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 36, justifyContent: 'center' },
+    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 22 },
+    '& .MuiListItemText-primary': { fontSize: '1rem', fontWeight: 500, color: '#ffffff', [compactMediaQuery]: { fontSize: '0.95rem' } },
     '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.16)' },
-    // Selected item: a translucent white "card" with a light-grey border — per
-    // the reference design. Icon stays a plain glyph (no badge behind it), and
-    // the label is not bolded.
+    '& .MuiListItemButton-root:focus-visible': { outline: '2px solid #ffffff', outlineOffset: -2 },
     '& .MuiListItemButton-root.Mui-selected': {
-      backgroundColor: 'rgba(255,255,255,0.22)',
-      borderColor: '#bbbababf',
+      backgroundColor: 'rgba(255,255,255,0.24)',
+      borderColor: 'rgba(255,255,255,0.7)',
     },
-    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.3)' },
-    '& .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root': { color: '#ffffff' },
-    '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { color: '#ffffff' },
+    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.32)' },
+    '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { fontWeight: 700 },
+    '& .MuiListSubheader-root': {
+      bgcolor: 'transparent',
+      color: 'rgba(255,255,255,0.85)',
+      fontSize: '0.78rem',
+      fontWeight: 700,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+      lineHeight: 1,
+      pt: 2,
+      pb: 0.75,
+      px: 2.25,
+      position: 'static',
+    },
   };
-  const navList = (
-    <List>
-      <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'dashboard'} onClick={() => go('dashboard')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><DashboardIcon /></ListItemIcon>
-          <ListItemText primary="Dashboard" />
-        </ListItemButton>
-      </ListItem>
-      <ListItem disablePadding>
-        <ListItemButton selected={activePage === 'products'} onClick={() => go('products')}>
-          <ListItemIcon sx={{ color: 'inherit' }}><Inventory2Icon /></ListItemIcon>
-          <ListItemText primary="Products" />
-        </ListItemButton>
-      </ListItem>
-      {canSeeGenerateCode && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'generateCode'} onClick={() => go('generateCode')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><QrCode2Icon /></ListItemIcon>
-            <ListItemText primary="Generate Code" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {isAdmin && !isEmployeeActor && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'users'} onClick={() => go('users')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
-            <ListItemText primary="Users" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {/* Staff Management (provisioning employees): the super admin sees every
-          company's roster plus company management; a Supervisor sees only
-          their own company's roster (see EmployeeManagementPage's isAdmin
-          prop). A plain Company/brand account and a working_employee never
-          see it. */}
-      {canSeeStaffManagement && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'employeeAuditLog'} onClick={() => go('employeeAuditLog')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><PeopleIcon /></ListItemIcon>
-            <ListItemText primary="Staff Management" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {/* Process Step Labels manages the Worker Operations grid for a single
-          company — a Supervisor may edit their own company's; a plain
-          Company/brand account may too. A working_employee never sees it
-          (only a Supervisor may edit process steps — see
-          resolveProcessStepsActor's canWrite check on the backend). */}
-      {!isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'processSteps'} onClick={() => go('processSteps')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><FormatListNumberedIcon /></ListItemIcon>
-            <ListItemText primary="Process Step Labels" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {/* Capture History: a Supervisor (or a plain Company/brand account)
-          reviewing every working employee's capture activity for their
-          company. */}
-      {canSeeCaptureHistory && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'captureHistory'} onClick={() => go('captureHistory')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><AssessmentIcon /></ListItemIcon>
-            <ListItemText primary="Capture History" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {/* Scan History: everyone except a working employee (a Supervisor sees
-          their company's products' scans, an app user their own products'). */}
-      {!isWorkingEmployee && (
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'history'} onClick={() => go('history')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><HistoryIcon /></ListItemIcon>
-            <ListItemText primary="Scan History" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {/* LCA: every role. */}
-      {(
 
-        <ListItem disablePadding>
-          <ListItemButton selected={activePage === 'trace'} onClick={() => go('trace')}>
-            <ListItemIcon sx={{ color: 'inherit' }}><TimelineIcon /></ListItemIcon>
-            <ListItemText primary="LCA" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {/* Notifications: every role. */}
-      {(
-        <ListItem disablePadding>
-          <ListItemButton
-            selected={activePage === 'notifications' || activePage === 'allNotifications'}
-            onClick={() => go(isAdmin ? 'notifications' : 'allNotifications')}
-          >
-            <ListItemIcon sx={{ color: 'inherit' }}><CampaignIcon /></ListItemIcon>
-            <ListItemText primary="Notifications" />
-          </ListItemButton>
-        </ListItem>
-      )}
-      {/* Recommendations and Chat: every role. */}
-      {(
-        <>
-          <ListItem disablePadding>
-            <ListItemButton selected={activePage === 'recommendations'} onClick={() => go('recommendations')}>
-              <ListItemIcon sx={{ color: 'inherit' }}><AutoAwesomeIcon /></ListItemIcon>
-              <ListItemText primary="Recommendations" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem disablePadding>
-            <ListItemButton selected={activePage === 'chat'} onClick={() => go('chat')}>
-              <ListItemIcon sx={{ color: 'inherit' }}><ChatBubbleOutlineIcon /></ListItemIcon>
-              <ListItemText primary="Chat" />
-            </ListItemButton>
-          </ListItem>
-        </>
-      )}
+  // Menu, grouped so an 11-item flat list reads as a few short sections.
+  // Each entry: [page, label, Icon, visible]. Plain names: "LCA" is really
+  // the ownership-transfer log, "Process Step Labels" sets the worker app's
+  // step buttons.
+  const navGroups = [
+    {
+      title: null,
+      items: [['dashboard', 'Dashboard', DashboardIcon, true]],
+    },
+    {
+      title: 'Products',
+      items: [
+        ['products', isAppUser ? 'My Products' : 'Products', Inventory2Icon, true],
+        ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
+      ],
+    },
+    {
+      title: 'Activity',
+      items: [
+        ['history', isAppUser ? 'My Scans' : 'Scan History', HistoryIcon, !isWorkingEmployee],
+        ['captureHistory', isWorkingEmployee ? 'My Captures' : 'Capture History', AssessmentIcon, canSeeCaptureHistory],
+        ['trace', 'Ownership Transfers', SwapHorizIcon, !isWorkingEmployee],
+      ],
+    },
+    {
+      title: 'People',
+      items: [
+        ['companies', 'Companies', BusinessIcon, isAdmin && !isEmployeeActor],
+        ['employeeAuditLog', 'Staff', BadgeIcon, canSeeStaffManagement],
+        ['users', 'App Users', PersonIcon, isAdmin && !isEmployeeActor],
+      ],
+    },
+    {
+      title: 'Messages & help',
+      items: [
+        ['notifications', 'Announcements', CampaignIcon, isAdmin],
+        ['allNotifications', 'Notifications', NotificationsIcon, true],
+        ['recommendations', 'Recommendations', AutoAwesomeIcon, !isWorkingEmployee],
+        ['chat', 'Chat', ChatBubbleOutlineIcon, !isWorkingEmployee],
+      ],
+    },
+    {
+      title: 'Settings',
+      items: [
+        // Worker app step buttons — per company, a Supervisor or the
+        // company account (never a working employee or the super admin).
+        ['processSteps', 'Worker App Steps', FormatListNumberedIcon, !isAppUser && !isAdmin && (!isEmployeeActor || isSupervisor)],
+        ['consumerSteps', 'Shopper App Steps', HomeWorkIcon, isAdmin],
+      ],
+    },
+  ];
+
+  const navList = (
+    <List component="nav" aria-label="Main menu" sx={{ pt: 0.5 }}>
+      {navGroups.map((group) => {
+        const visible = group.items.filter((item) => item[3]);
+        if (!visible.length) return null;
+        return (
+          <React.Fragment key={group.title || 'top'}>
+            {group.title && <ListSubheader disableSticky>{group.title}</ListSubheader>}
+            {visible.map(([page, label, Icon]) => (
+              <ListItem disablePadding key={page}>
+                <ListItemButton
+                  selected={activePage === page}
+                  aria-current={activePage === page ? 'page' : undefined}
+                  onClick={() => go(page)}
+                >
+                  <ListItemIcon><Icon /></ListItemIcon>
+                  <ListItemText primary={label} />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </React.Fragment>
+        );
+      })}
     </List>
   );
 
@@ -1850,18 +1765,21 @@ const InnerPage = () => {
           </Box>
           <Box sx={{ flexGrow: 1 }} />
           <NotificationBell onShowAll={() => setActivePage('allNotifications')} />
-          <Typography variant="body2" sx={{ mr: 2, display: { xs: 'none', sm: 'block' } }}>
-            {company.displayName || company.name}
-          </Typography>
-          <IconButton
+          <Button
             color="inherit"
             aria-label="Account menu"
+            aria-haspopup="menu"
             onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
+            endIcon={<ExpandMoreIcon />}
+            sx={{ color: '#fff', textTransform: 'none', px: 1, gap: 0.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.14)' } }}
           >
-            <Avatar src={getFileUrl(company.avatar)}>
+            <Avatar src={getFileUrl(company.avatar)} sx={{ width: 34, height: 34, bgcolor: '#ffffff', color: 'primary.main', fontWeight: 700 }}>
               {!company.avatar && (company.displayName || company.name)?.[0]?.toUpperCase()}
             </Avatar>
-          </IconButton>
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, ml: 1, fontWeight: 500 }}>
+              {company.displayName || company.name}
+            </Box>
+          </Button>
           <Menu
             anchorEl={profileMenuAnchor}
             open={isProfileMenuOpen}
@@ -1875,7 +1793,8 @@ const InnerPage = () => {
                 setProfileMenuAnchor(null);
               }}
             >
-              Profile
+              <ListItemIcon><AccountCircleIcon fontSize="small" /></ListItemIcon>
+              My profile
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -1883,7 +1802,8 @@ const InnerPage = () => {
                 handleLogout();
               }}
             >
-              Logout
+              <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
+              Sign out
             </MenuItem>
           </Menu>
         </Toolbar>
@@ -1942,12 +1862,19 @@ const InnerPage = () => {
             <DashboardPage
               isAdmin={isAdmin}
               isAppUser={isAppUser}
+              isWorkingEmployee={isWorkingEmployee}
+              canEditProducts={canEditProducts}
+              canSeeStaffManagement={canSeeStaffManagement}
+              canEditProcessSteps={!isAppUser && !isAdmin && (!isEmployeeActor || isSupervisor)}
+              productCount={products.length}
               company={company}
               onNavigateToNewProduct={() => {
                 resetFields();
+                setProductPanelMode('edit');
                 setPreviousPage(activePage); // Save current page before navigating
                 setActivePage('newProduct');
               }}
+              onNavigate={go}
               onNavigateToUsers={() => setActivePage('users')}
               onNavigateToProducts={() => setActivePage('products')}
               // KPI cards link to their source page -- only when the current
@@ -1961,14 +1888,19 @@ const InnerPage = () => {
           {activePage === 'profile' && <ProfilePage />}
 
           {activePage === 'recommendations' && (
-            <RecommendationsPage company={company} isAdmin={isAdmin} />
+            <RecommendationsPage company={company} isAdmin={isAdmin} isAppUser={isAppUser} />
           )}
 
-          {activePage === 'chat' && <ChatPage company={company} />}
+          {activePage === 'chat' && <ChatPage company={company} isAppUser={isAppUser} />}
 
-          {/* ESG / LCA: super admin sees everything; company/user are scoped to owned products. */}
+          {/* Scan History and Ownership Transfers: super admin sees everything;
+              company/user are scoped to owned products. */}
           {activePage === 'history' && (
-            <HistoryPage ownerKind={isAdmin ? null : ownerScopeKind} ownerId={isAdmin ? null : ownerScopeId} />
+            <HistoryPage
+              ownerKind={isAdmin ? null : ownerScopeKind}
+              ownerId={isAdmin ? null : ownerScopeId}
+              isAppUser={isAppUser}
+            />
           )}
 
           {activePage === 'trace' && (
@@ -1981,21 +1913,17 @@ const InnerPage = () => {
 
           {activePage === 'users' && isAdmin && (
             <Box>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Users
-              </Typography>
-              <Box
-                sx={{
-                  bgcolor: '#fff',
-                  p: 2,
-                  borderRadius: 1,
-                  boxShadow: 1,
-                }}
-              >
+              <PageHeader
+                title="App Users"
+                description="People who use the Yometel DPP shopper app. Search, correct their details, or remove an account."
+              />
+              <Box sx={{ bgcolor: '#fff', p: 2, borderRadius: 2, boxShadow: 1 }}>
                 <Admin />
               </Box>
             </Box>
           )}
+
+          {activePage === 'companies' && isAdmin && <CompanyManagementSection />}
 
           {activePage === 'employeeAuditLog' && canSeeStaffManagement && (
             <EmployeeManagementPage token={token} isAdmin={isAdmin} />
@@ -2004,6 +1932,8 @@ const InnerPage = () => {
           {activePage === 'processSteps' && !isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
             <ProcessStepsPage token={token} />
           )}
+
+          {activePage === 'consumerSteps' && isAdmin && <ConsumerLocationStepsPage token={token} />}
 
           {activePage === 'captureHistory' && canSeeCaptureHistory && (
             <CaptureHistoryPage
@@ -2019,32 +1949,41 @@ const InnerPage = () => {
               full page, with the product picked from a select box at the top. */}
           {activePage === 'generateCode' && canSeeGenerateCode && (
             <Box>
-              <Typography variant="h6" sx={{ mb: 2 }}>Generate Code</Typography>
-              <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider', width: { xs: '100%', md: '50%' } }}>
+              <PageHeader
+                title="Generate Code"
+                description="Create QR codes and other labels for a product, then download them as a PDF to print. Each label opens that product's page when scanned."
+              />
+              <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider', width: { xs: '100%', lg: '60%' } }}>
+                <Typography variant="subtitle1" component="label" htmlFor="generate-code-product" sx={{ display: 'block', mb: 1 }}>
+                  1. Choose a product
+                </Typography>
                 <TextField
+                  id="generate-code-product"
                   select
-                  label="Product"
-                  size="small"
                   fullWidth
                   value={generateCodeProduct?._id || ''}
                   onChange={(e) => selectGenerateCodeProduct(products.find((p) => p._id === e.target.value))}
                   disabled={!products.length}
-                  helperText={!products.length && !productsLoading ? 'No products yet.' : ' '}
+                  helperText={!products.length && !productsLoading
+                    ? (canEditProducts ? 'You have no products yet. Add one on the Products page first.' : 'No products yet.')
+                    : undefined}
                   SelectProps={{
+                    displayEmpty: true,
                     // The closed field's own display -- "selected product
                     // showing" -- also gets the thumbnail, not just the
                     // dropdown list.
                     renderValue: (id) => {
                       const p = products.find((pr) => pr._id === id);
-                      if (!p) return '';
+                      if (!p) return <Typography color="text.secondary">Select a product</Typography>;
                       const thumb = Array.isArray(p.images) ? p.images[0] : null;
                       return (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                           <Box
                             component="img"
+                            alt=""
                             src={thumb ? getFileUrl(thumb) : undefined}
                             sx={{
-                              width: 28, height: 28, borderRadius: 0.5, objectFit: 'cover', flexShrink: 0,
+                              width: 36, height: 36, borderRadius: 1, objectFit: 'cover', flexShrink: 0,
                               bgcolor: 'action.hover', visibility: thumb ? 'visible' : 'hidden',
                             }}
                           />
@@ -2057,12 +1996,13 @@ const InnerPage = () => {
                   {products.map((p) => {
                     const thumb = Array.isArray(p.images) ? p.images[0] : null;
                     return (
-                      <MenuItem key={p._id} value={p._id} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <MenuItem key={p._id} value={p._id} sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
                         <Box
                           component="img"
+                          alt=""
                           src={thumb ? getFileUrl(thumb) : undefined}
                           sx={{
-                            width: 28, height: 28, borderRadius: 0.5, objectFit: 'cover', flexShrink: 0,
+                            width: 36, height: 36, borderRadius: 1, objectFit: 'cover', flexShrink: 0,
                             bgcolor: 'action.hover', visibility: thumb ? 'visible' : 'hidden',
                           }}
                         />
@@ -2074,6 +2014,7 @@ const InnerPage = () => {
               </Box>
               {generateCodeProduct && (
                 <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>2. Choose a label type and create codes</Typography>
                   <ProductOwnerSection
                     company={company}
                     ownerInfo={ownerInfo}
@@ -2107,107 +2048,79 @@ const InnerPage = () => {
 
           {activePage === 'products' && (
             <Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 2,
-                }}
-              >
-                <Typography variant="h6">Products</Typography>
-                <Stack direction="row" spacing={1}>
-                  {/* Super admin only: platform-wide item categories. */}
-                  {isAdmin && (
-                    <Button variant="outlined" onClick={() => setOpenManageCategories('page')}>
-                      Manage Categories
-                    </Button>
-                  )}
-                  {canEditProducts && (
-                    <Button
-                      variant="contained"
-                      onClick={() => {
-                        resetFields();
-                        setProductPanelMode('edit');
-                        setPreviousPage(activePage);
-                        setActivePage('newProduct');
-                      }}
-                    >
-                      New Product
-                    </Button>
-                  )}
-                </Stack>
-              </Box>
+              <PageHeader
+                title={isAppUser ? 'My Products' : 'Products'}
+                description={isAppUser
+                  ? 'Products you own. Click a product to see its details and ownership history.'
+                  : canEditProducts
+                    ? 'All your products. Click a product to see its details, preview its product page, edit it, or create codes for it.'
+                    : 'Your company’s products. Click a product to see its details or create codes for it.'}
+                actions={(
+                  <>
+                    {/* Super admin only: platform-wide item categories. */}
+                    {isAdmin && (
+                      <Button variant="outlined" onClick={() => setOpenManageCategories('page')}>
+                        Manage Categories
+                      </Button>
+                    )}
+                    {canEditProducts && (
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => {
+                          resetFields();
+                          setProductPanelMode('edit');
+                          setPreviousPage(activePage);
+                          setActivePage('newProduct');
+                        }}
+                      >
+                        New Product
+                      </Button>
+                    )}
+                  </>
+                )}
+              />
 
-              {/* Guarded on the product actually being in the current (filtered)
-                  list — selectedProduct persists to localStorage across
-                  sessions/companies, so without this a stale selection kept
-                  showing the summary card even when the table below it was
-                  empty ("No rows"). */}
-              {selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) && (
-                <ProductDraftCard
-                  product={selectedProduct}
-                  onPreview={() => setOpenPreviewModal(true)}
-                  onTransferHistory={() => {
-                    setHistoryProduct(selectedProduct);
-                    setOpenProductHistory(true);
-                  }}
-                  onPrintCode={() => {
-                    const index = products.findIndex((p) => p._id === selectedProduct._id);
-                    if (index >= 0) {
-                      setProductPanelMode('print');
-                      setPreviousPage('products');
-                      editProductHandler(index);
-                    }
-                  }}
-                  onEdit={canEditProducts ? () => {
-                    const index = products.findIndex((p) => p._id === selectedProduct._id);
-                    if (index >= 0) {
-                      setProductPanelMode('edit');
-                      setPreviousPage('products');
-                      editProductHandler(index);
-                    }
-                  } : undefined}
-                  onRemove={canEditProducts ? () => {
-                    const index = products.findIndex((p) => p._id === selectedProduct._id);
-                    if (index >= 0) deleteProductHandler(index);
-                  } : undefined}
-                />
-              )}
-
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} justifyContent="flex-end" sx={{ mb: 2 }}>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
                 <TextField
-                  label="Product Name"
-                  size="small"
+                  id="product-search"
+                  placeholder={isAdmin ? 'Search by product, brand or owner' : 'Search by product or brand'}
+                  inputProps={{ 'aria-label': 'Search products' }}
                   value={productNameFilter}
                   onChange={(e) => setProductNameFilter(e.target.value)}
-                  sx={{ minWidth: 180 }}
+                  sx={{ flex: 1, maxWidth: 520, bgcolor: 'background.paper', borderRadius: 2 }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start"><SearchIcon /></InputAdornment>
+                    ),
+                  }}
                 />
-                <TextField
-                  label="Brand"
-                  size="small"
-                  value={productBrandFilter}
-                  onChange={(e) => setProductBrandFilter(e.target.value)}
-                  sx={{ minWidth: 180 }}
-                />
-                <TextField
-                  label="Owner"
-                  size="small"
-                  value={productOwnerFilter}
-                  onChange={(e) => setProductOwnerFilter(e.target.value)}
-                  sx={{ minWidth: 180 }}
-                />
-                <Tooltip title="Refresh">
-                  <IconButton onClick={loadProductsForCurrentCompany} color="primary" aria-label="Refresh products">
+                <Tooltip title="Reload the list">
+                  <IconButton onClick={loadProductsForCurrentCompany} color="primary" aria-label="Reload products">
                     <RefreshIcon />
                   </IconButton>
                 </Tooltip>
               </Stack>
 
+              {/* List first, so it's always visible without scrolling; the
+                  selected product's details follow below. */}
               <ProductsTable
                 products={filteredProducts}
                 loading={productsLoading}
-                onSelectProduct={productSelectHandler}
+                selectedId={selectedProduct?._id}
+                isAppUser={isAppUser}
+                showOwner={isAdmin}
+                emptyText={productNameFilter.trim()
+                  ? 'No products match your search.'
+                  : isAppUser
+                    ? 'You don’t own any products yet. When you scan a product label in the Yometel DPP app and claim it, it appears here.'
+                    : canEditProducts
+                      ? 'No products yet. Click "New Product" to add your first one.'
+                      : 'Your company has no products yet.'}
+                onSelectProduct={(row) => {
+                  productSelectHandler(row);
+                  setTimeout(() => productCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+                }}
                 onOwnerClick={(product) => {
                   if (product.company_id) {
                     setOwnerInfo(product.company_id);
@@ -2217,6 +2130,44 @@ const InnerPage = () => {
                   }
                 }}
               />
+
+              {/* Guarded on the product actually being in the current (filtered)
+                  list — selectedProduct persists to localStorage across
+                  sessions/companies, so without this a stale selection kept
+                  showing the summary card even when the table was empty. */}
+              {selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) && (
+                <Box ref={productCardRef} sx={{ mt: 3, scrollMarginTop: 16 }}>
+                  <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>Selected product</Typography>
+                  <ProductDraftCard
+                    product={selectedProduct}
+                    onPreview={() => setOpenPreviewModal(true)}
+                    onTransferHistory={() => {
+                      setHistoryProduct(selectedProduct);
+                      setOpenProductHistory(true);
+                    }}
+                    onPrintCode={isAppUser ? undefined : () => {
+                      const index = products.findIndex((p) => p._id === selectedProduct._id);
+                      if (index >= 0) {
+                        setProductPanelMode('print');
+                        setPreviousPage('products');
+                        editProductHandler(index);
+                      }
+                    }}
+                    onEdit={canEditProducts ? () => {
+                      const index = products.findIndex((p) => p._id === selectedProduct._id);
+                      if (index >= 0) {
+                        setProductPanelMode('edit');
+                        setPreviousPage('products');
+                        editProductHandler(index);
+                      }
+                    } : undefined}
+                    onRemove={canEditProducts ? () => {
+                      const index = products.findIndex((p) => p._id === selectedProduct._id);
+                      if (index >= 0) deleteProductHandler(index);
+                    } : undefined}
+                  />
+                </Box>
+              )}
             </Box>
           )}
 
@@ -2224,95 +2175,44 @@ const InnerPage = () => {
             // Read-only roles may only open a product's code panel ('print'),
             // never the create/edit form.
             open={activePage === 'newProduct' && (canEditProducts || productPanelMode === 'print')}
-            onClose={() => setActivePage('products')}
+            onClose={closeProductDialog}
             fullWidth
             maxWidth={productPanelMode === 'print' ? 'lg' : 'md'}
             fullScreen={isMobile}
             scroll="paper"
+            PaperProps={{ sx: { height: productPanelMode === 'edit' && !isMobile ? 'calc(100% - 48px)' : undefined } }}
+            aria-labelledby="product-dialog-title"
           >
-            <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
+            <DialogTitle id="product-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
               {productPanelMode === 'print'
-                ? 'Generate & Print Codes'
+                ? `Codes for ${selectedProduct?.name || 'this product'}`
                 : isEditing
-                ? 'Edit Product'
-                : 'New Product'}
-              <IconButton onClick={() => setActivePage('products')} size="small" color="inherit" aria-label="Close">
+                ? `Edit product${productName ? `: ${productName}` : ''}`
+                : 'New product'}
+              <IconButton onClick={() => closeProductDialog(null, 'closeButton')} color="inherit" aria-label="Close">
                 <CloseIcon />
               </IconButton>
             </DialogTitle>
-            <DialogContent dividers>
+
+            {productPanelMode === 'edit' && (
+              <Box sx={{ px: { xs: 1, sm: 3 }, pt: 2, pb: 1, borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
+                <Stepper nonLinear activeStep={detailTab} alternativeLabel sx={{ minWidth: 640 }}>
+                  {PRODUCT_FORM_STEPS.map((label, i) => (
+                    <Step key={label} completed={false}>
+                      <StepButton
+                        onClick={() => setDetailTab(i)}
+                        optional={i === 0 ? <Typography variant="caption" color="text.secondary">Required</Typography> : <Typography variant="caption" color="text.secondary">Optional</Typography>}
+                      >
+                        {label}
+                      </StepButton>
+                    </Step>
+                  ))}
+                </Stepper>
+              </Box>
+            )}
+
+            <DialogContent dividers={productPanelMode === 'print'}>
               <Box sx={{ pb: 1 }}>
-                {productPanelMode === 'edit' && (
-                <>
-
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 2,
-                    alignItems: 'flex-end',
-                    p: 2,
-                    mb: 2,
-                    borderRadius: 2,
-                    bgcolor: 'background.paper',
-                    boxShadow: 1,
-                    border: '1px solid',
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Box sx={{ minWidth: 200, flex: '1 1 200px' }}>
-                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
-                      Parent Product
-                    </Typography>
-                    <Select
-                      fullWidth
-                      displayEmpty
-                      value={parentProduct ?? ''}
-                      onChange={(item) => setParentProduct(item.target.value)}
-                      size="small"
-                      sx={{
-                        bgcolor: 'background.default',
-                        '& .MuiSelect-select': { py: 1.25 },
-                      }}
-                      renderValue={(v) => {
-                        if (!v) return 'No Parent';
-                        const p = products.find((pr) => pr._id === v);
-                        return p ? p.name : 'No Parent';
-                      }}
-                    >
-                      <MenuItem value="">No Parent</MenuItem>
-                      {products
-                        .filter((product) => !disabledProducts.includes(product._id))
-                        .map((product) => (
-                          <MenuItem key={product._id} value={product._id}>
-                            {product.name}
-                          </MenuItem>
-                        ))}
-                    </Select>
-                  </Box>
-                  <Box sx={{ minWidth: 140, flex: '0 1 140px' }}>
-                    <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 0.5 }}>
-                      Parent Product Count
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      placeholder="0"
-                      variant="outlined"
-                      type="number"
-                      size="small"
-                      value={parentProductCount}
-                      onChange={(e) => setParentProductCount(e.target.value)}
-                      inputProps={{ min: 0 }}
-                      sx={{
-                        bgcolor: 'background.default',
-                        '& .MuiInputBase-input': { py: 1.25 },
-                      }}
-                    />
-                  </Box>
-                </Box>
-                </>
-                )}
-
                 {selectedProduct && productPanelMode === 'print' && (
                   <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
                     <ProductOwnerSection
@@ -2346,809 +2246,638 @@ const InnerPage = () => {
 
                 {productPanelMode === 'edit' && (
                 <>
-                <Tabs
-                  value={detailTab}
-                  onChange={(e, v) => setDetailTab(v)}
-                  aria-label="Product detail tabs"
-                  variant="scrollable"
-                  scrollButtons="auto"
-                  sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
-                >
-                  <Tab label="Product" />
-                  <Tab label="Material/Size" />
-                  <Tab label="Maintenance" />
-                  <Tab label="Dispose" />
-                  <Tab label="Traceability/ESG" />
-                  <Tab label="Warranty" />
-                </Tabs>
                 {detailTab === 0 && (
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Basic Information</Typography>
-                    <Stack spacing={2} sx={{ mb: 3 }}>
-                      <TextField
-                        label="Product Name"
-                        variant="outlined" size="small" fullWidth required
-                        value={productName}
-                        onChange={(e) => setProductName(e.target.value)}
-                      />
-                      <TextField
-                        label="Model Designation"
-                        variant="outlined" size="small" fullWidth
-                        value={productModel}
-                        onChange={(e) => setProductModel(e.target.value)}
-                      />
-                      <TextField
-                        label="About This Product" placeholder="Design, features, and intended use of this product."
-                        variant="outlined" size="small" fullWidth
-                        multiline minRows={3}
-                        value={aboutProduct}
-                        onChange={(e) => setAboutProduct(e.target.value)}
-                        helperText="Shown on the app's Product Lifecycle > Details > About This Product."
-                      />
-                    </Stack>
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Product Facts</Typography>
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                      <Grid item xs={12} sm={6}>
+                  <Stack spacing={4}>
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Basic information</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Fields marked with * are required. Everything else can be added later.
+                      </Typography>
+                      <Stack spacing={2}>
+                        <TextField label="Product name" fullWidth required value={productName} onChange={(e) => setProductName(e.target.value)} />
+                        <TextField label="Model or short description" placeholder="e.g. Slim Fit" fullWidth value={productModel} onChange={(e) => setProductModel(e.target.value)} />
+                        <TextField
+                          label="About this product"
+                          placeholder="Design, features and intended use."
+                          fullWidth multiline minRows={3}
+                          value={aboutProduct}
+                          onChange={(e) => setAboutProduct(e.target.value)}
+                          helperText="Shown to shoppers under Product Lifecycle > Details in the app."
+                        />
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                          <TextField select label="Item Category" variant="outlined" size="small" fullWidth required
+                          <TextField select label="Item category" fullWidth required
                             value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}
-                            helperText="Used by the dashboard's category breakdown and filter.">
+                            helperText="Used to group products on the dashboard.">
                             {itemCategoryOptions.map((opt) => (
                               <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                             ))}
                           </TextField>
                           {/* Add new categories without leaving the form. */}
-                          <Button variant="outlined" size="small" onClick={() => setOpenManageCategories('form')}
-                            sx={{ flexShrink: 0, height: 40 }}>
-                            Manage
+                          <Button variant="outlined" onClick={() => setOpenManageCategories('form')} sx={{ flexShrink: 0, mt: 0.5 }}>
+                            Add category
                           </Button>
                         </Box>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Style / SKU Number" placeholder="e.g. DNM-2501-01" variant="outlined" size="small" fullWidth
-                          value={skuStyleNumber} onChange={(e) => setSkuStyleNumber(e.target.value)}
-                          helperText="Leave empty to auto-generate from the category." />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Product Type" placeholder="e.g. Men's Outerwear" variant="outlined" size="small" fullWidth
-                          value={productType} onChange={(e) => setProductType(e.target.value)} />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Color" placeholder="e.g. Midnight Black" variant="outlined" size="small" fullWidth
-                          value={color} onChange={(e) => setColor(e.target.value)} />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Size" placeholder="e.g. M" variant="outlined" size="small" fullWidth
-                          value={size} onChange={(e) => setSize(e.target.value)} />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Manufacture Date" placeholder="e.g. 2024-08-10" variant="outlined" size="small" fullWidth
-                          value={manufactureDate} onChange={(e) => setManufactureDate(e.target.value)} />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Material" placeholder="e.g. 99% Cotton, 1% Elastane" variant="outlined" size="small" fullWidth
-                          value={detailFacts.material} onChange={(e) => setDetailFacts((prev) => ({ ...prev, material: e.target.value }))} />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Fit" placeholder="e.g. Straight Leg, Mid Rise" variant="outlined" size="small" fullWidth
-                          value={detailFacts.fit} onChange={(e) => setDetailFacts((prev) => ({ ...prev, fit: e.target.value }))} />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Wash" placeholder="e.g. Medium Blue, Vintage Fade" variant="outlined" size="small" fullWidth
-                          value={detailFacts.wash} onChange={(e) => setDetailFacts((prev) => ({ ...prev, wash: e.target.value }))} />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Durability" placeholder="e.g. Reinforced Seams, Long Lasting" variant="outlined" size="small" fullWidth
-                          value={detailFacts.durability} onChange={(e) => setDetailFacts((prev) => ({ ...prev, durability: e.target.value }))} />
-                      </Grid>
-                      <Grid item xs={12}>
-                        <TextField label="Traceable Product Identity" placeholder="e.g. Traceable product identity" variant="outlined" size="small" fullWidth
-                          value={detailFacts.traceableIdentity} onChange={(e) => setDetailFacts((prev) => ({ ...prev, traceableIdentity: e.target.value }))} />
-                      </Grid>
-                    </Grid>
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>App Lifecycle Extras</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>Optional</Typography>
-                    <TextField
-                      label="Country of Origin"
-                      variant="outlined" size="small" fullWidth
-                      sx={{ mb: 2 }}
-                      value={traceabilityEsg.originCountry}
-                      onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, originCountry: e.target.value }))}
-                    />
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Route origin" size="small" fullWidth value={traceabilityEsg.route.origin}
-                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, origin: e.target.value } }))} />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Route destination" size="small" fullWidth value={traceabilityEsg.route.destination}
-                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, destination: e.target.value } }))} />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Transport mode" size="small" fullWidth value={traceabilityEsg.route.mode}
-                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, mode: e.target.value } }))} />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField label="Route emissions (e.g. 18.6 kg CO2e)" size="small" fullWidth value={traceabilityEsg.route.emissions}
-                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, emissions: e.target.value } }))} />
-                      </Grid>
-                    </Grid>
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Brand Information</Typography>
-                    <Stack spacing={2} sx={{ mb: 2 }}>
-                      <TextField
-                        label="Brand Name" variant="outlined" size="small" fullWidth required
-                        value={brandInfo.name}
-                        onChange={(e) => setBrandInfo((prev) => ({ ...prev, name: e.target.value }))}
-                      />
-                      <TextField
-                        label="Brand Detail" variant="outlined" size="small" fullWidth required multiline
-                        value={brandInfo.detail}
-                        onChange={(e) => setBrandInfo((prev) => ({ ...prev, detail: e.target.value }))}
-                      />
-                      <TextField
-                        label="Brand Website URL" variant="outlined" size="small" fullWidth required
-                        value={brandInfo.websiteUrl}
-                        onChange={(e) => setBrandInfo((prev) => ({ ...prev, websiteUrl: e.target.value }))}
-                      />
-                    </Stack>
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Brand Logo (Required)</Typography>
-                        <Button variant="outlined" component="label" disabled={isUploadingBrandLogo} size="small">
-                          {isUploadingBrandLogo ? 'Uploading...' : 'Upload Brand Logo'}
-                          <input type="file" accept="image/*" hidden onChange={handleBrandLogoChange} />
-                        </Button>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                          {brandInfo.logoUrl ? `Uploaded: ${brandInfo.logoUrl}` : 'No brand logo uploaded'}
-                        </Typography>
-                        {brandInfo.logoUrl ? (
-                          <Box
-                            component="img"
-                            src={getFileUrl(brandInfo.logoUrl)}
-                            alt="Brand logo"
-                            sx={{ width: 92, height: 92, objectFit: 'contain', border: '1px solid #ccc', borderRadius: 1, mt: 1 }}
-                          />
-                        ) : null}
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>Brand Cover Image (Optional)</Typography>
-                        <Button variant="outlined" component="label" disabled={isUploadingBrandCover} size="small">
-                          {isUploadingBrandCover ? 'Uploading...' : 'Upload Brand Cover'}
-                          <input type="file" accept="image/*" hidden onChange={handleBrandCoverChange} />
-                        </Button>
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                          {brandInfo.coverUrl ? `Uploaded: ${brandInfo.coverUrl}` : 'No brand cover uploaded'}
-                        </Typography>
-                        {brandInfo.coverUrl ? (
-                          <Box
-                            component="img"
-                            src={getFileUrl(brandInfo.coverUrl)}
-                            alt="Brand cover"
-                            sx={{ width: '100%', maxWidth: 320, height: 100, objectFit: 'cover', border: '1px solid #ccc', borderRadius: 1, mt: 1 }}
-                          />
-                        ) : null}
-                      </Grid>
-                    </Grid>
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Product Images</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                      <Button variant="outlined" size="small" onClick={handleProductImageAddClick}>
-                        + Add Image Group
-                      </Button>
+                      </Stack>
                     </Box>
-                    {productImageInputs.map((images, i) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 2, flexWrap: 'wrap' }}>
-                        <input
-                          ref={productImageInputRefs.current[i]}
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => handleProductImageChange(e, i)}
-                          multiple
-                          style={{ display: 'none' }}
-                        />
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => productImageInputRefs.current[i]?.current?.click()}
-                        >
-                          Choose Files
+
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Product photos *</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Add at least one photo. The first photo is used as the main picture.
+                      </Typography>
+                      <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
+                        <Button variant="contained" component="label" startIcon={<AddPhotoAlternateIcon />}>
+                          Add photos
+                          <input type="file" accept="image/*" multiple hidden onChange={handleAddProductPhotos} />
                         </Button>
-                        <Typography variant="body2" color="text.secondary" sx={{ alignSelf: 'center' }}>
-                          {Array.isArray(productImageInputs[i]) && productImageInputs[i].length > 0
-                            ? `${productImageInputs[i].length} files`
-                            : 'No file chosen'}
-                        </Typography>
-                        {Array.isArray(productImageInputs[i]) && productImageInputs[i].length > 0 && (
-                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, width: '100%' }}>
-                            {productImageInputs[i].map((img, idx) => (
-                              <Box key={idx} component="img" src={getFileUrl(img)} alt="" sx={{ width: 64, height: 64, objectFit: 'cover', border: '1px solid #ccc', borderRadius: 1 }} />
-                            ))}
-                          </Box>
+                        <Button variant="outlined" startIcon={<PhotoCameraIcon />} onClick={productCapturePhoto}>
+                          {!captureStart[0] ? 'Take a photo with the camera' : 'Capture photo'}
+                        </Button>
+                        {captureStart[0] && (
+                          <Button onClick={() => setCaptureStart([false, captureStart[1], captureStart[2]])}>Close camera</Button>
                         )}
-                      </Box>
-                    ))}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-                      <Button variant="outlined" size="small" onClick={productCapturePhoto}>
-                        {!captureStart[0] ? 'Start Capture' : 'Capture'}
-                      </Button>
-                      <Typography variant="body2" color="text.secondary">{productCaptureImages.length} images captured</Typography>
+                      </Stack>
+                      {captureStart[0] && (
+                        <Box sx={{ mb: 2, borderRadius: 2, overflow: 'hidden', maxWidth: 520 }}>
+                          <Webcam audio={false} ref={productWebcamRef} screenshotFormat="image/jpeg" width="100%" />
+                        </Box>
+                      )}
+                      {productImages.length > 0 ? (
+                        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))', gap: 1.5 }}>
+                          {productImages.map((img, idx) => (
+                            <Box key={`${img}-${idx}`} sx={{ position: 'relative' }}>
+                              <Box component="img" src={getFileUrl(img)} alt={`Product photo ${idx + 1}`}
+                                sx={{ width: '100%', aspectRatio: '1 / 1', objectFit: 'cover', borderRadius: 2, border: '1px solid', borderColor: idx === 0 ? 'primary.main' : 'divider', display: 'block' }} />
+                              {idx === 0 && (
+                                <Typography variant="caption" sx={{ position: 'absolute', left: 6, bottom: 6, bgcolor: 'primary.main', color: '#fff', px: 0.75, borderRadius: 1 }}>Main</Typography>
+                              )}
+                              <IconButton
+                                size="small"
+                                aria-label={`Remove photo ${idx + 1}`}
+                                onClick={() => removeProductPhoto(img)}
+                                sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(255,255,255,0.92)', '&:hover': { bgcolor: '#fff' } }}
+                              >
+                                <DeleteIcon fontSize="small" color="error" />
+                              </IconButton>
+                            </Box>
+                          ))}
+                        </Box>
+                      ) : (
+                        <Typography color="text.secondary">No photos yet.</Typography>
+                      )}
                     </Box>
-                    {captureStart[0] && (
-                      <Webcam
-                        audio={false}
-                        ref={productWebcamRef}
-                        screenshotFormat="image/jpeg"
-                        width="100%"
-                        height={360}
-                      />
-                    )}
 
-                    <Divider sx={{ my: 3 }} />
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Additional Identifiers</Typography>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => setSerials([{ type: enabledSerialTypes[0] }, ...serials])}
-                        disabled={enabledSerialTypes.length === 0}
-                      >
-                        + Add Identifier
-                      </Button>
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Brand</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Shown on the product page shoppers see after scanning.
+                      </Typography>
+                      <Stack spacing={2}>
+                        <TextField label="Brand name" fullWidth required value={brandInfo.name}
+                          onChange={(e) => setBrandInfo((prev) => ({ ...prev, name: e.target.value }))} />
+                        <TextField label="Brand description" fullWidth required multiline minRows={2} value={brandInfo.detail}
+                          onChange={(e) => setBrandInfo((prev) => ({ ...prev, detail: e.target.value }))} />
+                        <TextField label="Brand website" placeholder="https://www.example.com" fullWidth required value={brandInfo.websiteUrl}
+                          onChange={(e) => setBrandInfo((prev) => ({ ...prev, websiteUrl: e.target.value }))} />
+                      </Stack>
+                      <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="subtitle2" sx={{ mb: 1 }}>Brand logo *</Typography>
+                          <Stack direction="row" spacing={1.5} alignItems="center">
+                            {brandInfo.logoUrl ? (
+                              <Box component="img" src={getFileUrl(brandInfo.logoUrl)} alt="Brand logo"
+                                sx={{ width: 72, height: 72, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, bgcolor: '#fff' }} />
+                            ) : null}
+                            <Button variant="outlined" component="label" disabled={isUploadingBrandLogo}>
+                              {isUploadingBrandLogo ? 'Uploading…' : brandInfo.logoUrl ? 'Replace logo' : 'Upload logo'}
+                              <input type="file" accept="image/*" hidden onChange={handleBrandLogoChange} />
+                            </Button>
+                          </Stack>
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <Typography variant="subtitle2" sx={{ mb: 1 }}>Brand cover image (optional)</Typography>
+                          <Stack direction="row" spacing={1.5} alignItems="center">
+                            {brandInfo.coverUrl ? (
+                              <Box component="img" src={getFileUrl(brandInfo.coverUrl)} alt="Brand cover"
+                                sx={{ width: 128, height: 72, objectFit: 'cover', border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }} />
+                            ) : null}
+                            <Button variant="outlined" component="label" disabled={isUploadingBrandCover}>
+                              {isUploadingBrandCover ? 'Uploading…' : brandInfo.coverUrl ? 'Replace cover' : 'Upload cover'}
+                              <input type="file" accept="image/*" hidden onChange={handleBrandCoverChange} />
+                            </Button>
+                          </Stack>
+                        </Grid>
+                      </Grid>
                     </Box>
-                    {serials.map((item, i) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Select value={item.type} size="small" sx={{ minWidth: 180 }}>
-                          {serialTypes
-                            .filter((type) => enabledSerialTypes.includes(type.value) || type.value === item.type)
-                            .map((type) => (
-                              <MenuItem key={type.value} value={type.value}>
-                                {type.label}
-                              </MenuItem>
-                            ))}
-                        </Select>
-                        <IconButton
-                          aria-label={`Remove ${item.type || 'serial'} entry`}
-                          onClick={() => setSerials(serials.filter((_, index) => index !== i))}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
-                    ))}
 
-                    <Divider sx={{ my: 3 }} />
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Files</Typography>
-                      <Button variant="outlined" size="small" onClick={handleProductFileAddClick}>
-                        + Add File Group
-                      </Button>
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Product facts</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Optional. Shown as a short list on the product page.</Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Style / SKU number" placeholder="e.g. DNM-2501-01" fullWidth
+                            value={skuStyleNumber} onChange={(e) => setSkuStyleNumber(e.target.value)}
+                            helperText="Leave empty to create one automatically." />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Product type" placeholder="e.g. Men's outerwear" fullWidth
+                            value={productType} onChange={(e) => setProductType(e.target.value)} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Color" placeholder="e.g. Midnight black" fullWidth
+                            value={color} onChange={(e) => setColor(e.target.value)} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Size" placeholder="e.g. M" fullWidth
+                            value={size} onChange={(e) => setSize(e.target.value)} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Manufacture date" placeholder="YYYY-MM-DD" fullWidth
+                            value={manufactureDate} onChange={(e) => setManufactureDate(e.target.value)} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Material" placeholder="e.g. 99% cotton, 1% elastane" fullWidth
+                            value={detailFacts.material} onChange={(e) => setDetailFacts((prev) => ({ ...prev, material: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Fit" placeholder="e.g. Straight leg, mid rise" fullWidth
+                            value={detailFacts.fit} onChange={(e) => setDetailFacts((prev) => ({ ...prev, fit: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Wash" placeholder="e.g. Medium blue, vintage fade" fullWidth
+                            value={detailFacts.wash} onChange={(e) => setDetailFacts((prev) => ({ ...prev, wash: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Durability" placeholder="e.g. Reinforced seams" fullWidth
+                            value={detailFacts.durability} onChange={(e) => setDetailFacts((prev) => ({ ...prev, durability: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Traceability note" placeholder="e.g. Every item has its own traceable ID" fullWidth
+                            value={detailFacts.traceableIdentity} onChange={(e) => setDetailFacts((prev) => ({ ...prev, traceableIdentity: e.target.value }))} />
+                        </Grid>
+                      </Grid>
                     </Box>
-                    {productFileInputs.map((files, i) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1, flexWrap: 'wrap' }}>
-                        <input
-                          ref={productFileInputRefs.current[i]}
-                          type="file"
-                          accept=".pdf"
-                          onChange={(e) => handleProductFilesChange(e, i)}
-                          multiple
-                          style={{ display: 'none' }}
-                        />
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => productFileInputRefs.current[i]?.current.click()}
-                        >
-                          Choose Files
-                        </Button>
-                        <Typography variant="body2" color="text.secondary">
-                          {productFileInputs[i]?.length > 0 ? `${productFileInputs[i].length} files` : 'No file chosen'}
-                        </Typography>
-                      </Box>
-                    ))}
 
-                    <Divider sx={{ my: 3 }} />
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>YouTube Videos</Typography>
-                      <Button variant="outlined" size="small" onClick={handleProductVideoAddClick}>
-                        + Add Video
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Documents and videos</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Optional. PDF manuals or certificates, and YouTube videos.</Typography>
+                      <Button variant="outlined" component="label" startIcon={<PictureAsPdfIcon />} sx={{ mb: 1.5 }}>
+                        Add PDF files
+                        <input type="file" accept=".pdf,application/pdf" multiple hidden onChange={handleAddProductPdfs} />
                       </Button>
+                      {productFiles.length > 0 && (
+                        <Stack spacing={1} sx={{ mb: 2 }}>
+                          {productFiles.map((f, idx) => (
+                            <Box key={`${f}-${idx}`} sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 1, border: '1px solid', borderColor: 'divider', borderRadius: 1.5 }}>
+                              <PictureAsPdfIcon color="error" />
+                              <Typography sx={{ flex: 1, minWidth: 0 }} noWrap title={String(f)}>
+                                {String(f).split('/').pop()}
+                              </Typography>
+                              <IconButton aria-label={`Remove PDF ${idx + 1}`} onClick={() => removeProductPdf(f)}>
+                                <DeleteIcon color="error" />
+                              </IconButton>
+                            </Box>
+                          ))}
+                        </Stack>
+                      )}
+                      <Stack spacing={1.5}>
+                        {productVideos.map((video, i) => (
+                          <Box key={i} sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                            <TextField label={`YouTube link ${i + 1}`} placeholder="https://www.youtube.com/watch?v=…" sx={{ flex: '2 1 260px' }}
+                              value={video.url}
+                              onChange={(e) => handleVideoFieldChange(setProductVideos, productVideos, i, 'url', e.target.value)} />
+                            <TextField label="Short description" sx={{ flex: '1 1 200px' }}
+                              value={video.description}
+                              onChange={(e) => handleVideoFieldChange(setProductVideos, productVideos, i, 'description', e.target.value)} />
+                            <IconButton aria-label={`Remove video ${i + 1}`} sx={{ mt: 0.5 }}
+                              onClick={() => setProductVideos(productVideos.filter((_, x) => x !== i))}>
+                              <DeleteIcon color="error" />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Stack>
+                      <Button startIcon={<AddIcon />} onClick={handleProductVideoAddClick} sx={{ mt: 1 }}>Add a YouTube video</Button>
                     </Box>
-                    {productVideos.map((video, i) => (
-                      <Box key={i} sx={{ display: 'flex', gap: 1.5, mb: 1.5, flexWrap: 'wrap' }}>
-                        <TextField
-                          label="URL"
-                          variant="outlined"
-                          size="small"
-                          sx={{ flex: 1, minWidth: 200 }}
-                          value={video.url}
-                          onChange={(e) => handleVideoFieldChange(setProductVideos, productVideos, i, 'url', e.target.value)}
-                        />
-                        <TextField
-                          label="Description"
-                          variant="outlined"
-                          size="small"
-                          sx={{ flex: 1, minWidth: 200 }}
-                          value={video.description}
-                          onChange={(e) => handleVideoFieldChange(setProductVideos, productVideos, i, 'description', e.target.value)}
-                        />
-                      </Box>
-                    ))}
-                  </Box>
+
+                    <Accordion disableGutters variant="outlined" sx={{ borderRadius: 2, '&:before': { display: 'none' } }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box>
+                          <Typography variant="subtitle1">Advanced: part of another product</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Only needed when this item is a component of a bigger product (for example a set).
+                          </Typography>
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} sm={8}>
+                            <TextField
+                              select
+                              fullWidth
+                              label="Belongs to product"
+                              value={parentProduct ?? ''}
+                              onChange={(e) => setParentProduct(e.target.value || null)}
+                              SelectProps={{ displayEmpty: true }}
+                              InputLabelProps={{ shrink: true }}
+                            >
+                              <MenuItem value="">Not part of another product</MenuItem>
+                              {products
+                                .filter((product) => !disabledProducts.includes(product._id) && product._id !== isEditing)
+                                .map((product) => (
+                                  <MenuItem key={product._id} value={product._id}>{product.name}</MenuItem>
+                                ))}
+                            </TextField>
+                          </Grid>
+                          <Grid item xs={12} sm={4}>
+                            <TextField
+                              fullWidth
+                              type="number"
+                              label="How many in that product"
+                              value={parentProductCount}
+                              onChange={(e) => setParentProductCount(e.target.value)}
+                              inputProps={{ min: 0 }}
+                              disabled={!parentProduct}
+                            />
+                          </Grid>
+                        </Grid>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Stack>
                 )}
+
                 {detailTab === 1 && (
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Size</Typography>
-                    <TextField
-                      label="Size"
-                      variant="outlined"
-                      size="small"
-                      value={materialSize.size}
-                      onChange={(e) => setMaterialSize((prev) => ({ ...prev, size: e.target.value }))}
-                      sx={{ mb: 3 }}
-                    />
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Materials</Typography>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => setMaterialSize((prev) => ({ ...prev, materials: [...prev.materials, { material: '', percent: 0 }] }))}
-                        >
-                          + Add Material
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => setMaterialSize((prev) => ({ ...prev, materials: prev.materials.slice(0, -1) }))}
-                          disabled={materialSize.materials.length === 0}
-                        >
-                          Remove Last
-                        </Button>
-                      </Box>
+                  <Stack spacing={4}>
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Materials</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        What the product is made of. The percentages should add up to 100%.
+                      </Typography>
+                      <Stack spacing={1.5}>
+                        {materialSize.materials.map((row, i) => (
+                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap' }}>
+                            <TextField label={`Material ${i + 1}`} placeholder="e.g. Cotton" sx={{ flex: '2 1 180px' }} value={row.material}
+                              onChange={(e) => {
+                                const next = [...materialSize.materials];
+                                next[i] = { ...next[i], material: e.target.value };
+                                setMaterialSize((prev) => ({ ...prev, materials: next }));
+                              }} />
+                            <TextField label="Percent" type="number" sx={{ width: 120 }} value={row.percent}
+                              InputProps={{ endAdornment: <InputAdornment position="end">%</InputAdornment> }}
+                              onChange={(e) => {
+                                const next = [...materialSize.materials];
+                                next[i] = { ...next[i], percent: Number(e.target.value) || 0 };
+                                setMaterialSize((prev) => ({ ...prev, materials: next }));
+                              }} />
+                            <TextField label="Where it comes from (optional)" placeholder="e.g. India" sx={{ flex: '1 1 180px' }} value={row.origin || ''}
+                              onChange={(e) => {
+                                const next = [...materialSize.materials];
+                                next[i] = { ...next[i], origin: e.target.value };
+                                setMaterialSize((prev) => ({ ...prev, materials: next }));
+                              }} />
+                            <IconButton aria-label={`Remove material ${i + 1}`} sx={{ mt: 0.5 }}
+                              onClick={() => setMaterialSize((prev) => ({ ...prev, materials: prev.materials.filter((_, x) => x !== i) }))}>
+                              <DeleteIcon color="error" />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Stack>
+                      {materialSize.materials.length > 0 && (() => {
+                        const total = materialSize.materials.reduce((sum, m) => sum + (Number(m.percent) || 0), 0);
+                        return (
+                          <Typography variant="body2" sx={{ mt: 1, color: total === 100 ? 'success.main' : 'warning.main' }}>
+                            Total: {total}%{total === 100 ? '' : ' (should be 100%)'}
+                          </Typography>
+                        );
+                      })()}
+                      <Button startIcon={<AddIcon />} sx={{ mt: 1 }}
+                        onClick={() => setMaterialSize((prev) => ({ ...prev, materials: [...prev.materials, { material: '', percent: 0 }] }))}>
+                        Add a material
+                      </Button>
                     </Box>
-                    {materialSize.materials.map((row, i) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <TextField
-                          label="Material"
-                          variant="outlined"
-                          size="small"
-                          value={row.material}
-                          onChange={(e) => {
-                            const next = [...materialSize.materials];
-                            next[i] = { ...next[i], material: e.target.value };
-                            setMaterialSize((prev) => ({ ...prev, materials: next }));
-                          }}
-                          sx={{ minWidth: 140 }}
-                        />
-                        <TextField
-                          label="%"
-                          variant="outlined"
-                          size="small"
-                          type="number"
-                          value={row.percent}
-                          onChange={(e) => {
-                            const next = [...materialSize.materials];
-                            next[i] = { ...next[i], percent: Number(e.target.value) || 0 };
-                            setMaterialSize((prev) => ({ ...prev, materials: next }));
-                          }}
-                          sx={{ width: 80 }}
-                        />
-                        <TextField
-                          label="Origin (optional)"
-                          variant="outlined"
-                          size="small"
-                          value={row.origin || ''}
-                          onChange={(e) => {
-                            const next = [...materialSize.materials];
-                            next[i] = { ...next[i], origin: e.target.value };
-                            setMaterialSize((prev) => ({ ...prev, materials: next }));
-                          }}
-                          sx={{ minWidth: 120 }}
-                        />
-                      </Box>
-                    ))}
 
-                    <Divider sx={{ my: 3 }} />
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Certifications</Typography>
-                      <Button variant="outlined" size="small"
-                        onClick={() => setCertifications((prev) => [...prev, { icon: '', title: '', content: '' }])}>+ Add Certification</Button>
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Size details</Typography>
+                      <TextField
+                        label="Size details"
+                        placeholder="e.g. EU 38 / US 8, length 102 cm"
+                        fullWidth
+                        value={materialSize.size}
+                        onChange={(e) => setMaterialSize((prev) => ({ ...prev, size: e.target.value }))}
+                        helperText="Longer size information for the app's Materials screen. The short size (e.g. M) is on step 1."
+                      />
                     </Box>
-                    {certifications.map((c, i) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Button variant="outlined" component="label" size="small">
-                          {c.icon ? 'Icon ✓' : 'Icon'}
-                          <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
-                            const next = [...certifications]; next[i] = { ...next[i], icon: url }; setCertifications(next);
-                          })} />
-                        </Button>
-                        <TextField label="Title" size="small" value={c.title || ''}
-                          onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], title: e.target.value }; setCertifications(next); }} />
-                        <TextField label="Content" size="small" value={c.content || ''} sx={{ flex: 1 }}
-                          onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], content: e.target.value }; setCertifications(next); }} />
-                        <Button size="small" color="error" onClick={() => setCertifications(certifications.filter((_, x) => x !== i))}>×</Button>
-                      </Box>
-                    ))}
-                  </Box>
+
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Certifications</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>For example GOTS or OEKO-TEX, with a short explanation.</Typography>
+                      <Stack spacing={1.5}>
+                        {certifications.map((c, i) => (
+                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap' }}>
+                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }}>
+                              {c.icon ? 'Icon added ✓' : 'Add icon'}
+                              <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
+                                const next = [...certifications]; next[i] = { ...next[i], icon: url }; setCertifications(next);
+                              })} />
+                            </Button>
+                            <TextField label="Name" sx={{ flex: '1 1 160px' }} value={c.title || ''}
+                              onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], title: e.target.value }; setCertifications(next); }} />
+                            <TextField label="What it means" sx={{ flex: '2 1 240px' }} value={c.content || ''}
+                              onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], content: e.target.value }; setCertifications(next); }} />
+                            <IconButton aria-label={`Remove certification ${i + 1}`} sx={{ mt: 0.5 }}
+                              onClick={() => setCertifications(certifications.filter((_, x) => x !== i))}>
+                              <DeleteIcon color="error" />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Stack>
+                      <Button startIcon={<AddIcon />} sx={{ mt: 1 }}
+                        onClick={() => setCertifications((prev) => [...prev, { icon: '', title: '', content: '' }])}>
+                        Add a certification
+                      </Button>
+                    </Box>
+                  </Stack>
                 )}
+
                 {detailTab === 2 && (
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Maintenance Icons</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>Select all that apply</Typography>
-                    <CareSymbols
-                      selectedIds={maintenance.iconIds}
-                      onToggle={(id) => {
-                        const next = maintenance.iconIds.includes(id)
-                          ? maintenance.iconIds.filter((x) => x !== id)
-                          : [...maintenance.iconIds, id];
-                        setMaintenance((prev) => ({ ...prev, iconIds: next }));
-                      }}
-                      size={52}
-                    />
-
-                    <Divider sx={{ my: 3 }} />
-
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Description</Typography>
+                  <Stack spacing={4}>
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Care symbols</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Click every symbol that applies. Click again to remove it.</Typography>
+                      <CareSymbols
+                        selectedIds={maintenance.iconIds}
+                        onToggle={(id) => {
+                          const next = maintenance.iconIds.includes(id)
+                            ? maintenance.iconIds.filter((x) => x !== id)
+                            : [...maintenance.iconIds, id];
+                          setMaintenance((prev) => ({ ...prev, iconIds: next }));
+                        }}
+                        size={56}
+                      />
+                    </Box>
                     <TextField
-                      label="Maintenance description"
-                      variant="outlined"
-                      size="small"
+                      label="Care instructions"
                       fullWidth
                       multiline
+                      minRows={2}
                       value={maintenance.description}
                       onChange={(e) => setMaintenance((prev) => ({ ...prev, description: e.target.value }))}
-                      sx={{ mb: 3 }}
                     />
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>Care Tips</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-                      One per line — used on the app's Care tab; auto-generated from the icons above when left blank.
-                    </Typography>
                     <TextField
                       label="Care tips (one per line)"
-                      variant="outlined"
-                      size="small"
                       fullWidth
                       multiline
                       minRows={3}
                       value={(maintenance.tips || []).join('\n')}
-                      onChange={(e) => setMaintenance((prev) => ({ ...prev, tips: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) }))}
+                      onChange={(e) => setMaintenance((prev) => ({ ...prev, tips: e.target.value.split('\n').map((t) => t.trim()).filter(Boolean) }))}
+                      helperText="Shown on the app's Care tab. If left empty, tips are created from the symbols above."
                     />
-                  </Box>
+                  </Stack>
                 )}
+
                 {detailTab === 3 && (
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Disposal URLs</Typography>
-                    <Grid container spacing={2} sx={{ mb: 3 }}>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          label="Repair URL"
-                          variant="outlined" size="small" fullWidth
-                          value={disposal.repairUrl}
-                          onChange={(e) => setDisposal((prev) => ({ ...prev, repairUrl: e.target.value }))}
-                        />
+                  <Stack spacing={4}>
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Repair, reuse and disposal links</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Web pages where shoppers can repair, resell, rent or recycle this product.</Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Repair service link" placeholder="https://" fullWidth value={disposal.repairUrl}
+                            onChange={(e) => setDisposal((prev) => ({ ...prev, repairUrl: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Resale / reuse link" placeholder="https://" fullWidth value={disposal.reuseUrl}
+                            onChange={(e) => setDisposal((prev) => ({ ...prev, reuseUrl: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Rental link" placeholder="https://" fullWidth value={disposal.rentalUrl}
+                            onChange={(e) => setDisposal((prev) => ({ ...prev, rentalUrl: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Recycling / disposal link" placeholder="https://" fullWidth value={disposal.disposeUrl}
+                            onChange={(e) => setDisposal((prev) => ({ ...prev, disposeUrl: e.target.value }))} />
+                        </Grid>
                       </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          label="Reuse URL"
-                          variant="outlined" size="small" fullWidth
-                          value={disposal.reuseUrl}
-                          onChange={(e) => setDisposal((prev) => ({ ...prev, reuseUrl: e.target.value }))}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          label="Rental URL"
-                          variant="outlined" size="small" fullWidth
-                          value={disposal.rentalUrl}
-                          onChange={(e) => setDisposal((prev) => ({ ...prev, rentalUrl: e.target.value }))}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
-                        <TextField
-                          label="Dispose URL"
-                          variant="outlined" size="small" fullWidth
-                          value={disposal.disposeUrl}
-                          onChange={(e) => setDisposal((prev) => ({ ...prev, disposeUrl: e.target.value }))}
-                        />
-                      </Grid>
-                    </Grid>
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Sustainability Impact</Typography>
-                      <Button variant="outlined" size="small"
-                        onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: [...(prev.items || []), { icon: '', value: '', label: '', description: '' }] }))}>+ Add Impact Item</Button>
                     </Box>
-                    {(sustainabilityImpact.items || []).map((it, i) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-                        <Button variant="outlined" component="label" size="small">
-                          {it.icon ? 'Icon ✓' : 'Icon'}
-                          <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
-                            const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], icon: url };
-                            setSustainabilityImpact((prev) => ({ ...prev, items: next }));
-                          })} />
-                        </Button>
-                        <TextField label="Value (e.g. 12.4 kg)" size="small" value={it.value || ''}
-                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], value: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
-                        <TextField label="Label (e.g. CO2e Avoided)" size="small" value={it.label || ''}
-                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], label: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
-                        <TextField label="Description" size="small" value={it.description || ''} sx={{ flex: 1 }}
-                          onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], description: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
-                        <Button size="small" color="error" onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: prev.items.filter((_, x) => x !== i) }))}>×</Button>
-                      </Box>
-                    ))}
-                    <Divider sx={{ my: 3 }} />
 
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                      Legacy quick fields — still shown if no impact items are added above.
-                    </Typography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={4}>
-                        <TextField label="CO2 avoided" size="small" fullWidth value={sustainabilityImpact.co2Avoided}
-                          onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, co2Avoided: e.target.value }))} />
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <TextField label="Water saved" size="small" fullWidth value={sustainabilityImpact.waterSaved}
-                          onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, waterSaved: e.target.value }))} />
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <TextField label="Energy saved" size="small" fullWidth value={sustainabilityImpact.energySaved}
-                          onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, energySaved: e.target.value }))} />
-                      </Grid>
-                    </Grid>
-                  </Box>
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Sustainability impact</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Figures such as "12.4 kg CO2e avoided", each with a short explanation.</Typography>
+                      <Stack spacing={1.5}>
+                        {(sustainabilityImpact.items || []).map((it, i) => (
+                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap' }}>
+                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }}>
+                              {it.icon ? 'Icon added ✓' : 'Add icon'}
+                              <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
+                                const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], icon: url };
+                                setSustainabilityImpact((prev) => ({ ...prev, items: next }));
+                              })} />
+                            </Button>
+                            <TextField label="Value" placeholder="e.g. 12.4 kg" sx={{ width: 150 }} value={it.value || ''}
+                              onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], value: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
+                            <TextField label="Label" placeholder="e.g. CO2e avoided" sx={{ flex: '1 1 160px' }} value={it.label || ''}
+                              onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], label: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
+                            <TextField label="Explanation" sx={{ flex: '2 1 220px' }} value={it.description || ''}
+                              onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], description: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
+                            <IconButton aria-label={`Remove impact figure ${i + 1}`} sx={{ mt: 0.5 }}
+                              onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: prev.items.filter((_, x) => x !== i) }))}>
+                              <DeleteIcon color="error" />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Stack>
+                      <Button startIcon={<AddIcon />} sx={{ mt: 1 }}
+                        onClick={() => setSustainabilityImpact((prev) => ({ ...prev, items: [...(prev.items || []), { icon: '', value: '', label: '', description: '' }] }))}>
+                        Add an impact figure
+                      </Button>
+                    </Box>
+
+                    <Accordion disableGutters variant="outlined" sx={{ borderRadius: 2, '&:before': { display: 'none' } }}>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Box>
+                          <Typography variant="subtitle1">Simple impact figures</Typography>
+                          <Typography variant="body2" color="text.secondary">Older format, only shown when no impact figures are added above.</Typography>
+                        </Box>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} sm={4}>
+                            <TextField label="CO2 avoided" fullWidth value={sustainabilityImpact.co2Avoided}
+                              onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, co2Avoided: e.target.value }))} />
+                          </Grid>
+                          <Grid item xs={12} sm={4}>
+                            <TextField label="Water saved" fullWidth value={sustainabilityImpact.waterSaved}
+                              onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, waterSaved: e.target.value }))} />
+                          </Grid>
+                          <Grid item xs={12} sm={4}>
+                            <TextField label="Energy saved" fullWidth value={sustainabilityImpact.energySaved}
+                              onChange={(e) => setSustainabilityImpact((prev) => ({ ...prev, energySaved: e.target.value }))} />
+                          </Grid>
+                        </Grid>
+                      </AccordionDetails>
+                    </Accordion>
+                  </Stack>
                 )}
+
                 {detailTab === 4 && (
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Origin</Typography>
-                    <TextField
-                      label="Made in"
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                      value={traceabilityEsg.madeIn}
-                      onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, madeIn: e.target.value }))}
-                      sx={{ mb: 3 }}
-                    />
-
-                    <Divider sx={{ mb: 3 }} />
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Material Origins</Typography>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: [...prev.materialOrigins, { material: '', companyName: '' }] }))}
-                        >
-                          + Add Origin
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: prev.materialOrigins.slice(0, -1) }))}
-                          disabled={traceabilityEsg.materialOrigins.length === 0}
-                        >
-                          Remove Last
-                        </Button>
-                      </Box>
+                  <Stack spacing={4}>
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>Where it was made</Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Made in (country of manufacture)" placeholder="e.g. Sri Lanka" fullWidth value={traceabilityEsg.madeIn}
+                            onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, madeIn: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Country of origin (shown on the product summary)" placeholder="e.g. Sri Lanka" fullWidth value={traceabilityEsg.originCountry}
+                            onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, originCountry: e.target.value }))}
+                            helperText="Also used by the dashboard's Origin Country filter." />
+                        </Grid>
+                      </Grid>
                     </Box>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
-                      From Material/Size, with company name
-                    </Typography>
-                    {traceabilityEsg.materialOrigins.map((row, i) => (
-                      <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <TextField
-                          label="Material"
-                          variant="outlined"
-                          size="small"
-                          value={row.material}
-                          onChange={(e) => {
-                            const next = [...traceabilityEsg.materialOrigins];
-                            next[i] = { ...next[i], material: e.target.value };
-                            setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
-                          }}
-                          sx={{ minWidth: 120 }}
-                        />
-                        <TextField
-                          label="Company name"
-                          variant="outlined"
-                          size="small"
-                          value={row.companyName}
-                          onChange={(e) => {
-                            const next = [...traceabilityEsg.materialOrigins];
-                            next[i] = { ...next[i], companyName: e.target.value };
-                            setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
-                          }}
-                          sx={{ minWidth: 140 }}
-                        />
-                        <TextField
-                          label="Country" size="small"
-                          value={row.country || ''}
-                          onChange={(e) => {
-                            const next = [...traceabilityEsg.materialOrigins];
-                            next[i] = { ...next[i], country: e.target.value };
-                            setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
-                          }}
-                          sx={{ minWidth: 100 }}
-                        />
-                        <Button variant="outlined" component="label" size="small">
-                          {row.icon ? 'Icon ✓' : 'Icon'}
-                          <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
-                            const next = [...traceabilityEsg.materialOrigins];
-                            next[i] = { ...next[i], icon: url };
-                            setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
-                          })} />
-                        </Button>
-                      </Box>
-                    ))}
-                    <Divider sx={{ my: 3 }} />
 
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Shipping &amp; Emissions</Typography>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12}>
-                        <TextField
-                          label="Shipping log" placeholder="e.g. Sri Lanka to Italy"
-                          variant="outlined" size="small" fullWidth
-                          value={traceabilityEsg.shippingLog}
-                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, shippingLog: e.target.value }))}
-                        />
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Material suppliers</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Which company supplied each material, and from which country.</Typography>
+                      <Stack spacing={1.5}>
+                        {traceabilityEsg.materialOrigins.map((row, i) => (
+                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap' }}>
+                            <TextField label="Material" sx={{ flex: '1 1 140px' }} value={row.material}
+                              onChange={(e) => {
+                                const next = [...traceabilityEsg.materialOrigins];
+                                next[i] = { ...next[i], material: e.target.value };
+                                setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
+                              }} />
+                            <TextField label="Supplier company" sx={{ flex: '1 1 160px' }} value={row.companyName}
+                              onChange={(e) => {
+                                const next = [...traceabilityEsg.materialOrigins];
+                                next[i] = { ...next[i], companyName: e.target.value };
+                                setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
+                              }} />
+                            <TextField label="Country" sx={{ flex: '1 1 120px' }} value={row.country || ''}
+                              onChange={(e) => {
+                                const next = [...traceabilityEsg.materialOrigins];
+                                next[i] = { ...next[i], country: e.target.value };
+                                setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
+                              }} />
+                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }}>
+                              {row.icon ? 'Icon added ✓' : 'Add icon'}
+                              <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
+                                const next = [...traceabilityEsg.materialOrigins];
+                                next[i] = { ...next[i], icon: url };
+                                setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
+                              })} />
+                            </Button>
+                            <IconButton aria-label={`Remove supplier ${i + 1}`} sx={{ mt: 0.5 }}
+                              onClick={() => setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: prev.materialOrigins.filter((_, x) => x !== i) }))}>
+                              <DeleteIcon color="error" />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Stack>
+                      <Button startIcon={<AddIcon />} sx={{ mt: 1 }}
+                        onClick={() => setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: [...prev.materialOrigins, { material: '', companyName: '' }] }))}>
+                        Add a supplier
+                      </Button>
+                    </Box>
+
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 2 }}>Shipping and emissions</Typography>
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Shipped from" placeholder="e.g. Colombo" fullWidth value={traceabilityEsg.route.origin}
+                            onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, origin: e.target.value } }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Shipped to" placeholder="e.g. Milan" fullWidth value={traceabilityEsg.route.destination}
+                            onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, destination: e.target.value } }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Transport" placeholder="e.g. Ship" fullWidth value={traceabilityEsg.route.mode}
+                            onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, mode: e.target.value } }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Distance" placeholder="e.g. 7,300 km" fullWidth value={traceabilityEsg.distance}
+                            onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, distance: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12}>
+                          <TextField label="Shipping summary" placeholder="e.g. Sri Lanka to Italy by sea" fullWidth value={traceabilityEsg.shippingLog}
+                            onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, shippingLog: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <TextField label="CO2 from production" placeholder="e.g. 25 kg" fullWidth value={traceabilityEsg.co2Production}
+                            onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Production: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <TextField label="CO2 from transport" placeholder="e.g. 200 kg" fullWidth value={traceabilityEsg.co2Transportation}
+                            onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Transportation: e.target.value }))} />
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <TextField label="Shipping route emissions" placeholder="e.g. 18.6 kg CO2e" fullWidth value={traceabilityEsg.route.emissions}
+                            onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, route: { ...prev.route, emissions: e.target.value } }))} />
+                        </Grid>
                       </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <TextField
-                          label="Distance" placeholder="e.g. 7,300 km"
-                          variant="outlined" size="small" fullWidth
-                          value={traceabilityEsg.distance}
-                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, distance: e.target.value }))}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <TextField
-                          label="CO2 by Production" placeholder="e.g. 25 kg"
-                          variant="outlined" size="small" fullWidth
-                          value={traceabilityEsg.co2Production}
-                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Production: e.target.value }))}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={4}>
-                        <TextField
-                          label="CO2 by Transportation" placeholder="e.g. 200 kg"
-                          variant="outlined" size="small" fullWidth
-                          value={traceabilityEsg.co2Transportation}
-                          onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, co2Transportation: e.target.value }))}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Box>
+                    </Box>
+                  </Stack>
                 )}
+
                 {detailTab === 5 && (
-                  <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1.5 }}>Warranty</Typography>
-                    <Grid container spacing={2} sx={{ mb: 1.5 }}>
+                  <Box component="section">
+                    <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Warranty</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      Shown on the app's product summary. The end date is counted from the day the product is added.
+                    </Typography>
+                    <Grid container spacing={2}>
                       <Grid item xs={12} sm={6}>
-                        <TextField
-                          label="Warranty Status" placeholder="e.g. Active"
-                          variant="outlined" size="small" fullWidth
-                          value={warrantyStatus}
-                          onChange={(e) => setWarrantyStatus(e.target.value)}
-                        />
+                        <TextField label="Warranty status" placeholder="e.g. Active" fullWidth value={warrantyStatus}
+                          onChange={(e) => setWarrantyStatus(e.target.value)} />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <TextField
-                          label="Valid for (years)" type="number"
-                          variant="outlined" size="small" fullWidth
-                          value={warrantyValidYears}
-                          onChange={(e) => setWarrantyValidYears(Number(e.target.value) || 0)}
-                        />
+                        <TextField label="Valid for" type="number" fullWidth value={warrantyValidYears}
+                          InputProps={{ endAdornment: <InputAdornment position="end">years</InputAdornment> }}
+                          inputProps={{ min: 0 }}
+                          onChange={(e) => setWarrantyValidYears(Number(e.target.value) || 0)} />
                       </Grid>
                     </Grid>
-                    <Typography variant="caption" color="text.secondary">
-                      Shown on the app Product Summary (status + valid-until, computed from the date added).
-                    </Typography>
                   </Box>
                 )}
                 </>
                 )}
               </Box>
             </DialogContent>
-            {/* Pinned footer (not scrolled with the tab content above) — the
-                save action used to sit above the tabs, so filling in fields
-                on any tab past the first meant scrolling all the way back up
-                just to reach Add/Update Product. */}
-            {productPanelMode === 'edit' && (
-              <DialogActions sx={{ flexDirection: 'column', alignItems: 'stretch', px: 3, py: 2, gap: 1, borderTop: 1, borderColor: 'divider' }}>
-                {(() => {
-                  const missing = [
-                    productName === '' && 'Product Name',
-                    productImages.length === 0 && 'at least one Product Photo',
-                    brandInfo.name.trim() === '' && 'Brand Name',
-                    brandInfo.detail.trim() === '' && 'Brand Detail',
-                    brandInfo.websiteUrl.trim() === '' && 'Brand Website URL',
-                    brandInfo.logoUrl.trim() === '' && 'Brand Logo',
-                  ].filter(Boolean);
-                  if (missing.length === 0) return null;
-                  return (
-                    <Typography variant="caption" color="text.secondary">
+            {/* Pinned footer: what's still needed, step navigation, save. */}
+            {productPanelMode === 'edit' && (() => {
+              const missing = missingProductFields();
+              const lastStep = PRODUCT_FORM_STEPS.length - 1;
+              return (
+                <DialogActions sx={{ flexDirection: 'column', alignItems: 'stretch', px: 3, py: 2, gap: 1.25, borderTop: 1, borderColor: 'divider' }}>
+                  {missing.length > 0 && (
+                    <Alert severity="info" sx={{ py: 0.25 }}>
                       Still needed before you can save: {missing.join(', ')}.
-                    </Typography>
-                  );
-                })()}
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => setOpenPreviewModal(true)}
-                    disabled={
-                      !(
-                        productName !== '' &&
-                        productImages.length > 0 &&
-                        brandInfo.name.trim() !== '' &&
-                        brandInfo.detail.trim() !== '' &&
-                        brandInfo.websiteUrl.trim() !== '' &&
-                        brandInfo.logoUrl.trim() !== ''
-                      )
-                    }
-                  >
-                    Preview
-                  </Button>
-                  {!isEditing ? (
-                    <Button
-                      variant="contained"
-                      onClick={addProductHandler}
-                      disabled={
-                        !(
-                          productName !== '' &&
-                          productImages.length > 0 &&
-                          brandInfo.name.trim() !== '' &&
-                          brandInfo.detail.trim() !== '' &&
-                          brandInfo.websiteUrl.trim() !== '' &&
-                          brandInfo.logoUrl.trim() !== ''
-                        )
-                      }
-                    >
-                      Add Product
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="contained"
-                      onClick={updateProductHandler}
-                      disabled={
-                        !(
-                          productName !== '' &&
-                          productImages.length > 0 &&
-                          brandInfo.name.trim() !== '' &&
-                          brandInfo.detail.trim() !== '' &&
-                          brandInfo.websiteUrl.trim() !== '' &&
-                          brandInfo.logoUrl.trim() !== ''
-                        )
-                      }
-                    >
-                      Update Product
-                    </Button>
+                      {detailTab !== 0 && ' These are all on step 1.'}
+                    </Alert>
                   )}
-                </Box>
-              </DialogActions>
-            )}
+                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                    <Button onClick={() => setDetailTab((t) => Math.max(0, t - 1))} disabled={detailTab === 0}>
+                      Back
+                    </Button>
+                    <Button variant="outlined" onClick={() => setDetailTab((t) => Math.min(lastStep, t + 1))} disabled={detailTab === lastStep}>
+                      Next: {PRODUCT_FORM_STEPS[Math.min(lastStep, detailTab + 1)]}
+                    </Button>
+                    <Box sx={{ flexGrow: 1 }} />
+                    <Button variant="outlined" onClick={() => setOpenPreviewModal(true)} disabled={missing.length > 0}>
+                      Preview
+                    </Button>
+                    <Button
+                      variant="contained"
+                      onClick={isEditing ? updateProductHandler : addProductHandler}
+                      disabled={missing.length > 0 || savingProduct}
+                    >
+                      {savingProduct ? 'Saving…' : isEditing ? 'Save changes' : 'Add product'}
+                    </Button>
+                  </Box>
+                </DialogActions>
+              );
+            })()}
           </Dialog>
         </Box>
       </Box>
@@ -3212,7 +2941,7 @@ const InnerPage = () => {
         product={transferProduct}
         actor={company ? { kind: 'Company', id: company._id } : null}
         onTransferred={(msg) => {
-          alert(msg);
+          notifySuccess(msg);
           loadProductsForCurrentCompany();
         }}
       />
