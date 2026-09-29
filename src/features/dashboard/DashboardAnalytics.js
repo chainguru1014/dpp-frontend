@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Card, CardContent, Typography, Grid, Stack, TextField, MenuItem, Button, Table,
+  Box, Card, CardActionArea, CardContent, Typography, Grid, Stack, TextField, MenuItem, Button, Table,
   TableHead, TableRow, TableCell, TableBody, Paper, IconButton, Tooltip,
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -37,32 +37,45 @@ const CATEGORY_ICONS = {
 
 // Icon on the left, number+label+delta stacked on the right — delta is the
 // percent change vs the same metric's value 30 days ago (null = no 30-day-old
-// baseline to compare against yet).
-const Kpi = ({ icon: Icon, label, value, delta, sub }) => (
+// baseline to compare against yet). `onClick`, when given, makes the whole
+// card a link to that metric's source page; omitted entirely (not just
+// disabled) when the current role can't see that page, so it reads as a
+// plain stat card there instead of a dead/greyed-out button.
+const KpiContent = ({ icon: Icon, label, value, delta, sub }) => (
+  <CardContent sx={{ py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+    <Box sx={{ width: 52, height: 52, borderRadius: 2, bgcolor: '#eef2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <Icon sx={{ fontSize: 28, color: 'primary.main' }} />
+    </Box>
+    <Box sx={{ minWidth: 0 }}>
+      <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.4rem', md: '1.3rem' } }}>
+        {value}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
+        {label}
+      </Typography>
+      {delta != null && (
+        <Typography variant="caption" sx={{ color: delta >= 0 ? '#2e7d32' : '#c0392b', fontWeight: 600, display: 'block' }}>
+          {delta >= 0 ? '+' : ''}{delta}% vs last 30 days
+        </Typography>
+      )}
+      {sub && (
+        <Typography variant="caption" sx={{ color: '#2e7d32', fontWeight: 600, display: 'block' }}>
+          {sub}
+        </Typography>
+      )}
+    </Box>
+  </CardContent>
+);
+
+const Kpi = ({ onClick, ...props }) => (
   <Card sx={{ height: '100%' }}>
-    <CardContent sx={{ py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-      <Box sx={{ width: 52, height: 52, borderRadius: 2, bgcolor: '#eef2f8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon sx={{ fontSize: 28, color: 'primary.main' }} />
-      </Box>
-      <Box sx={{ minWidth: 0 }}>
-        <Typography variant="h5" sx={{ color: 'primary.main', fontWeight: 400, fontSize: { xs: '1.4rem', md: '1.3rem' } }}>
-          {value}
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.78rem' }}>
-          {label}
-        </Typography>
-        {delta != null && (
-          <Typography variant="caption" sx={{ color: delta >= 0 ? '#2e7d32' : '#c0392b', fontWeight: 600, display: 'block' }}>
-            {delta >= 0 ? '+' : ''}{delta}% vs last 30 days
-          </Typography>
-        )}
-        {sub && (
-          <Typography variant="caption" sx={{ color: '#2e7d32', fontWeight: 600, display: 'block' }}>
-            {sub}
-          </Typography>
-        )}
-      </Box>
-    </CardContent>
+    {onClick ? (
+      <CardActionArea onClick={onClick} sx={{ height: '100%' }}>
+        <KpiContent {...props} />
+      </CardActionArea>
+    ) : (
+      <KpiContent {...props} />
+    )}
   </Card>
 );
 
@@ -221,7 +234,10 @@ const CountryBars = ({ items }) => {
 
 const EMPTY_FILTERS = { date_from: '', date_to: '', item_category: '', origin_country: '', destination_country: '', city: '' };
 
-export default function DashboardAnalytics({ ownerKind = null, ownerId = null }) {
+export default function DashboardAnalytics({
+  ownerKind = null, ownerId = null,
+  onNavigateToScanHistory, onNavigateToCaptureHistory, onNavigateToProducts, onNavigateToGenerateCode,
+}) {
   const [a, setA] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
@@ -264,9 +280,9 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
           cards still fit one row (Retail Stores removed -- wasn't
           meaningful to a newly-visiting user -- so one fewer card now). */}
       <Grid container spacing={1} columns={{ xs: 12, md: showCaptures ? 12 : 10 }} sx={{ mb: 1.5 }}>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCodeScannerIcon} label="Total Scans" value={t.scans ?? 0} delta={t.deltas?.scans} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCodeScannerIcon} label="Total Scans" value={t.scans ?? 0} delta={t.deltas?.scans} onClick={onNavigateToScanHistory} /></Grid>
         {showCaptures && (
-          <Grid item xs={6} sm={4} md={2}><Kpi icon={CameraAltIcon} label="Total Captures" value={capturesTotal ?? 0} /></Grid>
+          <Grid item xs={6} sm={4} md={2}><Kpi icon={CameraAltIcon} label="Total Captures" value={capturesTotal ?? 0} onClick={onNavigateToCaptureHistory} /></Grid>
         )}
         {/* Distinct icons from the category breakdown below (which already
             owns Checkroom/Sell for denim/tops/etc.) so these two don't look
@@ -278,8 +294,8 @@ export default function DashboardAnalytics({ ownerKind = null, ownerId = null })
             distinct skuStyleNumber values -- i.e. distinct product types.
             So "Unique Products" reads uniqueSkus, and "Unique Product Codes"
             reads uniqueItems, despite what the field names alone suggest. */}
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={Inventory2Icon} label="Unique Products" value={t.uniqueSkus ?? 0} delta={t.deltas?.uniqueSkus} /></Grid>
-        <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCode2Icon} label="Unique Product Codes" value={t.uniqueItems ?? 0} delta={t.deltas?.uniqueItems} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={Inventory2Icon} label="Unique Products" value={t.uniqueSkus ?? 0} delta={t.deltas?.uniqueSkus} onClick={onNavigateToProducts} /></Grid>
+        <Grid item xs={6} sm={4} md={2}><Kpi icon={QrCode2Icon} label="Unique Product Codes" value={t.uniqueItems ?? 0} delta={t.deltas?.uniqueItems} onClick={onNavigateToGenerateCode} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={PublicIcon} label="Scanned Countries" value={t.countries ?? 0} delta={t.deltas?.countries} /></Grid>
         <Grid item xs={6} sm={4} md={2}><Kpi icon={VerifiedIcon} label="Data Integrity" value={`${t.dataIntegrity ?? 100}%`} sub="Verified" /></Grid>
       </Grid>

@@ -1950,6 +1950,11 @@ const InnerPage = () => {
               }}
               onNavigateToUsers={() => setActivePage('users')}
               onNavigateToProducts={() => setActivePage('products')}
+              // KPI cards link to their source page -- only when the current
+              // role can actually see that page (same gates as the sidebar).
+              onNavigateToScanHistory={!isWorkingEmployee ? () => go('history') : undefined}
+              onNavigateToCaptureHistory={canSeeCaptureHistory ? () => go('captureHistory') : undefined}
+              onNavigateToGenerateCode={canSeeGenerateCode ? () => go('generateCode') : undefined}
             />
           )}
 

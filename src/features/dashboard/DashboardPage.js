@@ -12,7 +12,10 @@ import {
 import { getAdminUserData, getProductsByUser, getOwnedProducts, registerCompany } from '../../helper';
 import DashboardAnalytics from './DashboardAnalytics';
 
-const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, onNavigateToUsers, onNavigateToProducts }) => {
+const DashboardPage = ({
+  isAdmin, isAppUser, company, onNavigateToNewProduct, onNavigateToUsers, onNavigateToProducts,
+  onNavigateToScanHistory, onNavigateToCaptureHistory, onNavigateToGenerateCode,
+}) => {
   // Non-super accounts see analytics scoped to the products they own.
   const ownerKind = isAppUser ? 'User' : 'Company';
   const ownerId = company?._id || company?.id;
@@ -101,6 +104,10 @@ const DashboardPage = ({ isAdmin, isAppUser, company, onNavigateToNewProduct, on
       <DashboardAnalytics
         ownerKind={isAdmin ? null : ownerKind}
         ownerId={isAdmin ? null : ownerId}
+        onNavigateToScanHistory={onNavigateToScanHistory}
+        onNavigateToCaptureHistory={onNavigateToCaptureHistory}
+        onNavigateToProducts={onNavigateToProducts}
+        onNavigateToGenerateCode={onNavigateToGenerateCode}
       />
 
       {/* Create Company Dialog */}
