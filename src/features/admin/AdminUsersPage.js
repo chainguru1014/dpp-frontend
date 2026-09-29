@@ -143,42 +143,42 @@ const AdminUsersPage = () => {
           size="small"
           value={usernameFilter}
           onChange={(e) => setUsernameFilter(e.target.value)}
-          sx={{ flexShrink: 0 }}
+          sx={{ width: 70, flexShrink: 0 }}
         />
         <TextField
           label="Email"
           size="small"
           value={emailFilter}
           onChange={(e) => setEmailFilter(e.target.value)}
-          sx={{ flexShrink: 0 }}
+          sx={{ width: 70, flexShrink: 0 }}
         />
         <TextField
           label="First Name"
           size="small"
           value={firstNameFilter}
           onChange={(e) => setFirstNameFilter(e.target.value)}
-          sx={{ flexShrink: 0 }}
+          sx={{ width: 70, flexShrink: 0 }}
         />
         <TextField
           label="Last Name"
           size="small"
           value={lastNameFilter}
           onChange={(e) => setLastNameFilter(e.target.value)}
-          sx={{ flexShrink: 0 }}
+          sx={{ width: 70, flexShrink: 0 }}
         />
         <TextField
           label="Country"
           size="small"
           value={countryFilter}
           onChange={(e) => setCountryFilter(e.target.value)}
-          sx={{ flexShrink: 0 }}
+          sx={{ width: 70, flexShrink: 0 }}
         />
         <TextField
           label="Phone Number"
           size="small"
           value={phoneNumberFilter}
           onChange={(e) => setPhoneNumberFilter(e.target.value)}
-          sx={{ flexShrink: 0 }}
+          sx={{ width: 70, flexShrink: 0 }}
         />
         <Tooltip title="Refresh">
           <IconButton onClick={reloadUsers} color="primary" sx={{ flexShrink: 0 }}>
