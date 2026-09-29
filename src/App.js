@@ -5,6 +5,7 @@ import { StyledEngineProvider, ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
 import GlobalLoadingBar from './components/GlobalLoadingBar';
+import GlobalFeedback from './components/GlobalFeedback';
 import Loader from './components/Loader';
 
 // Route-level code splitting. The consumer scan landing (PublicProductPage) is
@@ -45,6 +46,7 @@ function App() {
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <GlobalLoadingBar />
+          <GlobalFeedback />
           <BrowserRouter>
             <Suspense fallback={<RouteFallback />}>
               <Routes>

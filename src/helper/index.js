@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { notify, notifyError, notifySuccess } from '../utils/feedbackBus';
 
 // Backend URL configuration.
 // In hosting, set REACT_APP_BACKEND_URL to your public backend URL.
@@ -88,7 +89,7 @@ export const login = async (data) => {
     } catch (err) {
         console.log(err);
         const message = err.response?.data?.message;
-        alert(message || err.message || 'Login failed');
+        notifyError(message || err.message || 'Sign-in failed. Please try again.');
         return null;
     }
 }
@@ -97,17 +98,18 @@ export const registerCompany = async (data) => {
     try {
         const res = await axios.post(`${Backend_URL}company`, data);
         if (res.data.status === 'success') {
-            alert(res.data.warning ? `Successfully registered.\n\n${res.data.warning}` : 'Successfully registered');
+            if (res.data.warning) notify(`Company created. ${res.data.warning}`, 'warning');
+            else notifySuccess('Company created.');
             // Return the company document from response
             return res.data.data.doc || res.data.data;
         } else {
-            alert('Registration failed: ' + (res.data.message || 'Unknown error'));
+            notifyError(`Could not create the company: ${res.data.message || 'unknown error'}`);
             return null;
         }
     } catch (err) {
         console.error('Registration error:', err);
         const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
-        alert("Failed: " + errorMessage);
+        notifyError(`Could not create the company: ${errorMessage}`);
         return null;
     }
 }
@@ -162,7 +164,7 @@ export const googleLogin = async (idToken) => {
         return normalizeAuthResponse(res);
     } catch (err) {
         console.log(err);
-        alert(err.response?.data?.message || err.message || 'Google login failed');
+        notifyError(err.response?.data?.message || err.message || 'Google sign-in failed. Please try again.');
         return null;
     }
 }
@@ -176,7 +178,7 @@ export const appleLogin = async (identityToken, user) => {
         return normalizeAuthResponse(res);
     } catch (err) {
         console.log(err);
-        alert(err.response?.data?.message || err.message || 'Apple login failed');
+        notifyError(err.response?.data?.message || err.message || 'Apple sign-in failed. Please try again.');
         return null;
     }
 }
@@ -231,7 +233,7 @@ export const completeProfile = async (data, token) => {
         return normalizeAuthResponse(res);
     } catch (err) {
         console.log(err);
-        alert(err.response?.data?.message || err.message || 'Failed to save profile');
+        notifyError(err.response?.data?.message || err.message || 'Could not save your details. Please try again.');
         return null;
     }
 }
@@ -335,30 +337,36 @@ export const getAnalytics = async (ownerKind, ownerId, filters = {}) => {
 export const addProduct = async (data) => {
     try {
         await axios.post(`${Backend_URL}product`, data);
-        alert('product successfully added');
+        notifySuccess('Product added.');
+        return true;
     } catch(err) {
         console.log(err);
-        alert('Failed: ' + err.response.data.message);
+        notifyError(`Could not add the product: ${err.response?.data?.message || err.message}`);
+        return false;
     }
 }
 
 export const updateProduct = async (data) => {
     try {
         await axios.put(`${Backend_URL}product/${data._id}`, data);
-        alert('product successfully updated');
+        notifySuccess('Product saved.');
+        return true;
     } catch(err) {
         console.log(err);
-        alert('Failed: ' + err.response.data.message);
+        notifyError(`Could not save the product: ${err.response?.data?.message || err.message}`);
+        return false;
     }
 }
 
 export const removeProduct = async (id) => {
     try {
         await axios.delete(`${Backend_URL}product/${id}`);
-        alert('product successfully removed');
+        notifySuccess('Product removed.');
+        return true;
     } catch(err) {
         console.log(err);
-        alert('Failed: ' + err.response.data.message);
+        notifyError(`Could not remove the product: ${err.response?.data?.message || err.message}`);
+        return false;
     }
 }
 
@@ -539,7 +547,7 @@ export const generateSecurityQRCodes = async (product_id, amount, company_id) =>
         return res.data.data;
     } catch (err) {
         console.log(err);
-        alert(err.response?.data?.message || 'Failed to generate Security QR codes');
+        notifyError(err.response?.data?.message || 'Could not create Security QR codes. Please try again.');
         return [];
     }
 }
@@ -564,7 +572,7 @@ export const deleteQrCode = async (product_id, qrcode_id) => {
         await axios.delete(`${Backend_URL}qrcode/product/${product_id}/${qrcode_id}`);
         return true;
     } catch (err) {
-        alert(err.response?.data?.message || 'Failed to delete QR code');
+        notifyError(err.response?.data?.message || 'Could not delete the QR code.');
         return false;
     }
 }
@@ -574,7 +582,7 @@ export const deleteSecurityQrCode = async (product_id, security_qrcode_id) => {
         await axios.delete(`${Backend_URL}qrcode/security/${product_id}/${security_qrcode_id}`);
         return true;
     } catch (err) {
-        alert(err.response?.data?.message || 'Failed to delete Security QR code');
+        notifyError(err.response?.data?.message || 'Could not delete the Security QR code.');
         return false;
     }
 }
@@ -590,7 +598,7 @@ export const registerProductIdentifier = async (product_id, company_id, source_t
         });
         return res.data.data;
     } catch (err) {
-        alert(err.response?.data?.message || 'Failed to register identifier');
+        notifyError(err.response?.data?.message || 'Could not add this tag or barcode.');
         return null;
     }
 }
@@ -607,7 +615,7 @@ export const bulkRegisterProductIdentifiers = async (product_id, company_id, sou
         });
         return res.data.data;
     } catch (err) {
-        alert(err.response?.data?.message || 'Failed to import identifiers');
+        notifyError(err.response?.data?.message || 'Could not import the file.');
         return null;
     }
 }
@@ -627,7 +635,7 @@ export const deleteProductIdentifier = async (id) => {
         await axios.delete(`${Backend_URL}product-identifier/${id}`);
         return true;
     } catch (err) {
-        alert(err.response?.data?.message || 'Failed to remove identifier');
+        notifyError(err.response?.data?.message || 'Could not remove this tag or barcode.');
         return false;
     }
 }
@@ -685,7 +693,7 @@ export const updateCompany = async(id, data) => {
     try {
         const res = await axios.put(`${Backend_URL}company/${id}`, data);
         // Set when the admin email couldn't be made this company's Supervisor.
-        if (res.data?.warning) alert(res.data.warning);
+        if (res.data?.warning) notify(res.data.warning, 'warning');
         return true;
     } catch (err) {
         console.log(err);
