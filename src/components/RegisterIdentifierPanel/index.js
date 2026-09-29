@@ -340,11 +340,11 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           <TextField
             type="number"
             label="Test values"
-            helperText="For testing only. These are random numbers, not real tags.""
+            helperText="For testing only. These are random numbers, not real tags."
             value={bulkAmount}
             onChange={(e) => setBulkAmount(e.target.value)}
             inputProps={{ min: 1, max: MAX_BULK }}
-            sx={{ width: 100 }}
+            sx={{ width: 260 }}
           />
           <Button
             variant="outlined"
