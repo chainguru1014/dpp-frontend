@@ -17,7 +17,7 @@ const Stat = ({ label, value, highlight }) => (
             bgcolor: highlight ? 'rgba(31,51,97,0.06)' : 'background.default',
         }}
     >
-        <Typography sx={{ fontWeight: 400, fontSize: 22, lineHeight: 1.2, color: highlight ? 'primary.main' : 'text.primary' }}>
+        <Typography sx={{ fontWeight: 600, fontSize: 24, lineHeight: 1.2, color: highlight ? 'primary.main' : 'text.primary' }}>
             {value}
         </Typography>
         <Typography variant="caption" color="text.secondary">

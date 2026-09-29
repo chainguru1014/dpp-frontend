@@ -21,7 +21,8 @@ const DETAIL_FACT_ROWS = [
   { key: 'fit', icon: AccessibilityNewIcon, label: (v) => `Fit: ${v}` },
   { key: 'wash', icon: WaterDropIcon, label: (v) => `Wash: ${v}` },
   { key: 'durability', icon: ShieldIcon, label: (v) => `Durability: ${v}` },
-  { key: 'traceableIdentity', icon: QrCode2Icon, label: (v) => v || 'Traceable product identity' },
+  // A bare "Yes"/"true" read as a stray word on the card — show a sentence instead.
+  { key: 'traceableIdentity', icon: QrCode2Icon, label: (v) => (v && !/^(yes|true)$/i.test(String(v).trim()) ? v : 'Traceable product identity') },
 ];
 
 // One media cell in the right-hand strip. Each cell is exactly a quarter of the
@@ -33,7 +34,7 @@ const cellSx = {
   position: 'relative',
   flex: `0 0 calc((100% - ${MEDIA_GAP_PX * 3}px) / 4)`,
   maxWidth: `calc((100% - ${MEDIA_GAP_PX * 3}px) / 4)`,
-  height: 260,
+  height: 200,
   borderRadius: 1.5,
   border: '2px solid',
   borderColor: 'primary.main',
@@ -103,7 +104,7 @@ function VideoCell({ video }) {
 // row is selected — brand identity top-left, media strip on the right (images
 // first, then any YouTube videos, all quarter-width so four are always fully
 // visible; horizontal-scrolls past four), the 5 structured detail facts, and
-// the 5 row-level actions (Generate Code / Preview DPP / Edit / Transfer
+// the 5 row-level actions (Generate Code / Preview product page / Edit / Ownership
 // History / Remove) bottom-right.
 export default function ProductDraftCard({ product, onPreview, onTransferHistory, onPrintCode, onEdit, onRemove }) {
   if (!product) return null;
@@ -140,7 +141,7 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
                   variant="caption"
                   color="text.secondary"
                   noWrap
-                  sx={{ display: 'block', letterSpacing: 0.5, textTransform: 'uppercase', fontSize: '0.65rem' }}
+                  sx={{ display: 'block', letterSpacing: 0.3, fontSize: '0.85rem' }}
                 >
                   {brand.detail}
                 </Typography>
@@ -174,7 +175,7 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
               justifyContent: mediaCount > 4 ? 'flex-start' : 'flex-end',
               gap: `${MEDIA_GAP_PX}px`,
               overflowX: 'auto',
-              minHeight: 260,
+              minHeight: 200,
             }}
           >
             {images.map((img, i) => (
@@ -196,11 +197,11 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
       </Stack>
 
       <Stack direction="row" spacing={1.25} justifyContent="flex-end" flexWrap="wrap" useFlexGap sx={{ mt: 2.5 }}>
-        <Button variant="outlined" color="primary" startIcon={<PrintIcon />} onClick={onPrintCode}>Generate Code</Button>
-        <Button variant="outlined" color="primary" startIcon={<VisibilityIcon />} onClick={onPreview}>Preview DPP</Button>
+        {onPrintCode && <Button variant="outlined" color="primary" startIcon={<PrintIcon />} onClick={onPrintCode}>Generate Code</Button>}
+        <Button variant="outlined" color="primary" startIcon={<VisibilityIcon />} onClick={onPreview}>Preview product page</Button>
         {/* Omitted for read-only roles (no handler passed). */}
         {onEdit && <Button variant="outlined" color="primary" startIcon={<EditIcon />} onClick={onEdit}>Edit Product</Button>}
-        <Button variant="outlined" color="primary" startIcon={<HistoryIcon />} onClick={onTransferHistory}>Transfer History</Button>
+        <Button variant="outlined" color="primary" startIcon={<HistoryIcon />} onClick={onTransferHistory}>Ownership History</Button>
         {onRemove && <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={onRemove}>Remove Product</Button>}
       </Stack>
     </Box>

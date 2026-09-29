@@ -58,17 +58,17 @@ const SecurityQRCode = ({ data, identifer, onDelete }) => {
                     <CopyIconButton value={pmcEntry.serial} />
                 </Box>
             )}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 0.5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'row-reverse', justifyContent: 'space-between', gap: 0.5, mt: 0.5 }}>
                 {qrcodeImage && (
                     <Tooltip title="Download image">
-                        <IconButton component="a" href={qrcodeImage} download={`security-qr-${data}.png`} size="small">
+                        <IconButton aria-label="Download image" component="a" href={qrcodeImage} download={`security-qr-${data}.png`} size="small">
                             <DownloadIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
                 )}
                 {onDelete && (
-                    <Tooltip title="Remove">
-                        <IconButton size="small" onClick={onDelete}>
+                    <Tooltip title="Delete this code">
+                        <IconButton size="small" aria-label="Delete this code" color="error" onClick={onDelete}>
                             <DeleteIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>

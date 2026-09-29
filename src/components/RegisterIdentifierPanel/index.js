@@ -24,6 +24,7 @@ import { renderEan13ToDataUrl, toValidEan13 } from '../../utils/barcodeRenderer'
 import { truncateCode } from '../../utils/truncateCode';
 import { parseIdentifierCsv } from '../../utils/parseIdentifierCsv';
 import PrintDialog from '../printModal/PrintDialog';
+import { confirmAction } from '../../utils/feedbackBus';
 
 const SOURCE_TYPES = [
   { value: 'barcode', label: 'Barcode / GTIN' },
@@ -232,6 +233,13 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
   };
 
   const handleDelete = async (id) => {
+    const sure = await confirmAction({
+      title: `Remove this ${activeLabel || 'identifier'}?`,
+      message: 'Scanning it will no longer open this product.',
+      confirmText: 'Remove',
+      danger: true,
+    });
+    if (!sure) return;
     if (await deleteProductIdentifier(id)) {
       await refresh();
     }
@@ -270,13 +278,16 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
       {!lockedSourceType && (
         <Typography variant="h6" sx={{ mb: 1, fontWeight: 400 }}>Registered Identifiers</Typography>
       )}
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        {lockedSourceType
-          ? `Register this product's own ${activeLabel} so scanning it in the app resolves to this product and gets a PMC. Use this for identifiers printed outside this platform.`
-          : "Register this product's own barcode, GTIN, NFC tag, or RFID tag so scanning it in the app resolves to this product and gets a PMC. Use this for identifiers printed outside this platform — including barcodes from companies that don't follow the GS1 Digital Link standard."}
+      {!lockedSourceType && (
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Register this product's own barcode, GTIN, NFC tag or RFID tag so scanning it in the app opens this product. Use this for labels printed outside this platform.
+        </Typography>
+      )}
+      <Typography variant="subtitle1" sx={{ mb: 1 }}>
+        Add a {lockedSourceType ? activeLabel : 'label'} you already have
       </Typography>
 
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 1.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 3 }}>
         {!lockedSourceType && (
           <TextField
             select
@@ -292,15 +303,13 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           </TextField>
         )}
         <TextField
-          label={lockedSourceType ? `${activeLabel} value` : 'Barcode / GTIN / Tag value'}
-          size="small"
+          label={lockedSourceType ? `${activeLabel} number` : 'Barcode / GTIN / tag number'}
           value={rawValue}
           onChange={(e) => setRawValue(e.target.value)}
           sx={{ width: lockedSourceType ? VALUE_WIDTH[lockedSourceType] || DEFAULT_VALUE_WIDTH : DEFAULT_VALUE_WIDTH }}
         />
         <TextField
           label="Note (optional)"
-          size="small"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           sx={{ minWidth: 180 }}
@@ -309,8 +318,9 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           variant="contained"
           onClick={handleRegister}
           disabled={submitting || !rawValue.trim() || !companyId}
+          sx={{ mt: 0.5 }}
         >
-          Register
+          Add
         </Button>
       </Box>
 
@@ -318,19 +328,19 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           per type (see generateRandomValue above). Intentionally a separate
           control from manual Register above: this creates and registers
           `amount` values immediately. */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
         <Button
           variant="outlined"
           onClick={() => setPrintOpen(true)}
           disabled={visibleIdentifiers.length === 0}
         >
-          Print
+          Download labels to print
         </Button>
-        <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
           <TextField
             type="number"
-            label="Amount"
-            size="small"
+            label="Test values"
+            helperText="For testing only. These are random numbers, not real tags.""
             value={bulkAmount}
             onChange={(e) => setBulkAmount(e.target.value)}
             inputProps={{ min: 1, max: MAX_BULK }}
@@ -341,7 +351,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
             onClick={handleBulkGenerate}
             disabled={bulkGenerating || !companyId || !bulkAmount || Number(bulkAmount) < 1}
           >
-            {bulkGenerating ? 'Generating…' : 'Generate'}
+            {bulkGenerating ? 'Creating…' : 'Create test values'}
           </Button>
           {enableCsvImport && (
             <Button
@@ -405,7 +415,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
               />
             )}
           </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1.5 }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 2 }}>
             {pageItems.map((item) => (
               <Box
                 key={item._id}
@@ -458,7 +468,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
                     </Tooltip>
                   )}
                   <Tooltip title="Remove">
-                    <IconButton size="small" onClick={() => handleDelete(item._id)}>
+                    <IconButton size="small" aria-label="Remove" onClick={() => handleDelete(item._id)}>
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
@@ -469,7 +479,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
         </>
       ) : (
         <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-          {lockedSourceType ? `No ${activeLabel} registered yet for this product.` : 'No identifiers registered yet for this product.'}
+          {lockedSourceType ? `No ${activeLabel} added to this product yet.` : 'No labels added to this product yet.'}
         </Typography>
       )}
     </Box>

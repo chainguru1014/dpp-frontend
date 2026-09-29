@@ -300,7 +300,7 @@ const InnerPage = () => {
   const [certifications, setCertifications] = useState([]);
   const [sustainabilityImpact, setSustainabilityImpact] = useState({ co2Avoided: '', waterSaved: '', energySaved: '', items: [] });
   // selectedProduct is initialized above with localStorage
-  const [mintAmount, setMintAmount] = useState(0);
+  const [mintAmount, setMintAmount] = useState(10);
   const [qrcodes, setQrCodes] = useState([]);
   const [securityQRCodes, setSecurityQRCodes] = useState([]);
   const [productImages, setProductImages] = useState([]);

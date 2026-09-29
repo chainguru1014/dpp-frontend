@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Box, Button, Tab, Tabs, TextField, Typography, Pagination } from '@mui/material';
+import { Alert, Box, Button, Tab, Tabs, TextField, Typography, Pagination } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import DownloadIcon from '@mui/icons-material/Download';
 import qrcode from 'qrcode';
 import CircularProgressWithLabel from '../../components/CircularProgressBar';
 import QRCode from '../../components/displayQRCode';
@@ -10,19 +12,21 @@ import { printSecurityQRCodes } from '../../helper';
 
 const SECURITY_BASE_URL = process.env.REACT_APP_SECURITY_BASE_URL || process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com';
 
+// `help` is one plain sentence under the tabs so a first-time user knows
+// which label type to pick.
 const TABS = [
-  { key: 'qr', label: 'QR Code' },
-  { key: 'securityQr', label: 'Security QR Code' },
-  { key: 'gs1dl', label: 'GS1 Digital Link' },
-  { key: 'rfid', label: 'RFID Tag' },
-  { key: 'nfc', label: 'NFC Tag' },
-  { key: 'barcode', label: 'Barcode' },
+  { key: 'qr', label: 'QR Code', help: 'The usual choice. Each QR code is a unique label; scanning it with a phone opens this product\u2019s page.' },
+  { key: 'securityQr', label: 'Security QR Code', help: 'A QR code with a hidden security key, so shoppers can check the product is genuine. Use it for valuable items.' },
+  { key: 'gs1dl', label: 'GS1 Digital Link', help: 'For products that already have a GS1 barcode number (GTIN). Enter your GS1 link to connect it to this product.' },
+  { key: 'rfid', label: 'RFID Tag', help: 'For RFID tags sewn into or attached to the product. Enter each tag\u2019s number (EPC) or import a list from a CSV file.' },
+  { key: 'nfc', label: 'NFC Tag', help: 'For NFC tags that phones read by touching them. Enter each tag\u2019s ID.' },
+  { key: 'barcode', label: 'Barcode', help: 'For an existing printed barcode (EAN-13). Enter the 13-digit number to connect it to this product.' },
 ];
 
 // 5 per row, filling the dialog's full width — same sizing for every tab
 // that shows an image (QR, Security QR, and RegisterIdentifierPanel's own
 // grid for GS1-DL/Barcode/RFID/NFC).
-const GRID_SX = { display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1.5, width: '100%' };
+const GRID_SX = { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 2, width: '100%' };
 
 // Replaces the old single-section print view (ProductMintSection) with one
 // tab per identifier format. QR/Security QR keep the existing mint+print
@@ -138,38 +142,42 @@ const GenerateAndPrintPanel = ({
           <Tab key={t.key} value={t.key} label={t.label} />
         ))}
       </Tabs>
+      <Alert severity="info" icon={false} sx={{ mb: 2 }}>
+        {TABS.find((t) => t.key === tab)?.help}
+      </Alert>
 
       {tab === 'qr' && (
         <Box>
           {canGenerate && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-              <Button variant="outlined" onClick={onOpenPrint} disabled={total === 0}>
-                Print
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+              <TextField
+                type="number"
+                label="How many QR codes?"
+                value={mintAmount}
+                onChange={(e) => setMintAmount(e.target.value)}
+                inputProps={{ min: 1 }}
+                helperText="One code per physical item."
+                sx={{ width: 200 }}
+              />
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={batchMintHandler}
+                disabled={!mintAmount || mintAmount <= 0 || isMinting}
+                sx={{ mt: 0.5 }}
+              >
+                {isMinting ? 'Creating…' : `Create ${Number(mintAmount) > 0 ? Number(mintAmount) : ''} QR codes`}
               </Button>
-              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                <TextField
-                  type="number"
-                  label="Amount"
-                  variant="outlined"
-                  size="small"
-                  value={mintAmount}
-                  onChange={(e) => setMintAmount(e.target.value)}
-                  sx={{ minWidth: 120 }}
-                />
-                <Button
-                  variant="outlined"
-                  onClick={batchMintHandler}
-                  disabled={!mintAmount || mintAmount <= 0}
-                >
-                  Generate
-                </Button>
-                {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
-              </Box>
+              {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
+              <Box sx={{ flexGrow: 1 }} />
+              <Button variant="outlined" startIcon={<DownloadIcon />} onClick={onOpenPrint} disabled={total === 0} sx={{ mt: 0.5 }}>
+                Download labels to print
+              </Button>
             </Box>
           )}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1.5, mb: 1.5 }}>
             <Typography variant="body2" color="text.secondary">
-              {total > 0 ? `Showing ${startItem}–${endItem} of ${total}` : 'No QR codes generated yet.'}
+              {total > 0 ? `Showing ${startItem}–${endItem} of ${total} QR codes` : 'No QR codes yet. Enter how many you need and press Create.'}
             </Typography>
             {total > PAGE_SIZE && (
               <Pagination
@@ -200,33 +208,36 @@ const GenerateAndPrintPanel = ({
       {tab === 'securityQr' && (
         <Box>
           {canGenerate && (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+              <TextField
+                type="number"
+                label="How many Security QR codes?"
+                value={mintAmount}
+                onChange={(e) => setMintAmount(e.target.value)}
+                inputProps={{ min: 1 }}
+                helperText="One code per physical item."
+                sx={{ width: 240 }}
+              />
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={onGenerateSecurityQR}
+                disabled={!mintAmount || mintAmount <= 0 || isMinting}
+                sx={{ mt: 0.5 }}
+              >
+                {isMinting ? 'Creating…' : `Create ${Number(mintAmount) > 0 ? Number(mintAmount) : ''} Security QR codes`}
+              </Button>
+              {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
+              <Box sx={{ flexGrow: 1 }} />
               <Button
                 variant="outlined"
+                startIcon={<DownloadIcon />}
                 onClick={() => setSecurityPrintOpen(true)}
                 disabled={securityTotal === 0}
+                sx={{ mt: 0.5 }}
               >
-                Print
+                Download labels to print
               </Button>
-              <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-                <TextField
-                  type="number"
-                  label="Amount"
-                  variant="outlined"
-                  size="small"
-                  value={mintAmount}
-                  onChange={(e) => setMintAmount(e.target.value)}
-                  sx={{ minWidth: 120 }}
-                />
-                <Button
-                  variant="outlined"
-                  onClick={onGenerateSecurityQR}
-                  disabled={!mintAmount || mintAmount <= 0}
-                >
-                  Generate
-                </Button>
-                {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
-              </Box>
             </Box>
           )}
           {securityTotal > 0 ? (
@@ -261,7 +272,7 @@ const GenerateAndPrintPanel = ({
             </Box>
           ) : (
             <Typography color="text.secondary" sx={{ fontStyle: 'italic' }}>
-              No Security QR Codes generated yet.
+              No Security QR codes yet. Enter how many you need and press Create.
             </Typography>
           )}
           <PrintDialog
