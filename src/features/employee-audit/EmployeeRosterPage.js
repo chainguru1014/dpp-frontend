@@ -252,32 +252,6 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
 
   const columns = [
     {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 120,
-      sortable: false,
-      renderCell: (p) =>
-        editingId === p.row._id ? (
-          <>
-            <IconButton size="small" onClick={() => saveEdit(p.row)} aria-label="Save">
-              <SaveIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" onClick={cancelEdit} aria-label="Cancel">
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </>
-        ) : (
-          <>
-            <IconButton size="small" onClick={() => startEdit(p.row)} aria-label="Edit">
-              <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" onClick={() => handleRemove(p.row)} aria-label="Remove">
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </>
-        ),
-    },
-    {
       field: 'email',
       headerName: 'Corporate Email',
       width: 240,
@@ -381,6 +355,32 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
           />
         ) : (
           p.row.rfidReaderIds?.zebra || '—'
+        ),
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 120,
+      sortable: false,
+      renderCell: (p) =>
+        editingId === p.row._id ? (
+          <>
+            <IconButton size="small" onClick={() => saveEdit(p.row)} aria-label="Save">
+              <SaveIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={cancelEdit} aria-label="Cancel">
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </>
+        ) : (
+          <>
+            <IconButton size="small" onClick={() => startEdit(p.row)} aria-label="Edit">
+              <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={() => handleRemove(p.row)} aria-label="Remove">
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </>
         ),
     },
   ];

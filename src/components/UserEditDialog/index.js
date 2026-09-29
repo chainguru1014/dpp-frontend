@@ -35,6 +35,34 @@ const UserEditDialog = ({ user, onChange, onClose, onSave }) => {
               onChange={(e) => onChange({ ...user, email: e.target.value })}
               fullWidth
             />
+            {!Object.prototype.hasOwnProperty.call(user, 'isVerified') && (
+              <>
+                <TextField
+                  label="First Name"
+                  value={user.firstName || ''}
+                  onChange={(e) => onChange({ ...user, firstName: e.target.value })}
+                  fullWidth
+                />
+                <TextField
+                  label="Last Name"
+                  value={user.lastName || ''}
+                  onChange={(e) => onChange({ ...user, lastName: e.target.value })}
+                  fullWidth
+                />
+                <TextField
+                  label="Country"
+                  value={user.country || ''}
+                  onChange={(e) => onChange({ ...user, country: e.target.value })}
+                  fullWidth
+                />
+                <TextField
+                  label="Phone Number"
+                  value={user.phoneNumber || ''}
+                  onChange={(e) => onChange({ ...user, phoneNumber: e.target.value })}
+                  fullWidth
+                />
+              </>
+            )}
             <FormControl fullWidth>
               <InputLabel>Role</InputLabel>
               <Select
