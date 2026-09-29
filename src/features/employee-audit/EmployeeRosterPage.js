@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -13,8 +13,6 @@ import {
   Select,
   MenuItem,
   Alert,
-  Switch,
-  FormControlLabel,
   IconButton,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -170,6 +168,11 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
     zebraReaderId: '',
   });
   const [rowError, setRowError] = useState('');
+  const [emailFilter, setEmailFilter] = useState('');
+  const [nameFilter, setNameFilter] = useState('');
+  const [companyFilter, setCompanyFilter] = useState('');
+  const [domainFilter, setDomainFilter] = useState('');
+  const [employeeTypeFilter, setEmployeeTypeFilter] = useState('all');
 
   const reload = () => {
     setLoading(true);
@@ -183,10 +186,20 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const handleToggleActive = async (employee) => {
-    await updateEmployee(token, employee._id, { isActive: !employee.isActive });
-    reload();
-  };
+  const filteredEmployees = useMemo(() => {
+    const email = emailFilter.trim().toLowerCase();
+    const name = nameFilter.trim().toLowerCase();
+    const company = companyFilter.trim().toLowerCase();
+    const domain = domainFilter.trim().toLowerCase();
+    return employees.filter((e) => {
+      if (email && !(e.email || '').toLowerCase().includes(email)) return false;
+      if (name && !(e.name || '').toLowerCase().includes(name)) return false;
+      if (company && !(e.companyName || '').toLowerCase().includes(company)) return false;
+      if (domain && !(e.emailDomain || '').toLowerCase().includes(domain)) return false;
+      if (employeeTypeFilter !== 'all' && (e.employeeType || 'working_employee') !== employeeTypeFilter) return false;
+      return true;
+    });
+  }, [employees, emailFilter, nameFilter, companyFilter, domainFilter, employeeTypeFilter]);
 
   const startEdit = (employee) => {
     setRowError('');
@@ -239,6 +252,32 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
 
   const columns = [
     {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 120,
+      sortable: false,
+      renderCell: (p) =>
+        editingId === p.row._id ? (
+          <>
+            <IconButton size="small" onClick={() => saveEdit(p.row)} aria-label="Save">
+              <SaveIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={cancelEdit} aria-label="Cancel">
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </>
+        ) : (
+          <>
+            <IconButton size="small" onClick={() => startEdit(p.row)} aria-label="Edit">
+              <EditIcon fontSize="small" />
+            </IconButton>
+            <IconButton size="small" onClick={() => handleRemove(p.row)} aria-label="Remove">
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </>
+        ),
+    },
+    {
       field: 'email',
       headerName: 'Corporate Email',
       width: 240,
@@ -273,7 +312,6 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
     ...(showCompanyColumn
       ? [{ field: 'companyName', headerName: 'Company', width: 160, valueGetter: (p) => p.row.companyName || '—' }]
       : []),
-    { field: 'employeeCode', headerName: 'Employee Code', width: 160, valueGetter: (p) => p.row.employeeCode || '—' },
     { field: 'emailDomain', headerName: 'Domain', width: 140 },
     {
       field: 'employeeType',
@@ -345,49 +383,6 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
           p.row.rfidReaderIds?.zebra || '—'
         ),
     },
-    {
-      field: 'isActive',
-      headerName: 'Active',
-      width: 120,
-      renderCell: (p) => (
-        <FormControlLabel
-          control={<Switch checked={!!p.row.isActive} onChange={() => handleToggleActive(p.row)} size="small" />}
-          label=""
-        />
-      ),
-    },
-    {
-      field: 'lastLoginAt',
-      headerName: 'Last Login',
-      width: 190,
-      valueGetter: (p) => (p.row.lastLoginAt ? new Date(p.row.lastLoginAt).toLocaleString() : 'Never'),
-    },
-    {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 120,
-      sortable: false,
-      renderCell: (p) =>
-        editingId === p.row._id ? (
-          <>
-            <IconButton size="small" onClick={() => saveEdit(p.row)} aria-label="Save">
-              <SaveIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" onClick={cancelEdit} aria-label="Cancel">
-              <CloseIcon fontSize="small" />
-            </IconButton>
-          </>
-        ) : (
-          <>
-            <IconButton size="small" onClick={() => startEdit(p.row)} aria-label="Edit">
-              <EditIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" onClick={() => handleRemove(p.row)} aria-label="Remove">
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </>
-        ),
-    },
   ];
 
   return (
@@ -403,11 +398,51 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
           {rowError}
         </Alert>
       )}
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+        <TextField
+          label="Email"
+          size="small"
+          value={emailFilter}
+          onChange={(e) => setEmailFilter(e.target.value)}
+        />
+        <TextField
+          label="Name"
+          size="small"
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+        />
+        {showCompanyColumn && (
+          <TextField
+            label="Company"
+            size="small"
+            value={companyFilter}
+            onChange={(e) => setCompanyFilter(e.target.value)}
+          />
+        )}
+        <TextField
+          label="Domain"
+          size="small"
+          value={domainFilter}
+          onChange={(e) => setDomainFilter(e.target.value)}
+        />
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Employee Type</InputLabel>
+          <Select
+            label="Employee Type"
+            value={employeeTypeFilter}
+            onChange={(e) => setEmployeeTypeFilter(e.target.value)}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="working_employee">Working Employee</MenuItem>
+            <MenuItem value="supervisor">Supervisor</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
       <Box sx={{ bgcolor: '#fff', borderRadius: 1, boxShadow: 1 }}>
         <DataGrid
           loading={loading}
           columns={columns}
-          rows={employees}
+          rows={filteredEmployees}
           getRowId={(row) => row._id}
           autoHeight
           initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}

@@ -1,18 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
+  TextField,
   Typography,
   IconButton,
   CircularProgress,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
-import { CheckCircle, Delete, Edit } from '@mui/icons-material';
+import { Delete, Edit } from '@mui/icons-material';
 import UserEditDialog from '../../components/UserEditDialog';
-import { getAdminUserData, approveUser, removeUser, updateUserProfile } from '../../helper';
+import { getAdminUserData, removeUser, updateUserProfile } from '../../helper';
 
 const AdminLoadingOverlay = () => (
   <Box
@@ -35,23 +32,11 @@ const AdminLoadingOverlay = () => (
   </Box>
 );
 
-const NormalUsersTable = ({ users, loading, onEdit, onApprove, onRemove }) => {
+const NormalUsersTable = ({ users, loading, onEdit, onRemove }) => {
   const columns = [
     { field: 'name', headerName: 'Name', width: 150 },
     { field: 'email', headerName: 'Email', width: 200 },
     { field: 'role', headerName: 'Role', width: 120 },
-    { field: 'company_name', headerName: 'Company Name', width: 180 },
-    { field: 'company_detail', headerName: 'Company Detail', width: 220 },
-    {
-      field: 'isApproved',
-      headerName: 'Status',
-      width: 120,
-      renderCell: (data) => (
-        <span style={{ whiteSpace: 'pre-line', padding: 10 }}>
-          {data.value ? 'Approved' : 'Waiting'}
-        </span>
-      ),
-    },
     {
       field: 'actions',
       headerName: 'Actions',
@@ -61,11 +46,6 @@ const NormalUsersTable = ({ users, loading, onEdit, onApprove, onRemove }) => {
           <IconButton onClick={() => onEdit(data.row)}>
             <Edit />
           </IconButton>
-          {!data.row.isApproved && (
-            <IconButton onClick={() => onApprove(data.id)}>
-              <CheckCircle />
-            </IconButton>
-          )}
           <IconButton onClick={() => onRemove(data.id)}>
             <Delete />
           </IconButton>
@@ -97,25 +77,31 @@ const NormalUsersTable = ({ users, loading, onEdit, onApprove, onRemove }) => {
 // Management page now (see features/admin/CompanyManagementSection.js).
 const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [nameFilter, setNameFilter] = useState('');
+  const [emailFilter, setEmailFilter] = useState('');
   const [editingUser, setEditingUser] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const reloadUsers = () => {
     setLoading(true);
-    getAdminUserData(statusFilter)
-      .then((data) => {
-        const sortedUsers = (data.users || []).sort((a, b) =>
-          b.isApproved === a.isApproved ? 0 : b.isApproved ? 1 : -1,
-        );
-        setUsers(sortedUsers);
-      })
+    getAdminUserData()
+      .then((data) => setUsers(data.users || []))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
     reloadUsers();
-  }, [statusFilter]);
+  }, []);
+
+  const filteredUsers = useMemo(() => {
+    const name = nameFilter.trim().toLowerCase();
+    const email = emailFilter.trim().toLowerCase();
+    return users.filter((u) => {
+      if (name && !(u.name || '').toLowerCase().includes(name)) return false;
+      if (email && !(u.email || '').toLowerCase().includes(email)) return false;
+      return true;
+    });
+  }, [users, nameFilter, emailFilter]);
 
   const handleEditUserSave = async () => {
     if (!editingUser) return;
@@ -127,28 +113,24 @@ const AdminUsersPage = () => {
 
   return (
     <>
-      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}>
-        <FormControl size="small" sx={{ minWidth: 160 }}>
-          <InputLabel>Status Filter</InputLabel>
-          <Select
-            label="Status Filter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="approved">Approved</MenuItem>
-            <MenuItem value="waiting">Waiting</MenuItem>
-          </Select>
-        </FormControl>
+      <Box sx={{ mb: 2, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+        <TextField
+          label="Name"
+          size="small"
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+        />
+        <TextField
+          label="Email"
+          size="small"
+          value={emailFilter}
+          onChange={(e) => setEmailFilter(e.target.value)}
+        />
       </Box>
       <NormalUsersTable
-        users={users}
+        users={filteredUsers}
         loading={loading}
         onEdit={(user) => setEditingUser(user)}
-        onApprove={async (id) => {
-          await approveUser(id);
-          reloadUsers();
-        }}
         onRemove={async (id) => {
           if (!window.confirm('Remove this user? This cannot be undone.')) return;
           await removeUser(id);
