@@ -7,6 +7,10 @@ import LockIcon from '@mui/icons-material/Lock';
 import AuthShell from '../AuthShell';
 import { compactMediaQuery } from '../../theme';
 
+// Helper text on the see-through sign-in card: darker than the theme's
+// grey so it stays readable over the dark background photos.
+const AUTH_MUTED = '#26384d';
+
 const FEATURES = [
   {
     icon: QrCode2Icon,
@@ -46,7 +50,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
           <Typography variant="h5" component="h1" sx={{ textAlign: 'center', mb: 0.5 }}>
             {mode === 'review' ? 'Privacy preferences' : 'Meet your AI Concierge'}
           </Typography>
-          <Typography color="text.secondary" sx={{ textAlign: 'center', mb: 2 }}>
+          <Typography color={AUTH_MUTED} sx={{ textAlign: 'center', mb: 2 }}>
             An optional helper that personalises the app for you.
           </Typography>
 
@@ -65,7 +69,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
               </Box>
               <Box>
                 <Typography sx={{ fontWeight: 600 }}>{title}</Typography>
-                <Typography color="text.secondary">{description}</Typography>
+                <Typography color={AUTH_MUTED}>{description}</Typography>
               </Box>
             </Box>
           ))}
@@ -121,7 +125,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             {saving ? 'Saving…' : mode === 'review' ? 'Save my choice' : 'Continue'}
           </Button>
           {consent === null && (
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+            <Typography variant="body2" color={AUTH_MUTED} sx={{ textAlign: 'center' }}>
               Please choose Yes or No above to continue.
             </Typography>
           )}

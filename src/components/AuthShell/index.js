@@ -211,9 +211,10 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
         // font color changes (see useAuthShellBright), never the card
         // container itself.
         // See-through frosted glass like the original card (which was 20%
-        // white with a 3px blur), but less transparent so the dark text
-        // stays readable over any photo.
-        bgcolor: alpha('#ffffff', 0.6),
+        // white with a 3px blur): 40% white with a 10px blur. Grey helper
+        // text inside is darkened (AUTH_MUTED in AuthPage / consent page) so
+        // it stays readable over the dark photos.
+        bgcolor: alpha('#ffffff', 0.4),
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         border: '1px solid rgba(255,255,255,0.55)',

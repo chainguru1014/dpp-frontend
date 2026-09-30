@@ -8,6 +8,10 @@ import yometelLogoTrans from '../../assets/yometel-logo-trans.png';
 import theme, { compactMediaQuery } from '../../theme';
 import { notifyError } from '../../utils/feedbackBus';
 
+// Helper text on the see-through sign-in card: darker than the theme's
+// grey so it stays readable over the dark background photos.
+const AUTH_MUTED = '#26384d';
+
 // Google "G" mark (Simple Icons, CC0) in the app's navy.
 const GoogleIcon = ({ color = theme.palette.primary.main }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
@@ -152,7 +156,7 @@ const AuthPage = ({
         {logo}
         <Box component="form" onSubmit={handleProfileSubmit} sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
           <Typography variant="h5" component="h1" sx={{ mb: 0.5 }}>Your details</Typography>
-          <Typography color="text.secondary" sx={{ mb: 2 }}>
+          <Typography color={AUTH_MUTED} sx={{ mb: 2 }}>
             Almost done. Please fill in these details to finish setting up your account. Fields marked * are required.
           </Typography>
 
@@ -187,7 +191,7 @@ const AuthPage = ({
                 </TextField>
               </Grid>
               <Grid item xs={12}>
-                <Divider sx={{ my: 0.5 }}><Typography variant="body2" color="text.secondary">Address</Typography></Divider>
+                <Divider sx={{ my: 0.5 }}><Typography variant="body2" color={AUTH_MUTED}>Address</Typography></Divider>
               </Grid>
               <Grid item xs={12}>
                 <TextField label="Street and house number" required fullWidth value={registerData.addressStreet} onChange={setReg('addressStreet')} sx={fieldSx} autoComplete="street-address" />
@@ -234,7 +238,7 @@ const AuthPage = ({
               <Typography variant="h5" component="h1" sx={{ textAlign: 'center' }}>
                 {isSignup ? 'Create an account' : 'Sign in'}
               </Typography>
-              <Typography color="text.secondary" sx={{ textAlign: 'center', mt: 0.75 }}>
+              <Typography color={AUTH_MUTED} sx={{ textAlign: 'center', mt: 0.75 }}>
                 Enter your email. We will send you a 6-digit code, so you don&apos;t need a password.
               </Typography>
             </Box>
@@ -258,7 +262,7 @@ const AuthPage = ({
 
             {otpNotice && <Alert severity="error" role="alert">{otpNotice}</Alert>}
 
-            <Divider><Typography variant="body2" color="text.secondary">or</Typography></Divider>
+            <Divider><Typography variant="body2" color={AUTH_MUTED}>or</Typography></Divider>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               {/* Custom-styled Google button with the real (invisible) Google
@@ -278,7 +282,7 @@ const AuthPage = ({
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-              <Typography color="text.secondary">
+              <Typography color={AUTH_MUTED}>
                 {isSignup ? 'Already have an account?' : 'New here?'}
                 <Button
                   onClick={() => { setAuthMode(isSignup ? 'signin' : 'signup'); setOtpNotice(''); }}
@@ -288,7 +292,7 @@ const AuthPage = ({
                 </Button>
               </Typography>
               {onOpenPrivacyPreferences && (
-                <Button onClick={onOpenPrivacyPreferences} sx={{ minHeight: 40, color: 'text.secondary', textDecoration: 'underline' }}>
+                <Button onClick={onOpenPrivacyPreferences} sx={{ minHeight: 40, color: AUTH_MUTED, textDecoration: 'underline' }}>
                   Privacy preferences
                 </Button>
               )}
@@ -298,7 +302,7 @@ const AuthPage = ({
           <>
             <Box>
               <Typography variant="h5" component="h1" sx={{ textAlign: 'center' }}>Check your email</Typography>
-              <Typography color="text.secondary" sx={{ textAlign: 'center', mt: 0.75 }}>
+              <Typography color={AUTH_MUTED} sx={{ textAlign: 'center', mt: 0.75 }}>
                 We sent a 6-digit code to <Box component="strong" sx={{ color: 'text.primary', wordBreak: 'break-all' }}>{otpEmail}</Box>. Type it below.
               </Typography>
             </Box>
@@ -333,7 +337,7 @@ const AuthPage = ({
 
             {otpNotice && <Alert severity="error" role="alert">{otpNotice}</Alert>}
 
-            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+            <Typography variant="body2" color={AUTH_MUTED} sx={{ textAlign: 'center' }}>
               No email? Check your spam folder, or ask for a new code.
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
