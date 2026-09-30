@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, Typography } from '@mui/material';
+import { Box, Button, FormControlLabel, Radio, RadioGroup, Typography } from '@mui/material';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import ShieldIcon from '@mui/icons-material/Shield';
 import PeopleIcon from '@mui/icons-material/People';
@@ -9,228 +9,124 @@ import AuthShell from '../AuthShell';
 const FEATURES = [
   {
     icon: QrCode2Icon,
-    title: 'Personalized just for you',
-    description: "Your AI Concierge learns from your scans, favorites, and browsing habits to recommend products and brands you'll love.",
+    title: 'Suggestions just for you',
+    description: 'The AI Concierge learns from your scans and favourites to suggest products and brands you may like.',
   },
   {
     icon: ShieldIcon,
-    title: 'Your privacy is our priority',
-    description: 'Your real identity is never saved. Your scans and preferences are linked only to your unique profile, and to what you ask or need help.',
+    title: 'Your privacy comes first',
+    description: 'Your real identity is never stored with this data. It is linked only to your profile.',
   },
   {
     icon: PeopleIcon,
-    title: 'Smarter recommendations',
-    description: "From styling trends to care tips, you'll receive relevant information about your closet and preferences to improve product recommendations and services.",
+    title: 'Helpful tips',
+    description: 'You get relevant care tips and style ideas for the clothes you own.',
   },
   {
     icon: LockIcon,
-    title: "You're in control",
-    description: 'You can update your preferences and manage data permissions anytime in your account settings.',
+    title: 'You stay in control',
+    description: 'You can change this choice at any time under Privacy preferences.',
   },
 ];
 
-// Card background is transparent (see AuthShell) so the photo shows
-// through — text sitting directly on it needs to be white with a shadow.
-// Over the bright final slide (background-2) that flips to dark navy
-// instead — see useAuthShellBright.
-const defaultWhiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
-const darkTextSx = { color: '#1b4f72', textShadow: 'none' };
-
-// Matches AuthPage's SMALL_CONTROL_HEIGHT (2/3 of its old 40px control
-// height) — same height as the Send code/Verify/Google/Apple buttons there,
-// so the I Agree / I Disagree buttons here are visually consistent with the
-// rest of the sign-in flow's controls.
-const CONSENT_BUTTON_HEIGHT = 27;
-
-// `mode: 'gate'` is shown once, right after a User account's first sign-in
-// or sign-up, until that account has recorded an AI Concierge consent
-// decision (see pages/index.js's `isAppUser && !company?.aiConciergeConsentAt`
-// render branch) — submitting syncs the choice to the account, which clears
-// the gate and falls through to the dashboard on the next render, so this
-// screen's own button is what sends the user there. It never reappears for
-// that account afterward.
-//
-// It's also reachable before login via the "Privacy Preferences" link on
-// AuthPage (`mode: 'review'`), so a user can preview/change their choice per
-// GDPR even pre-account; that path stays device-local (localStorage) since
-// there's no account yet to attach it to — submitting (or Cancel) there
-// returns to wherever the link was opened from.
+// `mode: 'gate'` is shown once, right after a shopper account's first
+// sign-in or sign-up, until that account has recorded a choice (see
+// pages/index.js). It's also reachable before login via the "Privacy
+// preferences" link (`mode: 'review'`), stored on this device only since
+// there's no account yet — submitting or Cancel returns to the sign-in page.
 const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, saving, apiError, activeSlide }) => {
-  // `null` = no explicit choice made yet, which is what keeps the primary
-  // button disabled below. A prior local choice (either mode) starts
-  // pre-selected so the user sees what they picked last time.
+  // `null` = no choice made yet, which keeps the main button disabled.
   const [consent, setConsent] = useState(initialConsent != null ? !!initialConsent : null);
 
-  const handleSubmit = () => {
-    onSubmit(consent);
-  };
-
-  // No fixed `height` override here (there used to be one, forcing the card
-  // down to ~60vh purely to trigger a scrollbar) — AuthShell's own default
-  // cap (94vh xs / 82vh sm) is tall enough for this content to fit without
-  // scrolling, while still capping/scrolling as a fallback on very short
-  // screens (see cardScroll-equivalent `overflowY: 'auto'` below).
   return (
-    <AuthShell activeSlide={activeSlide} cardSx={{ height: 'auto', maxHeight: { xs: '94dvh', sm: '88dvh' }, width: { xs: '100%', sm: 540 } }}>
-      {(isBright) => {
-        // Computed here (inside AuthShell's render-prop), not at this
-        // component's own top level — see AuthShell's doc comment on why
-        // useAuthShellBright() only works for a genuine descendant of its
-        // Provider, which this render function's return value is and this
-        // component's own top level never was.
-        const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
-        return (
+    <AuthShell activeSlide={activeSlide} cardSx={{ height: 'auto', width: { xs: '100%', sm: 600 } }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}>
-          {/* Smaller font sizes + tighter line-heights/paragraph spacing than
-              before — this content was overflowing the card on shorter
-              screens; denser typography fits it without relying on scrolling. */}
-          <Typography
-            sx={{ ...whiteTextSx, textAlign: 'center', fontSize: '0.68rem', fontWeight: 600, letterSpacing: 1.5, textTransform: 'uppercase', mb: 0.3 }}
-          >
-            Welcome
+          <Typography variant="h5" component="h1" sx={{ textAlign: 'center', mb: 0.5 }}>
+            {mode === 'review' ? 'Privacy preferences' : 'Meet your AI Concierge'}
           </Typography>
-          <Typography sx={{ ...whiteTextSx, textAlign: 'center', fontSize: '1.15rem', fontWeight: 400, lineHeight: 1.3, mb: 0.8 }}>
-            Meet Your AI Concierge
+          <Typography color="text.secondary" sx={{ textAlign: 'center', mb: 2.5 }}>
+            An optional helper that personalises the app for you.
           </Typography>
-
-          <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
-            <Box sx={{ flex: 1, height: '1px', bgcolor: isBright ? 'rgba(27,79,114,0.3)' : 'rgba(255,255,255,0.35)' }} />
-            <Box sx={{ width: 6, height: 6, mx: 1, bgcolor: isBright ? 'rgba(27,79,114,0.5)' : 'rgba(255,255,255,0.55)', transform: 'rotate(45deg)' }} />
-            <Box sx={{ flex: 1, height: '1px', bgcolor: isBright ? 'rgba(27,79,114,0.3)' : 'rgba(255,255,255,0.35)' }} />
-          </Box>
 
           {FEATURES.map(({ icon: FeatureIcon, title, description }) => (
-            <Box key={title} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Box key={title} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.75 }}>
               <Box
                 sx={{
-                  width: 51,
-                  height: 51,
-                  flexShrink: 0,
-                  borderRadius: '50%',
-                  bgcolor: isBright ? 'rgba(27,79,114,0.12)' : 'rgba(255,255,255,0.18)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  width: 44, height: 44, flexShrink: 0, borderRadius: '50%',
+                  bgcolor: 'rgba(27,79,114,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                <FeatureIcon sx={{ fontSize: 27, color: isBright ? '#1b4f72' : '#fff' }} />
+                <FeatureIcon sx={{ fontSize: 24, color: 'primary.main' }} />
               </Box>
               <Box>
-                <Typography sx={{ ...whiteTextSx, fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.25, mb: 0.2 }}>
-                  {title}
-                </Typography>
-                <Typography sx={{ ...whiteTextSx, fontSize: '0.72rem', lineHeight: 1.3, opacity: 0.9 }}>
-                  {description}
-                </Typography>
+                <Typography sx={{ fontWeight: 600 }}>{title}</Typography>
+                <Typography color="text.secondary">{description}</Typography>
               </Box>
             </Box>
           ))}
 
-          <Box sx={{ display: 'flex', alignItems: 'center', my: 1 }}>
-            <Box sx={{ flex: 1, height: '1px', bgcolor: isBright ? 'rgba(27,79,114,0.3)' : 'rgba(255,255,255,0.35)' }} />
-            <Box sx={{ width: 6, height: 6, mx: 1, bgcolor: isBright ? 'rgba(27,79,114,0.5)' : 'rgba(255,255,255,0.55)', transform: 'rotate(45deg)' }} />
-            <Box sx={{ flex: 1, height: '1px', bgcolor: isBright ? 'rgba(27,79,114,0.3)' : 'rgba(255,255,255,0.35)' }} />
-          </Box>
-
-          {/* Placed after all the explanatory content, on purpose — the user
-              should read what they're agreeing to before choosing. Nothing is
-              pre-selected for a fresh visit, and the primary button below
-              stays disabled until one of these is picked. */}
-          <Typography sx={{ ...whiteTextSx, fontSize: '0.78rem', lineHeight: 1.35, mb: 0.6 }}>
-            I agree to let the AI Concierge of this app learn from my scans, favorites, and browsing
-            history to personalize my experience.
+          {/* Placed after the explanation on purpose: read first, then choose.
+              Nothing is pre-selected on a first visit. */}
+          <Typography component="h2" sx={{ fontWeight: 600, mt: 2.5, mb: 1 }} id="consent-question">
+            May the AI Concierge learn from your scans, favourites and browsing to personalise the app?
           </Typography>
-          <Box sx={{ display: 'flex', gap: 1, mb: 1.25 }}>
-            <Button
-              onClick={() => setConsent(true)}
-              variant={consent === true ? 'contained' : 'outlined'}
-              color="inherit"
-              sx={{
-                flex: 1,
-                textTransform: 'none',
-                fontWeight: 400,
-                borderRadius: 2,
-                height: CONSENT_BUTTON_HEIGHT,
-                minHeight: CONSENT_BUTTON_HEIGHT,
-                py: 0,
-                // Same azure as the Continue/Save Preferences button below,
-                // so the selected "I Agree" state reads as the same action
-                // color instead of a visually different dark navy.
-                ...(consent === true
-                  ? { bgcolor: '#4585db', borderColor: '#4585db', color: '#fff', '&:hover': { bgcolor: '#3a72c0', borderColor: '#3a72c0' } }
-                  : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
-              }}
-            >
-              I Agree
-            </Button>
-            <Button
-              onClick={() => setConsent(false)}
-              variant={consent === false ? 'contained' : 'outlined'}
-              color="inherit"
-              sx={{
-                flex: 1,
-                textTransform: 'none',
-                fontWeight: 400,
-                borderRadius: 2,
-                height: CONSENT_BUTTON_HEIGHT,
-                minHeight: CONSENT_BUTTON_HEIGHT,
-                py: 0,
-                // Gray background with white text — reads as "declined"
-                // without the alarm-red error color.
-                ...(consent === false
-                  ? { bgcolor: '#9ca3af', borderColor: '#9ca3af', color: '#fff', '&:hover': { bgcolor: '#6b7280', borderColor: '#6b7280' } }
-                  : { bgcolor: 'rgba(255,255,255,0.85)', color: 'text.primary', borderColor: 'transparent' }),
-              }}
-            >
-              I Disagree
-            </Button>
-          </Box>
+          <RadioGroup
+            aria-labelledby="consent-question"
+            value={consent === null ? '' : consent ? 'yes' : 'no'}
+            onChange={(e) => setConsent(e.target.value === 'yes')}
+            sx={{ gap: 1 }}
+          >
+            {[
+              { value: 'yes', label: 'Yes, personalise the app for me' },
+              { value: 'no', label: 'No, thank you' },
+            ].map((opt) => (
+              <FormControlLabel
+                key={opt.value}
+                value={opt.value}
+                control={<Radio />}
+                label={opt.label}
+                sx={{
+                  m: 0,
+                  px: 1.5,
+                  py: 0.75,
+                  border: '2px solid',
+                  borderColor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? 'primary.main' : 'divider',
+                  borderRadius: 2,
+                  bgcolor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? 'rgba(47,128,200,0.08)' : '#fff',
+                  '& .MuiFormControlLabel-label': { fontSize: '1.05rem' },
+                }}
+              />
+            ))}
+          </RadioGroup>
 
           {!!apiError && (
-            <Box sx={{ bgcolor: 'rgba(253,236,236,0.95)', borderRadius: 2, p: 1, mt: 1 }}>
-              <Typography sx={{ fontSize: '0.78rem', color: 'error.main' }}>
-                {apiError}
-              </Typography>
-            </Box>
+            <Typography color="error" sx={{ mt: 1.5 }} role="alert">{apiError}</Typography>
           )}
         </Box>
 
-        <Box sx={{ flexShrink: 0, pt: 1.25, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+        <Box sx={{ flexShrink: 0, pt: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Button
             variant="contained"
             fullWidth
-            onClick={handleSubmit}
+            onClick={() => onSubmit(consent)}
             disabled={!!saving || consent === null}
-            sx={{
-              textTransform: 'none',
-              fontWeight: 400,
-              borderRadius: 2,
-              height: CONSENT_BUTTON_HEIGHT,
-              minHeight: CONSENT_BUTTON_HEIGHT,
-              py: 0,
-              // Same azure as every other button (theme.js).
-              bgcolor: '#4585db',
-              '&:hover': { bgcolor: '#3a72c0' },
-            }}
+            sx={{ minHeight: 50, fontSize: '1.05rem', borderRadius: 2 }}
           >
-            {saving ? 'Saving…' : mode === 'review' ? 'Save Preferences' : 'Continue'}
+            {saving ? 'Saving…' : mode === 'review' ? 'Save my choice' : 'Continue'}
           </Button>
+          {consent === null && (
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+              Please choose Yes or No above to continue.
+            </Typography>
+          )}
           {mode === 'review' && (
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography
-                component="span"
-                onClick={onClose}
-                sx={{ ...whiteTextSx, fontWeight: 400, fontSize: '0.95rem', cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-              >
-                Cancel
-              </Typography>
-            </Box>
+            <Button onClick={onClose} fullWidth sx={{ minHeight: 44 }}>
+              Cancel
+            </Button>
           )}
         </Box>
       </Box>
-        );
-      }}
     </AuthShell>
   );
 };

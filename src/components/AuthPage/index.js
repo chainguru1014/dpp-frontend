@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, MenuItem, TextField, Typography } from '@mui/material';
-import { alpha } from '@mui/material/styles';
+import { Alert, Box, Button, Divider, Grid, MenuItem, TextField, Typography } from '@mui/material';
 import AppleIcon from '@mui/icons-material/Apple';
 import { useGoogleAuth } from '../../features/auth/useGoogleAuth';
 import { useAppleAuth } from '../../features/auth/useAppleAuth';
 import AuthShell from '../AuthShell';
-import yometelLogoWhite from '../../assets/yometel-logo-white.png';
 import yometelLogoTrans from '../../assets/yometel-logo-trans.png';
 import theme from '../../theme';
+import { notifyError } from '../../utils/feedbackBus';
 
-// Monochrome Google "G" mark (Simple Icons, CC0) — dark navy to match this
-// button's text color (was the official 4-color "G").
-// Sized to fit inside the compact Send-code-height buttons (see
-// SMALL_CONTROL_HEIGHT) without crowding them.
+// Google "G" mark (Simple Icons, CC0) in the app's navy.
 const GoogleIcon = ({ color = theme.palette.primary.main }) => (
-  <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+  <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
     <path
       fill={color}
       d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"
@@ -22,55 +18,31 @@ const GoogleIcon = ({ color = theme.palette.primary.main }) => (
   </svg>
 );
 
+// Every control on the sign-in card is at least 48px tall with 16px+ text —
+// easy to read and to tap on an iPad (they used to be 27px with 13px text).
+const CONTROL_HEIGHT = 50;
 const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff' } };
-
-// Smaller boxes/text for the sign-in/sign-up view specifically — the
-// profile-completion form (which also uses `fieldSx`) is unaffected.
-// Shared fixed height so the email field, code field, Send code/Verify
-// button, and the Google/Apple buttons all line up instead of the buttons'
-// own vertical padding making them a few px taller/shorter than the inputs.
-export const COMPACT_CONTROL_HEIGHT = 40;
-// 2/3 of COMPACT_CONTROL_HEIGHT — every control on this view (email field,
-// code field, Send code/Verify button, Google/Apple buttons) uses this
-// smaller height now. Exported so other auth-style forms (StaffLoginPage)
-// can match it exactly instead of drifting with their own magic numbers.
-export const SMALL_CONTROL_HEIGHT = Math.round((COMPACT_CONTROL_HEIGHT * 2) / 3);
-export const smallFieldSx = {
+const bigFieldSx = {
   ...fieldSx,
-  '& .MuiOutlinedInput-root': { ...fieldSx['& .MuiOutlinedInput-root'], height: SMALL_CONTROL_HEIGHT },
-  // The code field overrides this via its own `inputProps.style` (inline
-  // style wins over this sx-generated class), so this only really governs
-  // the email field's text size.
-  '& .MuiOutlinedInput-input': { padding: '4px 14px', fontSize: '0.85rem' },
+  '& .MuiOutlinedInput-root': { ...fieldSx['& .MuiOutlinedInput-root'], minHeight: CONTROL_HEIGHT, fontSize: '1.05rem' },
 };
-export const compactButtonSx = {
-  textTransform: 'none',
-  fontWeight: 400,
-  fontSize: '0.85rem',
-  height: SMALL_CONTROL_HEIGHT,
-  minHeight: SMALL_CONTROL_HEIGHT,
-  py: 0,
-  borderRadius: 2,
+const bigButtonSx = { minHeight: CONTROL_HEIGHT, fontSize: '1.05rem', borderRadius: 2 };
+const outlineButtonSx = {
+  ...bigButtonSx,
+  bgcolor: '#fff',
+  color: theme.palette.primary.main,
+  border: '1px solid #c9d2dd',
+  '&:hover': { bgcolor: '#f5f8fb', borderColor: '#9fb0c3' },
 };
-// Explicit font-family override — AuthShell blanket-applies its decorative
-// Cochin serif to every Typography in the card (for the headline copy), but
-// these are utility links that should read like the buttons next to them,
-// not like the tagline.
-const compactLinkSx = { fontWeight: 400, fontSize: '0.8rem', lineHeight: 1.2, fontFamily: theme.typography.fontFamily };
 
-// Card background is deliberately transparent (see AuthShell) so the photo
-// shows through — any text sitting directly on it (not on a solid
-// button/field surface) needs to be white with a shadow to stay legible
-// against a busy, variable-brightness photo. Over the bright final slide
-// (background-2) that same white text nearly vanishes, so it swaps to the
-// app's dark navy there instead — see useAuthShellBright.
-const defaultWhiteTextSx = { color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.6)' };
-const darkTextSx = { color: theme.palette.primary.main, textShadow: 'none' };
+// Must match the backend's per-email resend cooldown (see authController.otpRequest).
+const RESEND_COOLDOWN_SECONDS = 60;
 
 const AuthPage = ({
   needsProfileCompletion,
   registerData,
   setRegisterData,
+  accountEmail,
   onCompleteProfile,
   onCancelProfileCompletion,
   onGoogleCredential,
@@ -80,8 +52,6 @@ const AuthPage = ({
   onOpenPrivacyPreferences,
   activeSlide,
 }) => {
-  // OTP flow's own local UI state — nothing here needs to be lifted up, the
-  // parent only cares once verification actually succeeds.
   const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
   const [emailStep, setEmailStep] = useState('email'); // 'email' | 'code'
   const [otpEmail, setOtpEmail] = useState('');
@@ -93,16 +63,19 @@ const AuthPage = ({
   const { buttonContainerRef: googleButtonRef } = useGoogleAuth(onGoogleCredential);
   const { signIn: appleSignIn } = useAppleAuth();
 
-  // Counts the resend cooldown down to 0 once a code has been (re)sent.
+  // The email was just verified — pre-fill it on the details form.
+  useEffect(() => {
+    if (needsProfileCompletion && accountEmail && !registerData.email) {
+      setRegisterData((prev) => ({ ...prev, email: accountEmail }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [needsProfileCompletion, accountEmail]);
+
   useEffect(() => {
     if (resendCooldown <= 0) return undefined;
     const timer = setInterval(() => setResendCooldown((s) => Math.max(0, s - 1)), 1000);
     return () => clearInterval(timer);
   }, [resendCooldown]);
-
-  // Must match the backend's per-email resend cooldown (see authController.otpRequest) —
-  // a shorter client cooldown would let users retry before the server accepts it, guaranteeing a 429.
-  const RESEND_COOLDOWN_SECONDS = 60;
 
   const sendOtp = async (email) => {
     setOtpBusy(true);
@@ -110,12 +83,9 @@ const AuthPage = ({
     const res = await onRequestOtp(email, authMode);
     setOtpBusy(false);
     if (res?.ok) {
-      // No "Code sent" success notice here — the code-entry step's own
-      // "Enter the 6-digit code sent to {email}" line already says this,
-      // so a separate notice below the form was just redundant.
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
     } else {
-      setOtpNotice(res?.message || 'Failed to send code. Please try again.');
+      setOtpNotice(res?.message || 'We could not send the code. Please check the email address and try again.');
     }
     return res;
   };
@@ -125,7 +95,7 @@ const AuthPage = ({
       const { identityToken, user } = await appleSignIn();
       onAppleCredential?.(identityToken, user);
     } catch (err) {
-      alert(err?.message || 'Apple sign-in failed');
+      notifyError(err?.message || 'Apple sign-in did not work. Please try again or use your email.');
     }
   };
 
@@ -142,9 +112,8 @@ const AuthPage = ({
     await sendOtp(otpEmail.trim());
   };
 
-  // Takes the code explicitly (not read from `otpCode` state) so the
-  // auto-verify-on-6-digits path below can call it with the just-typed
-  // value directly, instead of racing React's async state update.
+  // Takes the code explicitly so the auto-verify-on-6-digits path can call it
+  // with the just-typed value instead of racing React's state update.
   const verifyCode = async (code) => {
     if (code.length !== 6) return;
     setOtpBusy(true);
@@ -152,7 +121,7 @@ const AuthPage = ({
     const res = await onVerifyOtp(otpEmail.trim(), code, authMode);
     setOtpBusy(false);
     if (!res?.ok) {
-      setOtpNotice(res?.message || 'Invalid or expired code. Please try again.');
+      setOtpNotice(res?.message || 'That code is not right or has expired. Please check it, or ask for a new code.');
     }
   };
 
@@ -166,403 +135,219 @@ const AuthPage = ({
     onCompleteProfile(registerData);
   };
 
+  const setReg = (key) => (e) => setRegisterData((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const logo = (
+    <Box sx={{ textAlign: 'center', mb: 2.5, flexShrink: 0 }}>
+      <Box component="img" src={yometelLogoTrans} alt="Yometel" sx={{ width: { xs: 140, sm: 170 }, height: 'auto', display: 'inline-block' }} />
+    </Box>
+  );
+
+  // ---------- Profile details after a first sign-up ----------
+  if (needsProfileCompletion) {
+    return (
+      <AuthShell activeSlide={activeSlide} cardSx={{ width: { xs: '100%', sm: 560 } }}>
+        {logo}
+        <Box component="form" onSubmit={handleProfileSubmit} sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+          <Typography variant="h5" component="h1" sx={{ mb: 0.5 }}>Your details</Typography>
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
+            Almost done. Please fill in these details to finish setting up your account. Fields marked * are required.
+          </Typography>
+
+          <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5, pt: 1 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField label="Username" required fullWidth value={registerData.name} onChange={setReg('name')}
+                  helperText="Shown to others instead of your full name." sx={fieldSx} autoFocus />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="First name" required fullWidth value={registerData.firstName} onChange={setReg('firstName')} sx={fieldSx} autoComplete="given-name" />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Last name" required fullWidth value={registerData.lastName} onChange={setReg('lastName')} sx={fieldSx} autoComplete="family-name" />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField label="Email" type="email" required fullWidth value={registerData.email} onChange={setReg('email')} sx={fieldSx}
+                  InputProps={{ readOnly: !!accountEmail }} helperText={accountEmail ? 'The email you signed up with.' : undefined} autoComplete="email" />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Phone number" required fullWidth value={registerData.phoneNumber} onChange={setReg('phoneNumber')} sx={fieldSx} autoComplete="tel" />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Date of birth" type="date" required fullWidth value={registerData.dateOfBirth} onChange={setReg('dateOfBirth')}
+                  InputLabelProps={{ shrink: true }} sx={fieldSx} autoComplete="bday" />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField select label="Gender" required fullWidth value={registerData.gender} onChange={setReg('gender')} sx={fieldSx}>
+                  <MenuItem value="female">Female</MenuItem>
+                  <MenuItem value="male">Male</MenuItem>
+                  <MenuItem value="other">Other / prefer not to say</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid item xs={12}>
+                <Divider sx={{ my: 0.5 }}><Typography variant="body2" color="text.secondary">Address</Typography></Divider>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField label="Street and house number" required fullWidth value={registerData.addressStreet} onChange={setReg('addressStreet')} sx={fieldSx} autoComplete="street-address" />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="City" required fullWidth value={registerData.addressCity} onChange={setReg('addressCity')} sx={fieldSx} autoComplete="address-level2" />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="State / prefecture" required fullWidth value={registerData.addressState} onChange={setReg('addressState')} sx={fieldSx} autoComplete="address-level1" />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Postal code" required fullWidth value={registerData.addressZipCode} onChange={setReg('addressZipCode')} sx={fieldSx} autoComplete="postal-code" />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField label="Country" required fullWidth value={registerData.addressCountry} onChange={setReg('addressCountry')} sx={fieldSx} autoComplete="country-name" />
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Box sx={{ flexShrink: 0, pt: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Button type="submit" variant="contained" fullWidth sx={bigButtonSx}>
+              Finish setting up my account
+            </Button>
+            {onCancelProfileCompletion && (
+              <Button onClick={onCancelProfileCompletion} fullWidth>
+                Not you? Sign out
+              </Button>
+            )}
+          </Box>
+        </Box>
+      </AuthShell>
+    );
+  }
+
+  // ---------- Sign in / create account ----------
+  const isSignup = authMode === 'signup';
   return (
     <AuthShell activeSlide={activeSlide}>
-      {(isBright) => {
-        // Computed here (inside AuthShell's render-prop), not at this
-        // component's own top level — see AuthShell's doc comment on why
-        // useAuthShellBright() only works for a genuine descendant of its
-        // Provider, which this render function's return value is and this
-        // component's own top level never was.
-        const whiteTextSx = isBright ? darkTextSx : defaultWhiteTextSx;
-        return (
-        <>
-        <Box sx={{ textAlign: 'center', mb: 2, flexShrink: 0 }}>
-          <Box
-            component="img"
-            src={isBright ? yometelLogoTrans : yometelLogoWhite}
-            alt="Yometel"
-            sx={{ width: { xs: 130, sm: 160 }, height: 'auto', display: 'inline-block' }}
-          />
-        </Box>
-        {needsProfileCompletion ? (
-          <Box
-            component="form"
-            onSubmit={handleProfileSubmit}
-            sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
-          >
-            <Typography variant="body2" sx={{ mb: 1.5, flexShrink: 0, ...whiteTextSx }}>
-              Just a few more details to finish setting up your account.
-            </Typography>
-
-            {/* Scrollable field area */}
-            <Box
-              sx={{
-                flex: 1,
-                minHeight: 0,
-                overflowY: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: { xs: 1.5, sm: 2 },
-                pr: 0.5,
-              }}
-            >
-              <TextField
-                placeholder="Username"
-                value={registerData.name}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, name: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              />
-              <TextField
-                placeholder="Email"
-                type="email"
-                value={registerData.email}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, email: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              />
-              <TextField
-                placeholder="First Name"
-                value={registerData.firstName}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, firstName: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              />
-              <TextField
-                placeholder="Last Name"
-                value={registerData.lastName}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, lastName: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              />
-              <TextField
-                placeholder="Street"
-                value={registerData.addressStreet}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, addressStreet: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              />
-              <TextField
-                placeholder="City"
-                value={registerData.addressCity}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, addressCity: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              />
-              <TextField
-                placeholder="State"
-                value={registerData.addressState}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, addressState: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              />
-              <TextField
-                placeholder="Zip Code"
-                value={registerData.addressZipCode}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, addressZipCode: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              />
-              <TextField
-                placeholder="Country"
-                value={registerData.addressCountry}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, addressCountry: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              />
-              <TextField
-                placeholder="Phone Number"
-                value={registerData.phoneNumber}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, phoneNumber: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              />
-              <TextField
-                select
-                label="Gender"
-                value={registerData.gender}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, gender: e.target.value }))}
-                required
-                fullWidth
-                sx={fieldSx}
-              >
-                <MenuItem value="male">Male</MenuItem>
-                <MenuItem value="female">Female</MenuItem>
-              </TextField>
-              <TextField
-                label="Date of Birth"
-                type="date"
-                value={registerData.dateOfBirth}
-                onChange={(e) => setRegisterData((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
-                required
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                sx={fieldSx}
-              />
-            </Box>
-
-            {/* Pinned action area — always visible below the scrolling fields */}
-            <Box sx={{ flexShrink: 0, pt: 2.5, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <Button
-                type="submit"
-                variant="contained"
-                fullWidth
-                sx={{ textTransform: 'none', fontWeight: 400, py: 1.1, borderRadius: 2 }}
-              >
-                Complete Profile
-              </Button>
-              {onCancelProfileCompletion && (
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography
-                    component="span"
-                    onClick={onCancelProfileCompletion}
-                    sx={{
-                      ...whiteTextSx,
-                      fontWeight: 400,
-                      fontSize: '0.95rem',
-                      cursor: 'pointer',
-                      '&:hover': { textDecoration: 'underline' },
-                    }}
-                  >
-                    Not you? Sign out
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, justifyContent: 'center', gap: 1.5 }}>
-            {emailStep === 'email' && (
-              <Box
-                component="form"
-                onSubmit={handleSendCode}
-                sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
-              >
-                <TextField
-                  placeholder="Email"
-                  type="email"
-                  value={otpEmail}
-                  onChange={(e) => setOtpEmail(e.target.value)}
-                  required
-                  autoFocus
-                  fullWidth
-                  size="small"
-                  sx={smallFieldSx}
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  fullWidth
-                  disabled={otpBusy}
-                  sx={compactButtonSx}
-                >
-                  {otpBusy ? 'Sending…' : authMode === 'signup' ? 'Create account' : 'Send code'}
-                </Button>
-              </Box>
-            )}
-
-            {emailStep === 'code' && (
-              <Box
-                component="form"
-                onSubmit={handleVerifyCode}
-                sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}
-              >
-                <Typography variant="body2" sx={{ ...whiteTextSx, fontSize: '0.85rem' }}>
-                  Enter the 6-digit code sent to {otpEmail}
-                </Typography>
-                <TextField
-                  placeholder="123456"
-                  value={otpCode}
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
-                    setOtpCode(digits);
-                    // Auto-submit once all 6 digits are in -- the Verify
-                    // button stays as an explicit fallback for anyone who'd
-                    // rather click it (matches the app project's OTP field).
-                    if (digits.length === 6 && !otpBusy) {
-                      verifyCode(digits);
-                    }
-                  }}
-                  required
-                  autoFocus
-                  fullWidth
-                  size="small"
-                  inputProps={{
-                    inputMode: 'numeric',
-                    pattern: '[0-9]*',
-                    maxLength: 6,
-                    style: { letterSpacing: 6, textAlign: 'center', fontSize: '1.1rem' },
-                  }}
-                  sx={smallFieldSx}
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  fullWidth
-                  disabled={otpBusy || otpCode.length !== 6}
-                  sx={compactButtonSx}
-                >
-                  {otpBusy ? 'Verifying…' : 'Verify'}
-                </Button>
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                  <Typography
-                    component="span"
-                    onClick={resendCooldown > 0 || otpBusy ? undefined : handleResendCode}
-                    sx={{
-                      ...whiteTextSx,
-                      ...compactLinkSx,
-                      color: resendCooldown > 0 || otpBusy
-                        ? (isBright ? alpha(theme.palette.primary.main, 0.6) : 'rgba(255,255,255,0.6)')
-                        : whiteTextSx.color,
-                      cursor: resendCooldown > 0 || otpBusy ? 'default' : 'pointer',
-                      '&:hover': resendCooldown > 0 || otpBusy ? undefined : { textDecoration: 'underline' },
-                    }}
-                  >
-                    {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : 'Resend code'}
-                  </Typography>
-                  <Typography
-                    component="span"
-                    onClick={() => {
-                      setEmailStep('email');
-                      setOtpCode('');
-                      setOtpNotice('');
-                    }}
-                    sx={{
-                      ...whiteTextSx,
-                      ...compactLinkSx,
-                      cursor: 'pointer',
-                      '&:hover': { textDecoration: 'underline' },
-                    }}
-                  >
-                    Use a different email
-                  </Typography>
-                </Box>
-              </Box>
-            )}
-
-            {otpNotice && (
-              <Typography
-                role="status"
-                variant="body2"
-                sx={{ textAlign: 'center', fontSize: '0.8rem', fontWeight: 600, ...whiteTextSx, color: '#ff8a80' }}
-              >
-                {otpNotice}
+      {logo}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {emailStep === 'email' ? (
+          <>
+            <Box>
+              <Typography variant="h5" component="h1" sx={{ textAlign: 'center' }}>
+                {isSignup ? 'Create an account' : 'Sign in'}
               </Typography>
-            )}
+              <Typography color="text.secondary" sx={{ textAlign: 'center', mt: 0.75 }}>
+                Enter your email. We will send you a 6-digit code, so you don&apos;t need a password.
+              </Typography>
+            </Box>
+            <Box component="form" onSubmit={handleSendCode} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <TextField
+                id="signin-email"
+                label="Email address"
+                type="email"
+                value={otpEmail}
+                onChange={(e) => setOtpEmail(e.target.value)}
+                required
+                autoFocus
+                fullWidth
+                autoComplete="email"
+                sx={bigFieldSx}
+              />
+              <Button type="submit" variant="contained" fullWidth disabled={otpBusy} sx={bigButtonSx}>
+                {otpBusy ? 'Sending code…' : 'Email me a code'}
+              </Button>
+            </Box>
 
-            {/* Google + Apple side by side, each half width. Google is a
-                custom-styled button with the real (invisible) GIS button
-                stacked on top — see useGoogleAuth for why. */}
-            <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
-              <Box sx={{ position: 'relative', flex: 1 }}>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  startIcon={<GoogleIcon />}
-                  tabIndex={-1}
-                  aria-hidden="true"
-                  sx={{
-                    ...compactButtonSx,
-                    px: 1,
-                    bgcolor: '#fff',
-                    color: theme.palette.primary.main,
-                    borderColor: '#d9dce1',
-                    '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
-                  }}
-                >
-                  Google
+            {otpNotice && <Alert severity="error" role="alert">{otpNotice}</Alert>}
+
+            <Divider><Typography variant="body2" color="text.secondary">or</Typography></Divider>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+              {/* Custom-styled Google button with the real (invisible) Google
+                  button stacked on top — see useGoogleAuth for why. */}
+              <Box sx={{ position: 'relative' }}>
+                <Button fullWidth startIcon={<GoogleIcon />} tabIndex={-1} aria-hidden="true" sx={outlineButtonSx}>
+                  Continue with Google
                 </Button>
                 <Box
                   ref={googleButtonRef}
-                  sx={{
-                    position: 'absolute',
-                    inset: 0,
-                    zIndex: 1,
-                    opacity: 0,
-                    overflow: 'hidden',
-                    cursor: 'pointer',
-                  }}
+                  sx={{ position: 'absolute', inset: 0, zIndex: 1, opacity: 0, overflow: 'hidden', cursor: 'pointer' }}
                 />
               </Box>
-
-              {/* White background, app-blue label and Apple glyph. */}
-              <Button
-                fullWidth
-                onClick={handleAppleClick}
-                startIcon={<AppleIcon sx={{ fontSize: 14, color: theme.palette.primary.main }} />}
-                sx={{
-                  ...compactButtonSx,
-                  flex: 1,
-                  px: 1,
-                  bgcolor: '#fff',
-                  color: theme.palette.primary.main,
-                  border: '1px solid #d9dce1',
-                  '&:hover': { bgcolor: '#fafafa', borderColor: '#c4c8cf' },
-                }}
-              >
-                Apple
+              <Button fullWidth onClick={handleAppleClick} startIcon={<AppleIcon sx={{ color: theme.palette.primary.main }} />} sx={outlineButtonSx}>
+                Continue with Apple
               </Button>
             </Box>
 
-            {/* Trailing links clustered tightly together (their own small
-                gap, not the parent's larger gap:1.5) so they read as one
-                "auxiliary links" group instead of three widely-spaced rows. */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography
-                  component="span"
-                  onClick={() => { setAuthMode(authMode === 'signin' ? 'signup' : 'signin'); setOtpNotice(''); }}
-                  sx={{
-                    ...whiteTextSx,
-                    ...compactLinkSx,
-                    cursor: 'pointer',
-                    '&:hover': { textDecoration: 'underline' },
-                  }}
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+              <Typography color="text.secondary">
+                {isSignup ? 'Already have an account?' : 'New here?'}
+                <Button
+                  onClick={() => { setAuthMode(isSignup ? 'signin' : 'signup'); setOtpNotice(''); }}
+                  sx={{ minHeight: 40, ml: 0.5, px: 1, fontWeight: 600 }}
                 >
-                  {authMode === 'signin' ? "Don't have an account? Sign Up" : 'Already have an account? Sign In'}
-                </Typography>
-              </Box>
-
-              {/* GDPR: lets a user reopen the AI Concierge consent screen at
-                  any time to review or change their choice — see
-                  AiConciergeConsentPage, opened via pages/index.js's
-                  showPrivacyPreferences state. */}
+                  {isSignup ? 'Sign in' : 'Create an account'}
+                </Button>
+              </Typography>
               {onOpenPrivacyPreferences && (
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography
-                    component="span"
-                    onClick={onOpenPrivacyPreferences}
-                    sx={{
-                      ...whiteTextSx,
-                      fontWeight: 400,
-                      fontSize: '0.8rem',
-                      lineHeight: 1.2,
-                      fontFamily: theme.typography.fontFamily,
-                      textDecoration: 'underline',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Privacy Preferences
-                  </Typography>
-                </Box>
+                <Button onClick={onOpenPrivacyPreferences} sx={{ minHeight: 40, color: 'text.secondary', textDecoration: 'underline' }}>
+                  Privacy preferences
+                </Button>
               )}
             </Box>
-          </Box>
+          </>
+        ) : (
+          <>
+            <Box>
+              <Typography variant="h5" component="h1" sx={{ textAlign: 'center' }}>Check your email</Typography>
+              <Typography color="text.secondary" sx={{ textAlign: 'center', mt: 0.75 }}>
+                We sent a 6-digit code to <Box component="strong" sx={{ color: 'text.primary', wordBreak: 'break-all' }}>{otpEmail}</Box>. Type it below.
+              </Typography>
+            </Box>
+            <Box component="form" onSubmit={handleVerifyCode} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <TextField
+                id="signin-code"
+                label="6-digit code"
+                value={otpCode}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setOtpCode(digits);
+                  // Auto-submit once all 6 digits are in; the button stays as
+                  // an explicit fallback.
+                  if (digits.length === 6 && !otpBusy) verifyCode(digits);
+                }}
+                required
+                autoFocus
+                fullWidth
+                autoComplete="one-time-code"
+                inputProps={{
+                  inputMode: 'numeric',
+                  pattern: '[0-9]*',
+                  maxLength: 6,
+                  style: { letterSpacing: 10, textAlign: 'center', fontSize: '1.6rem', fontWeight: 600 },
+                }}
+                sx={bigFieldSx}
+              />
+              <Button type="submit" variant="contained" fullWidth disabled={otpBusy || otpCode.length !== 6} sx={bigButtonSx}>
+                {otpBusy ? 'Checking…' : 'Sign in'}
+              </Button>
+            </Box>
+
+            {otpNotice && <Alert severity="error" role="alert">{otpNotice}</Alert>}
+
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+              No email? Check your spam folder, or ask for a new code.
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Button variant="outlined" onClick={handleResendCode} disabled={resendCooldown > 0 || otpBusy} sx={bigButtonSx}>
+                {resendCooldown > 0 ? `Send a new code (in ${resendCooldown} s)` : 'Send a new code'}
+              </Button>
+              <Button
+                onClick={() => { setEmailStep('email'); setOtpCode(''); setOtpNotice(''); }}
+                sx={{ minHeight: 44 }}
+              >
+                Use a different email
+              </Button>
+            </Box>
+          </>
         )}
-        </>
-        );
-      }}
+      </Box>
     </AuthShell>
   );
 };

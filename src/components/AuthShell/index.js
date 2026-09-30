@@ -24,7 +24,6 @@ const FADE_DURATION_MS = 900;
 // StaffLoginPage, AiConciergeConsentPage) can swap to dark-blue text/logo
 // only while this one slide is showing, without each one re-deriving which
 // slide index that is.
-const BRIGHT_SLIDE_INDEX = 2; // background2's position in SLIDER_IMAGES below
 const AuthShellBrightContext = React.createContext(false);
 export const useAuthShellBright = () => React.useContext(AuthShellBrightContext);
 
@@ -66,7 +65,8 @@ const taglineFontFamily = 'Cochin, Georgia, "Times New Roman", Times, serif';
 // continuously with viewport width instead of jumping at breakpoints —
 // 0.6rem at <=1280px wide, 0.7rem at 1920px, capping at 0.8rem by 2560px+
 // (70% of the original 0.85/1/1.15rem scale, per request).
-const taglineFontSize = 'clamp(0.6rem, calc(0.39rem + 0.26vw), 0.8rem)';
+// Readable at every size (was 0.6rem ≈ 10px at 1280px wide).
+const taglineFontSize = 'clamp(1.15rem, calc(0.7rem + 0.7vw), 1.9rem)';
 
 // Shared visual shell for every sign-in surface (consumer/brand AuthPage,
 // the Staff Login page, and the AI Concierge consent/privacy-preferences
@@ -84,7 +84,6 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
   const [internalSlide, setInternalSlide] = React.useState(0);
   const isControlled = controlledActiveSlide != null;
   const activeSlide = isControlled ? controlledActiveSlide : internalSlide;
-  const isBright = activeSlide === BRIGHT_SLIDE_INDEX;
 
   // Preload every slide up front so switching to it is instant (no blank flash
   // while the browser fetches a multi-hundred-KB photo mid-transition).
@@ -157,6 +156,9 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
           }}
         />
       ))}
+      {/* Even tint over every photo so the white slogans stay readable on
+          the bright final slide too. */}
+      <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(10,25,40,0.38)' }} />
     </Box>
 
     {/* Left tagline — its own grid column (not a flex sibling nudged with a
@@ -199,28 +201,28 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
     {/* Auth card */}
     <Box
       sx={{
-        width: { xs: '100%', sm: 360 },
+        width: { xs: '100%', sm: 440 },
         maxWidth: '92vw',
-        maxHeight: { xs: '94dvh', sm: '82dvh' },
+        maxHeight: { xs: '94dvh', sm: '92dvh' },
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         // Fixed regardless of slide/text color — only the content's own
         // font color changes (see useAuthShellBright), never the card
         // container itself.
-        bgcolor: alpha('#f3f4f6', 0.2),
-        backdropFilter: 'blur(3px)',
-        WebkitBackdropFilter: 'blur(3px)',
+        // Solid white (was 20% see-through glass): text on it is readable
+        // whatever photo is behind it.
+        bgcolor: alpha('#ffffff', 0.97),
         borderRadius: 3,
         boxShadow: '0 24px 60px rgba(0,0,0,0.28)',
-        px: { xs: 2.5, sm: 4 },
-        py: { xs: 3, sm: 4.5 },
-        fontFamily: taglineFontFamily,
-        '& .MuiTypography-root': { fontFamily: taglineFontFamily },
+        px: { xs: 3, sm: 5 },
+        py: { xs: 3.5, sm: 4.5 },
+        position: 'relative',
+        zIndex: 1,
         ...cardSx,
       }}
     >
-      <AuthShellBrightContext.Provider value={isBright}>
+      <AuthShellBrightContext.Provider value>
         {/* `children` may be a render function — (isBright) => node — for
             callers (AuthPage, StaffLoginPage, AiConciergeConsentPage) that
             need isBright themselves to style what they render here. Calling
@@ -233,7 +235,7 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
             always worked; everything computed by the parent's own top-level
             hook call never did). The render-function form sidesteps that
             entirely by passing isBright straight in as an argument. */}
-        {typeof children === 'function' ? children(isBright) : children}
+        {typeof children === 'function' ? children(true) : children}
       </AuthShellBrightContext.Provider>
     </Box>
 

@@ -1531,6 +1531,7 @@ const InnerPage = () => {
           needsProfileCompletion={needsProfileCompletion}
           registerData={registerData}
           setRegisterData={setRegisterData}
+          accountEmail={company?.email || ''}
           onCompleteProfile={completeProfileHandler}
           onCancelProfileCompletion={company ? logout : undefined}
           onGoogleCredential={googleCredentialHandler}
