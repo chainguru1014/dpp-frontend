@@ -20,9 +20,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { DataGrid } from '@mui/x-data-grid';
 import { getScanHistory, getProductsByUser, getOwnedProducts } from '../../helper';
 
-const fmt = (d) => {
+const fmtShort = (d) => {
   try {
-    return new Date(d).toLocaleString();
+    return new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
   } catch (e) {
     return '';
   }
@@ -115,14 +115,14 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
       {
         field: 'scanned_at',
         headerName: 'When',
-        width: 180,
-        valueGetter: (p) => fmt(p.row.scanned_at),
+        width: 150,
+        valueGetter: (p) => fmtShort(p.row.scanned_at),
       },
       ...(isAppUser ? [] : [{
         field: 'user',
         headerName: 'Scanned by',
         flex: 1,
-        minWidth: 190,
+        minWidth: 150,
         sortable: false,
         renderCell: (p) => (
           <Box sx={{ py: 0.75, minWidth: 0 }}>
@@ -139,7 +139,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
         field: 'location',
         headerName: 'Where',
         flex: 0.8,
-        minWidth: 160,
+        minWidth: 120,
         sortable: false,
         valueGetter: (p) => {
           const l = p.row.location || {};
@@ -151,7 +151,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
         field: 'product',
         headerName: 'Product',
         flex: 1,
-        minWidth: 180,
+        minWidth: 150,
         sortable: false,
         renderCell: (p) => (
           <Box sx={{ py: 0.75, minWidth: 0 }}>
@@ -167,7 +167,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
       {
         field: 'identifier_type',
         headerName: 'Label',
-        width: 120,
+        width: 110,
         renderCell: (p) => (
           <Chip
             size="small"
@@ -179,7 +179,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
       {
         field: 'security_verified',
         headerName: 'Genuine?',
-        width: 130,
+        width: 120,
         renderCell: (p) => {
           const v = p.row.security_verified;
           if (v === true) return <Chip size="small" color="success" label="Verified" />;
@@ -190,7 +190,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
       {
         field: 'reaction',
         headerName: 'Reaction',
-        width: 170,
+        width: 140,
         sortable: false,
         renderCell: (p) => {
           const marks = [p.row.like && 'Liked', p.row.dislike && 'Disliked', p.row.buy && 'Bought'].filter(Boolean);
@@ -214,13 +214,13 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
       />
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={3} lg={2}>
+          <Grid item xs={12} sm={6} md={3} xl={2}>
             <TextField label="From date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={filters.from} onChange={setF('from')} />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={2}>
+          <Grid item xs={12} sm={6} md={3} xl={2}>
             <TextField label="To date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={filters.to} onChange={setF('to')} />
           </Grid>
-          <Grid item xs={12} sm={6} md={3} lg={3}>
+          <Grid item xs={12} sm={6} md={3} xl={3}>
             <TextField select label="Product" fullWidth value={filters.product_id} onChange={setF('product_id')}>
               <MenuItem value="">All products</MenuItem>
               {productOptions.map((p) => (
@@ -229,7 +229,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
             </TextField>
           </Grid>
           {!isAppUser && (
-            <Grid item xs={12} sm={6} md={3} lg={3}>
+            <Grid item xs={12} sm={6} md={3} xl={3}>
               <TextField
                 label="Scanned by"
                 placeholder="Name or email"
@@ -239,8 +239,8 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
               />
             </Grid>
           )}
-          <Grid item xs={12} lg={isAppUser ? 5 : 2} sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', lg: 'flex-end' } }}>
-            <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setShowMore((v) => !v)} aria-expanded={showMore}>
+          <Grid item xs={12} xl={isAppUser ? 5 : 2} sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', xl: 'flex-end' } }}>
+            <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setShowMore((v) => !v)} aria-expanded={showMore} sx={{ whiteSpace: 'nowrap' }}>
               {showMore ? 'Fewer filters' : `More filters${moreFilterCount ? ` (${moreFilterCount})` : ''}`}
             </Button>
             <Tooltip title="Reload">

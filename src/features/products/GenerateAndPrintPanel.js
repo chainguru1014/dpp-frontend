@@ -157,7 +157,7 @@ const GenerateAndPrintPanel = ({
                 onChange={(e) => setMintAmount(e.target.value)}
                 inputProps={{ min: 1 }}
                 helperText="One code per physical item."
-                sx={{ width: 200 }}
+                sx={{ width: 240 }}
               />
               <Button
                 variant="contained"

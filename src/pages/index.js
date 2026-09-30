@@ -2197,7 +2197,7 @@ const InnerPage = () => {
             </DialogTitle>
 
             {productPanelMode === 'edit' && (
-              <Box sx={{ px: { xs: 1, sm: 3 }, pt: 2, pb: 1, borderBottom: 1, borderColor: 'divider', overflowX: 'auto' }}>
+              <Box sx={{ px: { xs: 1, sm: 3 }, pt: 2, pb: 1.5, borderBottom: 1, borderColor: 'divider', overflowX: 'auto', flexShrink: 0 }}>
                 <Stepper nonLinear activeStep={detailTab} alternativeLabel sx={{ minWidth: 640 }}>
                   {PRODUCT_FORM_STEPS.map((label, i) => (
                     <Step key={label} completed={false}>
