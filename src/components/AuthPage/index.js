@@ -4,16 +4,21 @@ import AppleIcon from '@mui/icons-material/Apple';
 import { useGoogleAuth } from '../../features/auth/useGoogleAuth';
 import { useAppleAuth } from '../../features/auth/useAppleAuth';
 import AuthShell from '../AuthShell';
-import yometelLogoTrans from '../../assets/yometel-logo-trans.png';
-import theme, { compactMediaQuery } from '../../theme';
+import yometelLogoWhite from '../../assets/yometel-logo-white.png';
+import { compactMediaQuery } from '../../theme';
 import { notifyError } from '../../utils/feedbackBus';
 
-// Helper text on the see-through sign-in card: darker than the theme's
-// grey so it stays readable over the dark background photos.
-const AUTH_MUTED = '#26384d';
+// Colours on the see-through sign-in card: the brand blue (#2f80c8) for
+// text, labels, icons and button text; the logo is the white version.
+const AUTH_BLUE = '#2f80c8';
+const AUTH_TEXT = AUTH_BLUE;
+const AUTH_MUTED = AUTH_BLUE;
+// A soft white glow keeps the blue text readable over darker photos.
+const textShadow = '0 0 2px #ffffff, 0 0 4px #ffffff, 0 0 10px rgba(255,255,255,0.85)';
+const onGlass = { color: AUTH_TEXT, textShadow };
 
 // Google "G" mark (Simple Icons, CC0) in the app's navy.
-const GoogleIcon = ({ color = theme.palette.primary.main }) => (
+const GoogleIcon = ({ color = AUTH_BLUE }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
     <path
       fill={color}
@@ -25,7 +30,14 @@ const GoogleIcon = ({ color = theme.palette.primary.main }) => (
 // Every control on the sign-in card is at least 48px tall with 16px+ text —
 // easy to read and to tap on an iPad (they used to be 27px with 13px text).
 const CONTROL_HEIGHT = 50;
-const fieldSx = { '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff' } };
+const fieldSx = {
+  '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff', color: AUTH_BLUE },
+  '& .MuiInputLabel-root': { color: AUTH_BLUE },
+  '& .MuiInputLabel-root.Mui-focused': { color: AUTH_BLUE },
+  '& .MuiInputLabel-shrink': { bgcolor: '#fff', px: 0.75, borderRadius: 1 },
+  '& .MuiSvgIcon-root': { color: AUTH_BLUE },
+  '& .MuiFormHelperText-root': { ...onGlass },
+};
 const bigFieldSx = {
   ...fieldSx,
   '& .MuiOutlinedInput-root': { ...fieldSx['& .MuiOutlinedInput-root'], minHeight: CONTROL_HEIGHT, fontSize: '1.05rem' },
@@ -36,7 +48,7 @@ const bigButtonSx = { minHeight: CONTROL_HEIGHT, fontSize: '1.05rem', borderRadi
 const outlineButtonSx = {
   ...bigButtonSx,
   bgcolor: '#fff',
-  color: theme.palette.primary.main,
+  color: AUTH_BLUE,
   border: '1px solid #c9d2dd',
   '&:hover': { bgcolor: '#f5f8fb', borderColor: '#9fb0c3' },
 };
@@ -145,7 +157,7 @@ const AuthPage = ({
 
   const logo = (
     <Box sx={{ textAlign: 'center', mb: 2.5, flexShrink: 0 }}>
-      <Box component="img" src={yometelLogoTrans} alt="Yometel" sx={{ width: { xs: 140, sm: 170 }, height: 'auto', display: 'inline-block' }} />
+      <Box component="img" src={yometelLogoWhite} alt="Yometel" sx={{ width: { xs: 140, sm: 170 }, height: 'auto', display: 'inline-block' }} />
     </Box>
   );
 
@@ -155,8 +167,8 @@ const AuthPage = ({
       <AuthShell activeSlide={activeSlide} cardSx={{ width: { xs: '100%', sm: 560 } }}>
         {logo}
         <Box component="form" onSubmit={handleProfileSubmit} sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-          <Typography variant="h5" component="h1" sx={{ mb: 0.5 }}>Your details</Typography>
-          <Typography color={AUTH_MUTED} sx={{ mb: 2 }}>
+          <Typography variant="h5" component="h1" sx={{ mb: 0.5, ...onGlass }}>Your details</Typography>
+          <Typography color={AUTH_MUTED} sx={{ textShadow,  mb: 2 }}>
             Almost done. Please fill in these details to finish setting up your account. Fields marked * are required.
           </Typography>
 
@@ -191,7 +203,7 @@ const AuthPage = ({
                 </TextField>
               </Grid>
               <Grid item xs={12}>
-                <Divider sx={{ my: 0.5 }}><Typography variant="body2" color={AUTH_MUTED}>Address</Typography></Divider>
+                <Divider sx={{ my: 0.5, '&::before, &::after': { borderColor: 'rgba(47,128,200,0.5)' } }}><Typography variant="body2" sx={{ color: AUTH_MUTED, textShadow }}>Address</Typography></Divider>
               </Grid>
               <Grid item xs={12}>
                 <TextField label="Street and house number" required fullWidth value={registerData.addressStreet} onChange={setReg('addressStreet')} sx={fieldSx} autoComplete="street-address" />
@@ -216,7 +228,7 @@ const AuthPage = ({
               Finish setting up my account
             </Button>
             {onCancelProfileCompletion && (
-              <Button onClick={onCancelProfileCompletion} fullWidth>
+              <Button onClick={onCancelProfileCompletion} fullWidth sx={{ ...onGlass, '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}>
                 Not you? Sign out
               </Button>
             )}
@@ -235,10 +247,10 @@ const AuthPage = ({
         {emailStep === 'email' ? (
           <>
             <Box>
-              <Typography variant="h5" component="h1" sx={{ textAlign: 'center' }}>
+              <Typography variant="h5" component="h1" sx={{ textAlign: 'center', ...onGlass }}>
                 {isSignup ? 'Create an account' : 'Sign in'}
               </Typography>
-              <Typography color={AUTH_MUTED} sx={{ textAlign: 'center', mt: 0.75 }}>
+              <Typography color={AUTH_MUTED} sx={{ textShadow,  textAlign: 'center', mt: 0.75 }}>
                 Enter your email. We will send you a 6-digit code, so you don&apos;t need a password.
               </Typography>
             </Box>
@@ -262,7 +274,7 @@ const AuthPage = ({
 
             {otpNotice && <Alert severity="error" role="alert">{otpNotice}</Alert>}
 
-            <Divider><Typography variant="body2" color={AUTH_MUTED}>or</Typography></Divider>
+            <Divider sx={{ '&::before, &::after': { borderColor: 'rgba(47,128,200,0.5)' } }}><Typography variant="body2" sx={{ color: AUTH_MUTED, textShadow }}>or</Typography></Divider>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               {/* Custom-styled Google button with the real (invisible) Google
@@ -276,23 +288,23 @@ const AuthPage = ({
                   sx={{ position: 'absolute', inset: 0, zIndex: 1, opacity: 0, overflow: 'hidden', cursor: 'pointer' }}
                 />
               </Box>
-              <Button fullWidth onClick={handleAppleClick} startIcon={<AppleIcon sx={{ color: theme.palette.primary.main }} />} sx={outlineButtonSx}>
+              <Button fullWidth onClick={handleAppleClick} startIcon={<AppleIcon sx={{ color: AUTH_BLUE }} />} sx={outlineButtonSx}>
                 Continue with Apple
               </Button>
             </Box>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
-              <Typography color={AUTH_MUTED}>
+              <Typography sx={{ color: AUTH_MUTED, textShadow }}>
                 {isSignup ? 'Already have an account?' : 'New here?'}
                 <Button
                   onClick={() => { setAuthMode(isSignup ? 'signin' : 'signup'); setOtpNotice(''); }}
-                  sx={{ minHeight: 40, ml: 0.5, px: 1, fontWeight: 600 }}
+                  sx={{ minHeight: 40, ml: 0.5, px: 1, fontWeight: 700, ...onGlass, textDecoration: 'underline', '&:hover': { bgcolor: 'rgba(255,255,255,0.35)', textDecoration: 'underline' } }}
                 >
                   {isSignup ? 'Sign in' : 'Create an account'}
                 </Button>
               </Typography>
               {onOpenPrivacyPreferences && (
-                <Button onClick={onOpenPrivacyPreferences} sx={{ minHeight: 40, color: AUTH_MUTED, textDecoration: 'underline' }}>
+                <Button onClick={onOpenPrivacyPreferences} sx={{ minHeight: 40, ...onGlass, textDecoration: 'underline', '&:hover': { bgcolor: 'rgba(255,255,255,0.35)', textDecoration: 'underline' } }}>
                   Privacy preferences
                 </Button>
               )}
@@ -301,9 +313,9 @@ const AuthPage = ({
         ) : (
           <>
             <Box>
-              <Typography variant="h5" component="h1" sx={{ textAlign: 'center' }}>Check your email</Typography>
-              <Typography color={AUTH_MUTED} sx={{ textAlign: 'center', mt: 0.75 }}>
-                We sent a 6-digit code to <Box component="strong" sx={{ color: 'text.primary', wordBreak: 'break-all' }}>{otpEmail}</Box>. Type it below.
+              <Typography variant="h5" component="h1" sx={{ textAlign: 'center', ...onGlass }}>Check your email</Typography>
+              <Typography color={AUTH_MUTED} sx={{ textShadow,  textAlign: 'center', mt: 0.75 }}>
+                We sent a 6-digit code to <Box component="strong" sx={{ color: AUTH_TEXT, wordBreak: 'break-all' }}>{otpEmail}</Box>. Type it below.
               </Typography>
             </Box>
             <Box component="form" onSubmit={handleVerifyCode} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -337,16 +349,16 @@ const AuthPage = ({
 
             {otpNotice && <Alert severity="error" role="alert">{otpNotice}</Alert>}
 
-            <Typography variant="body2" color={AUTH_MUTED} sx={{ textAlign: 'center' }}>
+            <Typography variant="body2" color={AUTH_MUTED} sx={{ textShadow,  textAlign: 'center' }}>
               No email? Check your spam folder, or ask for a new code.
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Button variant="outlined" onClick={handleResendCode} disabled={resendCooldown > 0 || otpBusy} sx={bigButtonSx}>
+              <Button variant="outlined" onClick={handleResendCode} disabled={resendCooldown > 0 || otpBusy} sx={{ ...bigButtonSx, ...outlineButtonSx }}>
                 {resendCooldown > 0 ? `Send a new code (in ${resendCooldown} s)` : 'Send a new code'}
               </Button>
               <Button
                 onClick={() => { setEmailStep('email'); setOtpCode(''); setOtpNotice(''); }}
-                sx={{ minHeight: 44 }}
+                sx={{ minHeight: 44, ...onGlass, '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}
               >
                 Use a different email
               </Button>

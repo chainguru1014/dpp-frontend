@@ -7,9 +7,10 @@ import LockIcon from '@mui/icons-material/Lock';
 import AuthShell from '../AuthShell';
 import { compactMediaQuery } from '../../theme';
 
-// Helper text on the see-through sign-in card: darker than the theme's
-// grey so it stays readable over the dark background photos.
-const AUTH_MUTED = '#26384d';
+// Text and icons on the see-through card in the brand blue (#2f80c8), with
+// a soft white glow so they stay readable over any background photo.
+const AUTH_BLUE = '#2f80c8';
+const onGlass = { color: AUTH_BLUE, textShadow: '0 0 2px #ffffff, 0 0 4px #ffffff, 0 0 10px rgba(255,255,255,0.85)' };
 
 const FEATURES = [
   {
@@ -47,10 +48,10 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
     <AuthShell activeSlide={activeSlide} cardSx={{ height: 'auto', width: { xs: '100%', sm: 640 } }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}>
-          <Typography variant="h5" component="h1" sx={{ textAlign: 'center', mb: 0.5 }}>
+          <Typography variant="h5" component="h1" sx={{ textAlign: 'center', mb: 0.5, ...onGlass }}>
             {mode === 'review' ? 'Privacy preferences' : 'Meet your AI Concierge'}
           </Typography>
-          <Typography color={AUTH_MUTED} sx={{ textAlign: 'center', mb: 2 }}>
+          <Typography sx={{ textAlign: 'center', mb: 2, ...onGlass }}>
             An optional helper that personalises the app for you.
           </Typography>
 
@@ -62,14 +63,14 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
               <Box
                 sx={{
                   width: 40, height: 40, flexShrink: 0, borderRadius: '50%',
-                  bgcolor: 'rgba(27,79,114,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  bgcolor: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                <FeatureIcon sx={{ fontSize: 24, color: 'primary.main' }} />
+                <FeatureIcon sx={{ fontSize: 24, color: AUTH_BLUE }} />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 600 }}>{title}</Typography>
-                <Typography color={AUTH_MUTED}>{description}</Typography>
+                <Typography sx={{ fontWeight: 600, ...onGlass }}>{title}</Typography>
+                <Typography sx={onGlass}>{description}</Typography>
               </Box>
             </Box>
           ))}
@@ -77,7 +78,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
 
           {/* Placed after the explanation on purpose: read first, then choose.
               Nothing is pre-selected on a first visit. */}
-          <Typography component="h2" sx={{ fontWeight: 600, mt: 2, mb: 1 }} id="consent-question">
+          <Typography component="h2" sx={{ fontWeight: 600, mt: 2, mb: 1, ...onGlass }} id="consent-question">
             May the AI Concierge learn from your scans, favourites and browsing to personalise the app?
           </Typography>
           <RadioGroup
@@ -100,10 +101,11 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                   px: 1.5,
                   py: 0.75,
                   border: '2px solid',
-                  borderColor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? 'primary.main' : 'divider',
+                  borderColor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? AUTH_BLUE : 'divider',
                   borderRadius: 2,
-                  bgcolor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? 'rgba(47,128,200,0.08)' : '#fff',
-                  '& .MuiFormControlLabel-label': { fontSize: '1.05rem' },
+                  bgcolor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? '#eef5fc' : '#fff',
+                  '& .MuiFormControlLabel-label': { fontSize: '1.05rem', color: AUTH_BLUE },
+                  '& .MuiRadio-root, & .MuiRadio-root.Mui-checked': { color: AUTH_BLUE },
                 }}
               />
             ))}
@@ -125,12 +127,12 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             {saving ? 'Saving…' : mode === 'review' ? 'Save my choice' : 'Continue'}
           </Button>
           {consent === null && (
-            <Typography variant="body2" color={AUTH_MUTED} sx={{ textAlign: 'center' }}>
+            <Typography variant="body2" sx={{ textAlign: 'center', ...onGlass }}>
               Please choose Yes or No above to continue.
             </Typography>
           )}
           {mode === 'review' && (
-            <Button onClick={onClose} fullWidth sx={{ minHeight: 44 }}>
+            <Button onClick={onClose} fullWidth sx={{ minHeight: 44, ...onGlass, '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}>
               Cancel
             </Button>
           )}
