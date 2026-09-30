@@ -48,7 +48,7 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import BusinessIcon from '@mui/icons-material/Business';
 import HistoryIcon from '@mui/icons-material/History';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import SpaIcon from '@mui/icons-material/Spa';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
@@ -100,7 +100,7 @@ import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import HistoryPage from '../features/history/HistoryPage';
-import TracePage from '../features/trace/TracePage';
+import SustainabilityPage from '../features/sustainability/SustainabilityPage';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ChatPage from '../features/chat/ChatPage';
 import NotificationBell from '../features/notifications/NotificationBell';
@@ -127,12 +127,14 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 // (/admin/<page>) so the browser Back/Forward buttons and bookmarks work.
 const KNOWN_PAGES = [
   'dashboard', 'products', 'newProduct', 'generateCode', 'users', 'companies', 'employeeAuditLog',
-  'processSteps', 'captureHistory', 'history', 'trace', 'notifications',
+  'processSteps', 'captureHistory', 'history', 'sustainability', 'notifications',
   'allNotifications', 'recommendations', 'chat', 'profile',
 ];
 const pageFromPath = (pathname) => {
   const match = String(pathname || '').match(/^\/admin\/([^/?#]+)/);
-  return match && KNOWN_PAGES.includes(match[1]) ? match[1] : null;
+  // Old bookmarks: the Ownership Transfers page ('trace') became Sustainability.
+  const page = match && match[1] === 'trace' ? 'sustainability' : match && match[1];
+  return page && KNOWN_PAGES.includes(page) ? page : null;
 };
 
 // Product form steps (was 6 unlabeled tabs) — shown as a numbered stepper
@@ -202,7 +204,7 @@ const InnerPage = () => {
   // they only ever see the pages listed below, never Users/ESG.
   const isEmployeeActor = company?.actorKind === 'Employee';
   // Shared by every non-admin role: LCA, Notifications, Recommendations, Chat.
-  const COMMON_PAGES = ['dashboard', 'products', 'profile', 'trace', 'allNotifications', 'recommendations', 'chat'];
+  const COMMON_PAGES = ['dashboard', 'products', 'profile', 'sustainability', 'allNotifications', 'recommendations', 'chat'];
   const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog'];
   const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
   const isWorkingEmployee = isEmployeeActor && !isSupervisor;
@@ -1683,7 +1685,7 @@ const InnerPage = () => {
       items: [
         ['history', isAppUser ? 'My Scans' : 'Scan History', HistoryIcon, !isWorkingEmployee],
         ['captureHistory', isWorkingEmployee ? 'My Captures' : 'Capture History', AssessmentIcon, canSeeCaptureHistory],
-        ['trace', 'Ownership Transfers', SwapHorizIcon, !isWorkingEmployee],
+        ['sustainability', 'Sustainability', SpaIcon, !isWorkingEmployee],
       ],
     },
     {
@@ -1921,8 +1923,20 @@ const InnerPage = () => {
             />
           )}
 
-          {activePage === 'trace' && (
-            <TracePage ownerKind={isAdmin ? null : ownerScopeKind} ownerId={isAdmin ? null : ownerScopeId} />
+          {activePage === 'sustainability' && (
+            <SustainabilityPage
+              products={products}
+              loading={productsLoading}
+              canEdit={canEditProducts}
+              isAppUser={isAppUser}
+              onEditProduct={(prod) => {
+                const index = products.findIndex((p) => p._id === prod._id);
+                if (index < 0) return;
+                setProductPanelMode('edit');
+                setPreviousPage('sustainability');
+                editProductHandler(index);
+              }}
+            />
           )}
 
           {activePage === 'notifications' && isAdmin && <SystemNotificationsPage />}
