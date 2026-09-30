@@ -14,6 +14,7 @@ import {
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import axios from 'axios';
 import { Backend_URL, getFileUrl, getProductsByUser, getOwnedProducts } from '../../helper';
+import PageHeader from '../../components/PageHeader';
 
 /**
  * Brand-curated, AI-assisted product recommendations.
@@ -23,7 +24,7 @@ import { Backend_URL, getFileUrl, getProductsByUser, getOwnedProducts } from '..
  * provider (OpenAI) is not yet wired up the page degrades gracefully
  * and keeps showing the catalogue with a short notice.
  */
-export default function RecommendationsPage({ company, isAdmin }) {
+export default function RecommendationsPage({ company, isAdmin, isAppUser = false }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -64,14 +65,14 @@ export default function RecommendationsPage({ company, isAdmin }) {
         setAiNote('Personalized by AI from recent shopper preferences.');
       } else {
         setRecommended(products);
-        setAiNote('No AI ranking returned yet — showing your full catalogue.');
+        setAiNote('No personal suggestions yet, so all products are shown.');
       }
     } catch (e) {
-      // AI backend not configured — keep the page useful.
+      // AI backend not configured — keep the page useful, and keep the
+      // technical reason out of the user's view.
+      console.error('Recommendations request failed:', e?.response?.status, e?.message);
       setRecommended(products);
-      setAiNote(
-        'AI personalization isn’t connected yet. Once your OpenAI key is configured on the backend, picks here will be tailored to each shopper.'
-      );
+      setAiNote('Personal suggestions are not available right now, so all products are shown. Please try again later.');
     } finally {
       setGenerating(false);
     }
@@ -81,13 +82,13 @@ export default function RecommendationsPage({ company, isAdmin }) {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-        <AutoAwesomeIcon sx={{ color: 'primary.main' }} />
-        <Typography variant="h6">Recommendations</Typography>
-      </Box>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        AI-curated product picks — your brand’s catalogue, ranked for each shopper’s personalized preferences.
-      </Typography>
+      <PageHeader
+        title="Recommendations"
+        icon={AutoAwesomeIcon}
+        description={isAppUser
+          ? 'Products picked for you, based on what you scan and like.'
+          : 'See how your products are suggested to shoppers based on what they scan and like.'}
+      />
 
       <Card sx={{ mb: 2 }}>
         <CardContent
@@ -102,11 +103,11 @@ export default function RecommendationsPage({ company, isAdmin }) {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
             <AutoAwesomeIcon sx={{ color: 'primary.main' }} />
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 400 }}>
-                AI personalization
+              <Typography variant="subtitle1">
+                Personal suggestions
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Generate recommendations powered by OpenAI (ChatGPT).
+              <Typography color="text.secondary">
+                Press the button to sort the products by what fits best. This uses an AI assistant.
               </Typography>
             </Box>
           </Box>
@@ -116,7 +117,7 @@ export default function RecommendationsPage({ company, isAdmin }) {
             onClick={generate}
             disabled={generating || loading}
           >
-            {generating ? 'Generating…' : 'Generate with AI'}
+            {generating ? 'Working…' : 'Show suggestions'}
           </Button>
         </CardContent>
       </Card>
@@ -132,7 +133,7 @@ export default function RecommendationsPage({ company, isAdmin }) {
           <CircularProgress />
         </Box>
       ) : shown.length === 0 ? (
-        <Alert severity="info">No products yet. Add products to enable recommendations.</Alert>
+        <Alert severity="info">{isAppUser ? 'No products to suggest yet.' : 'No products yet. Add products on the Products page first.'}</Alert>
       ) : (
         <Grid container spacing={{ xs: 1.5, md: 2 }}>
           {shown.map((p, i) => {
@@ -151,7 +152,7 @@ export default function RecommendationsPage({ company, isAdmin }) {
                     <Box sx={{ height: { xs: 110, md: 140 }, bgcolor: '#eef2f8' }} />
                   )}
                   <CardContent sx={{ py: 1.25, flexGrow: 1 }}>
-                    {recommended && <Chip label="AI pick" size="small" color="primary" sx={{ mb: 0.5 }} />}
+                    {recommended && <Chip label="Suggested" size="small" color="primary" sx={{ mb: 0.5 }} />}
                     <Typography variant="subtitle2" noWrap title={p.name}>
                       {p.name || 'Unnamed product'}
                     </Typography>

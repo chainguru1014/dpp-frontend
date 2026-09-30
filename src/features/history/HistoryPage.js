@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Box,
+  Button,
+  Collapse,
+  Grid,
   Paper,
   Typography,
   TextField,
@@ -10,6 +13,8 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import PageHeader from '../../components/PageHeader';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { DataGrid } from '@mui/x-data-grid';
@@ -31,29 +36,8 @@ const SCAN_TYPE_LABEL = {
   rfid: 'RFID',
 };
 
-function Mark({ on, label }) {
-  return (
-    <Tooltip title={label}>
-      {on ? (
-        <CheckCircleIcon fontSize="small" color="success" />
-      ) : (
-        <Box
-          component="span"
-          sx={{
-            width: 16,
-            height: 16,
-            borderRadius: '50%',
-            border: '1px solid',
-            borderColor: 'divider',
-            display: 'inline-block',
-          }}
-        />
-      )}
-    </Tooltip>
-  );
-}
 
-export default function HistoryPage({ ownerKind = null, ownerId = null }) {
+export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUser = false }) {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -121,224 +105,192 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
     setPaginationModel((p) => ({ ...p, page: 0 }));
   };
 
+  // userType is stored as 'client' (shopper) / 'agent' (business account).
+  const ACCOUNT_TYPE_LABEL = { client: 'Shopper', agent: 'Business', user: 'Shopper', guest: 'Guest' };
+  const moreFilterCount = ['source', 'security', 'reaction', 'location'].filter((k) => filters[k] || (k === 'location' && locationInput)).length;
+  const [showMore, setShowMore] = useState(false);
+
   const columns = useMemo(
     () => [
       {
         field: 'scanned_at',
-        headerName: 'Time',
-        width: 170,
+        headerName: 'When',
+        width: 180,
         valueGetter: (p) => fmt(p.row.scanned_at),
       },
-      {
+      ...(isAppUser ? [] : [{
         field: 'user',
-        headerName: 'User',
-        width: 180,
+        headerName: 'Scanned by',
+        flex: 1,
+        minWidth: 190,
         sortable: false,
         renderCell: (p) => (
-          <Box sx={{ py: 0.5 }}>
-            <Typography variant="body2">{p.row.user?.name || 'Guest'}</Typography>
-            {p.row.user?.email && (
-              <Typography variant="caption" color="text.secondary">
-                {p.row.user.email}
-              </Typography>
-            )}
+          <Box sx={{ py: 0.75, minWidth: 0 }}>
+            <Typography variant="body1">{p.row.user?.name || 'Guest'}</Typography>
+            <Typography variant="body2" color="text.secondary" noWrap>
+              {p.row.user
+                ? [ACCOUNT_TYPE_LABEL[p.row.user.userType || 'user'] || p.row.user.userType, p.row.user.email].filter(Boolean).join(' · ')
+                : 'Not signed in'}
+            </Typography>
           </Box>
         ),
-      },
-      {
-        field: 'userType',
-        headerName: 'Type',
-        width: 90,
-        valueGetter: (p) => (p.row.user ? p.row.user.userType || 'user' : 'guest'),
-      },
+      }]),
       {
         field: 'location',
-        headerName: 'Location / IP',
-        width: 180,
+        headerName: 'Where',
+        flex: 0.8,
+        minWidth: 160,
         sortable: false,
         valueGetter: (p) => {
           const l = p.row.location || {};
           const place = [l.city, l.country].filter(Boolean).join(', ');
-          return place || p.row.ip || '—';
+          return place || (isAppUser ? '—' : p.row.ip) || '—';
         },
       },
       {
         field: 'product',
         headerName: 'Product',
-        width: 200,
+        flex: 1,
+        minWidth: 180,
         sortable: false,
         renderCell: (p) => (
-          <Box sx={{ py: 0.5 }}>
-            <Typography variant="body2">{p.row.product?.name || '—'}</Typography>
-            {p.row.product?.model && (
-              <Typography variant="caption" color="text.secondary">
-                {p.row.product.model}
+          <Box sx={{ py: 0.75, minWidth: 0 }}>
+            <Typography variant="body1">{p.row.product?.name || '—'}</Typography>
+            {(p.row.product?.model || p.row.pmc_code) && (
+              <Typography variant="body2" color="text.secondary" noWrap>
+                {[p.row.product?.model, p.row.pmc_code].filter(Boolean).join(' · ')}
               </Typography>
             )}
           </Box>
         ),
       },
       {
-        field: 'pmc_code',
-        headerName: 'PMC Code',
-        width: 140,
-        sortable: false,
-        valueGetter: (p) => p.row.pmc_code || '—',
-      },
-      {
         field: 'identifier_type',
-        headerName: 'Scan Type',
-        width: 140,
+        headerName: 'Label',
+        width: 120,
         renderCell: (p) => (
           <Chip
             size="small"
             variant="outlined"
-            label={SCAN_TYPE_LABEL[p.row.identifier_type] || p.row.identifier_type || 'QR'}
-          />
-        ),
-      },
-      {
-        field: 'source',
-        headerName: 'Source',
-        width: 100,
-        renderCell: (p) => (
-          <Chip
-            size="small"
-            variant="outlined"
-            color={p.row.source === 'visit' ? 'default' : 'primary'}
-            label={p.row.source === 'visit' ? 'Visit' : 'Scan'}
+            label={`${SCAN_TYPE_LABEL[p.row.identifier_type] || p.row.identifier_type || 'QR'}${p.row.source === 'visit' ? ' (link)' : ''}`}
           />
         ),
       },
       {
         field: 'security_verified',
-        headerName: 'Security',
-        width: 120,
+        headerName: 'Genuine?',
+        width: 130,
         renderCell: (p) => {
           const v = p.row.security_verified;
           if (v === true) return <Chip size="small" color="success" label="Verified" />;
-          if (v === false) return <Chip size="small" color="error" label="Failed" />;
-          return <Chip size="small" variant="outlined" label="—" />;
+          if (v === false) return <Chip size="small" color="error" label="Check failed" />;
+          return <Typography color="text.secondary">Not checked</Typography>;
         },
       },
       {
-        field: 'like',
-        headerName: 'Like',
-        width: 80,
+        field: 'reaction',
+        headerName: 'Reaction',
+        width: 170,
         sortable: false,
-        align: 'center',
-        headerAlign: 'center',
-        renderCell: (p) => <Mark on={p.row.like} label="Liked" />,
-      },
-      {
-        field: 'dislike',
-        headerName: 'Dislike',
-        width: 80,
-        sortable: false,
-        align: 'center',
-        headerAlign: 'center',
-        renderCell: (p) => <Mark on={p.row.dislike} label="Disliked" />,
-      },
-      {
-        field: 'buy',
-        headerName: 'Buy',
-        width: 80,
-        sortable: false,
-        align: 'center',
-        headerAlign: 'center',
-        renderCell: (p) => <Mark on={p.row.buy} label="Bought" />,
+        renderCell: (p) => {
+          const marks = [p.row.like && 'Liked', p.row.dislike && 'Disliked', p.row.buy && 'Bought'].filter(Boolean);
+          return marks.length
+            ? <Stack direction="row" spacing={0.5}>{marks.map((m) => <Chip key={m} size="small" label={m} icon={<CheckCircleIcon />} />)}</Stack>
+            : <Typography color="text.secondary">—</Typography>;
+        },
       },
     ],
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isAppUser]
   );
 
   return (
     <Box>
+      <PageHeader
+        title={isAppUser ? 'My Scans' : 'Scan History'}
+        description={isAppUser
+          ? 'Every product label you have scanned, newest first.'
+          : 'Every time someone scanned one of your product labels, newest first.'}
+      />
       <Paper sx={{ p: 2, mb: 2 }}>
-        {/* Single line, always -- horizontal scroll (not wrap) is the
-            overflow strategy on narrower widths, so the row never breaks to
-            a second line no matter how many filters are added. */}
-        <Stack
-          direction={{ xs: 'column', md: 'row' }}
-          spacing={2}
-          flexWrap="nowrap"
-          alignItems={{ md: 'center' }}
-          sx={{ overflowX: { md: 'auto' }, pb: { md: 0.5 } }}
-        >
-          <TextField
-            label="From"
-            type="date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={filters.from}
-            onChange={setF('from')}
-            sx={{ flexShrink: 0 }}
-          />
-          <TextField
-            label="To"
-            type="date"
-            size="small"
-            InputLabelProps={{ shrink: true }}
-            value={filters.to}
-            onChange={setF('to')}
-            sx={{ flexShrink: 0 }}
-          />
-          <TextField select label="Source" size="small" sx={{ minWidth: 120, flexShrink: 0 }} value={filters.source} onChange={setF('source')}>
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="scan">Scan</MenuItem>
-            <MenuItem value="visit">Visit</MenuItem>
-          </TextField>
-          <TextField select label="Security" size="small" sx={{ minWidth: 130, flexShrink: 0 }} value={filters.security} onChange={setF('security')}>
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="verified">Verified</MenuItem>
-            <MenuItem value="failed">Failed</MenuItem>
-            <MenuItem value="na">N/A</MenuItem>
-          </TextField>
-          <TextField select label="Action" size="small" sx={{ minWidth: 120, flexShrink: 0 }} value={filters.reaction} onChange={setF('reaction')}>
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="like">Like</MenuItem>
-            <MenuItem value="dislike">Dislike</MenuItem>
-            <MenuItem value="buy">Buy</MenuItem>
-          </TextField>
-          <TextField
-            label="Username"
-            size="small"
-            placeholder="Name or email"
-            value={usernameInput}
-            onChange={(e) => setUsernameInput(e.target.value)}
-            sx={{ minWidth: 50, flexShrink: 0 }}
-          />
-          <TextField
-            label="Location"
-            size="small"
-            placeholder="Country, state, city…"
-            value={locationInput}
-            onChange={(e) => setLocationInput(e.target.value)}
-            sx={{ minWidth: 57, flexShrink: 0 }}
-          />
-          <TextField
-            select
-            label="Product"
-            size="small"
-            sx={{ minWidth: 106, flexShrink: 0 }}
-            value={filters.product_id}
-            onChange={setF('product_id')}
-          >
-            <MenuItem value="">All</MenuItem>
-            {productOptions.map((p) => (
-              <MenuItem key={p._id} value={p._id}>{p.name || p._id}</MenuItem>
-            ))}
-          </TextField>
-          <Tooltip title="Refresh">
-            <IconButton onClick={fetchData} color="primary" sx={{ flexShrink: 0 }}>
-              <RefreshIcon />
-            </IconButton>
-          </Tooltip>
-        </Stack>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} sm={6} md={3} lg={2}>
+            <TextField label="From date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={filters.from} onChange={setF('from')} />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={2}>
+            <TextField label="To date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={filters.to} onChange={setF('to')} />
+          </Grid>
+          <Grid item xs={12} sm={6} md={3} lg={3}>
+            <TextField select label="Product" fullWidth value={filters.product_id} onChange={setF('product_id')}>
+              <MenuItem value="">All products</MenuItem>
+              {productOptions.map((p) => (
+                <MenuItem key={p._id} value={p._id}>{p.name || p._id}</MenuItem>
+              ))}
+            </TextField>
+          </Grid>
+          {!isAppUser && (
+            <Grid item xs={12} sm={6} md={3} lg={3}>
+              <TextField
+                label="Scanned by"
+                placeholder="Name or email"
+                fullWidth
+                value={usernameInput}
+                onChange={(e) => setUsernameInput(e.target.value)}
+              />
+            </Grid>
+          )}
+          <Grid item xs={12} lg={isAppUser ? 5 : 2} sx={{ display: 'flex', gap: 1, justifyContent: { xs: 'flex-start', lg: 'flex-end' } }}>
+            <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setShowMore((v) => !v)} aria-expanded={showMore}>
+              {showMore ? 'Fewer filters' : `More filters${moreFilterCount ? ` (${moreFilterCount})` : ''}`}
+            </Button>
+            <Tooltip title="Reload">
+              <IconButton onClick={fetchData} color="primary" aria-label="Reload scan history">
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          </Grid>
+        </Grid>
+        <Collapse in={showMore}>
+          <Grid container spacing={2} sx={{ mt: 0.5 }}>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField select label="How it was opened" fullWidth value={filters.source} onChange={setF('source')}>
+                <MenuItem value="">Any</MenuItem>
+                <MenuItem value="scan">Scanned with the camera</MenuItem>
+                <MenuItem value="visit">Opened from a link</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField select label="Genuine check" fullWidth value={filters.security} onChange={setF('security')}>
+                <MenuItem value="">Any</MenuItem>
+                <MenuItem value="verified">Verified</MenuItem>
+                <MenuItem value="failed">Check failed</MenuItem>
+                <MenuItem value="na">Not checked</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField select label="Reaction" fullWidth value={filters.reaction} onChange={setF('reaction')}>
+                <MenuItem value="">Any</MenuItem>
+                <MenuItem value="like">Liked</MenuItem>
+                <MenuItem value="dislike">Disliked</MenuItem>
+                <MenuItem value="buy">Bought</MenuItem>
+              </TextField>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <TextField
+                label="Place"
+                placeholder="Country or city"
+                fullWidth
+                value={locationInput}
+                onChange={(e) => setLocationInput(e.target.value)}
+              />
+            </Grid>
+          </Grid>
+        </Collapse>
       </Paper>
 
-      <Paper sx={{ height: 620 }}>
+      <Paper sx={{ p: 1 }}>
         <DataGrid
+          autoHeight
           rows={rows}
           columns={columns}
           loading={loading}
@@ -348,11 +300,14 @@ export default function HistoryPage({ ownerKind = null, ownerId = null }) {
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[10, 25, 50, 100]}
           disableRowSelectionOnClick
+          disableColumnMenu
           getRowHeight={() => 'auto'}
+          localeText={{ noRowsLabel: isAppUser ? 'You have not scanned any products yet.' : 'No scans found. Try removing some filters.' }}
           sx={{
             border: 0,
+            minHeight: 260,
             '& .MuiDataGrid-columnHeaders': { backgroundColor: '#eef1f6' },
-            '& .MuiDataGrid-cell': { py: 1 },
+            '& .MuiDataGrid-cell': { py: 0.5, alignItems: 'center' },
           }}
         />
       </Paper>

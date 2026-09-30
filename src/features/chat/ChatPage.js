@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Typography, Paper, TextField, IconButton, Avatar, CircularProgress } from '@mui/material';
+import { Box, Button, Typography, Paper, TextField, Avatar, CircularProgress } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import axios from 'axios';
 import { Backend_URL } from '../../helper';
+import PageHeader from '../../components/PageHeader';
 
 /**
  * Customer ⇄ brand chat. Questions are answered by an AI assistant
@@ -16,7 +17,7 @@ const GREETING = {
   text: 'Hi! I’m your product assistant. Ask me anything about our products — authenticity, materials, care, sustainability, or where to buy.',
 };
 
-export default function ChatPage({ company }) {
+export default function ChatPage({ company, isAppUser = false }) {
   const [messages, setMessages] = useState([GREETING]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -50,19 +51,10 @@ export default function ChatPage({ company }) {
         },
       ]);
     } catch (e) {
-      const status = e?.response?.status;
-      const serverMsg = e?.response?.data?.message;
-      let text;
-      if (status === 404) {
-        text =
-          'The /chat endpoint returned 404 — the backend AI route isn’t live yet. Rebuild (npm run build) and restart the ACTUAL running backend process, then try again.';
-      } else if (serverMsg) {
-        // e.g. "AI is not configured…" (503) or an OpenAI error detail (502).
-        text = `⚠️ ${serverMsg}`;
-      } else {
-        text =
-          'Could not reach the AI service. Check that the backend is running and reachable from this site.';
-      }
+      // Users only ever see a plain message; the technical reason goes to
+      // the console for whoever maintains the server.
+      console.error('Chat request failed:', e?.response?.status, e?.response?.data?.message || e?.message);
+      const text = 'Sorry, the assistant is not available right now. Please try again in a few minutes.';
       setMessages((m) => [...m, { role: 'assistant', text }]);
     } finally {
       setSending(false);
@@ -78,13 +70,13 @@ export default function ChatPage({ company }) {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px - 48px)', minHeight: 360 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-        <AutoAwesomeIcon sx={{ color: 'primary.main' }} />
-        <Typography variant="h6">Chat</Typography>
-      </Box>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-        Ask the brand anything — answered by AI, powered by OpenAI (ChatGPT).
-      </Typography>
+      <PageHeader
+        title="Chat"
+        icon={AutoAwesomeIcon}
+        description={isAppUser
+          ? 'Ask about products: materials, care, where they were made, or where to buy. Answers come from an AI assistant.'
+          : 'Try the product assistant your shoppers use. Answers come from an AI assistant.'}
+      />
 
       <Paper
         variant="outlined"
@@ -111,8 +103,8 @@ export default function ChatPage({ company }) {
                   bgcolor: mine ? 'primary.main' : '#ffffff',
                   color: mine ? '#fff' : 'text.primary',
                   border: mine ? 'none' : '1px solid #e7edf6',
-                  fontSize: 14,
-                  lineHeight: 1.5,
+                  fontSize: '1rem',
+                  lineHeight: 1.55,
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
                 }}
@@ -125,7 +117,7 @@ export default function ChatPage({ company }) {
         {sending && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
             <CircularProgress size={16} />
-            <Typography variant="caption">Assistant is typing…</Typography>
+            <Typography variant="body2">The assistant is writing…</Typography>
           </Box>
         )}
         <div ref={endRef} />
@@ -135,16 +127,17 @@ export default function ChatPage({ company }) {
         <TextField
           fullWidth
           size="small"
-          placeholder="Type your question…"
+          placeholder="Type your question and press Enter"
+          inputProps={{ 'aria-label': 'Your question' }}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}
           multiline
           maxRows={4}
         />
-        <IconButton color="primary" onClick={send} disabled={!input.trim() || sending} sx={{ alignSelf: 'flex-end' }}>
-          <SendIcon />
-        </IconButton>
+        <Button variant="contained" endIcon={<SendIcon />} onClick={send} disabled={!input.trim() || sending} sx={{ alignSelf: 'flex-end' }}>
+          Send
+        </Button>
       </Box>
     </Box>
   );

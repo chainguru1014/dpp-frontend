@@ -1867,6 +1867,7 @@ const InnerPage = () => {
               canSeeStaffManagement={canSeeStaffManagement}
               canEditProcessSteps={!isAppUser && !isAdmin && (!isEmployeeActor || isSupervisor)}
               productCount={products.length}
+              hasCodes={products.some((p) => (p.total_minted_amount || 0) > 0)}
               company={company}
               onNavigateToNewProduct={() => {
                 resetFields();

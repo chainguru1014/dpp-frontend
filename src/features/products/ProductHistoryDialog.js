@@ -34,18 +34,18 @@ const OwnerCell = ({ owner }) => (
 );
 
 const columns = [
-  { field: 'createdAt', headerName: 'Time', width: 170, valueGetter: (p) => fmt(p.row.createdAt) },
-  { field: 'from_owner', headerName: 'From (owner)', width: 180, sortable: false, renderCell: (p) => <OwnerCell owner={p.row.from_owner} /> },
-  { field: 'to_owner', headerName: 'To (buyer)', width: 180, sortable: false, renderCell: (p) => <OwnerCell owner={p.row.to_owner} /> },
+  { field: 'createdAt', headerName: 'When', width: 180, valueGetter: (p) => fmt(p.row.createdAt) },
+  { field: 'from_owner', headerName: 'From', width: 180, sortable: false, renderCell: (p) => <OwnerCell owner={p.row.from_owner} /> },
+  { field: 'to_owner', headerName: 'To', width: 180, sortable: false, renderCell: (p) => <OwnerCell owner={p.row.to_owner} /> },
   {
     field: 'method',
-    headerName: 'Method',
+    headerName: 'Type',
     width: 160,
     renderCell: (p) => <Chip size="small" variant="outlined" label={METHOD_LABELS[p.row.method] || p.row.method} />,
   },
-  { field: 'quantity', headerName: 'Amount', width: 100, type: 'number', valueGetter: (p) => p.row.quantity ?? 1 },
-  { field: 'status', headerName: 'Status', width: 120, renderCell: (p) => <StatusChip status={p.row.status} /> },
-  { field: 'confirmed_at', headerName: 'Confirmed', width: 170, valueGetter: (p) => fmt(p.row.confirmed_at) },
+  { field: 'quantity', headerName: 'Quantity', width: 100, type: 'number', valueGetter: (p) => p.row.quantity ?? 1 },
+  { field: 'status', headerName: 'Status', width: 190, renderCell: (p) => <StatusChip status={p.row.status} /> },
+  { field: 'confirmed_at', headerName: 'Completed on', width: 170, valueGetter: (p) => fmt(p.row.confirmed_at) },
 ];
 
 export default function ProductHistoryDialog({ open, onClose, product }) {
