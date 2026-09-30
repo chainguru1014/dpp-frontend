@@ -54,16 +54,16 @@ const theme = createTheme({
     button: { textTransform: 'none', fontWeight: 500, fontSize: '1rem' },
   },
   components: {
-    // App-wide scrollbars in the brand blue (#4585db, the top bar colour) on a
+    // App-wide scrollbars in the brand blue (#428acb) on a
     // light blue track — same as the mobile app's web build
     // (app/public/index.html).
     MuiCssBaseline: {
       styleOverrides: {
-        '*': { scrollbarWidth: 'thin', scrollbarColor: '#4585db #e6eef8' },
+        '*': { scrollbarWidth: 'thin', scrollbarColor: '#428acb #e6eef8' },
         '*::-webkit-scrollbar': { width: 10, height: 10 },
         '*::-webkit-scrollbar-track': { background: '#e6eef8' },
-        '*::-webkit-scrollbar-thumb': { backgroundColor: '#4585db', borderRadius: 8, border: '2px solid #e6eef8' },
-        '*::-webkit-scrollbar-thumb:hover': { backgroundColor: '#3a72c0' },
+        '*::-webkit-scrollbar-thumb': { backgroundColor: '#428acb', borderRadius: 8, border: '2px solid #e6eef8' },
+        '*::-webkit-scrollbar-thumb:hover': { backgroundColor: '#356fa6' },
       },
     },
     MuiButton: {
