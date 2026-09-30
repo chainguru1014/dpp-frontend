@@ -7,10 +7,10 @@ import LockIcon from '@mui/icons-material/Lock';
 import AuthShell from '../AuthShell';
 import { compactMediaQuery } from '../../theme';
 
-// Text and icons on the see-through card in the brand blue (#2f80c8), with
-// a soft white glow so they stay readable over any background photo.
+// Text and icons on the see-through card in the brand blue (#2f80c8), (plain,
+// no glow).
 const AUTH_BLUE = '#2f80c8';
-const onGlass = { color: AUTH_BLUE, textShadow: '0 0 2px #ffffff, 0 0 4px #ffffff, 0 0 10px rgba(255,255,255,0.85)' };
+const onGlass = { color: AUTH_BLUE, textShadow: 'none' };
 
 const FEATURES = [
   {

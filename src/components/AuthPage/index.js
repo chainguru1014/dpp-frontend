@@ -13,8 +13,8 @@ import { notifyError } from '../../utils/feedbackBus';
 const AUTH_BLUE = '#2f80c8';
 const AUTH_TEXT = AUTH_BLUE;
 const AUTH_MUTED = AUTH_BLUE;
-// A soft white glow keeps the blue text readable over darker photos.
-const textShadow = '0 0 2px #ffffff, 0 0 4px #ffffff, 0 0 10px rgba(255,255,255,0.85)';
+// Plain blue text, no glow.
+const textShadow = 'none';
 const onGlass = { color: AUTH_TEXT, textShadow };
 
 // Google "G" mark (Simple Icons, CC0) in the app's navy.
