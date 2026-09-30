@@ -11,9 +11,11 @@ import { notifyError } from '../../utils/feedbackBus';
 // Colours on the see-through sign-in card: the brand blue (#2f80c8) for
 // text, labels, icons and button text; the logo is the white version.
 const AUTH_BLUE = '#2f80c8';
-const AUTH_TEXT = AUTH_BLUE;
-const AUTH_MUTED = AUTH_BLUE;
-// Plain blue text, no glow.
+// Text, lines and icons on the glass follow the background photo: white on
+// the two darker photos, brand blue on the bright last one (CSS variables
+// set by AuthShell).
+const AUTH_TEXT = 'var(--auth-on-glass, #2f80c8)';
+const AUTH_MUTED = AUTH_TEXT;
 const textShadow = 'none';
 const onGlass = { color: AUTH_TEXT, textShadow };
 
@@ -203,7 +205,7 @@ const AuthPage = ({
                 </TextField>
               </Grid>
               <Grid item xs={12}>
-                <Divider sx={{ my: 0.5, '&::before, &::after': { borderColor: 'rgba(47,128,200,0.5)' } }}><Typography variant="body2" sx={{ color: AUTH_MUTED, textShadow }}>Address</Typography></Divider>
+                <Divider sx={{ my: 0.5, '&::before, &::after': { borderColor: 'var(--auth-line)' } }}><Typography variant="body2" sx={{ color: AUTH_MUTED, textShadow }}>Address</Typography></Divider>
               </Grid>
               <Grid item xs={12}>
                 <TextField label="Street and house number" required fullWidth value={registerData.addressStreet} onChange={setReg('addressStreet')} sx={fieldSx} autoComplete="street-address" />
@@ -274,7 +276,7 @@ const AuthPage = ({
 
             {otpNotice && <Alert severity="error" role="alert">{otpNotice}</Alert>}
 
-            <Divider sx={{ '&::before, &::after': { borderColor: 'rgba(47,128,200,0.5)' } }}><Typography variant="body2" sx={{ color: AUTH_MUTED, textShadow }}>or</Typography></Divider>
+            <Divider sx={{ '&::before, &::after': { borderColor: 'var(--auth-line)' } }}><Typography variant="body2" sx={{ color: AUTH_MUTED, textShadow }}>or</Typography></Divider>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
               {/* Custom-styled Google button with the real (invisible) Google

@@ -10,7 +10,10 @@ import { compactMediaQuery } from '../../theme';
 // Text and icons on the see-through card in the brand blue (#2f80c8), (plain,
 // no glow).
 const AUTH_BLUE = '#2f80c8';
-const onGlass = { color: AUTH_BLUE, textShadow: 'none' };
+// Follows the background photo: white on the darker photos, blue on the
+// bright one (CSS variables set by AuthShell).
+const ON_GLASS = 'var(--auth-on-glass, #2f80c8)';
+const onGlass = { color: ON_GLASS, textShadow: 'none' };
 
 const FEATURES = [
   {
@@ -63,10 +66,10 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
               <Box
                 sx={{
                   width: 40, height: 40, flexShrink: 0, borderRadius: '50%',
-                  bgcolor: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  bgcolor: 'var(--auth-icon-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                <FeatureIcon sx={{ fontSize: 24, color: AUTH_BLUE }} />
+                <FeatureIcon sx={{ fontSize: 24, color: ON_GLASS }} />
               </Box>
               <Box>
                 <Typography sx={{ fontWeight: 600, ...onGlass }}>{title}</Typography>
