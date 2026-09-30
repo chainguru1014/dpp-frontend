@@ -13,8 +13,12 @@ import {
   TableCell,
   Chip,
   CircularProgress,
+  TablePagination,
+  TextField,
 } from '@mui/material';
 import { getCaptures, listEmployees } from '../../helper';
+import PageHeader from '../../components/PageHeader';
+import { processStepTypeLabel } from '../../utils/processStepTypes';
 
 const dateKeyForToday = () => {
   const d = new Date();
@@ -36,6 +40,10 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
   const [loading, setLoading] = useState(true);
   const [workerFilter, setWorkerFilter] = useState('all');
   const [companyFilter, setCompanyFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [tablePage, setTablePage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
 
   useEffect(() => {
     setLoading(true);
@@ -123,125 +131,138 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
   const colCount = isAdmin ? 7 : 6;
   const selfOnly = !!selfEmployee;
 
+  // Date range + paging for the history table (it used to list every
+  // capture ever made on one endless page).
+  const inRange = (d) => {
+    const when = new Date(d.capturedAt);
+    if (dateFrom && when < new Date(`${dateFrom}T00:00:00`)) return false;
+    if (dateTo && when > new Date(`${dateTo}T23:59:59`)) return false;
+    return true;
+  };
+  const rangedDocs = filteredDocs.filter(inRange);
+  const pageDocs = rangedDocs.slice(tablePage * rowsPerPage, tablePage * rowsPerPage + rowsPerPage);
+
+  const Stat = ({ label, value }) => (
+    <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', height: '100%' }}>
+      <Typography sx={{ fontSize: '1.8rem', fontWeight: 700, color: 'primary.main', lineHeight: 1.2 }}>{value}</Typography>
+      <Typography color="text.secondary">{label}</Typography>
+    </Paper>
+  );
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 2, flexWrap: 'wrap' }}>
-        <Typography variant="h6">Capture History</Typography>
-        {isAdmin && (
+      <PageHeader
+        title={selfOnly ? 'My Captures' : 'Capture History'}
+        description={selfOnly
+          ? 'Work steps you recorded with the mobile app.'
+          : 'Work steps your staff recorded with the mobile app, per person.'}
+        actions={isAdmin ? (
           <Select
-            size="small"
             value={companyFilter}
-            onChange={(e) => { setCompanyFilter(e.target.value); setWorkerFilter('all'); }}
-            sx={{ minWidth: 220 }}
+            onChange={(e) => { setCompanyFilter(e.target.value); setWorkerFilter('all'); setTablePage(0); }}
+            inputProps={{ 'aria-label': 'Company' }}
+            sx={{ minWidth: 240, bgcolor: 'background.paper' }}
           >
             <MenuItem value="all">All companies</MenuItem>
             {companyOptions.map((c) => (
               <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
             ))}
           </Select>
-        )}
-      </Box>
+        ) : null}
+      />
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={selfOnly ? 4 : 6} sm={selfOnly ? 4 : 3}>
-          <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">Total Captures</Typography>
-            <Typography variant="h5">{companyDocs.length}</Typography>
-          </Paper>
-        </Grid>
-        <Grid item xs={selfOnly ? 4 : 6} sm={selfOnly ? 4 : 3}>
-          <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">Today</Typography>
-            <Typography variant="h5">{todayCount}</Typography>
-          </Paper>
-        </Grid>
+        <Grid item xs={12} sm={selfOnly ? 4 : 6} md={selfOnly ? 4 : 3}><Stat label="All captures" value={companyDocs.length} /></Grid>
+        <Grid item xs={12} sm={selfOnly ? 4 : 6} md={selfOnly ? 4 : 3}><Stat label="Today" value={todayCount} /></Grid>
         {!selfOnly && (
-          <Grid item xs={6} sm={3}>
-            <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">Active Employees</Typography>
-              <Typography variant="h5">
-                {byWorker.filter((w) => !w.removed && w.total > 0).length} / {byWorker.filter((w) => !w.removed).length}
-              </Typography>
-            </Paper>
+          <Grid item xs={12} sm={6} md={3}>
+            <Stat
+              label="Staff with captures"
+              value={`${byWorker.filter((w) => !w.removed && w.total > 0).length} of ${byWorker.filter((w) => !w.removed).length}`}
+            />
           </Grid>
         )}
-        <Grid item xs={selfOnly ? 4 : 6} sm={selfOnly ? 4 : 3}>
-          <Paper variant="outlined" sx={{ p: 2, textAlign: 'center' }}>
-            <Typography variant="body2" color="text.secondary">Flagged</Typography>
-            <Typography variant="h5">{companyDocs.filter((d) => d.flagged).length}</Typography>
-          </Paper>
-        </Grid>
+        <Grid item xs={12} sm={selfOnly ? 4 : 6} md={selfOnly ? 4 : 3}><Stat label="Flagged for review" value={companyDocs.filter((d) => d.flagged).length} /></Grid>
       </Grid>
 
       {!selfOnly && (
       <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-        <Typography variant="subtitle1" sx={{ mb: 1.5 }}>Captures per Employee</Typography>
+        <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>Captures per person</Typography>
         {byWorker.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">No staff employees yet.</Typography>
+          <Typography color="text.secondary">No staff yet. Add Working Employees on the Staff page.</Typography>
         ) : (
           byWorker.map((w) => (
-            <Box key={w.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <Box sx={{ width: isAdmin ? 220 : 140, flexShrink: 0, minWidth: 0 }}>
-                <Typography variant="body2" noWrap>{w.label}</Typography>
+            <Box key={w.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.25 }}>
+              <Box sx={{ width: { xs: 120, sm: isAdmin ? 220 : 180 }, flexShrink: 0, minWidth: 0 }}>
+                <Typography noWrap title={w.label}>{w.label}</Typography>
                 {isAdmin && w.companyName && (
-                  <Typography variant="caption" color="text.secondary" noWrap component="div">{w.companyName}</Typography>
+                  <Typography variant="body2" color="text.secondary" noWrap component="div">{w.companyName}</Typography>
                 )}
               </Box>
-              <Box sx={{ flex: 1, bgcolor: '#eef2f8', borderRadius: 1, height: 10, overflow: 'hidden' }}>
-                <Box sx={{ width: `${(w.total / maxTotal) * 100}%`, bgcolor: '#1b4f72', height: '100%' }} />
+              <Box sx={{ flex: 1, bgcolor: '#eef2f8', borderRadius: 1, height: 12, overflow: 'hidden' }}>
+                <Box sx={{ width: `${(w.total / maxTotal) * 100}%`, bgcolor: '#2f80c8', height: '100%' }} />
               </Box>
-              <Typography variant="body2" sx={{ width: 36, textAlign: 'right' }}>{w.total}</Typography>
+              <Typography sx={{ width: 44, textAlign: 'right', fontWeight: 600 }}>{w.total}</Typography>
             </Box>
           ))
         )}
       </Paper>
       )}
 
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, minHeight: 40 }}>
-        <Typography variant="subtitle1">History</Typography>
-        {/* A working employee only ever sees their own captures — no filter. */}
-        {!selfOnly && (
-          <Select size="small" value={workerFilter} onChange={(e) => setWorkerFilter(e.target.value)} sx={{ minWidth: 200 }}>
-            <MenuItem value="all">All employees</MenuItem>
-            {byWorker.map((w) => (
-              <MenuItem key={w.id} value={w.id}>
-                {w.label}{isAdmin && w.companyName ? ` (${w.companyName})` : ''}
-              </MenuItem>
-            ))}
-          </Select>
-        )}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, gap: 2, flexWrap: 'wrap' }}>
+        <Typography variant="h6" component="h2">All recorded steps</Typography>
+        <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+          <TextField label="From date" type="date" InputLabelProps={{ shrink: true }} value={dateFrom}
+            onChange={(e) => { setDateFrom(e.target.value); setTablePage(0); }} />
+          <TextField label="To date" type="date" InputLabelProps={{ shrink: true }} value={dateTo}
+            onChange={(e) => { setDateTo(e.target.value); setTablePage(0); }} />
+          {/* A working employee only ever sees their own captures — no filter. */}
+          {!selfOnly && (
+            <Select value={workerFilter} onChange={(e) => { setWorkerFilter(e.target.value); setTablePage(0); }}
+              inputProps={{ 'aria-label': 'Person' }} sx={{ minWidth: 200 }}>
+              <MenuItem value="all">Everyone</MenuItem>
+              {byWorker.map((w) => (
+                <MenuItem key={w.id} value={w.id}>
+                  {w.label}{isAdmin && w.companyName ? ` (${w.companyName})` : ''}
+                </MenuItem>
+              ))}
+            </Select>
+          )}
+        </Box>
       </Box>
 
       <Paper variant="outlined" sx={{ overflowX: 'auto' }}>
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Ref Number</TableCell>
+              <TableCell>Reference</TableCell>
               {isAdmin && <TableCell>Company</TableCell>}
-              <TableCell>Worker</TableCell>
+              <TableCell>Person</TableCell>
               <TableCell>Step</TableCell>
-              <TableCell>Terminal</TableCell>
-              <TableCell>Captured</TableCell>
+              <TableCell>Device</TableCell>
+              <TableCell>When</TableCell>
               <TableCell>Flagged</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredDocs.length === 0 ? (
+            {pageDocs.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={colCount}>
-                  <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
-                    No captures found.
+                  <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                    {dateFrom || dateTo || workerFilter !== 'all'
+                      ? 'No captures match these filters.'
+                      : 'No captures yet. They appear here when staff record work steps in the mobile app.'}
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredDocs.map((doc) => (
-                <TableRow key={doc._id}>
+              pageDocs.map((doc) => (
+                <TableRow key={doc._id} hover>
                   <TableCell>{doc.refNumber}</TableCell>
                   {isAdmin && <TableCell>{doc.companyName || '—'}</TableCell>}
                   <TableCell>{doc.workerLabel || '—'}</TableCell>
-                  <TableCell>{doc.stepEntity} / {doc.stepType}</TableCell>
-                  <TableCell>{doc.terminalId || '—'}</TableCell>
+                  <TableCell>{[doc.stepEntity, processStepTypeLabel(doc.stepType)].filter(Boolean).join(' · ') || '—'}</TableCell>
+                  <TableCell>{doc.terminalId ? `No. ${doc.terminalId}` : '—'}</TableCell>
                   <TableCell>{new Date(doc.capturedAt).toLocaleString()}</TableCell>
                   <TableCell>{doc.flagged ? <Chip size="small" color="warning" label="Flagged" /> : '—'}</TableCell>
                 </TableRow>
@@ -249,6 +270,16 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
             )}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={rangedDocs.length}
+          page={tablePage}
+          onPageChange={(_, p) => setTablePage(p)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setTablePage(0); }}
+          rowsPerPageOptions={[25, 50, 100]}
+          labelRowsPerPage="Rows per page"
+        />
       </Paper>
     </Box>
   );

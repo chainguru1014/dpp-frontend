@@ -113,7 +113,7 @@ const NotificationBell = ({ onShowAll }) => {
   return (
     <>
       <Tooltip title="Notifications">
-        <IconButton color="inherit" onClick={handleOpen} sx={{ mr: 1 }}>
+        <IconButton color="inherit" onClick={handleOpen} sx={{ mr: 1 }} aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}>
           <Badge badgeContent={unread} color="error" max={99}>
             <NotificationsNoneIcon />
           </Badge>
@@ -142,7 +142,7 @@ const NotificationBell = ({ onShowAll }) => {
                 }
               }}
             >
-              Mark all read
+              Mark all as read
             </Button>
           )}
         </Box>
@@ -204,7 +204,7 @@ const NotificationBell = ({ onShowAll }) => {
               onShowAll?.();
             }}
           >
-            Show all
+            See all notifications
           </Button>
         </Box>
       </Popover>

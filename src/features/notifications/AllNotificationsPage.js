@@ -20,6 +20,7 @@ import CampaignIcon from '@mui/icons-material/Campaign';
 import { useAuth } from '../auth/AuthContext';
 import { getNotifications, markAllNotificationsRead, markNotificationRead } from '../../helper';
 import NotificationDetailDialog from './NotificationDetailDialog';
+import PageHeader from '../../components/PageHeader';
 
 const LEVEL_COLOR = {
   info: '#4a96dd',
@@ -81,15 +82,12 @@ const AllNotificationsPage = () => {
   };
 
   return (
-    <Box sx={{ p: { xs: 1, md: 2 } }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h5" sx={{ fontWeight: 400 }}>
-          Notifications
-        </Typography>
-        {items.some((n) => !n.read) && (
-          <Button onClick={handleMarkAll}>Mark all as read</Button>
-        )}
-      </Box>
+    <Box>
+      <PageHeader
+        title="Notifications"
+        description="Messages for you, such as ownership transfer requests. New ones are marked NEW; click one to open it."
+        actions={items.some((n) => !n.read) ? <Button variant="outlined" onClick={handleMarkAll}>Mark all as read</Button> : null}
+      />
 
       <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
         {loading ? (
@@ -100,7 +98,7 @@ const AllNotificationsPage = () => {
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <NotificationsNoneIcon sx={{ fontSize: 44, color: 'text.disabled' }} />
             <Typography color="text.secondary" sx={{ mt: 1 }}>
-              No notifications yet
+              You have no notifications yet
             </Typography>
           </Box>
         ) : (
@@ -113,7 +111,7 @@ const AllNotificationsPage = () => {
                     button
                     onClick={() => handleOpenDetail(n)}
                     alignItems="flex-start"
-                    sx={{ bgcolor: n.read ? 'transparent' : 'rgba(47,123,201,0.06)', py: 1.5, cursor: 'pointer' }}
+                    sx={{ bgcolor: n.read ? 'transparent' : 'rgba(47,123,201,0.08)', borderLeft: n.read ? '4px solid transparent' : '4px solid #2f80c8', py: 1.5, cursor: 'pointer' }}
                   >
                     <ListItemAvatar>
                       <Avatar variant="rounded" sx={{ bgcolor: `${color}22` }}>
@@ -122,8 +120,9 @@ const AllNotificationsPage = () => {
                     </ListItemAvatar>
                     <ListItemText
                       primary={
-                        <Typography variant="body1" sx={{ fontWeight: 400 }}>
+                        <Typography variant="body1" sx={{ fontWeight: n.read ? 400 : 700 }}>
                           {n.title}
+                          {!n.read && <Typography component="span" variant="caption" sx={{ ml: 1, color: 'primary.main', fontWeight: 700 }}>NEW</Typography>}
                         </Typography>
                       }
                       secondary={
@@ -131,7 +130,7 @@ const AllNotificationsPage = () => {
                           <Typography variant="body2" color="text.secondary" component="span" sx={{ display: 'block' }}>
                             {n.message}
                           </Typography>
-                          <Typography variant="caption" color="text.disabled">
+                          <Typography variant="caption" color="text.secondary">
                             {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
                           </Typography>
                         </>

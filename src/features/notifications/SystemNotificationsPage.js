@@ -40,6 +40,8 @@ import {
   uploadFiles,
   getFileUrl,
 } from '../../helper';
+import PageHeader from '../../components/PageHeader';
+import { confirmAction } from '../../utils/feedbackBus';
 
 const LEVELS = [
   { value: 'info', label: 'Info', color: 'info' },
@@ -118,7 +120,7 @@ const SystemNotificationsPage = () => {
 
   const handleSave = async () => {
     if (!form.title.trim() || !form.message.trim()) {
-      showToast('Title and message are required', 'warning');
+      showToast('Please add a title and a message.', 'warning');
       return;
     }
     setSaving(true);
@@ -144,7 +146,7 @@ const SystemNotificationsPage = () => {
     setSaving(false);
     if (res && res.status !== 'fail') {
       setDialogOpen(false);
-      showToast(isEditing ? 'Notification updated' : 'Notification published');
+      showToast(isEditing ? 'Announcement saved.' : 'Announcement sent.');
       load();
     } else {
       showToast(res?.message || 'Something went wrong', 'error');
@@ -161,11 +163,16 @@ const SystemNotificationsPage = () => {
   };
 
   const handleDelete = async (row) => {
-    // eslint-disable-next-line no-alert
-    if (!window.confirm(`Delete notification "${row.title}"? This cannot be undone.`)) return;
+    const sure = await confirmAction({
+      title: 'Delete this announcement?',
+      message: `"${row.title}" will be removed for everyone. This cannot be undone.`,
+      confirmText: 'Delete',
+      danger: true,
+    });
+    if (!sure) return;
     const ok = await deleteSystemNotification(row._id);
     if (ok) {
-      showToast('Notification deleted');
+      showToast('Announcement deleted.');
       load();
     } else {
       showToast('Failed to delete notification', 'error');
@@ -173,34 +180,28 @@ const SystemNotificationsPage = () => {
   };
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 } }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <CampaignIcon color="primary" sx={{ fontSize: 30 }} />
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 400 }}>
-              System Notifications
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Broadcast announcements to all app users. Shown in their in-app notification center.
-            </Typography>
-          </Box>
-        </Box>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
-          New notification
-        </Button>
-      </Box>
+    <Box>
+      <PageHeader
+        title="Announcements"
+        icon={CampaignIcon}
+        description="Messages sent to every shopper in the app, for example new features or service notices. Turn one off to hide it without deleting it."
+        actions={(
+          <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
+            New announcement
+          </Button>
+        )}
+      />
 
-      <Paper sx={{ mt: 2, borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow sx={{ '& th': { fontWeight: 400, bgcolor: 'background.default' } }}>
                 <TableCell>Title</TableCell>
                 <TableCell>Message</TableCell>
-                <TableCell>Level</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">Reads</TableCell>
+                <TableCell>Importance</TableCell>
+                <TableCell>Shown?</TableCell>
+                <TableCell align="center">Read by</TableCell>
                 <TableCell>Created</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -215,7 +216,7 @@ const SystemNotificationsPage = () => {
               ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                    <Typography color="text.secondary">No system notifications yet.</Typography>
+                    <Typography color="text.secondary">No announcements yet. Click "New announcement" to send one.</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -235,7 +236,7 @@ const SystemNotificationsPage = () => {
                       <TableCell>
                         <Chip
                           size="small"
-                          label={row.is_active ? 'Active' : 'Inactive'}
+                          label={row.is_active ? 'Shown' : 'Hidden'}
                           color={row.is_active ? 'success' : 'default'}
                         />
                       </TableCell>
@@ -244,20 +245,20 @@ const SystemNotificationsPage = () => {
                         {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : ''}
                       </TableCell>
                       <TableCell align="right">
-                        <Tooltip title={row.is_active ? 'Disable' : 'Enable'}>
+                        <Tooltip title={row.is_active ? 'Hide from shoppers' : 'Show to shoppers'}>
                           <Switch
-                            size="small"
+                            inputProps={{ 'aria-label': row.is_active ? 'Hide from shoppers' : 'Show to shoppers' }}
                             checked={row.is_active !== false}
                             onChange={() => handleToggleActive(row)}
                           />
                         </Tooltip>
                         <Tooltip title="Edit">
-                          <IconButton size="small" onClick={() => openEdit(row)}>
+                          <IconButton aria-label={`Edit ${row.title}`} onClick={() => openEdit(row)}>
                             <EditIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Delete">
-                          <IconButton size="small" color="error" onClick={() => handleDelete(row)}>
+                          <IconButton aria-label={`Delete ${row.title}`} color="error" onClick={() => handleDelete(row)}>
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -284,7 +285,7 @@ const SystemNotificationsPage = () => {
       </Paper>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>{isEditing ? 'Edit notification' : 'New system notification'}</DialogTitle>
+        <DialogTitle>{isEditing ? 'Edit announcement' : 'New announcement'}</DialogTitle>
         <DialogContent>
           <TextField
             label="Title"
@@ -306,7 +307,7 @@ const SystemNotificationsPage = () => {
           />
           <TextField
             select
-            label="Level"
+            label="Importance"
             fullWidth
             margin="normal"
             value={form.level}
@@ -320,7 +321,7 @@ const SystemNotificationsPage = () => {
           </TextField>
           <Box sx={{ mt: 2 }}>
             <Button component="label" variant="outlined" startIcon={<PhotoLibraryIcon />} disabled={uploading}>
-              {uploading ? 'Uploading…' : 'Add images'}
+              {uploading ? 'Uploading…' : 'Add pictures'}
               <input hidden type="file" accept="image/*" multiple onChange={handleUpload} />
             </Button>
             {form.images.length > 0 && (
@@ -335,6 +336,7 @@ const SystemNotificationsPage = () => {
                     />
                     <IconButton
                       size="small"
+                      aria-label="Remove picture"
                       onClick={() => removeImage(img)}
                       sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'background.paper', boxShadow: 1, '&:hover': { bgcolor: 'background.paper' } }}
                     >
@@ -354,13 +356,13 @@ const SystemNotificationsPage = () => {
                 onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
               />
             }
-            label="Active (visible to app users)"
+            label="Show to shoppers now"
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleSave} disabled={saving}>
-            {saving ? 'Saving…' : isEditing ? 'Save changes' : 'Publish'}
+            {saving ? 'Saving…' : isEditing ? 'Save changes' : 'Send announcement'}
           </Button>
         </DialogActions>
       </Dialog>

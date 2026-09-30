@@ -16,6 +16,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import { getFileUrl, getTransferByCode, confirmTransfer, rejectTransfer } from '../../helper';
+import { confirmAction } from '../../utils/feedbackBus';
 
 const Detail = ({ label, value }) =>
   value ? (
@@ -59,6 +60,15 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
 
   const act = async (action) => {
     if (!code) return;
+    if (action !== 'confirm') {
+      const sure = await confirmAction({
+        title: 'Decline this transfer?',
+        message: 'The product stays with its current owner and the request is closed.',
+        confirmText: 'Decline transfer',
+        danger: true,
+      });
+      if (!sure) return;
+    }
     setSubmitting(true);
     const actor = { kind: recipientKind, id: recipientId };
     const res = action === 'confirm' ? await confirmTransfer(code, actor) : await rejectTransfer(code, actor);
@@ -85,14 +95,14 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
-      <IconButton onClick={onClose} sx={{ position: 'absolute', right: 8, top: 8, zIndex: 2 }}>
+      <IconButton onClick={onClose} aria-label="Close" sx={{ position: 'absolute', right: 8, top: 8, zIndex: 2 }}>
         <CloseIcon />
       </IconButton>
 
       {isTransfer ? (
         <DialogContent sx={{ pt: 4 }}>
           <Typography variant="h6" sx={{ fontWeight: 400, mb: 2, pr: 3 }}>
-            Ownership transfer request
+            Request to take ownership of this product
           </Typography>
           {loading ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -132,7 +142,7 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: 400 }}>
-                  Transfer amount
+                  Quantity
                 </Typography>
                 <Typography variant="h6" color="primary" sx={{ fontWeight: 400 }}>
                   {transfer?.quantity ?? d.quantity ?? 1}
@@ -157,7 +167,7 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
                   {resultMsg}
                 </Typography>
               ) : !isPending ? (
-                <Chip label={`This request is ${status}`} color="default" sx={{ width: '100%' }} />
+                <Chip label={`This request is already ${({ confirmed: 'approved', rejected: 'declined', cancelled: 'cancelled' })[status] || status}`} color="default" sx={{ width: '100%' }} />
               ) : null}
             </>
           )}
@@ -209,7 +219,7 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
               Decline
             </Button>
             <Button variant="contained" onClick={() => act('confirm')} disabled={submitting}>
-              {submitting ? 'Working…' : 'Approve'}
+              {submitting ? 'Working…' : 'Approve transfer'}
             </Button>
           </DialogActions>
         </>

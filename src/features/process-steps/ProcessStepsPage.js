@@ -1,57 +1,47 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Button, TextField, Select, MenuItem, IconButton, Alert, Paper } from '@mui/material';
+import React, { useEffect, useRef, useState } from 'react';
+import { Box, Typography, Button, TextField, MenuItem, IconButton, Alert, Paper, Tooltip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { getProcessSteps, updateProcessSteps } from '../../helper';
+import { PROCESS_STEP_TYPES as TYPE_OPTIONS } from '../../utils/processStepTypes';
+import PageHeader from '../../components/PageHeader';
+import { notifySuccess } from '../../utils/feedbackBus';
 
 const MIN_STEPS = 1;
 const MAX_STEPS = 18;
 
-// Fixed set of step "type" categories — the mobile app translates each key
-// via i18n instead of displaying free text, so this list (the value stored)
-// must stay in sync with backend/controllers/companyController.ts's
-// PROCESS_STEP_TYPE_KEYS and app/src/screens/EmployeeHomeScreen.tsx's
-// TYPE_LABEL_KEYS.
-const TYPE_OPTIONS = [
-  { value: 'receiving', label: 'Receiving' },
-  { value: 'shipping', label: 'Shipping' },
-  { value: 'finalInspection', label: 'Final Inspection' },
-  { value: 'inboundScan', label: 'Inbound Scan' },
-  { value: 'packing', label: 'Packing' },
-  { value: 'unpacking', label: 'Unpacking' },
-  { value: 'storeReceipt', label: 'Store Receipt' },
-  { value: 'inspection', label: 'Inspection' },
-  { value: 'returnCheck', label: 'Return Check' },
-  { value: 'disposal', label: 'Disposal Registration' },
-  { value: 'general', label: 'General' },
-];
-
 const emptyStep = () => ({ entity: '', type: 'general' });
 
-// Manages the numbered "Worker Operations" step labels shown as a grid on the
-// mobile app's employee home screen (each tile = entity on top, type below).
-// Reachable by a bridged Supervisor session or a plain Company admin — see
-// pages/index.js's EMPLOYEE_ALLOWED_PAGES / navList gating.
+// Manages the numbered "Worker Operations" step buttons shown on the mobile
+// app's employee home screen (each button = place on top, step type below).
+// Reachable by a Supervisor or a plain Company admin — see pages/index.js.
 const ProcessStepsPage = ({ token }) => {
   const [steps, setSteps] = useState([emptyStep()]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const savedRef = useRef(JSON.stringify([emptyStep()]));
+  const dirty = !loading && JSON.stringify(steps) !== savedRef.current;
 
   const reload = () => {
     setLoading(true);
     getProcessSteps(token)
-      .then((data) => setSteps(data && data.length
-        ? data.map((s) => ({
-            entity: s.entity || '',
-            // Older steps saved before the fixed type list existed may carry
-            // free text that no longer matches any option — fall back to
-            // "General" rather than leaving the Select on an invalid value.
-            type: TYPE_OPTIONS.some((o) => o.value === s.type) ? s.type : 'general',
-          }))
-        : [emptyStep()]))
+      .then((data) => {
+        const next = data && data.length
+          ? data.map((s) => ({
+              entity: s.entity || '',
+              // Older steps saved before the fixed type list existed may carry
+              // free text that no longer matches any option — fall back to
+              // "General" rather than leaving the Select on an invalid value.
+              type: TYPE_OPTIONS.some((o) => o.value === s.type) ? s.type : 'general',
+            }))
+          : [emptyStep()];
+        savedRef.current = JSON.stringify(next);
+        setSteps(next);
+      })
       .finally(() => setLoading(false));
   };
 
@@ -59,6 +49,14 @@ const ProcessStepsPage = ({ token }) => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  // Warn before leaving the website with unsaved changes.
+  useEffect(() => {
+    if (!dirty) return undefined;
+    const warn = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [dirty]);
 
   const handleChange = (index, field, value) => {
     setSteps((prev) => prev.map((step, i) => (i === index ? { ...step, [field]: value } : step)));
@@ -74,82 +72,134 @@ const ProcessStepsPage = ({ token }) => {
     setSteps((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const move = (index, delta) => {
+    setSteps((prev) => {
+      const target = index + delta;
+      if (target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
   const handleSave = async () => {
     setError('');
-    setSuccess('');
-
     const invalidIndex = steps.findIndex((step) => !step.entity.trim() || !step.type);
     if (invalidIndex !== -1) {
-      setError(`Step ${invalidIndex + 1} needs both an Entity and a Type before saving.`);
+      setError(`Step ${invalidIndex + 1} needs a place name before saving.`);
       return;
     }
 
     setSaving(true);
-    const res = await updateProcessSteps(
-      token,
-      steps.map((step) => ({ entity: step.entity.trim(), type: step.type }))
-    );
+    const cleaned = steps.map((step) => ({ entity: step.entity.trim(), type: step.type }));
+    const res = await updateProcessSteps(token, cleaned);
     setSaving(false);
 
     if (!res.ok) {
-      setError(res.message);
+      setError(res.message || 'The steps could not be saved. Please try again.');
       return;
     }
-    setSuccess('Process step labels saved.');
+    savedRef.current = JSON.stringify(cleaned);
+    setSteps(cleaned);
+    notifySuccess('Worker app steps saved. Staff see them the next time they open the app.');
   };
 
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography variant="h6">Process Step Labels</Typography>
-        <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAdd} disabled={steps.length >= MAX_STEPS}>
-          Add Step
-        </Button>
-      </Box>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        These labels populate the numbered Worker Operations grid on the mobile app's employee home
-        screen. Add between 1 and 18 steps, each with an Entity (e.g. "Tokyo DC") and a Type chosen
-        from the list below — the app displays each Type in the worker's own language.
-      </Typography>
+    <Box sx={{ pb: 10 }}>
+      <PageHeader
+        title="Worker App Steps"
+        description={`The numbered buttons your staff see in the mobile app. Each button shows a place (for example "Tokyo DC") and a step type. You can have 1 to ${MAX_STEPS} steps; the app shows the step type in each worker's own language.`}
+        actions={(
+          <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAdd} disabled={steps.length >= MAX_STEPS}>
+            Add step
+          </Button>
+        )}
+      />
 
       {!!error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {!!success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
       <Paper variant="outlined" sx={{ p: 2 }}>
         {steps.map((step, index) => (
-          <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <Typography sx={{ width: 24, fontWeight: 600 }}>{index + 1}</Typography>
+          <Box
+            key={index}
+            sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}
+          >
+            <Typography sx={{ width: 32, fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>{index + 1}</Typography>
             <TextField
-              label="Entity"
-              placeholder="Tokyo DC"
+              label="Place"
+              placeholder="e.g. Tokyo DC"
               value={step.entity}
               onChange={(e) => handleChange(index, 'entity', e.target.value)}
-              size="small"
-              fullWidth
+              sx={{ flex: '1 1 220px' }}
             />
-            <Select
+            <TextField
+              select
+              label="Step type"
               value={step.type}
               onChange={(e) => handleChange(index, 'type', e.target.value)}
-              size="small"
-              fullWidth
-              displayEmpty
+              sx={{ flex: '1 1 220px' }}
             >
               {TYPE_OPTIONS.map((opt) => (
                 <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
               ))}
-            </Select>
-            <IconButton onClick={() => handleRemove(index)} disabled={steps.length <= MIN_STEPS} aria-label="Remove step">
-              <DeleteIcon />
-            </IconButton>
+            </TextField>
+            <Box sx={{ display: 'flex', flexShrink: 0 }}>
+              <Tooltip title="Move up">
+                <span>
+                  <IconButton aria-label={`Move step ${index + 1} up`} disabled={index === 0} onClick={() => move(index, -1)}>
+                    <ArrowUpwardIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Move down">
+                <span>
+                  <IconButton aria-label={`Move step ${index + 1} down`} disabled={index === steps.length - 1} onClick={() => move(index, 1)}>
+                    <ArrowDownwardIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+              <Tooltip title="Remove step">
+                <span>
+                  <IconButton aria-label={`Remove step ${index + 1}`} color="error" onClick={() => handleRemove(index)} disabled={steps.length <= MIN_STEPS}>
+                    <DeleteIcon />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </Box>
           </Box>
         ))}
+        <Button startIcon={<AddIcon />} onClick={handleAdd} disabled={steps.length >= MAX_STEPS}>
+          Add step
+        </Button>
       </Paper>
 
-      <Box sx={{ mt: 2 }}>
-        <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={saving || loading}>
-          Save
-        </Button>
-      </Box>
+      {/* Save bar stays in view while scrolling a long list. */}
+      <Paper
+        elevation={6}
+        sx={{
+          position: 'sticky',
+          bottom: 16,
+          mt: 2,
+          p: 1.5,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          border: '1px solid',
+          borderColor: dirty ? 'warning.main' : 'divider',
+        }}
+      >
+        <Typography color={dirty ? 'warning.main' : 'text.secondary'} sx={{ fontWeight: dirty ? 600 : 400 }}>
+          {dirty ? 'You have unsaved changes.' : 'All changes saved.'}
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {dirty && <Button onClick={reload} disabled={saving}>Undo changes</Button>}
+          <Button variant="contained" startIcon={<SaveIcon />} onClick={handleSave} disabled={saving || loading || !dirty}>
+            {saving ? 'Saving…' : 'Save'}
+          </Button>
+        </Box>
+      </Paper>
     </Box>
   );
 };
