@@ -26,7 +26,7 @@ export default function ProductsTable({
       field: 'name',
       headerName: 'Product',
       flex: 1.4,
-      minWidth: 220,
+      minWidth: 200,
       renderCell: (p) => {
         const thumb = Array.isArray(p.row.images) ? p.row.images[0] : null;
         return (
@@ -93,7 +93,7 @@ export default function ProductsTable({
             field: 'minted',
             headerName: 'Codes',
             description: 'How many codes (labels) have been created for this product',
-            width: 100,
+            width: 115,
             type: 'number',
             valueGetter: (p) => p.row.total_minted_amount || 0,
           },
@@ -101,7 +101,7 @@ export default function ProductsTable({
             field: 'printed',
             headerName: 'Printed',
             description: 'How many of those codes have been downloaded for printing',
-            width: 100,
+            width: 115,
             type: 'number',
             valueGetter: (p) => p.row.printed_amount || 0,
           },

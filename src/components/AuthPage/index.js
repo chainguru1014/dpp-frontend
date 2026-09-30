@@ -5,7 +5,7 @@ import { useGoogleAuth } from '../../features/auth/useGoogleAuth';
 import { useAppleAuth } from '../../features/auth/useAppleAuth';
 import AuthShell from '../AuthShell';
 import yometelLogoTrans from '../../assets/yometel-logo-trans.png';
-import theme from '../../theme';
+import theme, { compactMediaQuery } from '../../theme';
 import { notifyError } from '../../utils/feedbackBus';
 
 // Google "G" mark (Simple Icons, CC0) in the app's navy.
@@ -26,7 +26,9 @@ const bigFieldSx = {
   ...fieldSx,
   '& .MuiOutlinedInput-root': { ...fieldSx['& .MuiOutlinedInput-root'], minHeight: CONTROL_HEIGHT, fontSize: '1.05rem' },
 };
-const bigButtonSx = { minHeight: CONTROL_HEIGHT, fontSize: '1.05rem', borderRadius: 2 };
+// The laptop density rule in theme.js would shrink these to 40px; the
+// sign-in screen keeps its large controls everywhere.
+const bigButtonSx = { minHeight: CONTROL_HEIGHT, fontSize: '1.05rem', borderRadius: 2, [compactMediaQuery]: { minHeight: CONTROL_HEIGHT, fontSize: '1.05rem' } };
 const outlineButtonSx = {
   ...bigButtonSx,
   bgcolor: '#fff',

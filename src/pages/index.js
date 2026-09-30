@@ -1810,7 +1810,9 @@ const InnerPage = () => {
         </Toolbar>
       </AppBar>
 
-      <Box sx={{ display: 'flex', flexGrow: 1, pt: 8 }}>
+      {/* minHeight 0 lets the content area below be the one scrolling box
+          (menu and top bar stay put, and sticky save bars work). */}
+      <Box sx={{ display: 'flex', flexGrow: 1, pt: 8, minHeight: 0 }}>
         {/* Desktop sidebar (md and up) — narrower (240) from md through lg
             (covers 1280x720/1366x768 client displays), widening back to 280
             only at xl (1536px+) where there's room to spare. */}

@@ -68,7 +68,8 @@ const DashboardPage = ({
   // Non-super accounts see analytics scoped to the products they own.
   const ownerKind = isAppUser ? 'User' : 'Company';
   const ownerId = company?._id || company?.id;
-  const firstName = String(company?.displayName || company?.name || '').split(' ')[0];
+  // Staff see their own name; companies and shoppers their account name.
+  const greetingName = String(company?.displayName || company?.name || '').trim();
 
   const [checklistHidden, setChecklistHidden] = useState(() => {
     try { return localStorage.getItem(CHECKLIST_HIDDEN_KEY) === '1'; } catch (e) { return false; }
@@ -114,7 +115,7 @@ const DashboardPage = ({
   return (
     <Box>
       <PageHeader
-        title={firstName ? `Welcome, ${firstName}` : 'Dashboard'}
+        title={greetingName ? `Welcome, ${greetingName}` : 'Dashboard'}
         description={description}
         actions={actions}
       />

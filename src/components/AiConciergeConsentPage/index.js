@@ -5,6 +5,7 @@ import ShieldIcon from '@mui/icons-material/Shield';
 import PeopleIcon from '@mui/icons-material/People';
 import LockIcon from '@mui/icons-material/Lock';
 import AuthShell from '../AuthShell';
+import { compactMediaQuery } from '../../theme';
 
 const FEATURES = [
   {
@@ -39,21 +40,24 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
   const [consent, setConsent] = useState(initialConsent != null ? !!initialConsent : null);
 
   return (
-    <AuthShell activeSlide={activeSlide} cardSx={{ height: 'auto', width: { xs: '100%', sm: 600 } }}>
+    <AuthShell activeSlide={activeSlide} cardSx={{ height: 'auto', width: { xs: '100%', sm: 680 } }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}>
           <Typography variant="h5" component="h1" sx={{ textAlign: 'center', mb: 0.5 }}>
             {mode === 'review' ? 'Privacy preferences' : 'Meet your AI Concierge'}
           </Typography>
-          <Typography color="text.secondary" sx={{ textAlign: 'center', mb: 2.5 }}>
+          <Typography color="text.secondary" sx={{ textAlign: 'center', mb: 2 }}>
             An optional helper that personalises the app for you.
           </Typography>
 
+          {/* Two columns on wider screens so the Yes/No choice below stays
+              visible without scrolling on a 1280x720 laptop. */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, columnGap: 2.5, rowGap: 1.5 }}>
           {FEATURES.map(({ icon: FeatureIcon, title, description }) => (
-            <Box key={title} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.75 }}>
+            <Box key={title} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
               <Box
                 sx={{
-                  width: 44, height: 44, flexShrink: 0, borderRadius: '50%',
+                  width: 40, height: 40, flexShrink: 0, borderRadius: '50%',
                   bgcolor: 'rgba(27,79,114,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
@@ -65,17 +69,18 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
               </Box>
             </Box>
           ))}
+          </Box>
 
           {/* Placed after the explanation on purpose: read first, then choose.
               Nothing is pre-selected on a first visit. */}
-          <Typography component="h2" sx={{ fontWeight: 600, mt: 2.5, mb: 1 }} id="consent-question">
+          <Typography component="h2" sx={{ fontWeight: 600, mt: 2, mb: 1 }} id="consent-question">
             May the AI Concierge learn from your scans, favourites and browsing to personalise the app?
           </Typography>
           <RadioGroup
             aria-labelledby="consent-question"
             value={consent === null ? '' : consent ? 'yes' : 'no'}
             onChange={(e) => setConsent(e.target.value === 'yes')}
-            sx={{ gap: 1 }}
+            sx={{ gap: 1, flexDirection: { xs: 'column', sm: 'row' }, '& > *': { flex: 1 } }}
           >
             {[
               { value: 'yes', label: 'Yes, personalise the app for me' },
@@ -111,7 +116,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             fullWidth
             onClick={() => onSubmit(consent)}
             disabled={!!saving || consent === null}
-            sx={{ minHeight: 50, fontSize: '1.05rem', borderRadius: 2 }}
+            sx={{ minHeight: 50, fontSize: '1.05rem', borderRadius: 2, [compactMediaQuery]: { minHeight: 50 } }}
           >
             {saving ? 'Saving…' : mode === 'review' ? 'Save my choice' : 'Continue'}
           </Button>
