@@ -11,22 +11,22 @@ const FEATURES = [
   {
     icon: QrCode2Icon,
     title: 'Suggestions just for you',
-    description: 'The AI Concierge learns from your scans and favourites to suggest products and brands you may like.',
+    description: 'Learns from your scans and favourites to suggest products you may like.',
   },
   {
     icon: ShieldIcon,
     title: 'Your privacy comes first',
-    description: 'Your real identity is never stored with this data. It is linked only to your profile.',
+    description: 'Your real identity is never stored with this data.',
   },
   {
     icon: PeopleIcon,
     title: 'Helpful tips',
-    description: 'You get relevant care tips and style ideas for the clothes you own.',
+    description: 'Care tips and style ideas for the clothes you own.',
   },
   {
     icon: LockIcon,
     title: 'You stay in control',
-    description: 'You can change this choice at any time under Privacy preferences.',
+    description: 'Change this choice any time under Privacy preferences.',
   },
 ];
 
@@ -40,7 +40,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
   const [consent, setConsent] = useState(initialConsent != null ? !!initialConsent : null);
 
   return (
-    <AuthShell activeSlide={activeSlide} cardSx={{ height: 'auto', width: { xs: '100%', sm: 680 } }}>
+    <AuthShell activeSlide={activeSlide} cardSx={{ height: 'auto', width: { xs: '100%', sm: 640 } }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}>
           <Typography variant="h5" component="h1" sx={{ textAlign: 'center', mb: 0.5 }}>
@@ -83,7 +83,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             sx={{ gap: 1, flexDirection: { xs: 'column', sm: 'row' }, '& > *': { flex: 1 } }}
           >
             {[
-              { value: 'yes', label: 'Yes, personalise the app for me' },
+              { value: 'yes', label: 'Yes, personalise it' },
               { value: 'no', label: 'No, thank you' },
             ].map((opt) => (
               <FormControlLabel

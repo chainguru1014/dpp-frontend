@@ -210,9 +210,13 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
         // Fixed regardless of slide/text color — only the content's own
         // font color changes (see useAuthShellBright), never the card
         // container itself.
-        // Solid white (was 20% see-through glass): text on it is readable
-        // whatever photo is behind it.
-        bgcolor: alpha('#ffffff', 0.97),
+        // See-through frosted glass like the original card (which was 20%
+        // white with a 3px blur), but less transparent so the dark text
+        // stays readable over any photo.
+        bgcolor: alpha('#ffffff', 0.6),
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255,255,255,0.55)',
         borderRadius: 3,
         boxShadow: '0 24px 60px rgba(0,0,0,0.28)',
         px: { xs: 3, sm: 5 },
