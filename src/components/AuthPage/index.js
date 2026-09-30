@@ -11,9 +11,8 @@ import { notifyError } from '../../utils/feedbackBus';
 // Colours on the see-through sign-in card: the brand blue (#2f80c8) for
 // text, labels, icons and button text; the logo is the white version.
 const AUTH_BLUE = '#2f80c8';
-// Text, lines and icons on the glass follow the background photo: white on
-// the two darker photos, brand blue on the bright last one (CSS variables
-// set by AuthShell).
+// Text, lines and icons on the glass are white (CSS variable set by
+// AuthShell).
 const AUTH_TEXT = 'var(--auth-on-glass, #2f80c8)';
 const AUTH_MUTED = AUTH_TEXT;
 const textShadow = 'none';

@@ -84,9 +84,8 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
   const [internalSlide, setInternalSlide] = React.useState(0);
   const isControlled = controlledActiveSlide != null;
   const activeSlide = isControlled ? controlledActiveSlide : internalSlide;
-  // The last photo (bright shop interior) needs blue text on the card; the
-  // first two (dark forest, lake) need white. Exposed as CSS variables so
-  // every card's text, lines and icons follow the photo that's showing.
+  // The last photo (bright shop interior); still exposed via context for
+  // callers that want it.
   const isBright = activeSlide === SLIDER_IMAGES.length - 1;
 
   // Preload every slide up front so switching to it is instant (no blank flash
@@ -222,9 +221,10 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         border: '1px solid rgba(255,255,255,0.55)',
-        '--auth-on-glass': isBright ? '#2f80c8' : '#ffffff',
-        '--auth-line': isBright ? 'rgba(47,128,200,0.5)' : 'rgba(255,255,255,0.75)',
-        '--auth-icon-bg': isBright ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.22)',
+        // Text, lines and icons on the glass are white on every photo.
+        '--auth-on-glass': '#ffffff',
+        '--auth-line': 'rgba(255,255,255,0.75)',
+        '--auth-icon-bg': 'rgba(255,255,255,0.22)',
         '& *': { transition: 'color 0.9s ease, border-color 0.9s ease, background-color 0.9s ease' },
         borderRadius: 3,
         boxShadow: '0 24px 60px rgba(0,0,0,0.28)',

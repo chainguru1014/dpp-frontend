@@ -10,8 +10,7 @@ import { compactMediaQuery } from '../../theme';
 // Text and icons on the see-through card in the brand blue (#2f80c8), (plain,
 // no glow).
 const AUTH_BLUE = '#2f80c8';
-// Follows the background photo: white on the darker photos, blue on the
-// bright one (CSS variables set by AuthShell).
+// White on the glass on every photo (CSS variables set by AuthShell).
 const ON_GLASS = 'var(--auth-on-glass, #2f80c8)';
 const onGlass = { color: ON_GLASS, textShadow: 'none' };
 
