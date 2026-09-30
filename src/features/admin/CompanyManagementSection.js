@@ -61,7 +61,7 @@ const CompanyUsersTable = ({ companies, loading, onView, onEdit, onRemove }) => 
     { field: 'email', headerName: 'Admin email', flex: 1.2, minWidth: 200 },
     {
       field: 'allowedEmailDomains',
-      headerName: 'Staff email domains',
+      headerName: 'Company domain',
       flex: 1,
       minWidth: 160,
       valueGetter: (p) => (p.row.allowedEmailDomains || []).join(', ') || '—',
@@ -138,14 +138,17 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
       notify('Please enter the company name.', 'warning');
       return;
     }
-    if (form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      notify('Please enter a valid admin email address.', 'warning');
+    // The admin email is required: it becomes the company's Supervisor
+    // staff account (created automatically by the backend), who can sign in
+    // to this website right away.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      notify("Please enter the company admin's email address. It becomes the company's Supervisor login.", 'warning');
       return;
     }
     setSaving(true);
     const doc = await registerCompany({
       name: form.name.trim(),
-      email: form.email.trim() || undefined,
+      email: form.email.trim(),
       title: form.title.trim() || undefined,
       allowedEmailDomains: form.allowedEmailDomains
         .split(',')
@@ -176,9 +179,10 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
           autoFocus
         />
         <TextField
-          label="Company admin email"
+          label="Company admin email (Supervisor)"
           type="email"
-          helperText="This person can sign in right away as the company's Supervisor, using a code sent to this email."
+          required
+          helperText="A Supervisor staff account is created for this email automatically. They can sign in to this website right away with a code sent to this email."
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           fullWidth
@@ -190,9 +194,9 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
           fullWidth
         />
         <TextField
-          label="Staff email domains (optional)"
-          placeholder="e.g. hm.com"
-          helperText="Staff with an email at these domains belong to this company. Separate several with commas. You can add this later."
+          label="Company domain"
+          placeholder={form.email.includes('@') ? form.email.split('@')[1] : 'e.g. hm.com'}
+          helperText="Staff emails must end with this domain. The admin email's domain is added automatically; add more separated by commas."
           value={form.allowedEmailDomains}
           onChange={(e) => setForm({ ...form, allowedEmailDomains: e.target.value })}
           fullWidth

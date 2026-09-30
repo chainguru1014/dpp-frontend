@@ -46,7 +46,6 @@ import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import PersonIcon from '@mui/icons-material/Person';
 import BadgeIcon from '@mui/icons-material/Badge';
 import BusinessIcon from '@mui/icons-material/Business';
-import HomeWorkIcon from '@mui/icons-material/HomeWork';
 import HistoryIcon from '@mui/icons-material/History';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
@@ -111,7 +110,6 @@ import ProductHistoryDialog from '../features/products/ProductHistoryDialog';
 import ProductTransferDialog from '../features/products/ProductTransferDialog';
 import { getFileUrl, getItemCategories } from '../helper';
 import ManageCategoriesDialog from '../features/products/ManageCategoriesDialog';
-import ConsumerLocationStepsPage from '../features/consumer-steps/ConsumerLocationStepsPage';
 import CompanyManagementSection from '../features/admin/CompanyManagementSection';
 import PageHeader from '../components/PageHeader';
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
@@ -129,7 +127,7 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 // (/admin/<page>) so the browser Back/Forward buttons and bookmarks work.
 const KNOWN_PAGES = [
   'dashboard', 'products', 'newProduct', 'generateCode', 'users', 'companies', 'employeeAuditLog',
-  'processSteps', 'consumerSteps', 'captureHistory', 'history', 'trace', 'notifications',
+  'processSteps', 'captureHistory', 'history', 'trace', 'notifications',
   'allNotifications', 'recommendations', 'chat', 'profile',
 ];
 const pageFromPath = (pathname) => {
@@ -444,7 +442,7 @@ const InnerPage = () => {
     if (!company) return;
     // Pages only the super admin manages, and the one page (worker app
     // steps, a per-company setting) the super admin has no company for.
-    const ADMIN_ONLY = ['users', 'companies', 'notifications', 'consumerSteps'];
+    const ADMIN_ONLY = ['users', 'companies', 'notifications'];
     const allowed = isWorkingEmployee
       ? WORKING_EMPLOYEE_ALLOWED_PAGES
       : isEmployeeActor
@@ -753,6 +751,7 @@ const InnerPage = () => {
     setIsEditing(0);
     setUpdates(0);
     setDetailTab(0);
+    setShowFieldErrors(false);
     setMaterialSize({ size: '', materials: [] });
     setMaintenance({ iconIds: [], description: '', tips: [] });
     setDisposal({ repairUrl: '', reuseUrl: '', rentalUrl: '', disposeUrl: '' });
@@ -844,13 +843,32 @@ const InnerPage = () => {
   ].filter(Boolean);
 
   const [savingProduct, setSavingProduct] = useState(false);
+  // Turns on red "required" marks after the user presses Next / Add product
+  // with something missing (not before — an empty new form shouldn't shout).
+  const [showFieldErrors, setShowFieldErrors] = useState(false);
+
+  // Checks the required fields; if any are missing, shows them in red, goes
+  // to step 1 where they all live, scrolls to the first one and says what's
+  // needed. Returns true when everything required is filled in.
+  const validateRequiredProductFields = () => {
+    const missing = missingProductFields();
+    if (!missing.length) return true;
+    setShowFieldErrors(true);
+    setDetailTab(0);
+    notify(`Please fill in: ${missing.join(', ')}.`, 'warning');
+    setTimeout(() => {
+      const first = document.querySelector('[role="dialog"] .Mui-error, [role="dialog"] [data-required-missing="true"]');
+      if (first) {
+        first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const input = first.querySelector ? first.querySelector('input, textarea') : null;
+        if (input) input.focus({ preventScroll: true });
+      }
+    }, 150);
+    return false;
+  };
 
   const addProductHandler = async () => {
-    const missing = missingProductFields();
-    if (missing.length) {
-      notify(`Please add: ${missing.join(', ')}.`, 'warning');
-      return;
-    }
+    if (!validateRequiredProductFields()) return;
     setSavingProduct(true);
     const ok = await addProduct({
       name: productName,
@@ -908,11 +926,7 @@ const InnerPage = () => {
   };
 
   const updateProductHandler = async () => {
-    const missing = missingProductFields();
-    if (missing.length) {
-      notify(`Please add: ${missing.join(', ')}.`, 'warning');
-      return;
-    }
+    if (!validateRequiredProductFields()) return;
     setSavingProduct(true);
     const ok = await updateProduct({
       _id: isEditing,
@@ -993,6 +1007,7 @@ const InnerPage = () => {
     const mc = prod.manualsAndCerts || {};
     setIsEditing(prod._id);
     setDetailTab(0);
+    setShowFieldErrors(false);
     setProductName(prod.name || '');
     setProductModel(prod.model || '');
     setProductDetail(prod.detail || '');
@@ -1694,7 +1709,6 @@ const InnerPage = () => {
         // Worker app step buttons — per company, a Supervisor or the
         // company account (never a working employee or the super admin).
         ['processSteps', 'Worker App Steps', FormatListNumberedIcon, !isAppUser && !isAdmin && (!isEmployeeActor || isSupervisor)],
-        ['consumerSteps', 'Shopper App Steps', HomeWorkIcon, isAdmin],
       ],
     },
   ];
@@ -1930,14 +1944,13 @@ const InnerPage = () => {
           {activePage === 'companies' && isAdmin && <CompanyManagementSection />}
 
           {activePage === 'employeeAuditLog' && canSeeStaffManagement && (
-            <EmployeeManagementPage token={token} isAdmin={isAdmin} />
+            <EmployeeManagementPage token={token} isAdmin={isAdmin} companyId={company?._id} />
           )}
 
           {activePage === 'processSteps' && !isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
             <ProcessStepsPage token={token} />
           )}
 
-          {activePage === 'consumerSteps' && isAdmin && <ConsumerLocationStepsPage token={token} />}
 
           {activePage === 'captureHistory' && canSeeCaptureHistory && (
             <CaptureHistoryPage
@@ -2085,64 +2098,13 @@ const InnerPage = () => {
                 )}
               />
 
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                <TextField
-                  id="product-search"
-                  placeholder={isAdmin ? 'Search by product, brand or owner' : 'Search by product or brand'}
-                  inputProps={{ 'aria-label': 'Search products' }}
-                  value={productNameFilter}
-                  onChange={(e) => setProductNameFilter(e.target.value)}
-                  sx={{ flex: 1, maxWidth: 520, bgcolor: 'background.paper', borderRadius: 2 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start"><SearchIcon /></InputAdornment>
-                    ),
-                  }}
-                />
-                <Tooltip title="Reload the list">
-                  <IconButton onClick={loadProductsForCurrentCompany} color="primary" aria-label="Reload products">
-                    <RefreshIcon />
-                  </IconButton>
-                </Tooltip>
-              </Stack>
-
-              {/* List first, so it's always visible without scrolling; the
-                  selected product's details follow below. */}
-              <ProductsTable
-                products={filteredProducts}
-                loading={productsLoading}
-                selectedId={selectedProduct?._id}
-                isAppUser={isAppUser}
-                showOwner={isAdmin}
-                emptyText={productNameFilter.trim()
-                  ? 'No products match your search.'
-                  : isAppUser
-                    ? 'You don’t own any products yet. When you scan a product label in the Yometel DPP app and claim it, it appears here.'
-                    : canEditProducts
-                      ? 'No products yet. Click "New Product" to add your first one.'
-                      : 'Your company has no products yet.'}
-                onSelectProduct={(row) => {
-                  productSelectHandler(row);
-                  setTimeout(() => productCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
-                }}
-                onOwnerClick={(product) => {
-                  if (product.company_id) {
-                    setOwnerInfo(product.company_id);
-                    setOpenOwnerDialog(true);
-                    // Don't show product preview when clicking owner
-                    setOpenPreviewModal(false);
-                  }
-                }}
-              />
-
               {/* Guarded on the product actually being in the current (filtered)
                   list — selectedProduct persists to localStorage across
                   sessions/companies, so without this a stale selection kept
                   showing the summary card even when the table was empty. */}
               {selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) && (
-                <Box ref={productCardRef} sx={{ mt: 3, scrollMarginTop: 16 }}>
-                  <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>Selected product</Typography>
-                  <ProductDraftCard
+                <Box ref={productCardRef} sx={{ mb: 3, scrollMarginTop: 16 }}>
+                                    <ProductDraftCard
                     product={selectedProduct}
                     onPreview={() => setOpenPreviewModal(true)}
                     onTransferHistory={() => {
@@ -2172,6 +2134,54 @@ const InnerPage = () => {
                   />
                 </Box>
               )}
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
+                <TextField
+                  id="product-search"
+                  placeholder={isAdmin ? 'Search by product, brand or owner' : 'Search by product or brand'}
+                  inputProps={{ 'aria-label': 'Search products' }}
+                  value={productNameFilter}
+                  onChange={(e) => setProductNameFilter(e.target.value)}
+                  sx={{ flex: 1, maxWidth: 520, bgcolor: 'background.paper', borderRadius: 2 }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start"><SearchIcon /></InputAdornment>
+                    ),
+                  }}
+                />
+                <Tooltip title="Reload the list">
+                  <IconButton onClick={loadProductsForCurrentCompany} color="primary" aria-label="Reload products">
+                    <RefreshIcon />
+                  </IconButton>
+                </Tooltip>
+              </Stack>
+
+              <ProductsTable
+                products={filteredProducts}
+                loading={productsLoading}
+                selectedId={selectedProduct?._id}
+                isAppUser={isAppUser}
+                showOwner={isAdmin}
+                emptyText={productNameFilter.trim()
+                  ? 'No products match your search.'
+                  : isAppUser
+                    ? 'You don’t own any products yet. When you scan a product label in the Yometel DPP app and claim it, it appears here.'
+                    : canEditProducts
+                      ? 'No products yet. Click "New Product" to add your first one.'
+                      : 'Your company has no products yet.'}
+                onSelectProduct={(row) => {
+                  productSelectHandler(row);
+                  setTimeout(() => productCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+                }}
+                onOwnerClick={(product) => {
+                  if (product.company_id) {
+                    setOwnerInfo(product.company_id);
+                    setOpenOwnerDialog(true);
+                    // Don't show product preview when clicking owner
+                    setOpenPreviewModal(false);
+                  }
+                }}
+              />
+
             </Box>
           )}
 
@@ -2205,7 +2215,9 @@ const InnerPage = () => {
                     <Step key={label} completed={false}>
                       <StepButton
                         onClick={() => setDetailTab(i)}
-                        optional={i === 0 ? <Typography variant="caption" color="text.secondary">Required</Typography> : <Typography variant="caption" color="text.secondary">Optional</Typography>}
+                        optional={i === 0
+                          ? <Typography variant="caption" color={showFieldErrors && missingProductFields().length ? 'error' : 'text.secondary'}>{showFieldErrors && missingProductFields().length ? 'Needs attention' : 'Required'}</Typography>
+                          : <Typography variant="caption" color="text.secondary">Optional</Typography>}
                       >
                         {label}
                       </StepButton>
@@ -2258,7 +2270,8 @@ const InnerPage = () => {
                         Fields marked with * are required. Everything else can be added later.
                       </Typography>
                       <Stack spacing={2}>
-                        <TextField label="Product name" fullWidth required value={productName} onChange={(e) => setProductName(e.target.value)} />
+                        <TextField label="Product name" fullWidth required value={productName} onChange={(e) => setProductName(e.target.value)}
+                          error={showFieldErrors && !productName.trim()} helperText={showFieldErrors && !productName.trim() ? 'Please enter the product name.' : undefined} />
                         <TextField label="Model or short description" placeholder="e.g. Slim Fit" fullWidth value={productModel} onChange={(e) => setProductModel(e.target.value)} />
                         <TextField
                           label="About this product"
@@ -2271,7 +2284,8 @@ const InnerPage = () => {
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                           <TextField select label="Item category" fullWidth required
                             value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}
-                            helperText="Used to group products on the dashboard.">
+                            error={showFieldErrors && !itemCategory}
+                            helperText={showFieldErrors && !itemCategory ? 'Please choose a category.' : 'Used to group products on the dashboard.'}>
                             {itemCategoryOptions.map((opt) => (
                               <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                             ))}
@@ -2285,7 +2299,8 @@ const InnerPage = () => {
                     </Box>
 
                     <Box component="section">
-                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Product photos *</Typography>
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }} color={showFieldErrors && productImages.length === 0 ? 'error' : undefined}
+                        data-required-missing={showFieldErrors && productImages.length === 0 ? 'true' : undefined}>Product photos *</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Add at least one photo. The first photo is used as the main picture.
                       </Typography>
@@ -2327,7 +2342,9 @@ const InnerPage = () => {
                           ))}
                         </Box>
                       ) : (
-                        <Typography color="text.secondary">No photos yet.</Typography>
+                        <Typography color={showFieldErrors ? 'error' : 'text.secondary'}>
+                          {showFieldErrors ? 'Please add at least one photo.' : 'No photos yet.'}
+                        </Typography>
                       )}
                     </Box>
 
@@ -2338,15 +2355,21 @@ const InnerPage = () => {
                       </Typography>
                       <Stack spacing={2}>
                         <TextField label="Brand name" fullWidth required value={brandInfo.name}
+                          error={showFieldErrors && !brandInfo.name.trim()} helperText={showFieldErrors && !brandInfo.name.trim() ? 'Please enter the brand name.' : undefined}
                           onChange={(e) => setBrandInfo((prev) => ({ ...prev, name: e.target.value }))} />
                         <TextField label="Brand description" fullWidth required multiline minRows={2} value={brandInfo.detail}
+                          error={showFieldErrors && !brandInfo.detail.trim()} helperText={showFieldErrors && !brandInfo.detail.trim() ? 'Please describe the brand in a sentence or two.' : undefined}
                           onChange={(e) => setBrandInfo((prev) => ({ ...prev, detail: e.target.value }))} />
                         <TextField label="Brand website" placeholder="https://www.example.com" fullWidth required value={brandInfo.websiteUrl}
+                          error={showFieldErrors && !brandInfo.websiteUrl.trim()} helperText={showFieldErrors && !brandInfo.websiteUrl.trim() ? 'Please enter the brand website address.' : undefined}
                           onChange={(e) => setBrandInfo((prev) => ({ ...prev, websiteUrl: e.target.value }))} />
                       </Stack>
                       <Grid container spacing={2} sx={{ mt: 0.5 }}>
                         <Grid item xs={12} sm={6}>
-                          <Typography variant="subtitle2" sx={{ mb: 1 }}>Brand logo *</Typography>
+                          <Typography variant="subtitle2" sx={{ mb: 1 }} color={showFieldErrors && !brandInfo.logoUrl ? 'error' : undefined}
+                            data-required-missing={showFieldErrors && !brandInfo.logoUrl ? 'true' : undefined}>
+                            Brand logo *{showFieldErrors && !brandInfo.logoUrl ? ' (please upload a logo)' : ''}
+                          </Typography>
                           <Stack direction="row" spacing={1.5} alignItems="center">
                             {brandInfo.logoUrl ? (
                               <Box component="img" src={getFileUrl(brandInfo.logoUrl)} alt="Brand logo"
@@ -2855,7 +2878,7 @@ const InnerPage = () => {
               return (
                 <DialogActions sx={{ flexDirection: 'column', alignItems: 'stretch', px: 3, py: 2, gap: 1.25, borderTop: 1, borderColor: 'divider' }}>
                   {missing.length > 0 && (
-                    <Alert severity="info" sx={{ py: 0.25 }}>
+                    <Alert severity={showFieldErrors ? 'warning' : 'info'} sx={{ py: 0.25 }}>
                       Still needed before you can save: {missing.join(', ')}.
                       {detailTab !== 0 && ' These are all on step 1.'}
                     </Alert>
@@ -2864,17 +2887,25 @@ const InnerPage = () => {
                     <Button onClick={() => setDetailTab((t) => Math.max(0, t - 1))} disabled={detailTab === 0}>
                       Back
                     </Button>
-                    <Button variant="outlined" onClick={() => setDetailTab((t) => Math.min(lastStep, t + 1))} disabled={detailTab === lastStep}>
+                    <Button
+                      variant="outlined"
+                      onClick={() => {
+                        // All required fields are on step 1: check them before leaving it.
+                        if (detailTab === 0 && !validateRequiredProductFields()) return;
+                        setDetailTab((t) => Math.min(lastStep, t + 1));
+                      }}
+                      disabled={detailTab === lastStep}
+                    >
                       Next: {PRODUCT_FORM_STEPS[Math.min(lastStep, detailTab + 1)]}
                     </Button>
                     <Box sx={{ flexGrow: 1 }} />
-                    <Button variant="outlined" onClick={() => setOpenPreviewModal(true)} disabled={missing.length > 0}>
+                    <Button variant="outlined" onClick={() => { if (validateRequiredProductFields()) setOpenPreviewModal(true); }}>
                       Preview
                     </Button>
                     <Button
                       variant="contained"
                       onClick={isEditing ? updateProductHandler : addProductHandler}
-                      disabled={missing.length > 0 || savingProduct}
+                      disabled={savingProduct}
                     >
                       {savingProduct ? 'Saving…' : isEditing ? 'Save changes' : 'Add product'}
                     </Button>

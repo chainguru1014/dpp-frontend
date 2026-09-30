@@ -51,7 +51,7 @@ export default function CompanyPreview({ companyInfo, setCompanyInfo }) {
         <Row label="Admin email"><Typography>{companyInfo?.email || '—'}</Typography></Row>
         <Row label="Tagline"><Typography>{companyInfo?.title || '—'}</Typography></Row>
         <Row label="Location"><Typography>{companyInfo?.location || '—'}</Typography></Row>
-        <Row label="Staff email domains"><Typography>{(companyInfo?.allowedEmailDomains || []).join(', ') || '—'}</Typography></Row>
+        <Row label="Company domain"><Typography>{(companyInfo?.allowedEmailDomains || []).join(', ') || '—'}</Typography></Row>
         <Row label="ID documents"><FileLinks files={companyInfo?.idDocuments} /></Row>
         <Row label="Business documents"><FileLinks files={companyInfo?.businessDocuments} /></Row>
       </DialogContent>

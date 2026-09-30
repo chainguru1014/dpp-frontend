@@ -731,6 +731,19 @@ export const getEmployeeAuditLog = async (token, { page = 1, limit = 50 } = {}) 
 // Provisioning is the only way an Employee record is created — see
 // backend/controllers/employeeController.ts and employeeAuthController.otpRequest,
 // which refuses to send a code to anyone not provisioned here first.
+// One company record (its name and domains), e.g. for a Supervisor's own
+// company in the Add staff dialog.
+export const getCompanyById = async (id) => {
+    if (!id) return null;
+    try {
+        const res = await axios.get(`${Backend_URL}company/${id}`);
+        return res.data?.data?.doc || null;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+};
+
 export const inviteEmployee = async (token, data) => {
     try {
         const res = await axios.post(`${Backend_URL}employee-auth/employees`, data, {

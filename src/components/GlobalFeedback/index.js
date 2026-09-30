@@ -40,7 +40,10 @@ const GlobalFeedback = () => {
         open={!!toast}
         autoHideDuration={toast?.severity === 'error' ? 9000 : 6000}
         onClose={(_, reason) => reason !== 'clickaway' && setToast(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        // Top of the screen, just under the top bar: bottom toasts covered
+        // dialog buttons (e.g. the product form's Next / Add product).
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{ top: { xs: 72, sm: 76 } }}
       >
         {toast ? (
           <Alert

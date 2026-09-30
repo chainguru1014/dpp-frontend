@@ -10,7 +10,7 @@ import PageHeader from '../../components/PageHeader';
 // company's staff; a Supervisor may only manage working employees —
 // restrictToWorkingEmployee, enforced again in employeeController.ts).
 // Company accounts themselves are managed on the separate Companies page.
-const EmployeeManagementPage = ({ token, isAdmin }) => {
+const EmployeeManagementPage = ({ token, isAdmin, companyId }) => {
   const [tab, setTab] = useState('roster');
 
   return (
@@ -26,7 +26,7 @@ const EmployeeManagementPage = ({ token, isAdmin }) => {
         <Tab value="auditLog" label="Sign-in history" />
       </Tabs>
       {tab === 'roster' && (
-        <EmployeeRosterPage token={token} showCompanyColumn={isAdmin} restrictToWorkingEmployee={!isAdmin} />
+        <EmployeeRosterPage token={token} showCompanyColumn={isAdmin} restrictToWorkingEmployee={!isAdmin} companyId={companyId} />
       )}
       {tab === 'auditLog' && <EmployeeAuditLogPage token={token} showCompanyColumn={isAdmin} />}
     </Box>

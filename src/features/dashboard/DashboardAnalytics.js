@@ -3,7 +3,6 @@ import {
   Box, Card, CardActionArea, CardContent, Typography, Grid, Stack, TextField, MenuItem, Button, Table,
   TableHead, TableRow, TableCell, TableBody, Paper, Collapse,
 } from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
@@ -41,12 +40,12 @@ const CATEGORY_ICONS = {
 // `onClick`, when given, makes the whole card a link to that metric's page
 // (shown by a "View" hint); omitted when the role can't see that page.
 const KpiContent = ({ icon: Icon, label, value, delta, sub, linked }) => (
-  <CardContent sx={{ py: 1.75, display: 'flex', alignItems: 'center', gap: 1.5, height: '100%' }}>
-    <Box sx={{ width: 52, height: 52, borderRadius: 2, bgcolor: '#eaf2fb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-      <Icon sx={{ fontSize: 28, color: 'primary.main' }} />
+  <CardContent sx={{ py: 1.25, '&:last-child': { pb: 1.25 }, display: 'flex', alignItems: 'center', gap: 1.25, height: '100%' }}>
+    <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: '#eaf2fb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <Icon sx={{ fontSize: 24, color: 'primary.main' }} />
     </Box>
     <Box sx={{ minWidth: 0, flex: 1 }}>
-      <Typography sx={{ color: 'primary.main', fontWeight: 700, fontSize: '1.6rem', lineHeight: 1.15 }}>
+      <Typography sx={{ color: 'primary.main', fontWeight: 700, fontSize: '1.45rem', lineHeight: 1.15 }}>
         {value}
       </Typography>
       <Typography sx={{ fontSize: '0.95rem', color: 'text.secondary', lineHeight: 1.3 }}>
@@ -85,8 +84,8 @@ const Kpi = ({ onClick, ...props }) => (
 
 const Section = ({ title, children, sx }) => (
   <Card sx={{ height: '100%', ...sx }}>
-    <CardContent sx={{ py: 1.75 }}>
-      <Typography variant="subtitle1" component="h2" sx={{ mb: 1.25 }}>
+    <CardContent sx={{ py: 1.25, '&:last-child': { pb: 1.25 } }}>
+      <Typography variant="subtitle1" component="h2" sx={{ mb: 0.75 }}>
         {title}
       </Typography>
       {children}
@@ -95,7 +94,7 @@ const Section = ({ title, children, sx }) => (
 );
 
 const EmptyChart = ({ text = 'No scans yet.' }) => (
-  <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>{text}</Typography>
+  <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>{text}</Typography>
 );
 
 // SVG donut chart for [{category,count}] segments.
@@ -107,8 +106,8 @@ const Donut = ({ segments, labels = CATEGORY_LABELS }) => {
   let offset = 0;
   return (
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-      <Box sx={{ position: 'relative', width: 140, height: 140, flexShrink: 0 }}>
-        <svg width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Scans by product category">
+      <Box sx={{ position: 'relative', width: 116, height: 116, flexShrink: 0 }}>
+        <svg width="116" height="116" viewBox="0 0 140 140" role="img" aria-label="Scans by product category">
           <circle cx="70" cy="70" r={r} fill="none" stroke="#eef1f6" strokeWidth="20" />
           {segments.map((s, i) => {
             if (!s.count) return null;
@@ -132,7 +131,7 @@ const Donut = ({ segments, labels = CATEGORY_LABELS }) => {
           <text x="70" y="86" textAnchor="middle" fontSize="11" fill="#51617a">scans</text>
         </svg>
       </Box>
-      <Stack spacing={0.75} sx={{ flex: 1, minWidth: 0, width: '100%' }}>
+      <Stack spacing={0.4} sx={{ flex: 1, minWidth: 0, width: '100%' }}>
         {segments.map((s, i) => (
           <Box key={s.category} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box sx={{ width: 12, height: 12, borderRadius: '3px', bgcolor: COLORS[i % COLORS.length], flexShrink: 0 }} />
@@ -175,8 +174,8 @@ const LineChart = ({ data }) => {
   const leftPad = 34;
   const rightPad = 14;
   const topPad = 12;
-  const plotWidth = 320;
-  const plotHeight = 130;
+  const plotWidth = 380;
+  const plotHeight = 100;
   const bottomPad = 24;
   const width = leftPad + plotWidth + rightPad;
   const height = topPad + plotHeight + bottomPad;
@@ -238,7 +237,7 @@ const CountryBars = ({ items }) => {
   const total = items.reduce((s, x) => s + x.count, 0) || 1;
   const max = Math.max(1, ...items.map((i) => i.count));
   return (
-    <Stack spacing={1.25}>
+    <Stack spacing={0.9}>
       {items.map((it, i) => (
         <Box key={it.country}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.4, gap: 1 }}>
@@ -247,7 +246,7 @@ const CountryBars = ({ items }) => {
               {it.count} <Typography component="span" variant="body2" color="text.secondary">({Math.round((it.count / total) * 100)}%)</Typography>
             </Typography>
           </Box>
-          <Box sx={{ height: 10, borderRadius: 5, bgcolor: '#eef1f6', overflow: 'hidden' }}>
+          <Box sx={{ height: 8, borderRadius: 4, bgcolor: '#eef1f6', overflow: 'hidden' }}>
             <Box sx={{ height: '100%', width: `${(it.count / max) * 100}%`, bgcolor: COLORS[i % COLORS.length], borderRadius: 5 }} />
           </Box>
         </Box>
@@ -262,11 +261,11 @@ const activeFilterCount = (f) => Object.values(f).filter(Boolean).length;
 export default function DashboardAnalytics({
   ownerKind = null, ownerId = null,
   onNavigateToScanHistory, onNavigateToCaptureHistory, onNavigateToProducts, onNavigateToGenerateCode,
+  filtersOpen = false, onActiveFilterCountChange,
 }) {
   const [a, setA] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
-  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     setA(null);
@@ -294,12 +293,17 @@ export default function DashboardAnalytics({
   // built-in names as a fallback for older backends.
   const categoryLabels = { ...CATEGORY_LABELS, ...(a?.filterOptions?.itemCategoryLabels || {}) };
 
+  const appliedCount = activeFilterCount(appliedFilters);
+  useEffect(() => {
+    onActiveFilterCountChange?.(appliedCount);
+  }, [appliedCount, onActiveFilterCountChange]);
+
   if (!a) {
     return <Loader label="Loading your figures…" />;
   }
 
   const t = a.totals || {};
-  const applied = activeFilterCount(appliedFilters);
+  const applied = appliedCount;
 
   // Field mapping (see backend qrcodeController): `uniqueSkus` is distinct
   // product types scanned; `uniqueItems` is distinct scanned item codes.
@@ -313,95 +317,89 @@ export default function DashboardAnalytics({
   ].filter(Boolean);
 
   const filterPanel = (
-    <Paper sx={{ p: 2, mb: 2 }}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} justifyContent="space-between">
-        <Typography color="text.secondary">
-          {applied
-            ? `Showing figures for ${applied} filter${applied === 1 ? '' : 's'}.`
-            : 'Showing all figures. Use filters to narrow them down by date, category or country.'}
-        </Typography>
-        <Stack direction="row" spacing={1}>
-          {applied > 0 && (
+    <Collapse in={filtersOpen || applied > 0} unmountOnExit>
+      <Paper sx={{ p: 2, mb: 1.5 }}>
+        {applied > 0 && !filtersOpen ? (
+          <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" flexWrap="wrap" useFlexGap>
+            <Typography>
+              Figures are filtered ({applied} filter{applied === 1 ? '' : 's'}).
+            </Typography>
             <Button onClick={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); }}>
               Clear filters
             </Button>
-          )}
-          <Button
-            variant="outlined"
-            startIcon={<FilterListIcon />}
-            onClick={() => setShowFilters((v) => !v)}
-            aria-expanded={showFilters}
-          >
-            {showFilters ? 'Hide filters' : 'Filters'}
-          </Button>
-        </Stack>
-      </Stack>
-      <Collapse in={showFilters}>
-        <Grid container spacing={2} sx={{ mt: 0.5 }}>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
-            <TextField
-              label="From date" type="date" fullWidth InputLabelProps={{ shrink: true }}
-              value={filters.date_from} onChange={(e) => setFilters((f) => ({ ...f, date_from: e.target.value }))}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
-            <TextField
-              label="To date" type="date" fullWidth InputLabelProps={{ shrink: true }}
-              value={filters.date_to} onChange={(e) => setFilters((f) => ({ ...f, date_to: e.target.value }))}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
-            <TextField
-              select label="Product category" fullWidth value={filters.item_category}
-              onChange={(e) => setFilters((f) => ({ ...f, item_category: e.target.value }))}
-            >
-              <MenuItem value="">All categories</MenuItem>
-              {(a.filterOptions?.itemCategories || []).map((k) => (
-                <MenuItem key={k} value={k}>{categoryLabels[k] || k}</MenuItem>
-              ))}
-            </TextField>
-          </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
-            <TextField
-              select label="Made in" fullWidth value={filters.origin_country}
-              onChange={(e) => setFilters((f) => ({ ...f, origin_country: e.target.value }))}
-            >
-              <MenuItem value="">All countries</MenuItem>
-              {(a.filterOptions?.originCountries || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-            </TextField>
-          </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
-            <TextField
-              select label="Scanned in" fullWidth value={filters.destination_country}
-              onChange={(e) => setFilters((f) => ({ ...f, destination_country: e.target.value }))}
-            >
-              <MenuItem value="">All countries</MenuItem>
-              {(a.filterOptions?.destinationCountries || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-            </TextField>
-          </Grid>
-          <Grid item xs={12} sm={6} md={4} lg={2}>
-            <TextField
-              select label="City" fullWidth value={filters.city}
-              onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value }))}
-            >
-              <MenuItem value="">All cities</MenuItem>
-              {(a.filterOptions?.cities || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-            </TextField>
-          </Grid>
-        </Grid>
-        <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
-          <Button onClick={() => setFilters(EMPTY_FILTERS)}>Reset</Button>
-          <Button variant="contained" onClick={() => setAppliedFilters(filters)}>Apply filters</Button>
-        </Stack>
-      </Collapse>
-    </Paper>
+          </Stack>
+        ) : (
+          <>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <TextField
+                  label="From date" type="date" fullWidth InputLabelProps={{ shrink: true }}
+                  value={filters.date_from} onChange={(e) => setFilters((f) => ({ ...f, date_from: e.target.value }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <TextField
+                  label="To date" type="date" fullWidth InputLabelProps={{ shrink: true }}
+                  value={filters.date_to} onChange={(e) => setFilters((f) => ({ ...f, date_to: e.target.value }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <TextField
+                  select label="Product category" fullWidth value={filters.item_category}
+                  onChange={(e) => setFilters((f) => ({ ...f, item_category: e.target.value }))}
+                >
+                  <MenuItem value="">All categories</MenuItem>
+                  {(a.filterOptions?.itemCategories || []).map((k) => (
+                    <MenuItem key={k} value={k}>{categoryLabels[k] || k}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <TextField
+                  select label="Made in" fullWidth value={filters.origin_country}
+                  onChange={(e) => setFilters((f) => ({ ...f, origin_country: e.target.value }))}
+                >
+                  <MenuItem value="">All countries</MenuItem>
+                  {(a.filterOptions?.originCountries || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <TextField
+                  select label="Scanned in" fullWidth value={filters.destination_country}
+                  onChange={(e) => setFilters((f) => ({ ...f, destination_country: e.target.value }))}
+                >
+                  <MenuItem value="">All countries</MenuItem>
+                  {(a.filterOptions?.destinationCountries || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4} lg={2}>
+                <TextField
+                  select label="City" fullWidth value={filters.city}
+                  onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value }))}
+                >
+                  <MenuItem value="">All cities</MenuItem>
+                  {(a.filterOptions?.cities || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                </TextField>
+              </Grid>
+            </Grid>
+            <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
+              {applied > 0 && (
+                <Button onClick={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); }}>Clear filters</Button>
+              )}
+              <Button onClick={() => setFilters(EMPTY_FILTERS)}>Reset</Button>
+              <Button variant="contained" onClick={() => setAppliedFilters(filters)}>Apply filters</Button>
+            </Stack>
+          </>
+        )}
+      </Paper>
+    </Collapse>
   );
 
   return (
     <Box>
       {filterPanel}
 
-      <Grid container spacing={1.5} sx={{ mb: 2 }}>
+      <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
         {cards.map((c) => (
           <Grid item key={c.key} xs={12} sm={6} md={4} xl={cards.length > 4 ? 2 : 3}>
             <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} onClick={c.onClick} />
@@ -409,7 +407,7 @@ export default function DashboardAnalytics({
         ))}
       </Grid>
 
-      <Grid container spacing={1.5} sx={{ mb: 2 }}>
+      <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
         <Grid item xs={12} md={6} xl={4}>
           <Section title={isAppUser ? 'My scans by product category' : 'Scans by product category'}>
             <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
@@ -429,11 +427,11 @@ export default function DashboardAnalytics({
 
       {/* Brand/traceability detail — not meaningful for shoppers. */}
       {!isAppUser && (
-        <Paper sx={{ p: 2 }}>
-          <Typography variant="subtitle1" component="h2" sx={{ mb: 0.5 }}>
+        <Paper sx={{ px: 2, py: 1.5 }}>
+          <Typography variant="subtitle1" component="h2">
             Where each product category is made and scanned
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 1.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
             Number of scans per country, for each product category and country of manufacture.
           </Typography>
           <Box sx={{ overflowX: 'auto' }}>

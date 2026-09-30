@@ -13,6 +13,7 @@ import AddIcon from '@mui/icons-material/Add';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import HistoryIcon from '@mui/icons-material/History';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import PageHeader from '../../components/PageHeader';
 import DashboardAnalytics from './DashboardAnalytics';
@@ -71,6 +72,20 @@ const DashboardPage = ({
   // Staff see their own name; companies and shoppers their account name.
   const greetingName = String(company?.displayName || company?.name || '').trim();
 
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [activeFilters, setActiveFilters] = useState(0);
+  const filtersButton = (
+    <Button
+      variant={filtersOpen || activeFilters ? 'contained' : 'outlined'}
+      color="primary"
+      startIcon={<FilterListIcon />}
+      onClick={() => setFiltersOpen((v) => !v)}
+      aria-expanded={filtersOpen}
+    >
+      {filtersOpen ? 'Hide filters' : `Filters${activeFilters ? ` (${activeFilters})` : ''}`}
+    </Button>
+  );
+
   const [checklistHidden, setChecklistHidden] = useState(() => {
     try { return localStorage.getItem(CHECKLIST_HIDDEN_KEY) === '1'; } catch (e) { return false; }
   });
@@ -117,7 +132,7 @@ const DashboardPage = ({
       <PageHeader
         title={greetingName ? `Welcome, ${greetingName}` : 'Dashboard'}
         description={description}
-        actions={actions}
+        actions={<>{filtersButton}{actions}</>}
       />
 
       {showChecklist && <GettingStarted steps={steps} onHide={hideChecklist} />}
@@ -129,6 +144,8 @@ const DashboardPage = ({
         onNavigateToCaptureHistory={onNavigateToCaptureHistory}
         onNavigateToProducts={onNavigateToProducts}
         onNavigateToGenerateCode={onNavigateToGenerateCode}
+        filtersOpen={filtersOpen}
+        onActiveFilterCountChange={setActiveFilters}
       />
     </Box>
   );

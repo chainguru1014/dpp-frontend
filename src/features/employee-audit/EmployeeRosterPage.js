@@ -27,15 +27,22 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { confirmAction } from '../../utils/feedbackBus';
-import { listEmployees, inviteEmployee, updateEmployee, deleteEmployee } from '../../helper';
+import { listEmployees, inviteEmployee, updateEmployee, deleteEmployee, getAdminUserData, getCompanyById } from '../../helper';
 
 // Admin-provisioning UI for the employee/staff route (backend/controllers/employeeController.ts).
 // This is the only place a staff account gets created — employeeAuthController.otpRequest
 // refuses to send a sign-in code to anyone not added here first, so a company
 // admin must invite each employee by their real corporate email up front.
-// There's no company picker: the backend matches the invited email's domain
-// against every registered company's Allowed Staff Email Domains itself.
-const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmployee }) => {
+// The company is chosen at the top of the dialog: the super admin picks any
+// registered company; a Supervisor / company account sees only their own.
+// The email must end with one of that company's domains (checked here and
+// again by the backend).
+const isPlatformAdminCompany = (c) => c.role === 'super' || c.role === 'admin' || c.name === 'admin';
+const emailDomainOf = (value) => String(value || '').trim().toLowerCase().split('@')[1] || '';
+
+const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmployee, isAdmin, companyId }) => {
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [employeeType, setEmployeeType] = useState('working_employee');
@@ -45,11 +52,58 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
   const [zebraReaderId, setZebraReaderId] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
+  const [triedSave, setTriedSave] = useState(false);
+
+  // Load the company list (super admin) or the user's own company.
+  useEffect(() => {
+    if (!open) return;
+    setError('');
+    setTriedSave(false);
+    let alive = true;
+    (async () => {
+      if (isAdmin) {
+        const data = await getAdminUserData();
+        const list = (data.companies || []).filter((c) => !isPlatformAdminCompany(c));
+        if (!alive) return;
+        setCompanies(list);
+        setSelectedCompanyId((prev) => (list.some((c) => c._id === prev) ? prev : (list.length === 1 ? list[0]._id : '')));
+      } else {
+        const own = await getCompanyById(companyId);
+        if (!alive) return;
+        setCompanies(own ? [own] : []);
+        setSelectedCompanyId(own?._id || '');
+      }
+    })();
+    return () => { alive = false; };
+  }, [open, isAdmin, companyId]);
+
+  const selectedCompany = companies.find((c) => c._id === selectedCompanyId) || null;
+  const companyDomains = (selectedCompany?.allowedEmailDomains || []).map((d) => String(d).toLowerCase());
+  const typedDomain = emailDomainOf(email);
+  const emailFormatOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const domainOk = !!selectedCompany && companyDomains.includes(typedDomain);
+  const domainHint = companyDomains.length
+    ? `Must end with ${companyDomains.map((d) => `@${d}`).join(' or ')}`
+    : 'This company has no domain yet. Add one on the Companies page first.';
+  const emailError = (triedSave || (email.includes('@') && typedDomain.includes('.')))
+    ? (!email.trim() ? 'Please enter their work email.'
+      : !emailFormatOk ? 'Please enter a full email address, for example jane@company.com.'
+        : selectedCompany && !domainOk ? `This email doesn't match ${selectedCompany.name}. ${domainHint}.` : '')
+    : '';
 
   const handleSave = async () => {
     setError('');
-    if (!email.trim() || !email.includes('@')) {
-      setError('A valid corporate email is required.');
+    setTriedSave(true);
+    if (!selectedCompany) {
+      setError('Please choose the company this person works for.');
+      return;
+    }
+    if (!emailFormatOk) {
+      setError('Please enter a full work email address, for example jane@company.com.');
+      return;
+    }
+    if (!domainOk) {
+      setError(`The email must belong to ${selectedCompany.name}. ${domainHint}.`);
       return;
     }
     if (!name.trim()) {
@@ -58,6 +112,9 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
     }
     setSaving(true);
     const res = await inviteEmployee(token, {
+      // The super admin's chosen company; a Supervisor's own company is
+      // always used by the backend anyway.
+      company_id: isAdmin ? selectedCompany._id : undefined,
       email: email.trim(),
       name: name.trim(),
       employeeType,
@@ -75,6 +132,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
     }
     setEmail('');
     setName('');
+    setTriedSave(false);
     setEmployeeType('working_employee');
     setEmployeeCode('');
     setYometelReaderId('');
@@ -91,18 +149,39 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
         <IconButton onClick={onClose} color="inherit" aria-label="Close"><CloseIcon /></IconButton>
       </DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Typography color="text.secondary">
-          They sign in with a code sent to this email. Use their work email: its domain decides which company they belong to.
-        </Typography>
+        <TextField
+          select
+          label="Company"
+          required
+          value={selectedCompanyId}
+          onChange={(e) => setSelectedCompanyId(e.target.value)}
+          disabled={!isAdmin}
+          error={triedSave && !selectedCompany}
+          helperText={isAdmin
+            ? (companies.length ? 'The company this person works for.' : 'No companies yet. Create one on the Companies page first.')
+            : 'Staff you add here belong to your company.'}
+          fullWidth
+          SelectProps={{ displayEmpty: true }}
+          InputLabelProps={{ shrink: true }}
+        >
+          <MenuItem value="" disabled>Choose a company</MenuItem>
+          {companies.map((c) => (
+            <MenuItem key={c._id} value={c._id}>
+              {c.name}{(c.allowedEmailDomains || []).length ? `  (@${c.allowedEmailDomains.join(', @')})` : ''}
+            </MenuItem>
+          ))}
+        </TextField>
         <TextField
           label="Work email"
           required
           type="email"
-          placeholder="jane.doe@company.com"
+          placeholder={companyDomains[0] ? `jane.doe@${companyDomains[0]}` : 'jane.doe@company.com'}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          error={!!emailError}
+          helperText={emailError || (selectedCompany ? `${domainHint}. They sign in with a code sent to this email.` : 'Choose the company first.')}
           fullWidth
-          autoFocus
+          autoFocus={!isAdmin}
         />
         <TextField
           label="Name"
@@ -156,7 +235,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
   );
 };
 
-const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmployee }) => {
+const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmployee, companyId }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
@@ -464,6 +543,8 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
         onInvited={reload}
         token={token}
         restrictToWorkingEmployee={restrictToWorkingEmployee}
+        isAdmin={showCompanyColumn}
+        companyId={companyId}
       />
     </Box>
   );
