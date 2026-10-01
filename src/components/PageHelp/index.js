@@ -31,7 +31,7 @@ const PAGE_HELP = {
   },
   itemSearch: {
     title: 'Product Activity',
-    text: 'Click a product to see everything recorded for it: scans, work steps your employees recorded and changes of owner, with a map of where they happened. To look up one item, type the code from its code or tag and press "Find code".',
+    text: 'Click a product to see everything recorded for it: scans, work steps your employees recorded and changes of owner, with a map of where they happened. It also shows the lifecycle you entered for the product (materials, where it was made, shipping) on the same map. To look up one item, type the code from its code or tag and press "Find code".',
   },
   security: {
     title: 'Security',

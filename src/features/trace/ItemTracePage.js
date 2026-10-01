@@ -9,6 +9,9 @@ import AssignmentTurnedInIcon from '@mui/icons-material/AssignmentTurnedIn';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import SpaIcon from '@mui/icons-material/Spa';
+import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PageHeader from '../../components/PageHeader';
 import Loader from '../../components/Loader';
 import CopyIconButton from '../../components/CopyIconButton';
@@ -17,7 +20,12 @@ import { getFileUrl, getTraceItem, getTraceProduct, searchTrace } from '../../he
 import { processStepTypeLabel } from '../../utils/processStepTypes';
 import { METHOD_LABELS } from './TracePage';
 
-const ItemMap = React.lazy(() => import('./ItemMap'));
+// Google Maps when a key is configured (REACT_APP_GOOGLE_MAPS_KEY), otherwise OpenStreetMap.
+const USE_GOOGLE_MAPS = !!process.env.REACT_APP_GOOGLE_MAPS_KEY;
+const ItemMap = React.lazy(() => (USE_GOOGLE_MAPS ? import('./GoogleItemMap') : import('./ItemMap')));
+// Same green as the lifecycle line and dots on the map.
+const LIFECYCLE_COLOR = '#2e7d32';
+const LIFECYCLE_ICONS = { materials: SpaIcon, manufacturing: PrecisionManufacturingIcon, transport: LocalShippingIcon };
 
 const IDENTIFIER_LABELS = { qr: 'QR code', barcode: 'Barcode', nfc: 'NFC tag', rfid: 'RFID tag', gs1dl: 'GS1 Digital Link' };
 
@@ -215,6 +223,11 @@ export default function ItemTracePage({
       label: `${(EVENT_KINDS[e.kind] || EVENT_KINDS.scan).title(e)} — ${formatWhen(e.at)}`,
     }));
   const selectedId = result && result.type !== 'list' ? result.product._id : undefined;
+  // The lifecycle the brand entered for the product, in order.
+  const lifecycle = (result && result.type !== 'list' && result.lifecycle) || [];
+  const lifecyclePoints = lifecycle
+    .filter((s) => typeof s.latitude === 'number' && typeof s.longitude === 'number')
+    .map((s) => ({ lat: s.latitude, lng: s.longitude, color: LIFECYCLE_COLOR, label: `${s.title}: ${s.detail}` }));
 
   return (
     <Box>
@@ -307,6 +320,39 @@ export default function ItemTracePage({
             </ProductCard>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2, alignItems: 'start' }}>
+              <Stack spacing={2}>
+              {/* What the brand entered for the product: materials, where it was made, how it was shipped. */}
+              <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2 }}>
+                <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Product lifecycle</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  From the product’s information: where its materials come from, where it was made and how it was shipped.
+                </Typography>
+                {lifecycle.length === 0 ? (
+                  <Typography color="text.secondary">
+                    No lifecycle places entered yet. Add the country of manufacture, material suppliers and shipping route in the product’s “Origin &amp; shipping” step.
+                  </Typography>
+                ) : (
+                  <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0 }}>
+                    {lifecycle.map((s, i) => {
+                      const StepIcon = LIFECYCLE_ICONS[s.stage] || SpaIcon;
+                      return (
+                        <Box component="li" key={i} sx={{ display: 'flex', gap: 1.5, position: 'relative', pb: i < lifecycle.length - 1 ? 2 : 0 }}>
+                          {i < lifecycle.length - 1 && <Box sx={{ position: 'absolute', left: 15, top: 32, bottom: 0, width: 2, bgcolor: LIFECYCLE_COLOR, opacity: 0.4 }} />}
+                          <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: LIFECYCLE_COLOR, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <StepIcon sx={{ fontSize: 18 }} />
+                          </Box>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>{i + 1}. {s.title}</Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {s.detail}{s.latitude == null ? ' · not found on the map' : ''}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                )}
+              </Box>
               <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2 }}>
                 <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>
                   {result.type === 'item' ? 'History of this item' : 'Latest activity across all items'}
@@ -318,19 +364,27 @@ export default function ItemTracePage({
                   onOpenItem={(itemId) => openItem(result.product._id, itemId)}
                 />
               </Box>
+              </Stack>
               <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2, position: { lg: 'sticky' }, top: { lg: 0 } }}>
-                <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Where it happened</Typography>
-                {mapPoints.length ? (
+                <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>On the map</Typography>
+                {mapPoints.length || lifecyclePoints.length ? (
                   <>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                      {mapPoints.length} of {events.length} events have a location. The line follows them in time order; the largest dot is the most recent.
-                    </Typography>
+                    <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap sx={{ mb: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <Box sx={{ width: 22, height: 4, borderRadius: 2, bgcolor: LIFECYCLE_COLOR }} />
+                        <Typography variant="body2" color="text.secondary">Product lifecycle ({lifecyclePoints.length} place{lifecyclePoints.length === 1 ? '' : 's'})</Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                        <Box sx={{ width: 22, height: 0, borderTop: '4px dashed #2f80c8' }} />
+                        <Typography variant="body2" color="text.secondary">Recorded activity ({mapPoints.length} of {events.length} with a place)</Typography>
+                      </Box>
+                    </Stack>
                     <Suspense fallback={<Loader label="Loading the map…" />}>
-                      <ItemMap points={mapPoints} />
+                      <ItemMap points={mapPoints} lifecycle={lifecyclePoints} height={440} />
                     </Suspense>
                   </>
                 ) : (
-                  <Typography color="text.secondary">None of these events has a location yet.</Typography>
+                  <Typography color="text.secondary">Nothing has a place yet. Lifecycle places and located scans appear here.</Typography>
                 )}
               </Box>
             </Box>
