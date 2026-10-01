@@ -43,7 +43,7 @@ import CameraIcon from '../../assets/camera_icon.png';
 import YoutubeIcon from '../../assets/youtube-icon.png';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { Backend_URL, getFileUrl, normalizeProductVideos } from '../../helper';
-import { dppFontCss, dppPalette, normalizeDppTheme } from '../../utils/dppTheme';
+import { DPP_TEXT_SCALE, dppButtonFill, dppFontCss, dppPalette, normalizeDppTheme } from '../../utils/dppTheme';
 import VideoPlayerDialog from '../VideoPlayerDialog';
 
 // The colours this preview is drawn with: the app's own tokens (src/theme.ts)
@@ -172,16 +172,18 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   // Same diagonal direction as the app's top bar / buttons (see GradientButton /
   // AppLayout) -- a straight top-to-bottom gradient read as a visibly different
   // "atmosphere" next to the app once the app switched to this angle.
-  const GRADIENT = `linear-gradient(135deg, ${C.headerLight} 0%, ${C.primary} 100%)`;
+  const GRADIENT = `linear-gradient(135deg, ${C.headerLight} 0%, ${C.header} 100%)`;
+  // Cards follow the brand's corner radius and card style.
   const card = {
     bgcolor: C.surface,
-    borderRadius: 2,
-    border: `1px solid ${C.border}`,
+    borderRadius: `${look.cardRadius}px`,
+    border: look.cardStyle === 'flat' ? 'none' : `1px solid ${C.border}`,
     p: 1.5,
     mx: 2,
     mt: 1,
-    boxShadow: '0 4px 10px rgba(27,79,114,0.08)',
+    boxShadow: look.cardStyle === 'shadow' ? '0 4px 10px rgba(27,79,114,0.08)' : 'none',
   };
+  const mainButton = useMemo(() => dppButtonFill(theme), [theme]);
   const cardTitle = { fontSize: 13, fontWeight: 700, color: C.primary, mb: 0.75 };
   const buttonRadius = `${look.buttonRadius}px`;
   // Lifecycle tabs in the brand's order, minus the ones it hides.
@@ -335,47 +337,44 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     </Box>
   );
 
-  const renderOverview = () => (
+  const brand = info.brandInfo || {};
+  const productText = (
     <>
-      {/* Product card — image (left) + name / model / ID / Authenticated (right) */}
-      <Box sx={{ ...card, mt: 2 }}>
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-          {renderMediaBox()}
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography sx={{ fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.25 }}>
-              {info.name || '—'}
-            </Typography>
-            {info.model && <Typography sx={{ fontSize: 12, color: C.muted, mt: 0.25 }}>{info.model}</Typography>}
-            {productId !== '' && (
-              <Typography sx={{ fontSize: 11, color: C.placeholder, mt: 0.25 }}>ID: {productId}</Typography>
-            )}
-            <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, mt: 1, bgcolor: C.authBg, borderRadius: 1.5, px: 1, py: 0.75 }}>
-              <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <CheckIcon sx={{ fontSize: 11, color: '#fff' }} />
-              </Box>
-              <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.text, lineHeight: 1.1 }}>Authenticated</Typography>
-                <Typography sx={{ fontSize: 10, color: C.muted, lineHeight: 1.1 }}>Verified by Yometel</Typography>
-              </Box>
-            </Box>
-          </Box>
+      <Typography sx={{ fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.25 }}>
+        {info.name || '—'}
+      </Typography>
+      {info.model && <Typography sx={{ fontSize: 12, color: C.muted, mt: 0.25 }}>{info.model}</Typography>}
+      {look.showProductId && productId !== '' && (
+        <Typography sx={{ fontSize: 11, color: C.placeholder, mt: 0.25 }}>ID: {productId}</Typography>
+      )}
+      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, mt: 1, bgcolor: C.authBg, borderRadius: 1.5, px: 1, py: 0.75 }}>
+        <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: C.badge, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CheckIcon sx={{ fontSize: 11, color: C.onBadge }} />
+        </Box>
+        <Box>
+          <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.text, lineHeight: 1.1 }}>Authenticated</Typography>
+          <Typography sx={{ fontSize: 10, color: C.muted, lineHeight: 1.1 }}>Verified by Yometel</Typography>
         </Box>
       </Box>
+    </>
+  );
 
-      {/* Key Highlights */}
-      {highlightRows.length > 0 && (
-        <Box sx={card}>
-          <Typography sx={cardTitle}>Key Highlights</Typography>
-          {highlightRows.map((row, i) => (
-            <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.4 }}>
-              <row.Icon sx={{ fontSize: 15, color: C.primary }} />
-              <Typography sx={{ fontSize: 12, color: C.text }}>{row.text}</Typography>
-            </Box>
-          ))}
-        </Box>
-      )}
-
-      {/* Lifecycle Preview */}
+  // The blocks of the Overview below the product card. The brand chooses
+  // which show and in what order (theme.blocks); a block with nothing to
+  // show (no highlights, no message written...) is skipped.
+  const overviewBlocks = {
+    highlights: () => highlightRows.length > 0 && (
+      <Box sx={card}>
+        <Typography sx={cardTitle}>Key Highlights</Typography>
+        {highlightRows.map((row, i) => (
+          <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.4 }}>
+            <row.Icon sx={{ fontSize: 15, color: C.primary }} />
+            <Typography sx={{ fontSize: 12, color: C.text }}>{row.text}</Typography>
+          </Box>
+        ))}
+      </Box>
+    ),
+    lifecycle: () => (
       <Box sx={card}>
         <Typography sx={{ ...cardTitle, mb: 1.5 }}>Lifecycle Preview</Typography>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -402,8 +401,35 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
           <ChevronRightIcon sx={{ fontSize: 16, color: C.primary }} />
         </Box>
       </Box>
-
-      {/* Like / Dislike / Share */}
+    ),
+    about: () => !!info.aboutProduct && (
+      <Box sx={card}>
+        <Typography sx={cardTitle}>About This Product</Typography>
+        <Typography sx={{ fontSize: 12, color: C.text, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{info.aboutProduct}</Typography>
+      </Box>
+    ),
+    brand: () => !!brand.name && (
+      <Box sx={card}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+          {!!brand.logoUrl && <Box component="img" src={getFileUrl(brand.logoUrl)} alt="" sx={{ width: 32, height: 32, objectFit: 'contain' }} />}
+          <Typography sx={{ ...cardTitle, mb: 0 }}>{brand.name}</Typography>
+        </Box>
+        {!!brand.detail && <Typography sx={{ fontSize: 12, color: C.text, lineHeight: 1.5 }}>{brand.detail}</Typography>}
+        {!!brand.websiteUrl && <Typography sx={{ fontSize: 12, fontWeight: 600, color: C.primary, mt: 0.75 }}>Visit website ›</Typography>}
+      </Box>
+    ),
+    message: () => (!!look.message.title || !!look.message.body) && (
+      <Box sx={card}>
+        {!!look.message.title && <Typography sx={cardTitle}>{look.message.title}</Typography>}
+        {!!look.message.body && <Typography sx={{ fontSize: 12, color: C.text, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{look.message.body}</Typography>}
+      </Box>
+    ),
+    cta: () => !!look.cta.label && !!look.cta.url && (
+      <Box sx={{ mx: 2, mt: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 700, ...mainButton }}>
+        {look.cta.label}
+      </Box>
+    ),
+    feedback: () => (
       <Box sx={{ display: 'flex', gap: 1, mx: 2, mt: 1 }}>
         {[ThumbUpOffAltIcon, ThumbDownOffAltIcon, IosShareIcon].map((Ico, i) => (
           <Box key={i} sx={{ flex: 1, height: 36, borderRadius: 1.5, border: `1px solid ${C.border}`, bgcolor: C.surface, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -411,16 +437,38 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
           </Box>
         ))}
       </Box>
-
-      {/* Contact Owner | Scan Another Product */}
+    ),
+    actions: () => (
       <Box sx={{ display: 'flex', gap: 1, mx: 2, mt: 1 }}>
-        <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', color: C.onDark, fontSize: 13, fontWeight: 700, background: GRADIENT }}>
+        <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 700, ...mainButton }}>
           Scan Product
         </Box>
         <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 600, color: C.primary, border: `1px solid ${C.primary}`, bgcolor: C.surface }}>
           Request ownership
         </Box>
       </Box>
+    ),
+  };
+
+  const renderOverview = () => (
+    <>
+      {/* Product card — photo beside the name, or a large photo on top. */}
+      <Box sx={{ ...card, mt: 2 }}>
+        {look.heroLayout === 'top' ? (
+          <>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.25 }}>{renderMediaBox({ size: 220 })}</Box>
+            {productText}
+          </>
+        ) : (
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+            {renderMediaBox()}
+            <Box sx={{ flex: 1, minWidth: 0 }}>{productText}</Box>
+          </Box>
+        )}
+      </Box>
+      {look.blocks.filter((b) => b.visible).map((b) => (
+        <React.Fragment key={b.key}>{overviewBlocks[b.key]?.()}</React.Fragment>
+      ))}
     </>
   );
 
@@ -774,11 +822,11 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                 back button on the left (this is a top-level preview, not a
                 navigable screen -- closing the dialog is the only exit). */}
             <Box sx={{ width: 40 }} />
-            <Typography id="preview-modal-title" sx={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>
+            <Typography id="preview-modal-title" sx={{ color: C.onHeader, fontSize: 16, fontWeight: 600 }}>
               {view === 'lifecycle' ? 'Product Lifecycle' : 'Product Overview'}
             </Typography>
             {onClose ? (
-              <Button onClick={onClose} aria-label="Close preview" sx={{ minWidth: 40, color: '#fff' }}>
+              <Button onClick={onClose} aria-label="Close preview" sx={{ minWidth: 40, color: C.onHeader }}>
                 <CloseIcon fontSize="small" />
               </Button>
             ) : <Box sx={{ width: 40 }} />}
@@ -788,14 +836,14 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
             <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', px: 2, pb: 1.5 }}>
               {renderMediaBox({ size: 66, rounded: 1 })}
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>{info.name || '—'}</Typography>
-                {info.model && <Typography sx={{ fontSize: 11, color: 'rgba(255,255,255,0.9)', mt: 0.2 }}>{info.model}</Typography>}
-                {productId !== '' && <Typography sx={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', mt: 0.1 }}>ID: {productId}</Typography>}
+                <Typography sx={{ fontSize: 15, fontWeight: 700, color: C.onHeader, lineHeight: 1.2 }}>{info.name || '—'}</Typography>
+                {info.model && <Typography sx={{ fontSize: 11, color: C.onHeader, opacity: 0.9, mt: 0.2 }}>{info.model}</Typography>}
+                {look.showProductId && productId !== '' && <Typography sx={{ fontSize: 10, color: C.onHeader, opacity: 0.7, mt: 0.1 }}>ID: {productId}</Typography>}
                 <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, mt: 0.75 }}>
-                  <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CheckIcon sx={{ fontSize: 10, color: C.primary }} />
+                  <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: C.onHeader, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CheckIcon sx={{ fontSize: 10, color: C.header }} />
                   </Box>
-                  <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Genuine product</Typography>
+                  <Typography sx={{ fontSize: 11, fontWeight: 700, color: C.onHeader }}>Genuine product</Typography>
                 </Box>
               </Box>
             </Box>
@@ -810,7 +858,17 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                 role="tab"
                 aria-selected={lifecycleTab === tb.key}
                 onClick={() => setLifecycleTab(tb.key)}
-                sx={{
+                sx={look.tabStyle === 'pills' ? {
+                  flex: '0 0 auto',
+                  px: 1.5,
+                  py: 0.6,
+                  my: 0.75,
+                  ml: 0.75,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  borderRadius: 999,
+                  bgcolor: lifecycleTab === tb.key ? C.primary : C.surfaceAlt,
+                } : {
                   flex: '0 0 auto',
                   px: 1.5,
                   py: 1,
@@ -819,7 +877,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                   borderBottom: lifecycleTab === tb.key ? `2px solid ${C.primary}` : '2px solid transparent',
                 }}
               >
-                <Typography sx={{ fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', color: lifecycleTab === tb.key ? C.primary : C.muted }}>
+                <Typography sx={{ fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', color: lifecycleTab === tb.key ? (look.tabStyle === 'pills' ? C.onPrimary : C.primary) : C.muted }}>
                   {tb.label}
                 </Typography>
               </Box>
@@ -829,7 +887,10 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
 
         {/* Scrollable content layer */}
         <Box sx={{ flex: 1, overflow: 'auto', pb: 2 }}>
-          {view === 'overview' ? renderOverview() : renderLifecycleTabContent()}
+          {/* The brand's text size, approximated here by scaling the content. */}
+          <Box sx={{ zoom: DPP_TEXT_SCALE[look.textScale] }}>
+            {view === 'overview' ? renderOverview() : renderLifecycleTabContent()}
+          </Box>
         </Box>
 
         {/* Product bottom bar — Overview / Lifecycle, matching the app's

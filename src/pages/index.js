@@ -183,7 +183,7 @@ const STUDIO_PHASES = [
 ];
 // While a colour is being typed it is briefly not a full #rrggbb value —
 // keep what the user typed in the field instead of snapping it back.
-const normalizeThemeDraft = (draft) => ({ ...normalizeDppTheme(draft), ...['pageBg', 'cardBg', 'accent', 'buttonText', 'textColor'].reduce((acc, key) => {
+const normalizeThemeDraft = (draft) => ({ ...normalizeDppTheme(draft), ...['pageBg', 'cardBg', 'accent', 'buttonText', 'textColor', 'headerColor', 'badgeColor'].reduce((acc, key) => {
   if (typeof draft[key] === 'string' && draft[key].length <= 7) acc[key] = draft[key];
   return acc;
 }, {}) });
