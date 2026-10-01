@@ -67,6 +67,8 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import AddIcon from '@mui/icons-material/Add';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import DownloadIcon from '@mui/icons-material/Download';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Webcam from 'react-webcam';
@@ -109,6 +111,9 @@ import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import DppPhonePreview from '../features/products/DppPhonePreview';
 import DppThemeEditor from '../features/products/DppThemeEditor';
+import ProductImportDialog from '../features/products/ProductImportDialog';
+import { downloadCsv } from '../utils/csv';
+import { productsToCsvRows } from '../utils/productCsv';
 import { normalizeDppTheme } from '../utils/dppTheme';
 import { CERTIFICATE_STATUS, certificateStatus, certificateWarnings } from '../utils/certificates';
 import PassportReadinessPanel, { PassportScore } from '../features/products/PassportReadinessPanel';
@@ -313,6 +318,7 @@ const InnerPage = () => {
   // admin edits them in Manage Categories.
   const [itemCategoryOptions, setItemCategoryOptions] = useState(ITEM_CATEGORY_OPTIONS);
   const [openManageCategories, setOpenManageCategories] = useState(false);
+  const [openProductImport, setOpenProductImport] = useState(false);
   const loadItemCategoryOptions = async () => {
     const list = await getItemCategories();
     if (list.length) setItemCategoryOptions(list.map((c) => ({ value: c.key, label: c.label })));
@@ -2237,6 +2243,25 @@ const InnerPage = () => {
                         Manage Categories
                       </Button>
                     )}
+                    {/* Spreadsheet in / out: add or change many products at once. */}
+                    {canEditProducts && (
+                      <>
+                        <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={() => setOpenProductImport(true)}>
+                          Import
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          startIcon={<DownloadIcon />}
+                          disabled={!filteredProducts.length}
+                          onClick={() => downloadCsv(
+                            `yometel-products-${new Date().toISOString().slice(0, 10)}.csv`,
+                            productsToCsvRows(filteredProducts, itemCategoryOptions),
+                          )}
+                        >
+                          Export
+                        </Button>
+                      </>
+                    )}
                     {canEditProducts && (
                       <Button
                         variant="contained"
@@ -3243,6 +3268,15 @@ const InnerPage = () => {
               setItemCategory(res.addedKeys[res.addedKeys.length - 1]);
             }
           }}
+        />
+      )}
+      {canEditProducts && (
+        <ProductImportDialog
+          open={openProductImport}
+          onClose={() => setOpenProductImport(false)}
+          token={token}
+          categoryOptions={itemCategoryOptions}
+          onImported={loadProductsForCurrentCompany}
         />
       )}
       {selectedProduct && openPrintModal && (

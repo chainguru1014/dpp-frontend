@@ -1180,3 +1180,28 @@ export const setItemBlocked = async (token, product_id, qrcode_id, blocked, note
         return { ok: false, message: err.response?.data?.message || err.message || 'The label could not be updated' };
     }
 };
+
+// ----- Bulk work: import products from a spreadsheet, pair tags with items -----
+// rows: one product object per spreadsheet row (see utils/productCsv.js).
+export const bulkImportProducts = async (token, rows) => {
+    try {
+        const res = await axios.post(`${Backend_URL}product/bulk-import`, { rows }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data || { created: 0, updated: 0, errors: [] } };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'The import could not be completed' };
+    }
+};
+
+// pairs: [{ qrcode_id, raw_value }] — ties each tag to one item of the product.
+export const pairTagsWithItems = async (token, product_id, source_type, pairs) => {
+    try {
+        const res = await axios.post(`${Backend_URL}product-identifier/pair`, { product_id, source_type, pairs }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data || { paired: 0, unchanged: 0, errors: [] } };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'The tags could not be paired' };
+    }
+};

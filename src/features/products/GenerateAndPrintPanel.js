@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Box, Button, Tab, Tabs, TextField, Typography, Pagination } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
+import LinkIcon from '@mui/icons-material/Link';
 import qrcode from 'qrcode';
 import CircularProgressWithLabel from '../../components/CircularProgressBar';
 import QRCode from '../../components/displayQRCode';
@@ -9,6 +10,7 @@ import SecurityQRCode from '../../components/displaySecurityQRCode';
 import RegisterIdentifierPanel from '../../components/RegisterIdentifierPanel';
 import PrintDialog from '../../components/printModal/PrintDialog';
 import { printSecurityQRCodes } from '../../helper';
+import PairTagsDialog from './PairTagsDialog';
 
 const SECURITY_BASE_URL = process.env.REACT_APP_SECURITY_BASE_URL || process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com';
 
@@ -56,6 +58,7 @@ const GenerateAndPrintPanel = ({
 }) => {
   const [tab, setTab] = useState('qr');
   const [securityPrintOpen, setSecurityPrintOpen] = useState(false);
+  const [pairOpen, setPairOpen] = useState(false);
 
   // Same 10-per-display-page / 100-per-backend-batch split ProductMintSection
   // used — the backend serves codes in batches of 100 (parent's page/setPage).
@@ -170,6 +173,10 @@ const GenerateAndPrintPanel = ({
               </Button>
               {isMinting && <CircularProgressWithLabel value={mintingProgress} />}
               <Box sx={{ flexGrow: 1 }} />
+              {/* Tie RFID / NFC tags to individual items (one tag per QR code). */}
+              <Button variant="outlined" startIcon={<LinkIcon />} onClick={() => setPairOpen(true)} disabled={total === 0} sx={{ mt: 0.5 }}>
+                Pair tags with items
+              </Button>
               <Button variant="outlined" startIcon={<DownloadIcon />} onClick={onOpenPrint} disabled={total === 0} sx={{ mt: 0.5 }}>
                 Download labels to print
               </Button>
@@ -192,6 +199,7 @@ const GenerateAndPrintPanel = ({
               />
             )}
           </Box>
+          <PairTagsDialog open={pairOpen} onClose={() => setPairOpen(false)} product={selectedProduct} totalItems={total} />
           <Box sx={GRID_SX}>
             {pageCodes.map((item) => (
               <QRCode
