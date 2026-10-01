@@ -6,6 +6,8 @@
 // the product form where the field lives (PRODUCT_FORM_STEPS in pages/index.js)
 // and a test against the product (same shape whether saved or still in the form).
 
+import { certificateStatus, productCertificates, uncoveredRequiredMaterials } from './certificates';
+
 const text = (v) => String(v ?? '').trim();
 const list = (v) => (Array.isArray(v) ? v : []);
 
@@ -96,6 +98,18 @@ export const PASSPORT_CHECKS = [
     label: 'At least one certification',
     step: 1,
     test: (p) => list(p.certifications).some((c) => (typeof c === 'string' ? text(c) : text(c?.title))),
+  },
+  {
+    group: 'Compliance',
+    label: 'No expired certificate',
+    step: 1,
+    test: (p) => productCertificates(p).every((c) => certificateStatus(c) !== 'expired'),
+  },
+  {
+    group: 'Compliance',
+    label: 'Every material marked "required" is covered by a valid certificate',
+    step: 1,
+    test: (p) => uncoveredRequiredMaterials(p).length === 0,
   },
   { group: 'Compliance', label: 'Manual or certificate document (PDF)', step: 0, test: (p) => list(p.files).length > 0 },
   {

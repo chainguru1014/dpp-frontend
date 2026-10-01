@@ -8,7 +8,10 @@ import {
   Avatar,
   Box,
   Button,
+  Checkbox,
+  Chip,
   Drawer,
+  FormControlLabel,
   IconButton,
   InputAdornment,
   List,
@@ -107,6 +110,7 @@ import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import DppPhonePreview from '../features/products/DppPhonePreview';
 import DppThemeEditor from '../features/products/DppThemeEditor';
 import { normalizeDppTheme } from '../utils/dppTheme';
+import { CERTIFICATE_STATUS, certificateStatus, certificateWarnings } from '../utils/certificates';
 import PassportReadinessPanel, { PassportScore } from '../features/products/PassportReadinessPanel';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import HistoryPage from '../features/history/HistoryPage';
@@ -1124,7 +1128,12 @@ const InnerPage = () => {
     });
     setCertifications(
       Array.isArray(prod.certifications)
-        ? prod.certifications.map((c) => (typeof c === 'string' ? { icon: '', title: c, content: '' } : { icon: c.icon || '', title: c.title || '', content: c.content || '' }))
+        ? prod.certifications.map((c) => (typeof c === 'string'
+          ? { icon: '', title: c, content: '', issuer: '', number: '', validUntil: '', fileUrl: '' }
+          : {
+              icon: c.icon || '', title: c.title || '', content: c.content || '',
+              issuer: c.issuer || '', number: c.number || '', validUntil: c.validUntil || '', fileUrl: c.fileUrl || '',
+            }))
         : []
     );
     setSustainabilityImpact({
@@ -2282,6 +2291,27 @@ const InnerPage = () => {
                   />
                 </Box>
               )}
+              {/* Certificates that ran out or are about to — brands only. */}
+              {canEditProducts && (() => {
+                const warnings = certificateWarnings(products);
+                if (!warnings.length) return null;
+                const expired = warnings.filter((w) => w.status === 'expired').length;
+                return (
+                  <Alert severity={expired ? 'error' : 'warning'} sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2">
+                      {expired
+                        ? `${expired} certificate${expired === 1 ? ' has' : 's have'} expired${warnings.length > expired ? `, ${warnings.length - expired} more expire${warnings.length - expired === 1 ? 's' : ''} within 30 days` : ''}.`
+                        : `${warnings.length} certificate${warnings.length === 1 ? ' expires' : 's expire'} within 30 days.`}
+                    </Typography>
+                    {warnings.slice(0, 5).map((w, i) => (
+                      <Typography key={i} variant="body2">
+                        {w.product.name}: {w.cert.title} — {w.status === 'expired' ? 'expired' : 'valid until'} {w.cert.validUntil}
+                      </Typography>
+                    ))}
+                    {warnings.length > 5 && <Typography variant="body2">…and {warnings.length - 5} more.</Typography>}
+                  </Alert>
+                );
+              })()}
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
                 <TextField
                   id="product-search"
@@ -2749,7 +2779,8 @@ const InnerPage = () => {
                     <Box component="section">
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Materials</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        What the product is made of. The percentages should add up to 100%.
+                        What the product is made of. The percentages should add up to 100%. Tick "Required for verification" for a
+                        material that must be backed by a certificate, then choose which certificate (added below) covers it.
                       </Typography>
                       <Stack spacing={1.5}>
                         {materialSize.materials.map((row, i) => (
@@ -2773,6 +2804,33 @@ const InnerPage = () => {
                                 next[i] = { ...next[i], origin: e.target.value };
                                 setMaterialSize((prev) => ({ ...prev, materials: next }));
                               }} />
+                            <TextField select label="Covered by certificate" sx={{ flex: '1 1 180px' }}
+                              value={certifications.some((c) => c.title && c.title === row.certificate) ? row.certificate : ''}
+                              SelectProps={{ displayEmpty: true }} InputLabelProps={{ shrink: true }}
+                              onChange={(e) => {
+                                const next = [...materialSize.materials];
+                                next[i] = { ...next[i], certificate: e.target.value };
+                                setMaterialSize((prev) => ({ ...prev, materials: next }));
+                              }}>
+                              <MenuItem value="">None</MenuItem>
+                              {certifications.filter((c) => c.title).map((c, ci) => (
+                                <MenuItem key={ci} value={c.title}>{c.title}</MenuItem>
+                              ))}
+                            </TextField>
+                            <FormControlLabel
+                              sx={{ mt: 0.5, mr: 0 }}
+                              label="Required for verification"
+                              control={(
+                                <Checkbox
+                                  checked={!!row.required}
+                                  onChange={(e) => {
+                                    const next = [...materialSize.materials];
+                                    next[i] = { ...next[i], required: e.target.checked };
+                                    setMaterialSize((prev) => ({ ...prev, materials: next }));
+                                  }}
+                                />
+                              )}
+                            />
                             <IconButton aria-label={`Remove material ${i + 1}`} sx={{ mt: 0.5 }}
                               onClick={() => setMaterialSize((prev) => ({ ...prev, materials: prev.materials.filter((_, x) => x !== i) }))}>
                               <DeleteIcon color="error" />
@@ -2808,10 +2866,13 @@ const InnerPage = () => {
 
                     <Box component="section">
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Certifications</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>For example GOTS or OEKO-TEX, with a short explanation.</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        For example GOTS or OEKO-TEX, with a short explanation. Add who issued it, its expiry date and the
+                        certificate file so shoppers can check it — you are warned here before it runs out.
+                      </Typography>
                       <Stack spacing={1.5}>
                         {certifications.map((c, i) => (
-                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap' }}>
+                          <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap', p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
                             <Button variant="outlined" component="label" sx={{ mt: 0.5 }}>
                               {c.icon ? 'Icon added ✓' : 'Add icon'}
                               <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
@@ -2826,11 +2887,33 @@ const InnerPage = () => {
                               onClick={() => setCertifications(certifications.filter((_, x) => x !== i))}>
                               <DeleteIcon color="error" />
                             </IconButton>
+                            <Box sx={{ flexBasis: '100%', height: 0 }} />
+                            <TextField label="Issued by" placeholder="e.g. Control Union" sx={{ flex: '1 1 180px' }} value={c.issuer || ''}
+                              onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], issuer: e.target.value }; setCertifications(next); }} />
+                            <TextField label="Certificate number" sx={{ flex: '1 1 160px' }} value={c.number || ''}
+                              onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], number: e.target.value }; setCertifications(next); }} />
+                            <TextField label="Valid until" type="date" sx={{ width: 180 }} value={c.validUntil || ''}
+                              InputLabelProps={{ shrink: true }}
+                              onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], validUntil: e.target.value }; setCertifications(next); }} />
+                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }}>
+                              {c.fileUrl ? 'Certificate file added ✓' : 'Add certificate file'}
+                              <input type="file" accept=".pdf,application/pdf,image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
+                                const next = [...certifications]; next[i] = { ...next[i], fileUrl: url }; setCertifications(next);
+                              })} />
+                            </Button>
+                            {c.validUntil && (
+                              <Chip
+                                size="small"
+                                sx={{ mt: 1.25 }}
+                                color={CERTIFICATE_STATUS[certificateStatus(c)].color}
+                                label={CERTIFICATE_STATUS[certificateStatus(c)].label}
+                              />
+                            )}
                           </Box>
                         ))}
                       </Stack>
                       <Button startIcon={<AddIcon />} sx={{ mt: 1 }}
-                        onClick={() => setCertifications((prev) => [...prev, { icon: '', title: '', content: '' }])}>
+                        onClick={() => setCertifications((prev) => [...prev, { icon: '', title: '', content: '', issuer: '', number: '', validUntil: '', fileUrl: '' }])}>
                         Add a certification
                       </Button>
                     </Box>
