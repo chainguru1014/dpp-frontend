@@ -37,6 +37,7 @@ export const PRODUCT_COLUMNS = [
   { header: 'model', example: 'Slim fit', get: (p) => p.model, set: (v, o) => { o.model = v; } },
   { header: 'category', example: 'Outerwear', help: 'One of your item categories.', get: (p, ctx) => ctx.categoryLabel(p.itemCategory), set: (v, o, ctx) => { o.itemCategory = ctx.categoryKey(v); } },
   { header: 'sku', example: 'OUT-2501-01', help: 'Leave empty to create one automatically.', get: (p) => p.skuStyleNumber, set: (v, o) => { o.skuStyleNumber = v; } },
+  { header: 'gtin', example: '4006381333931', help: 'Your GS1 barcode number, if the product has one.', get: (p) => p.gtin, set: (v, o) => { o.gtin = v; } },
   { header: 'product_type', example: "Men's outerwear", get: (p) => p.productType, set: (v, o) => { o.productType = v; } },
   { header: 'color', example: 'Indigo', get: (p) => p.color, set: (v, o) => { o.color = v; } },
   { header: 'size', example: 'M', get: (p) => p.size, set: (v, o) => { o.size = v; } },

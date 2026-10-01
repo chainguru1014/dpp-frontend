@@ -11,7 +11,7 @@ import { normalizeDppTheme } from '../utils/dppTheme';
 // The web product page a scanned label opens when the shopper isn't using
 // the app: the product's Digital Product Passport in the brand's own look —
 // the same passport view the admin panel's studio previews.
-const PublicProductPage = ({ qrcodeKey, productId, qrcodeId }) => {
+const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, gtin, serial }) => {
   const [product, setProduct] = useState(null);
   const [theme, setTheme] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,8 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId }) => {
     const fetchProduct = async () => {
       const hasProductIds = !!productId && qrcodeId != null;
       const hasLegacyKey = !!qrcodeKey;
-      if (!hasProductIds && !hasLegacyKey) {
+      const hasGs1 = !!gtin && serial != null;
+      if (!hasProductIds && !hasLegacyKey && !hasGs1) {
         setError('This link is missing its product code.');
         setLoading(false);
         return;
@@ -30,7 +31,9 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId }) => {
       try {
         setLoading(true);
         let response;
-        if (hasProductIds) {
+        if (hasGs1) {
+          response = await fetch(`${Backend_URL}qrcode/gs1/${encodeURIComponent(String(gtin))}/${encodeURIComponent(String(serial))}`);
+        } else if (hasProductIds) {
           response = await fetch(`${Backend_URL}qrcode/public/${encodeURIComponent(String(productId))}/${encodeURIComponent(String(qrcodeId))}`);
         } else {
           // Backward-compatible support for old encrypted key links.
@@ -52,7 +55,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId }) => {
     };
 
     fetchProduct();
-  }, [qrcodeKey, productId, qrcodeId]);
+  }, [qrcodeKey, productId, qrcodeId, gtin, serial]);
 
   // The brand's look. Any failure just leaves the standard look.
   const rawCompany = product?.company_id;

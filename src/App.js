@@ -39,6 +39,12 @@ function PublicProductPageWrapper() {
   return <PublicProductPage productId={productId} qrcodeId={qrcodeId} />;
 }
 
+// GS1 Digital Link: /01/<GTIN>/21/<item number>
+function Gs1ProductPageWrapper() {
+  const { gtin, serial } = useParams();
+  return <PublicProductPage gtin={gtin} serial={serial} />;
+}
+
 function App() {
   return (
     <div className="App">
@@ -51,6 +57,7 @@ function App() {
             <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/product/:productId/:qrcodeId" element={<PublicProductPageWrapper />} />
+                <Route path="/01/:gtin/21/:serial" element={<Gs1ProductPageWrapper />} />
                 <Route path="/" element={<PublicProductRoute />} />
                 <Route path="/admin/*" element={<Page />} />
                 {/* The separate Staff Login is gone — staff sign in on the

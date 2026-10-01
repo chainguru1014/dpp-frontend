@@ -314,6 +314,9 @@ const InnerPage = () => {
   const [warrantyValidYears, setWarrantyValidYears] = useState(0);
   const [itemCategory, setItemCategory] = useState('');
   const [skuStyleNumber, setSkuStyleNumber] = useState('');
+  // GS1 product number, and whether new QR codes carry the GS1 Digital Link.
+  const [gtin, setGtin] = useState('');
+  const [gs1DigitalLink, setGs1DigitalLink] = useState(false);
   // Managed item categories (product form options). Reloaded after the super
   // admin edits them in Manage Categories.
   const [itemCategoryOptions, setItemCategoryOptions] = useState(ITEM_CATEGORY_OPTIONS);
@@ -515,7 +518,7 @@ const InnerPage = () => {
   const productFormOpen = activePage === 'newProduct' && canEditProducts;
   const productFormSignature = JSON.stringify([
     productName, productModel, aboutProduct, productType, color, size, manufactureDate,
-    warrantyStatus, warrantyValidYears, itemCategory, skuStyleNumber, detailFacts, brandInfo,
+    warrantyStatus, warrantyValidYears, itemCategory, skuStyleNumber, gtin, gs1DigitalLink, detailFacts, brandInfo,
     productImages, productFiles, productVideos, materialSize, maintenance, disposal,
     traceabilityEsg, certifications, sustainabilityImpact, parentProduct, parentProductCount,
   ]);
@@ -799,6 +802,8 @@ const InnerPage = () => {
     setWarrantyValidYears(0);
     setItemCategory('');
     setSkuStyleNumber('');
+    setGtin('');
+    setGs1DigitalLink(false);
     setDetailFacts({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
     setBrandInfo({
       // Starts from the signed-in company's own name — never another
@@ -975,6 +980,7 @@ const InnerPage = () => {
       aboutProduct,
       productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
       itemCategory, skuStyleNumber: skuStyleNumber.trim(),
+      gtin: gtin.trim(), gs1DigitalLink: gs1DigitalLink && !!gtin.trim(),
       detailFacts,
       brandInfo,
       company_id: company._id,
@@ -1034,6 +1040,7 @@ const InnerPage = () => {
       aboutProduct,
       productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
       itemCategory, skuStyleNumber: skuStyleNumber.trim(),
+      gtin: gtin.trim(), gs1DigitalLink: gs1DigitalLink && !!gtin.trim(),
       detailFacts,
       brandInfo,
       company_id: company._id,
@@ -1118,6 +1125,8 @@ const InnerPage = () => {
     setWarrantyValidYears(Number(prod.warrantyValidYears) || 0);
     setItemCategory(prod.itemCategory || '');
     setSkuStyleNumber(prod.skuStyleNumber || '');
+    setGtin(prod.gtin || '');
+    setGs1DigitalLink(!!prod.gs1DigitalLink);
     setDetailFacts({
       material: prod.detailFacts?.material || '',
       fit: prod.detailFacts?.fit || '',
@@ -2672,6 +2681,26 @@ const InnerPage = () => {
                           <TextField label="Style / SKU number" placeholder="e.g. DNM-2501-01" fullWidth
                             value={skuStyleNumber} onChange={(e) => setSkuStyleNumber(e.target.value)}
                             helperText="Leave empty to create one automatically." />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="GTIN (barcode number)" placeholder="e.g. 4006381333931" fullWidth
+                            value={gtin} onChange={(e) => setGtin(e.target.value.replace(/[^\d]/g, '').slice(0, 14))}
+                            inputProps={{ inputMode: 'numeric' }}
+                            helperText="Optional. Your GS1 number for this product (8, 12, 13 or 14 digits)." />
+                          <FormControlLabel
+                            sx={{ mt: 0.5 }}
+                            label="Print QR codes as GS1 Digital Links"
+                            control={(
+                              <Checkbox
+                                checked={gs1DigitalLink && !!gtin.trim()}
+                                disabled={!gtin.trim()}
+                                onChange={(e) => setGs1DigitalLink(e.target.checked)}
+                              />
+                            )}
+                          />
+                          <Typography variant="body2" color="text.secondary">
+                            The standard link format other systems and retailers can read. QR codes already printed keep working either way.
+                          </Typography>
                         </Grid>
                         <Grid item xs={12} sm={6}>
                           <TextField label="Product type" placeholder="e.g. Men's outerwear" fullWidth
