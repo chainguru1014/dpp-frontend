@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -41,32 +41,17 @@ import VerifiedIcon from '@mui/icons-material/Verified';
 import EcoIcon from '@mui/icons-material/Nature';
 import CameraIcon from '../../assets/camera_icon.png';
 import YoutubeIcon from '../../assets/youtube-icon.png';
-import { getFileUrl, normalizeProductVideos } from '../../helper';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import { Backend_URL, getFileUrl, normalizeProductVideos } from '../../helper';
+import { dppFontCss, dppPalette, normalizeDppTheme } from '../../utils/dppTheme';
 import VideoPlayerDialog from '../VideoPlayerDialog';
 
-// Brand tokens — kept in sync with the app's src/theme.ts so this admin preview
-// reads like the consumer Product Overview / Product Lifecycle screens.
-const C = {
-  primary: '#1b4f72',
-  primaryDark: '#123a56',
-  headerLight: '#4a96dd',
-  text: '#33415c',
-  muted: '#7a8aa3',
-  placeholder: '#9aa7bd',
-  bg: '#f4f7fc',
-  surface: '#ffffff',
-  surfaceAlt: '#eef2f8',
-  border: '#e7edf6',
-  authBg: '#eef5fc',
-  danger: '#c0392b',
-};
+// The colours this preview is drawn with: the app's own tokens (src/theme.ts)
+// or, when the brand has its own look, the same tokens with its colours
+// swapped in (utils/dppTheme.dppPalette). Row reads them through context.
+const PaletteContext = React.createContext(dppPalette(null));
 
-// Same diagonal direction as the app's top bar / buttons (see GradientButton /
-// AppLayout) -- a straight top-to-bottom gradient read as a visibly different
-// "atmosphere" next to the app once the app switched to this angle.
-const GRADIENT = `linear-gradient(135deg, ${C.headerLight} 0%, ${C.primary} 100%)`;
-
-const style = {
+const modalStyle = {
   position: 'absolute',
   top: '50%',
   left: '50%',
@@ -75,25 +60,12 @@ const style = {
   maxWidth: '92vw',
   height: '86vh',
   maxHeight: '820px',
-  bgcolor: C.bg,
   borderRadius: 3,
   boxShadow: 24,
   overflow: 'hidden',
   display: 'flex',
   flexDirection: 'column',
 };
-
-const card = {
-  bgcolor: C.surface,
-  borderRadius: 2,
-  border: `1px solid ${C.border}`,
-  p: 1.5,
-  mx: 2,
-  mt: 1,
-  boxShadow: '0 4px 10px rgba(27,79,114,0.08)',
-};
-
-const cardTitle = { fontSize: 13, fontWeight: 700, color: C.primary, mb: 0.75 };
 
 const LIFECYCLE_STAGES = [
   { key: 'materials', label: 'Materials', Icon: SpaIcon },
@@ -118,6 +90,7 @@ const LIFECYCLE_TABS = [
   { key: 'materials', label: 'Materials' },
   { key: 'dispose', label: 'Reuse & Recycle' },
   { key: 'traceability', label: 'Origin & Impact' },
+  { key: 'compliance', label: 'Compliance' },
 ];
 
 // Mirrors ProductLifecycleScreen's CARE_TIP_BY_ICON fallback (used when the
@@ -165,6 +138,7 @@ const toArray = (v) => (v == null ? [] : Array.isArray(v) ? v : typeof v === 'ob
 // nothing when there's no value so callers can list every possible field
 // without hand-guarding each one.
 function Row({ icon: Icon, label, value, onClick, chevron, expanded }) {
+  const C = useContext(PaletteContext);
   if (!value) return null;
   return (
     <Box
@@ -187,7 +161,35 @@ function Row({ icon: Icon, label, value, onClick, chevron, expanded }) {
   );
 }
 
-export default function PreviewModal({ open, setOpen, productInfo }) {
+// The shopper's product page as a phone screen: Product Overview and Product
+// Lifecycle, as in the app, drawn from `productInfo` in the brand's look
+// (`theme`: colours, font, button corners, which lifecycle tabs and in what
+// order). Fills its parent — the preview dialog below, or the studio's
+// Experience panel. `onClose` adds the close button (dialog only).
+export function DppPhoneView({ productInfo, theme, onClose }) {
+  const look = useMemo(() => normalizeDppTheme(theme), [theme]);
+  const C = useMemo(() => dppPalette(theme), [theme]);
+  // Same diagonal direction as the app's top bar / buttons (see GradientButton /
+  // AppLayout) -- a straight top-to-bottom gradient read as a visibly different
+  // "atmosphere" next to the app once the app switched to this angle.
+  const GRADIENT = `linear-gradient(135deg, ${C.headerLight} 0%, ${C.primary} 100%)`;
+  const card = {
+    bgcolor: C.surface,
+    borderRadius: 2,
+    border: `1px solid ${C.border}`,
+    p: 1.5,
+    mx: 2,
+    mt: 1,
+    boxShadow: '0 4px 10px rgba(27,79,114,0.08)',
+  };
+  const cardTitle = { fontSize: 13, fontWeight: 700, color: C.primary, mb: 0.75 };
+  const buttonRadius = `${look.buttonRadius}px`;
+  // Lifecycle tabs in the brand's order, minus the ones it hides.
+  const lifecycleTabs = useMemo(() => {
+    const ordered = look.sections.filter((s) => s.visible).map((s) => LIFECYCLE_TABS.find((tb) => tb.key === s.key)).filter(Boolean);
+    return ordered.length ? ordered : LIFECYCLE_TABS;
+  }, [look]);
+
   const [slideIndex, setSlideIndex] = useState(0);
   const [dialogVideoId, setDialogVideoId] = useState(null);
   // 'overview' mirrors ResultScreen (Product Overview); 'lifecycle' mirrors
@@ -195,6 +197,9 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
   // bottom bar (its third item, Scan, doesn't apply inside a static preview).
   const [view, setView] = useState('overview');
   const [lifecycleTab, setLifecycleTab] = useState('journey');
+  useEffect(() => {
+    if (!lifecycleTabs.some((tb) => tb.key === lifecycleTab)) setLifecycleTab(lifecycleTabs[0].key);
+  }, [lifecycleTabs, lifecycleTab]);
   const [openStage, setOpenStage] = useState(null);
   const [openOrigin, setOpenOrigin] = useState(null);
 
@@ -227,7 +232,7 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
 
   const goToLifecycle = () => {
     setView('lifecycle');
-    setLifecycleTab('journey');
+    setLifecycleTab(lifecycleTabs[0].key);
   };
 
   // ---- Lifecycle data (mirrors ProductLifecycleScreen's field mapping --
@@ -409,11 +414,11 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
 
       {/* Contact Owner | Scan Another Product */}
       <Box sx={{ display: 'flex', gap: 1, mx: 2, mt: 1 }}>
-        <Box sx={{ flex: 1, py: 1, borderRadius: 1.5, textAlign: 'center', color: '#fff', fontSize: 13, fontWeight: 700, background: GRADIENT }}>
-          Contact Owner
+        <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', color: C.onDark, fontSize: 13, fontWeight: 700, background: GRADIENT }}>
+          Scan Product
         </Box>
-        <Box sx={{ flex: 1, py: 1, borderRadius: 1.5, textAlign: 'center', fontSize: 13, fontWeight: 600, color: C.primary, border: `1px solid ${C.primary}`, bgcolor: C.surface }}>
-          Scan Another Product
+        <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 600, color: C.primary, border: `1px solid ${C.primary}`, bgcolor: C.surface }}>
+          Request ownership
         </Box>
       </Box>
     </>
@@ -692,6 +697,46 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
     );
   };
 
+  const documents = [...toArray(info.files), ...toArray(info.manualsAndCerts?.files)].filter(Boolean);
+  const today = new Date().toISOString().slice(0, 10);
+
+  // Mirrors ProductLifecycleScreen's Compliance tab.
+  const renderCompliance = () => (
+    <Box sx={{ pt: 1.5 }}>
+      <Box sx={card}>
+        <Typography sx={cardTitle}>Certifications</Typography>
+        {certifications.length > 0 ? certifications.map((c, i) => {
+          const expired = !!c.validUntil && c.validUntil < today;
+          const covered = materials.filter((m) => m?.certificate && m.certificate === c.title).map((m) => m.material).filter(Boolean);
+          const meta = [c.issuer && `Issued by ${c.issuer}`, c.number && `Certificate no. ${c.number}`, c.validUntil && `${expired ? 'Expired' : 'Valid until'} ${c.validUntil}`].filter(Boolean).join(' · ');
+          return (
+            <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', py: 0.75, borderBottom: i < certifications.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+              <VerifiedIcon sx={{ fontSize: 18, color: expired ? '#b26a00' : '#2e7d32', mt: 0.25 }} />
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ fontSize: 12, fontWeight: 600, color: C.text }}>{c.title || '—'}{covered.length ? ` (${covered.join(', ')})` : ''}</Typography>
+                {!!meta && <Typography sx={{ fontSize: 10, color: expired ? '#b26a00' : C.muted }}>{meta}</Typography>}
+                {!!c.content && <Typography sx={{ fontSize: 10, color: C.muted }}>{c.content}</Typography>}
+              </Box>
+            </Box>
+          );
+        }) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>}
+      </Box>
+      {documents.length > 0 && (
+        <Box sx={card}>
+          <Typography sx={cardTitle}>Documents</Typography>
+          {documents.map((doc, i) => (
+            <Row key={i} icon={PictureAsPdfIcon} label={decodeURIComponent(String(doc).split('/').pop() || 'Document')} value=" " />
+          ))}
+        </Box>
+      )}
+      <Box sx={card}>
+        <Row icon={PlaceIcon} label="Country of Origin" value={originCountry} />
+        <Row icon={ShieldIcon} label="Warranty" value={info.warrantyStatus} />
+        <Row label="Valid for" value={Number(info.warrantyValidYears) ? `${info.warrantyValidYears} years` : ''} />
+      </Box>
+    </Box>
+  );
+
   const renderLifecycleTabContent = () => {
     switch (lifecycleTab) {
       case 'journey': return renderJourney();
@@ -699,13 +744,25 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
       case 'materials': return renderMaterials();
       case 'dispose': return renderReuseRecycle();
       case 'traceability': return renderOriginImpact();
+      case 'compliance': return renderCompliance();
       default: return null;
     }
   };
 
   return (
-    <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="preview-modal-title">
-      <Box sx={style}>
+    <PaletteContext.Provider value={C}>
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          bgcolor: C.bg,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          // The brand's font, on every text in the phone.
+          ...(look.fontFamily !== 'system' ? { '& .MuiTypography-root, & .MuiBox-root': { fontFamily: dppFontCss(look.fontFamily) } } : {}),
+        }}
+      >
         {/* Top bar + (when in Lifecycle view) the product header directly
             below it share ONE gradient background instead of each having
             its own -- two adjacent elements with independently-restarting
@@ -720,9 +777,11 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
             <Typography id="preview-modal-title" sx={{ color: '#fff', fontSize: 16, fontWeight: 600 }}>
               {view === 'lifecycle' ? 'Product Lifecycle' : 'Product Overview'}
             </Typography>
-            <Button onClick={() => setOpen(false)} aria-label="Close preview" sx={{ minWidth: 40, color: '#fff' }}>
-              <CloseIcon fontSize="small" />
-            </Button>
+            {onClose ? (
+              <Button onClick={onClose} aria-label="Close preview" sx={{ minWidth: 40, color: '#fff' }}>
+                <CloseIcon fontSize="small" />
+              </Button>
+            ) : <Box sx={{ width: 40 }} />}
           </Box>
 
           {view === 'lifecycle' && (
@@ -745,7 +804,7 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
 
         {view === 'lifecycle' && (
           <Box sx={{ display: 'flex', bgcolor: C.surface, borderBottom: `1px solid ${C.border}`, overflowX: 'auto', flexShrink: 0 }}>
-            {LIFECYCLE_TABS.map((tb) => (
+            {lifecycleTabs.map((tb) => (
               <Box
                 key={tb.key}
                 role="tab"
@@ -813,6 +872,32 @@ export default function PreviewModal({ open, setOpen, productInfo }) {
         </Box>
 
         <VideoPlayerDialog open={Boolean(dialogVideoId)} onClose={() => setDialogVideoId(null)} videoId={dialogVideoId} />
+      </Box>
+    </PaletteContext.Provider>
+  );
+}
+
+// "Preview product page" dialog. `theme` is the look to draw with; when it
+// is not given, the look of the company the product belongs to is loaded, so
+// the preview always matches what that brand's shoppers see.
+export default function PreviewModal({ open, setOpen, productInfo, theme }) {
+  const [loadedTheme, setLoadedTheme] = useState(null);
+  const rawCompany = productInfo?.company_id;
+  const companyId = rawCompany && typeof rawCompany === 'object' ? rawCompany._id : rawCompany;
+  useEffect(() => {
+    if (theme || !open || !companyId) return;
+    let cancelled = false;
+    fetch(`${Backend_URL}company/${encodeURIComponent(String(companyId))}/dpp-theme`)
+      .then((r) => r.json())
+      .then((j) => { if (!cancelled) setLoadedTheme(j?.data?.dppTheme || null); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [theme, open, companyId]);
+
+  return (
+    <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="preview-modal-title">
+      <Box sx={modalStyle}>
+        <DppPhoneView productInfo={productInfo} theme={theme || loadedTheme} onClose={() => setOpen(false)} />
       </Box>
     </Modal>
   );

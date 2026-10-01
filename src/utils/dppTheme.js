@@ -62,5 +62,44 @@ export function normalizeDppTheme(raw) {
   };
 }
 
+// Blend two #rrggbb colours; amount 0 = all a, 1 = all b.
+const mix = (a, b, amount) => {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return `#${pa.map((v, i) => Math.round(v + (pb[i] - v) * amount).toString(16).padStart(2, '0')).join('')}`;
+};
+
+// The colour tokens the product page is drawn with, for a theme. Same
+// derivation as the app's buildPalette (app/src/utils/dppTheme.ts), so the
+// admin preview and the real page agree. The default theme gives exactly
+// the standard Yometel colours.
+export const dppPalette = (rawTheme) => {
+  const t = normalizeDppTheme(rawTheme);
+  const d = DEFAULT_DPP_THEME;
+  const isDefault = ['pageBg', 'cardBg', 'accent', 'buttonText', 'textColor'].every((k) => t[k].toLowerCase() === d[k]);
+  if (isDefault) {
+    return {
+      primary: '#1b4f72', primaryDark: '#123a56', headerLight: '#4a96dd', text: '#33415c', muted: '#7a8aa3',
+      placeholder: '#9aa7bd', bg: '#f4f7fc', surface: '#ffffff', surfaceAlt: '#eef2f8', border: '#e7edf6',
+      authBg: '#eef5fc', danger: '#c0392b', onDark: '#ffffff',
+    };
+  }
+  return {
+    primary: t.accent,
+    primaryDark: mix(t.accent, '#000000', 0.25),
+    headerLight: mix(t.accent, '#ffffff', 0.35),
+    text: t.textColor,
+    muted: mix(t.textColor, t.cardBg, 0.2),
+    placeholder: mix(t.textColor, t.cardBg, 0.45),
+    bg: t.pageBg,
+    surface: t.cardBg,
+    surfaceAlt: mix(t.cardBg, t.accent, 0.07),
+    border: mix(t.cardBg, t.accent, 0.14),
+    authBg: mix(t.cardBg, t.accent, 0.07),
+    danger: '#c0392b',
+    onDark: t.buttonText,
+  };
+};
+
 export const dppFontCss = (value) => (DPP_FONTS.find((f) => f.value === value) || DPP_FONTS[0]).css;
 export const dppSectionLabel = (key) => (DPP_SECTIONS.find((s) => s.key === key) || {}).label || key;

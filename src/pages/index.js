@@ -109,7 +109,6 @@ import ProductsTable from '../features/products/ProductsTable';
 import ProductDraftCard from '../features/products/ProductDraftCard';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
-import DppPhonePreview from '../features/products/DppPhonePreview';
 import DppThemeEditor from '../features/products/DppThemeEditor';
 import ProductImportDialog from '../features/products/ProductImportDialog';
 import { downloadCsv } from '../utils/csv';
@@ -141,6 +140,8 @@ import { confirmAction, notify, notifyError, notifySuccess } from '../utils/feed
 // pdfjs-dist / @react-pdf/renderer) plus react-youtube — lazy-loaded so that
 // weight only downloads when a user actually opens the preview or print dialog.
 const PreviewModal = React.lazy(() => import('../components/PreviewModal'));
+// The same phone view the preview dialog shows, for the studio's Experience part.
+const DppPhoneView = React.lazy(() => import('../components/PreviewModal').then((m) => ({ default: m.DppPhoneView })));
 const PrintModal = React.lazy(() => import('../components/printModal'));
 
 
@@ -2528,9 +2529,13 @@ const InnerPage = () => {
                       <Box sx={{ position: { md: 'sticky' }, top: { md: 0 } }}>
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>What shoppers see</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        The product page after scanning the label. Tap a section to open it.
+                        The product page in the app, in your design. Use Overview and Lifecycle at the bottom to move around.
                       </Typography>
-                      <DppPhonePreview product={formProduct} theme={dppTheme} />
+                      <Box sx={{ width: 340, maxWidth: '100%', height: 640, mx: 'auto', border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 4 }}>
+                        <Suspense fallback={null}>
+                          <DppPhoneView productInfo={formProduct} theme={dppTheme} />
+                        </Suspense>
+                      </Box>
                       </Box>
                     </Grid>
                   </Grid>
@@ -3356,6 +3361,9 @@ const InnerPage = () => {
         <PreviewModal
           open={openPreviewModal}
           setOpen={setOpenPreviewModal}
+          // From the studio: the design being edited. From the Products
+          // page: left out, so the product's own company's saved design loads.
+          theme={activePage === 'newProduct' ? dppTheme : undefined}
           productInfo={
             // If selectedProduct exists and we're viewing from products page, use it
             // Otherwise use form data
