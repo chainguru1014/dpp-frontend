@@ -2,6 +2,8 @@ import React from 'react';
 import { Box, Typography, Link } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { getFileUrl } from '../../helper';
+import { PassportScore } from './PassportReadinessPanel';
+import { passportCompleteness } from '../../utils/passportCompleteness';
 
 const normalizeUrl = (url) => {
   if (!url) return '';
@@ -80,6 +82,18 @@ export default function ProductsTable({
         );
       },
     },
+    // How complete the product's passport is — brands only (a shopper has
+    // nothing to fill in).
+    ...(isAppUser
+      ? []
+      : [{
+          field: 'passport',
+          headerName: 'Passport',
+          description: 'How much of the Digital Product Passport is filled in',
+          width: 160,
+          valueGetter: (p) => passportCompleteness(p.row).percent,
+          renderCell: (p) => <PassportScore product={p.row} width={70} />,
+        }]),
     ...(isAppUser
       ? [{
           field: 'owned',

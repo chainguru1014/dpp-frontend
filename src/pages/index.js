@@ -23,6 +23,8 @@ import {
   Step,
   StepButton,
   Stepper,
+  Tab,
+  Tabs,
   TextField,
   Toolbar,
   Tooltip,
@@ -98,6 +100,8 @@ import ProductsTable from '../features/products/ProductsTable';
 import ProductDraftCard from '../features/products/ProductDraftCard';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
+import DppPhonePreview from '../features/products/DppPhonePreview';
+import PassportReadinessPanel, { PassportScore } from '../features/products/PassportReadinessPanel';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import HistoryPage from '../features/history/HistoryPage';
 import SustainabilityPage from '../features/sustainability/SustainabilityPage';
@@ -146,6 +150,13 @@ const PRODUCT_FORM_STEPS = [
   'Repair & disposal',
   'Origin & shipping',
   'Warranty',
+];
+// The product window is a three-part "DPP Studio": fill in the data, check
+// how the shopper's page looks, then create the codes that go on the item.
+const STUDIO_PHASES = [
+  { mode: 'edit', label: '1. Data' },
+  { mode: 'experience', label: '2. Experience' },
+  { mode: 'print', label: '3. Codes' },
 ];
 // Default item categories — only used until the managed list (super admin,
 // Products > Manage Categories) loads from the backend.
@@ -464,12 +475,15 @@ const InnerPage = () => {
   const [previousPage, setPreviousPage] = useState(() => loadStateFromStorage('previousPage', 'dashboard'));
   const [selectedProduct, setSelectedProduct] = useState(() => loadStateFromStorage('selectedProduct', null));
   const [detailTab, setDetailTab] = useState(0);
-  // Which product panel to show: 'edit' (product form) or 'print' (QR generate/print).
+  // Which product panel to show: 'edit' (product form), 'experience' (the
+  // shopper's page preview + passport readiness) or 'print' (QR generate/print).
   const [productPanelMode, setProductPanelMode] = useState('edit');
 
   // Unsaved-changes guard for the product form: remember what the form held
   // when it opened, and ask before closing if anything differs.
-  const productFormOpen = activePage === 'newProduct' && productPanelMode === 'edit';
+  // Open for the whole studio (not only the Data part), so moving between
+  // its parts never forgets that something was changed.
+  const productFormOpen = activePage === 'newProduct' && canEditProducts;
   const productFormSignature = JSON.stringify([
     productName, productModel, aboutProduct, productType, color, size, manufactureDate,
     warrantyStatus, warrantyValidYears, itemCategory, skuStyleNumber, detailFacts, brandInfo,
@@ -484,6 +498,26 @@ const InnerPage = () => {
   const isProductFormDirty = productFormOpen
     && productFormSnapshotRef.current !== null
     && productFormSnapshotRef.current !== productFormSignature;
+  // The product as the form currently holds it — what the studio's preview
+  // and passport-readiness panel are drawn from.
+  const formProduct = {
+    name: productName,
+    model: productModel,
+    aboutProduct,
+    productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
+    itemCategory, skuStyleNumber: skuStyleNumber.trim(),
+    detailFacts,
+    brandInfo,
+    images: productImages,
+    files: productFiles,
+    videos: productVideos,
+    materialSize,
+    maintenance,
+    disposal,
+    traceabilityEsg,
+    certifications,
+    sustainabilityImpact,
+  };
   const [sidebarOpen, setSidebarOpen] = useState(() => loadStateFromStorage('sidebarOpen', true));
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
   // Mobile/tablet: the left nav becomes a toggleable overlay drawer.
@@ -2205,10 +2239,10 @@ const InnerPage = () => {
             open={activePage === 'newProduct' && (canEditProducts || productPanelMode === 'print')}
             onClose={closeProductDialog}
             fullWidth
-            maxWidth={productPanelMode === 'print' ? 'lg' : 'md'}
+            maxWidth={productPanelMode === 'edit' ? 'md' : 'lg'}
             fullScreen={isMobile}
             scroll="paper"
-            PaperProps={{ sx: { height: productPanelMode === 'edit' && !isMobile ? 'calc(100% - 48px)' : undefined } }}
+            PaperProps={{ sx: { height: productPanelMode !== 'print' && !isMobile ? 'calc(100% - 48px)' : undefined } }}
             aria-labelledby="product-dialog-title"
           >
             <DialogTitle id="product-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
@@ -2221,6 +2255,36 @@ const InnerPage = () => {
                 <CloseIcon />
               </IconButton>
             </DialogTitle>
+
+            {/* Studio rail: Data > Experience > Codes. Read-only roles only
+                ever open the Codes part, so they get no rail. */}
+            {canEditProducts && (
+              <Box sx={{ px: { xs: 1, sm: 3 }, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', flexShrink: 0 }}>
+                <Tabs
+                  value={productPanelMode}
+                  onChange={(e, mode) => setProductPanelMode(mode)}
+                  variant="scrollable"
+                  allowScrollButtonsMobile
+                  aria-label="Product passport steps"
+                  sx={{ flex: 1, minWidth: 0 }}
+                >
+                  {STUDIO_PHASES.map(({ mode, label }) => (
+                    <Tab
+                      key={mode}
+                      value={mode}
+                      // Codes belong to a saved product.
+                      disabled={mode === 'print' && !isEditing}
+                      label={mode === 'print' && !isEditing ? `${label} (save first)` : label}
+                      sx={{ fontWeight: 600, textTransform: 'none', fontSize: '1rem' }}
+                    />
+                  ))}
+                </Tabs>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1 }}>
+                  <Typography variant="body2" color="text.secondary">Passport</Typography>
+                  <PassportScore product={formProduct} />
+                </Box>
+              </Box>
+            )}
 
             {productPanelMode === 'edit' && (
               <Box sx={{ px: { xs: 1, sm: 3 }, pt: 2, pb: 1.5, borderBottom: 1, borderColor: 'divider', overflowX: 'auto', flexShrink: 0 }}>
@@ -2272,6 +2336,27 @@ const InnerPage = () => {
                       canGenerate={canManageProducts}
                     />
                   </Box>
+                )}
+
+                {productPanelMode === 'experience' && (
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={7}>
+                      <PassportReadinessPanel
+                        product={formProduct}
+                        onGoToStep={(step) => {
+                          setDetailTab(step);
+                          setProductPanelMode('edit');
+                        }}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={5}>
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>What shoppers see</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        The product page after scanning the label. Tap a section to open it.
+                      </Typography>
+                      <DppPhonePreview product={formProduct} />
+                    </Grid>
+                  </Grid>
                 )}
 
                 {productPanelMode === 'edit' && (
@@ -2886,32 +2971,45 @@ const InnerPage = () => {
               </Box>
             </DialogContent>
             {/* Pinned footer: what's still needed, step navigation, save. */}
-            {productPanelMode === 'edit' && (() => {
+            {productPanelMode !== 'print' && (() => {
               const missing = missingProductFields();
+              const inData = productPanelMode === 'edit';
               const lastStep = PRODUCT_FORM_STEPS.length - 1;
               return (
                 <DialogActions sx={{ flexDirection: 'column', alignItems: 'stretch', px: 3, py: 2, gap: 1.25, borderTop: 1, borderColor: 'divider' }}>
                   {missing.length > 0 && (
                     <Alert severity={showFieldErrors ? 'warning' : 'info'} sx={{ py: 0.25 }}>
                       Still needed before you can save: {missing.join(', ')}.
-                      {detailTab !== 0 && ' These are all on step 1.'}
+                      {(detailTab !== 0 || !inData) && ' These are all on step 1 of Data.'}
                     </Alert>
                   )}
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                    <Button onClick={() => setDetailTab((t) => Math.max(0, t - 1))} disabled={detailTab === 0}>
-                      Back
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => {
-                        // All required fields are on step 1: check them before leaving it.
-                        if (detailTab === 0 && !validateRequiredProductFields()) return;
-                        setDetailTab((t) => Math.min(lastStep, t + 1));
-                      }}
-                      disabled={detailTab === lastStep}
-                    >
-                      Next: {PRODUCT_FORM_STEPS[Math.min(lastStep, detailTab + 1)]}
-                    </Button>
+                    {inData ? (
+                      <>
+                        <Button onClick={() => setDetailTab((t) => Math.max(0, t - 1))} disabled={detailTab === 0}>
+                          Back
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          onClick={() => {
+                            // All required fields are on step 1: check them before leaving it.
+                            if (detailTab === 0 && !validateRequiredProductFields()) return;
+                            // After the last data step comes the Experience part.
+                            if (detailTab === lastStep) setProductPanelMode('experience');
+                            else setDetailTab((t) => Math.min(lastStep, t + 1));
+                          }}
+                        >
+                          Next: {detailTab === lastStep ? 'Experience' : PRODUCT_FORM_STEPS[detailTab + 1]}
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button onClick={() => setProductPanelMode('edit')}>Back to Data</Button>
+                        {!!isEditing && (
+                          <Button variant="outlined" onClick={() => setProductPanelMode('print')}>Next: Codes</Button>
+                        )}
+                      </>
+                    )}
                     <Box sx={{ flexGrow: 1 }} />
                     <Button variant="outlined" onClick={() => { if (validateRequiredProductFields()) setOpenPreviewModal(true); }}>
                       Preview
