@@ -3,9 +3,10 @@ import { createTheme, responsiveFontSizes } from '@mui/material/styles';
 // Shared visual language with the Yometel DPP mobile app:
 // dark-navy palette on a soft light-blue canvas, rounded cards, soft blue shadows.
 //
-// Readability rules (older users, laptops + iPads): body text 16px, nothing
-// smaller than ~13.5px, real bold for headings, secondary text dark enough
-// to pass WCAG AA, and 44–48px touch targets on touch screens.
+// Readability rules (older users, laptops + iPads): everything is large and
+// there is little of it per page — body text 17px, nothing smaller than
+// ~14.5px, real bold for headings, secondary text dark enough to pass WCAG
+// AA, and 48px targets everywhere (not only on touch screens).
 const navy = '#1b4f72';     // dark navy (primary — matches app top bar/icons/fonts)
 const navyDark = '#123a56'; // darkest navy (hover / gradient dark stop)
 const blue = '#4a96dd';     // lighter azure (gradient light stop / accents)
@@ -38,20 +39,20 @@ const theme = createTheme({
   shape: { borderRadius: 12 },
   typography: {
     fontFamily: '"Poppins","Segoe UI",system-ui,-apple-system,Roboto,sans-serif',
-    fontSize: 15,
+    fontSize: 16,
     fontWeightRegular: 400,
     fontWeightMedium: 500,
     fontWeightBold: 700,
     h4: { fontWeight: 600 },
-    h5: { fontWeight: 600, fontSize: '1.6rem' },
-    h6: { fontWeight: 600, fontSize: '1.25rem' },
-    subtitle1: { fontWeight: 600, fontSize: '1.05rem' },
-    subtitle2: { fontWeight: 600, fontSize: '0.95rem' },
-    body1: { fontWeight: 400, fontSize: '1rem', lineHeight: 1.6 },
-    body2: { fontWeight: 400, fontSize: '0.95rem', lineHeight: 1.55 },
-    caption: { fontSize: '0.85rem', lineHeight: 1.45 },
-    overline: { fontSize: '0.8rem', fontWeight: 600, letterSpacing: '0.06em' },
-    button: { textTransform: 'none', fontWeight: 500, fontSize: '1rem' },
+    h5: { fontWeight: 600, fontSize: '1.9rem' },
+    h6: { fontWeight: 600, fontSize: '1.35rem' },
+    subtitle1: { fontWeight: 600, fontSize: '1.15rem' },
+    subtitle2: { fontWeight: 600, fontSize: '1.02rem' },
+    body1: { fontWeight: 400, fontSize: '1.0625rem', lineHeight: 1.6 },
+    body2: { fontWeight: 400, fontSize: '1rem', lineHeight: 1.55 },
+    caption: { fontSize: '0.9rem', lineHeight: 1.45 },
+    overline: { fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.06em' },
+    button: { textTransform: 'none', fontWeight: 500, fontSize: '1.0625rem' },
   },
   components: {
     // App-wide scrollbars in the brand blue (#428acb) on a
@@ -69,28 +70,27 @@ const theme = createTheme({
     MuiButton: {
       defaultProps: { disableElevation: true },
       styleOverrides: {
-        // 44px target (WCAG 2.2 / Apple HIG), 48px on touch screens; a bit
-        // denser only on mouse-driven compact laptops.
+        // 48px target everywhere; only a little denser on mouse-driven
+        // compact laptops.
         root: {
           borderRadius: 10,
           textTransform: 'none',
           fontWeight: 500,
-          minHeight: 44,
-          paddingInline: 22,
-          paddingBlock: 8,
+          minHeight: 48,
+          paddingInline: 26,
+          paddingBlock: 10,
           [compactMediaQuery]: {
-            minHeight: 40,
-            paddingInline: 16,
-            paddingBlock: 6,
-            fontSize: '0.95rem',
+            minHeight: 44,
+            paddingInline: 20,
+            paddingBlock: 8,
+            fontSize: '1rem',
           },
-          [touchMediaQuery]: { minHeight: 48 },
         },
         sizeSmall: {
-          minHeight: 38,
-          paddingInline: 14,
-          fontSize: '0.92rem',
-          [compactMediaQuery]: { minHeight: 34, paddingInline: 12 },
+          minHeight: 40,
+          paddingInline: 16,
+          fontSize: '0.97rem',
+          [compactMediaQuery]: { minHeight: 38, paddingInline: 14 },
           [touchMediaQuery]: { minHeight: 44 },
         },
         containedPrimary: {
@@ -113,19 +113,18 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: 'none',
-          fontSize: '1rem',
+          fontSize: '1.0625rem',
           fontWeight: 500,
-          minHeight: 48,
-          [compactMediaQuery]: { minHeight: 42, fontSize: '0.95rem', paddingTop: 6, paddingBottom: 6 },
+          minHeight: 54,
+          [compactMediaQuery]: { minHeight: 46, fontSize: '1rem', paddingTop: 6, paddingBottom: 6 },
         },
       },
     },
     MuiIconButton: {
       styleOverrides: {
         sizeMedium: {
-          padding: 10,
-          [compactMediaQuery]: { padding: 8 },
-          [touchMediaQuery]: { padding: 12 },
+          padding: 12,
+          [compactMediaQuery]: { padding: 10 },
         },
         sizeSmall: {
           padding: 6,
@@ -157,38 +156,38 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 10,
-          fontSize: '1rem',
-          [compactMediaQuery]: { fontSize: '0.95rem' },
+          fontSize: '1.0625rem',
+          [compactMediaQuery]: { fontSize: '1rem' },
         },
         input: {
           [compactMediaQuery]: { paddingTop: 12.5, paddingBottom: 12.5 },
         },
       },
     },
-    MuiInputLabel: { styleOverrides: { root: { fontSize: '1rem' } } },
-    MuiFormHelperText: { styleOverrides: { root: { fontSize: '0.85rem', marginTop: 4 } } },
+    MuiInputLabel: { styleOverrides: { root: { fontSize: '1.0625rem' } } },
+    MuiFormHelperText: { styleOverrides: { root: { fontSize: '0.92rem', marginTop: 4 } } },
     MuiMenuItem: {
       styleOverrides: {
-        root: { minHeight: 44, fontSize: '1rem', [touchMediaQuery]: { minHeight: 48 } },
+        root: { minHeight: 48, fontSize: '1.0625rem' },
       },
     },
-    MuiChip: { styleOverrides: { root: { fontWeight: 500, fontSize: '0.85rem' } } },
+    MuiChip: { styleOverrides: { root: { fontWeight: 500, fontSize: '0.92rem' } } },
     MuiTooltip: {
       styleOverrides: { tooltip: { backgroundColor: navy, fontSize: 14, borderRadius: 8, padding: '6px 10px' } },
     },
     MuiTableCell: {
       styleOverrides: {
-        root: { fontSize: '0.95rem' },
+        root: { fontSize: '1rem', paddingTop: 14, paddingBottom: 14 },
         head: { fontWeight: 600, color: '#16324a' },
       },
     },
     MuiDataGrid: {
       styleOverrides: {
-        root: { fontSize: '0.95rem' },
+        root: { fontSize: '1rem' },
         columnHeaderTitle: { fontWeight: 600 },
       },
     },
-    MuiAlert: { styleOverrides: { root: { fontSize: '0.95rem' } } },
+    MuiAlert: { styleOverrides: { root: { fontSize: '1rem' } } },
     // Unified dialog look across the admin panel: rounded card + gradient header bar.
     MuiDialog: {
       styleOverrides: {
@@ -201,8 +200,8 @@ const theme = createTheme({
           backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navy} 100%)`,
           color: '#ffffff',
           fontWeight: 600,
-          fontSize: 20,
-          padding: '16px 24px',
+          fontSize: 22,
+          padding: '18px 28px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',

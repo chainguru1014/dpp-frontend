@@ -135,7 +135,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
     <Box>
       <PageHeader
         title="Security"
-        description="How often your labels are scanned, and which ones behave like copies. A genuine label is on one item, so it cannot be scanned in two distant places minutes apart."
+        description="Labels that behave like copies, and how often your labels are scanned."
         actions={(
           <>
             <TextField select size="small" value={days} onChange={(e) => setDays(Number(e.target.value))} inputProps={{ 'aria-label': 'Period' }} sx={{ minWidth: 170, bgcolor: 'background.paper' }}>

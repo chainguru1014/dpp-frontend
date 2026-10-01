@@ -15,6 +15,8 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { getAnalytics, getCapturesCount } from '../../helper';
 import { useAuth } from '../auth/AuthContext';
 import Loader from '../../components/Loader';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 // Clearly different hues (was five similar blue-greys, hard to tell apart,
 // especially for older eyes or colour-blind users). Navy/blue lead so the
@@ -262,6 +264,9 @@ export default function DashboardAnalytics({
   ownerKind = null, ownerId = null,
   onNavigateToScanHistory, onNavigateToCaptureHistory, onNavigateToProducts, onNavigateToGenerateCode,
   filtersOpen = false, onActiveFilterCountChange,
+  // The dashboard has two layers: four figures and two charts, then
+  // everything else once "More analytics" is opened.
+  moreOpen = false, onToggleMore,
 }) {
   const [a, setA] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
@@ -399,28 +404,58 @@ export default function DashboardAnalytics({
     <Box>
       {filterPanel}
 
-      <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
-        {cards.map((c) => (
-          <Grid item key={c.key} xs={12} sm={6} md={4} xl={cards.length > 4 ? 2 : 3}>
+      {/* First layer: four figures, two charts. */}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        {cards.slice(0, 4).map((c) => (
+          <Grid item key={c.key} xs={12} sm={6} lg={3}>
             <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} onClick={c.onClick} />
           </Grid>
         ))}
       </Grid>
 
-      <Grid container spacing={1.5} sx={{ mb: 1.5 }}>
-        <Grid item xs={12} md={6} xl={4}>
-          <Section title={isAppUser ? 'My scans by product category' : 'Scans by product category'}>
-            <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
-          </Section>
-        </Grid>
-        <Grid item xs={12} md={6} xl={4}>
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={6}>
           <Section title="Scans per day (last 30 days)">
             <LineChart data={a.scansByDay || []} />
           </Section>
         </Grid>
-        <Grid item xs={12} md={6} xl={4}>
+        <Grid item xs={12} md={6}>
           <Section title="Countries where products were scanned">
             <CountryBars items={a.countryBreakdown || []} />
+          </Section>
+        </Grid>
+      </Grid>
+
+      {onToggleMore && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={onToggleMore}
+            aria-expanded={moreOpen}
+            endIcon={moreOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+          >
+            {moreOpen ? 'Fewer analytics' : 'More analytics'}
+          </Button>
+        </Box>
+      )}
+
+      {/* Second layer: the remaining figures, the category split and the
+          traceability table. */}
+      <Collapse in={moreOpen || !onToggleMore} unmountOnExit>
+      {cards.length > 4 && (
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          {cards.slice(4).map((c) => (
+            <Grid item key={c.key} xs={12} sm={6} lg={3}>
+              <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} onClick={c.onClick} />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={6}>
+          <Section title={isAppUser ? 'My scans by product category' : 'Scans by product category'}>
+            <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
           </Section>
         </Grid>
       </Grid>
@@ -486,6 +521,7 @@ export default function DashboardAnalytics({
           </Box>
         </Paper>
       )}
+      </Collapse>
     </Box>
   );
 }

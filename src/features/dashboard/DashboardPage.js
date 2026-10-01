@@ -19,6 +19,14 @@ const DashboardPage = ({
   // Staff see their own name; companies and shoppers their account name.
   const greetingName = String(company?.displayName || company?.name || '').trim();
 
+  // "More analytics" stays as the user left it.
+  const [moreOpen, setMoreOpen] = useState(() => {
+    try { return localStorage.getItem('dpp_dashboardMore') === '1'; } catch (e) { return false; }
+  });
+  const toggleMore = () => setMoreOpen((open) => {
+    try { localStorage.setItem('dpp_dashboardMore', open ? '0' : '1'); } catch (e) { /* storage blocked */ }
+    return !open;
+  });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState(0);
   const filtersButton = (
@@ -53,7 +61,9 @@ const DashboardPage = ({
       <PageHeader
         title={greetingName ? `Welcome, ${greetingName}` : 'Dashboard'}
         description={description}
-        actions={<>{filtersButton}{actions}</>}
+        // Filters belong to the detailed view; they also stay reachable
+        // while any filter is on, so it can always be cleared.
+        actions={<>{(moreOpen || activeFilters > 0) && filtersButton}{actions}</>}
       />
 
       {/* The jobs people come here to do, as large cards (brands and staff;
@@ -79,6 +89,8 @@ const DashboardPage = ({
         onNavigateToProducts={onNavigateToProducts}
         onNavigateToGenerateCode={onNavigateToGenerateCode}
         filtersOpen={filtersOpen}
+        moreOpen={moreOpen}
+        onToggleMore={toggleMore}
         onActiveFilterCountChange={setActiveFilters}
       />
     </Box>

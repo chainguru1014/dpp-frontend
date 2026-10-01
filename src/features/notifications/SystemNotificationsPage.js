@@ -184,7 +184,7 @@ const SystemNotificationsPage = () => {
       <PageHeader
         title="Announcements"
         icon={CampaignIcon}
-        description="Messages sent to every shopper in the app, for example new features or service notices. Turn one off to hide it without deleting it."
+        description="Messages sent to every shopper in the app."
         actions={(
           <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate}>
             New announcement

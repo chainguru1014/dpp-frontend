@@ -10,6 +10,7 @@ import {
   Button,
   Checkbox,
   Chip,
+  Collapse,
   Drawer,
   FormControlLabel,
   IconButton,
@@ -19,7 +20,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  ListSubheader,
   Menu,
   MenuItem,
   Stack,
@@ -30,7 +30,6 @@ import {
   Tabs,
   TextField,
   Toolbar,
-  Tooltip,
   Typography,
   Dialog,
   DialogTitle,
@@ -62,6 +61,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
+import InsightsIcon from '@mui/icons-material/Insights';
+import GroupsIcon from '@mui/icons-material/Groups';
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
@@ -69,6 +72,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import AddIcon from '@mui/icons-material/Add';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DownloadIcon from '@mui/icons-material/Download';
+import CategoryIcon from '@mui/icons-material/Category';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Webcam from 'react-webcam';
@@ -105,7 +109,7 @@ import ProfilePage from '../features/profile/ProfilePage';
 import EmployeeManagementPage from '../features/employee-audit/EmployeeManagementPage';
 import ProcessStepsPage from '../features/process-steps/ProcessStepsPage';
 import CaptureHistoryPage from '../features/capture-history/CaptureHistoryPage';
-import ProductsTable from '../features/products/ProductsTable';
+import ProductsTable, { ProductRow } from '../features/products/ProductsTable';
 import ProductDraftCard from '../features/products/ProductDraftCard';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
@@ -132,6 +136,7 @@ import { getFileUrl, getItemCategories } from '../helper';
 import ManageCategoriesDialog from '../features/products/ManageCategoriesDialog';
 import CompanyManagementSection from '../features/admin/CompanyManagementSection';
 import PageHeader from '../components/PageHeader';
+import PageHelp from '../components/PageHelp';
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
 import { compactMediaQuery } from '../theme';
 import { confirmAction, notify, notifyError, notifySuccess } from '../utils/feedbackBus';
@@ -194,7 +199,7 @@ const ITEM_CATEGORY_OPTIONS = [
 // Single source of truth for the left bar width — shared by the Drawer and the
 // logo container so the logo is always centered over the bar at every breakpoint.
 // Kept deliberately narrow so the content area gets more room.
-const LEFT_BAR_WIDTH = { md: 236, xl: 260 };
+const LEFT_BAR_WIDTH = { md: 252, xl: 280 };
 const MOBILE_NAV_WIDTH = 260;
 
 const InnerPage = () => {
@@ -325,6 +330,11 @@ const InnerPage = () => {
   const [itemCategoryOptions, setItemCategoryOptions] = useState(ITEM_CATEGORY_OPTIONS);
   const [openManageCategories, setOpenManageCategories] = useState(false);
   const [openProductImport, setOpenProductImport] = useState(false);
+  // Generate Code page: true while the product list is shown to pick another product.
+  const [pickingCodeProduct, setPickingCodeProduct] = useState(false);
+  // New products open as a short "quick add" form (name, category, photo,
+  // brand); the full studio appears on request or when editing.
+  const [quickAdd, setQuickAdd] = useState(false);
   const loadItemCategoryOptions = async () => {
     const list = await getItemCategories();
     if (list.length) setItemCategoryOptions(list.map((c) => ({ value: c.key, label: c.label })));
@@ -587,6 +597,12 @@ const InnerPage = () => {
     notifySuccess('Design saved. It now applies to all your products.');
   };
   const [sidebarOpen, setSidebarOpen] = useState(() => loadStateFromStorage('sidebarOpen', true));
+  // Which menu groups are unfolded. Only Products starts open, so the menu
+  // shows a handful of items; the group of the page you are on is always open.
+  const [openNavGroups, setOpenNavGroups] = useState(() => loadStateFromStorage('navGroups', { products: true }));
+  useEffect(() => {
+    saveStateToStorage('navGroups', openNavGroups);
+  }, [openNavGroups]);
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
   // Mobile/tablet: the left nav becomes a toggleable overlay drawer.
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -808,16 +824,20 @@ const InnerPage = () => {
     setGtin('');
     setGs1DigitalLink(false);
     setDetailFacts({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
+    // A company's new product starts with the brand of one it already has,
+    // so adding a product does not mean typing the brand in again. With no
+    // product yet it starts from the company's own name — never another
+    // brand's. The super admin (who sees every company's products) types
+    // the brand in.
+    const ownBrand = isAdmin ? null : (products.find((p) => p.brandInfo?.name && p.brandInfo?.logoUrl)?.brandInfo || null);
     setBrandInfo({
-      // Starts from the signed-in company's own name — never another
-      // brand's (it used to pre-fill Yometel's name/detail/website for
-      // every company). The super admin types the brand in.
-      name: isAdmin ? '' : (company?.name || ''),
-      detail: '',
-      websiteUrl: '',
-      logoUrl: '',
-      coverUrl: '',
+      name: ownBrand?.name || (isAdmin ? '' : (company?.name || '')),
+      detail: ownBrand?.detail || '',
+      websiteUrl: ownBrand?.websiteUrl || '',
+      logoUrl: ownBrand?.logoUrl || '',
+      coverUrl: ownBrand?.coverUrl || '',
     });
+    setQuickAdd(true);
     setIsUploadingBrandLogo(false);
     setIsUploadingBrandCover(false);
     setCertifications([]);
@@ -948,6 +968,8 @@ const InnerPage = () => {
     !brandInfo.logoUrl.trim() && 'Brand logo',
   ].filter(Boolean);
 
+  // All four brand details the server requires are filled in.
+  const brandComplete = ['name', 'detail', 'websiteUrl', 'logoUrl'].every((key) => String(brandInfo[key] || '').trim());
   const [savingProduct, setSavingProduct] = useState(false);
   // Turns on red "required" marks after the user presses Next / Add product
   // with something missing (not before — an empty new form shouldn't shout).
@@ -1114,6 +1136,7 @@ const InnerPage = () => {
     const g = wg.guarantee || {};
     const mc = prod.manualsAndCerts || {};
     setIsEditing(prod._id);
+    setQuickAdd(false);
     setDetailTab(0);
     setShowFieldErrors(false);
     setProductName(prod.name || '');
@@ -1747,13 +1770,13 @@ const InnerPage = () => {
       border: '1px solid transparent',
       mx: 1,
       my: 0.25,
-      py: 0.8,
+      py: 1.1,
       px: 1.25,
-      [compactMediaQuery]: { mx: 0.75, my: 0.2, py: 0.6, px: 1 },
+      [compactMediaQuery]: { mx: 0.75, my: 0.2, py: 0.8, px: 1 },
     },
-    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 36, justifyContent: 'center' },
-    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 22 },
-    '& .MuiListItemText-primary': { fontSize: '1rem', fontWeight: 500, color: '#ffffff', [compactMediaQuery]: { fontSize: '0.95rem' } },
+    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 42, justifyContent: 'center' },
+    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 26 },
+    '& .MuiListItemText-primary': { fontSize: '1.1rem', fontWeight: 500, color: '#ffffff', [compactMediaQuery]: { fontSize: '1.02rem' } },
     '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.16)' },
     '& .MuiListItemButton-root:focus-visible': { outline: '2px solid #ffffff', outlineOffset: -2 },
     '& .MuiListItemButton-root.Mui-selected': {
@@ -1762,31 +1785,22 @@ const InnerPage = () => {
     },
     '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.32)' },
     '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { fontWeight: 700 },
-    '& .MuiListSubheader-root': {
-      bgcolor: 'transparent',
-      color: 'rgba(255,255,255,0.85)',
-      fontSize: '0.78rem',
-      fontWeight: 700,
-      letterSpacing: '0.08em',
-      textTransform: 'uppercase',
-      lineHeight: 1,
-      pt: 2,
-      pb: 0.75,
-      px: 2.25,
-      position: 'static',
-    },
+    // Items inside a group sit a step in from the group's own row.
+    '& .nav-sub .MuiListItemButton-root': { pl: 3 },
+    '& .nav-sub .MuiListItemText-primary': { fontSize: '1.02rem', [compactMediaQuery]: { fontSize: '0.98rem' } },
+    '& .nav-sub .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 22 },
   };
 
-  // Menu, grouped so an 11-item flat list reads as a few short sections.
-  // Each entry: [page, label, Icon, visible]. Plain names: "LCA" is really
-  // the ownership-transfer log, "Process Step Labels" sets the worker app's
-  // step buttons.
+  // Menu: Dashboard, then four groups that fold open and shut, so only a
+  // handful of items show at once. Each entry: [page, label, Icon, visible].
   const navGroups = [
     {
       title: null,
       items: [['dashboard', 'Dashboard', DashboardIcon, true]],
     },
     {
+      key: 'products',
+      icon: Inventory2Icon,
       title: 'Products',
       items: [
         ['products', isAppUser ? 'My Products' : 'Products', Inventory2Icon, true],
@@ -1794,6 +1808,8 @@ const InnerPage = () => {
       ],
     },
     {
+      key: 'activity',
+      icon: InsightsIcon,
       title: 'Activity',
       items: [
         ['itemSearch', 'Product Activity', TravelExploreIcon, canSeeItemSearch],
@@ -1804,6 +1820,8 @@ const InnerPage = () => {
       ],
     },
     {
+      key: 'staff',
+      icon: GroupsIcon,
       title: 'Staff',
       items: [
         ['companies', 'Companies', BusinessIcon, isAdmin && !isEmployeeActor],
@@ -1815,36 +1833,56 @@ const InnerPage = () => {
       ],
     },
     {
-      title: 'Messages & help',
+      key: 'more',
+      icon: MoreHorizIcon,
+      title: 'More',
       items: [
-        ['notifications', 'Announcements', CampaignIcon, isAdmin],
         ['allNotifications', 'Notifications', NotificationsIcon, true],
+        ['notifications', 'Announcements', CampaignIcon, isAdmin],
         ['recommendations', 'Recommendations', AutoAwesomeIcon, !isWorkingEmployee],
         ['chat', 'Chat', ChatBubbleOutlineIcon, !isWorkingEmployee],
       ],
     },
   ];
 
+  const navItem = ([page, label, Icon]) => (
+    <ListItem disablePadding key={page}>
+      <ListItemButton
+        selected={activePage === page}
+        aria-current={activePage === page ? 'page' : undefined}
+        onClick={() => go(page)}
+      >
+        <ListItemIcon><Icon /></ListItemIcon>
+        <ListItemText primary={label} />
+      </ListItemButton>
+    </ListItem>
+  );
+
   const navList = (
     <List component="nav" aria-label="Main menu" sx={{ pt: 0.5 }}>
       {navGroups.map((group) => {
         const visible = group.items.filter((item) => item[3]);
         if (!visible.length) return null;
+        if (!group.title) return visible.map(navItem);
+        // A group with a single item is shown as that item — nothing to fold.
+        if (visible.length === 1) return navItem(visible[0]);
+        const holdsActivePage = visible.some((item) => item[0] === activePage);
+        const open = holdsActivePage || !!openNavGroups[group.key];
         return (
-          <React.Fragment key={group.title || 'top'}>
-            {group.title && <ListSubheader disableSticky>{group.title}</ListSubheader>}
-            {visible.map(([page, label, Icon]) => (
-              <ListItem disablePadding key={page}>
-                <ListItemButton
-                  selected={activePage === page}
-                  aria-current={activePage === page ? 'page' : undefined}
-                  onClick={() => go(page)}
-                >
-                  <ListItemIcon><Icon /></ListItemIcon>
-                  <ListItemText primary={label} />
-                </ListItemButton>
-              </ListItem>
-            ))}
+          <React.Fragment key={group.key}>
+            <ListItem disablePadding>
+              <ListItemButton
+                aria-expanded={open}
+                onClick={() => setOpenNavGroups((prev) => ({ ...prev, [group.key]: !open }))}
+              >
+                <ListItemIcon><group.icon /></ListItemIcon>
+                <ListItemText primary={group.title} />
+                {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+              </ListItemButton>
+            </ListItem>
+            <Collapse in={open} unmountOnExit>
+              <List disablePadding className="nav-sub">{visible.map(navItem)}</List>
+            </Collapse>
           </React.Fragment>
         );
       })}
@@ -2007,8 +2045,8 @@ const InnerPage = () => {
           sx={{
             flexGrow: 1,
             minWidth: 0,
-            p: { xs: 1.5, md: 3 },
-            [compactMediaQuery]: { p: 1.75 },
+            p: { xs: 2, md: 4, xl: 5 },
+            [compactMediaQuery]: { p: 2.5 },
             bgcolor: '#f5f6fa',
             overflow: 'auto',
           }}
@@ -2112,7 +2150,7 @@ const InnerPage = () => {
             <Box>
               <PageHeader
                 title="App Users"
-                description="People who use the Yometel DPP shopper app. Search, correct their details, or remove an account."
+                description="People who use the Yometel DPP shopper app."
               />
               <Box sx={{ bgcolor: '#fff', p: 2, borderRadius: 2, boxShadow: 1 }}>
                 <Admin />
@@ -2147,70 +2185,34 @@ const InnerPage = () => {
             <Box>
               <PageHeader
                 title="Generate Code"
-                description="Create QR codes and other labels for a product, then download them as a PDF to print. Each label opens that product's page when scanned."
+                description="Create labels for a product and download them to print."
               />
-              <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider', width: { xs: '100%', lg: '60%' } }}>
-                <Typography variant="subtitle1" component="label" htmlFor="generate-code-product" sx={{ display: 'block', mb: 1 }}>
-                  1. Choose a product
-                </Typography>
-                <TextField
-                  id="generate-code-product"
-                  select
-                  fullWidth
-                  value={generateCodeProduct?._id || ''}
-                  onChange={(e) => selectGenerateCodeProduct(products.find((p) => p._id === e.target.value))}
-                  disabled={!products.length}
-                  helperText={!products.length && !productsLoading
-                    ? (canEditProducts ? 'You have no products yet. Add one on the Products page first.' : 'No products yet.')
-                    : undefined}
-                  SelectProps={{
-                    displayEmpty: true,
-                    // The closed field's own display -- "selected product
-                    // showing" -- also gets the thumbnail, not just the
-                    // dropdown list.
-                    renderValue: (id) => {
-                      const p = products.find((pr) => pr._id === id);
-                      if (!p) return <Typography color="text.secondary">Select a product</Typography>;
-                      const thumb = Array.isArray(p.images) ? p.images[0] : null;
-                      return (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                          <Box
-                            component="img"
-                            alt=""
-                            src={thumb ? getFileUrl(thumb) : undefined}
-                            sx={{
-                              width: 36, height: 36, borderRadius: 1, objectFit: 'cover', flexShrink: 0,
-                              bgcolor: 'action.hover', visibility: thumb ? 'visible' : 'hidden',
-                            }}
-                          />
-                          <span>{p.name}{p.model ? ` — ${p.model}` : ''}</span>
-                        </Box>
-                      );
-                    },
-                  }}
-                >
-                  {products.map((p) => {
-                    const thumb = Array.isArray(p.images) ? p.images[0] : null;
-                    return (
-                      <MenuItem key={p._id} value={p._id} sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                        <Box
-                          component="img"
-                          alt=""
-                          src={thumb ? getFileUrl(thumb) : undefined}
-                          sx={{
-                            width: 36, height: 36, borderRadius: 1, objectFit: 'cover', flexShrink: 0,
-                            bgcolor: 'action.hover', visibility: thumb ? 'visible' : 'hidden',
-                          }}
-                        />
-                        {p.name}{p.model ? ` — ${p.model}` : ''}
-                      </MenuItem>
-                    );
-                  })}
-                </TextField>
-              </Box>
-              {generateCodeProduct && (
-                <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
-                  <Typography variant="subtitle1" sx={{ mb: 1 }}>2. Choose a label type and create codes</Typography>
+              <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>1. Choose a product</Typography>
+              {generateCodeProduct && !pickingCodeProduct ? (
+                <Box sx={{ mb: 3.5 }}>
+                  <ProductRow product={generateCodeProduct} selected />
+                  {products.length > 1 && (
+                    <Button sx={{ mt: 1 }} onClick={() => setPickingCodeProduct(true)}>Choose another product</Button>
+                  )}
+                </Box>
+              ) : (
+                <Box sx={{ mb: 3.5 }}>
+                  <ProductsTable
+                    products={products}
+                    loading={productsLoading}
+                    selectedId={generateCodeProduct?._id}
+                    showOwner={false}
+                    emptyText={canEditProducts ? 'You have no products yet. Add one on the Products page first.' : 'No products yet.'}
+                    onSelectProduct={(prod) => {
+                      selectGenerateCodeProduct(prod);
+                      setPickingCodeProduct(false);
+                    }}
+                  />
+                </Box>
+              )}
+              {generateCodeProduct && !pickingCodeProduct && (
+                <Box sx={{ mb: 2, p: 2.5, borderRadius: 3, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
+                  <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>2. Choose a label type and create codes</Typography>
                   <ProductOwnerSection
                     company={company}
                     ownerInfo={ownerInfo}
@@ -2246,54 +2248,37 @@ const InnerPage = () => {
             <Box>
               <PageHeader
                 title={isAppUser ? 'My Products' : 'Products'}
-                description={isAppUser
-                  ? 'Products you own. Click a product to see its details and ownership history.'
-                  : canEditProducts
-                    ? 'All your products. Click a product to see its details, preview its product page, edit it, or create codes for it.'
-                    : 'Your company’s products. Click a product to see its details or create codes for it.'}
-                actions={(
-                  <>
-                    {/* Super admin only: platform-wide item categories. */}
-                    {isAdmin && (
-                      <Button variant="outlined" onClick={() => setOpenManageCategories('page')}>
-                        Manage Categories
-                      </Button>
-                    )}
-                    {/* Spreadsheet in / out: add or change many products at once. */}
-                    {canEditProducts && (
-                      <>
-                        <Button variant="outlined" startIcon={<UploadFileIcon />} onClick={() => setOpenProductImport(true)}>
-                          Import
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          startIcon={<DownloadIcon />}
-                          disabled={!filteredProducts.length}
-                          onClick={() => downloadCsv(
-                            `yometel-products-${new Date().toISOString().slice(0, 10)}.csv`,
-                            productsToCsvRows(filteredProducts, itemCategoryOptions),
-                          )}
-                        >
-                          Export
-                        </Button>
-                      </>
-                    )}
-                    {canEditProducts && (
-                      <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => {
-                          resetFields();
-                          setProductPanelMode('edit');
-                          setPreviousPage(activePage);
-                          setActivePage('newProduct');
-                        }}
-                      >
-                        New Product
-                      </Button>
-                    )}
-                  </>
+                description={isAppUser ? 'The products you own.' : 'Click a product to see it, edit it or create its codes.'}
+                actions={canEditProducts && (
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => {
+                      resetFields();
+                      setProductPanelMode('edit');
+                      setPreviousPage(activePage);
+                      setActivePage('newProduct');
+                    }}
+                  >
+                    New Product
+                  </Button>
                 )}
+                moreActions={[
+                  // Spreadsheet in / out: add or change many products at once.
+                  canEditProducts && { label: 'Import from a spreadsheet', icon: UploadFileIcon, onClick: () => setOpenProductImport(true) },
+                  canEditProducts && {
+                    label: 'Export to a spreadsheet',
+                    icon: DownloadIcon,
+                    disabled: !filteredProducts.length,
+                    onClick: () => downloadCsv(
+                      `yometel-products-${new Date().toISOString().slice(0, 10)}.csv`,
+                      productsToCsvRows(filteredProducts, itemCategoryOptions),
+                    ),
+                  },
+                  // Super admin only: platform-wide item categories.
+                  isAdmin && { label: 'Manage categories', icon: CategoryIcon, onClick: () => setOpenManageCategories('page') },
+                  { label: 'Reload the list', icon: RefreshIcon, onClick: loadProductsForCurrentCompany },
+                ]}
               />
 
               {/* Guarded on the product actually being in the current (filtered)
@@ -2367,11 +2352,6 @@ const InnerPage = () => {
                     ),
                   }}
                 />
-                <Tooltip title="Reload the list">
-                  <IconButton onClick={loadProductsForCurrentCompany} color="primary" aria-label="Reload products">
-                    <RefreshIcon />
-                  </IconButton>
-                </Tooltip>
               </Stack>
 
               <ProductsTable
@@ -2410,10 +2390,10 @@ const InnerPage = () => {
             open={activePage === 'newProduct' && (canEditProducts || productPanelMode === 'print')}
             onClose={closeProductDialog}
             fullWidth
-            maxWidth={productPanelMode === 'edit' ? 'md' : 'lg'}
+            maxWidth={quickAdd ? 'sm' : productPanelMode === 'edit' ? 'md' : 'lg'}
             fullScreen={isMobile}
             scroll="paper"
-            PaperProps={{ sx: { height: productPanelMode !== 'print' && !isMobile ? 'calc(100% - 48px)' : undefined } }}
+            PaperProps={{ sx: { height: productPanelMode !== 'print' && !quickAdd && !isMobile ? 'calc(100% - 48px)' : undefined } }}
             aria-labelledby="product-dialog-title"
           >
             <DialogTitle id="product-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
@@ -2429,7 +2409,7 @@ const InnerPage = () => {
 
             {/* Studio rail: Data > Experience > Codes. Read-only roles only
                 ever open the Codes part, so they get no rail. */}
-            {canEditProducts && (
+            {canEditProducts && !quickAdd && (
               <Box sx={{ px: { xs: 1, sm: 3 }, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', flexShrink: 0 }}>
                 <Tabs
                   value={productPanelMode}
@@ -2457,7 +2437,7 @@ const InnerPage = () => {
               </Box>
             )}
 
-            {productPanelMode === 'edit' && (
+            {productPanelMode === 'edit' && !quickAdd && (
               <Box sx={{ px: { xs: 1, sm: 3 }, pt: 2, pb: 1.5, borderBottom: 1, borderColor: 'divider', overflowX: 'auto', flexShrink: 0 }}>
                 <Stepper nonLinear activeStep={detailTab} alternativeLabel sx={{ minWidth: 640 }}>
                   {PRODUCT_FORM_STEPS.map((label, i) => (
@@ -2554,11 +2534,15 @@ const InnerPage = () => {
                     <Box component="section">
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Basic information</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        Fields marked with * are required. Everything else can be added later.
+                        {quickAdd
+                          ? 'This is all a product needs to start. The rest of its passport can be added afterwards.'
+                          : 'Fields marked with * are required. Everything else can be added later.'}
                       </Typography>
                       <Stack spacing={2}>
                         <TextField label="Product name" fullWidth required value={productName} onChange={(e) => setProductName(e.target.value)}
                           error={showFieldErrors && !productName.trim()} helperText={showFieldErrors && !productName.trim() ? 'Please enter the product name.' : undefined} />
+                        {!quickAdd && (
+                        <>
                         <TextField label="Model or short description" placeholder="e.g. Slim Fit" fullWidth value={productModel} onChange={(e) => setProductModel(e.target.value)} />
                         <TextField
                           label="About this product"
@@ -2568,6 +2552,8 @@ const InnerPage = () => {
                           onChange={(e) => setAboutProduct(e.target.value)}
                           helperText="Shown to shoppers under Product Lifecycle > Details in the app."
                         />
+                        </>
+                        )}
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
                           <TextField select label="Item category" fullWidth required
                             value={itemCategory} onChange={(e) => setItemCategory(e.target.value)}
@@ -2635,6 +2621,18 @@ const InnerPage = () => {
                       )}
                     </Box>
 
+                    {quickAdd && brandComplete ? (
+                      // Quick add with a brand to reuse: one line instead of the four brand fields.
+                      <Box component="section" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                        <Box component="img" src={getFileUrl(brandInfo.logoUrl)} alt=""
+                          sx={{ width: 48, height: 48, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, bgcolor: '#fff' }} />
+                        <Box sx={{ flex: 1, minWidth: 160 }}>
+                          <Typography variant="subtitle1">Brand: {brandInfo.name}</Typography>
+                          <Typography variant="body2" color="text.secondary">The same brand as your other products.</Typography>
+                        </Box>
+                        <Button onClick={() => setQuickAdd(false)}>Change</Button>
+                      </Box>
+                    ) : (
                     <Box component="section">
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Brand</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -2684,6 +2682,10 @@ const InnerPage = () => {
                       </Grid>
                     </Box>
 
+                    )}
+
+                    {!quickAdd && (
+                    <>
                     <Box component="section">
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Product facts</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Optional. Shown as a short list on the product page.</Typography>
@@ -2836,6 +2838,8 @@ const InnerPage = () => {
                         </Grid>
                       </AccordionDetails>
                     </Accordion>
+                    </>
+                    )}
                   </Stack>
                 )}
 
@@ -3235,6 +3239,7 @@ const InnerPage = () => {
             {productPanelMode !== 'print' && (() => {
               const missing = missingProductFields();
               const inData = productPanelMode === 'edit';
+              const addLabel = isEditing ? 'Save changes' : 'Add product';
               const lastStep = PRODUCT_FORM_STEPS.length - 1;
               return (
                 <DialogActions sx={{ flexDirection: 'column', alignItems: 'stretch', px: 3, py: 2, gap: 1.25, borderTop: 1, borderColor: 'divider' }}>
@@ -3245,7 +3250,9 @@ const InnerPage = () => {
                     </Alert>
                   )}
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
-                    {inData ? (
+                    {quickAdd ? (
+                      <Button onClick={() => setQuickAdd(false)}>Add more details now</Button>
+                    ) : inData ? (
                       <>
                         <Button onClick={() => setDetailTab((t) => Math.max(0, t - 1))} disabled={detailTab === 0}>
                           Back
@@ -3272,15 +3279,17 @@ const InnerPage = () => {
                       </>
                     )}
                     <Box sx={{ flexGrow: 1 }} />
-                    <Button variant="outlined" onClick={() => { if (validateRequiredProductFields()) setOpenPreviewModal(true); }}>
-                      Preview
-                    </Button>
+                    {!quickAdd && (
+                      <Button variant="outlined" onClick={() => { if (validateRequiredProductFields()) setOpenPreviewModal(true); }}>
+                        Preview
+                      </Button>
+                    )}
                     <Button
                       variant="contained"
                       onClick={isEditing ? updateProductHandler : addProductHandler}
                       disabled={savingProduct}
                     >
-                      {savingProduct ? 'Saving…' : isEditing ? 'Save changes' : 'Add product'}
+                      {savingProduct ? 'Saving…' : addLabel}
                     </Button>
                   </Box>
                 </DialogActions>
@@ -3289,6 +3298,8 @@ const InnerPage = () => {
           </Dialog>
         </Box>
       </Box>
+
+      <PageHelp page={activePage} isAppUser={isAppUser} />
 
       {/* Manage Categories — opened from the Products page (super admin: full
           management) or from the product form's Manage button (add new

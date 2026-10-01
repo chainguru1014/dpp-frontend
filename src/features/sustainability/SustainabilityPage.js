@@ -177,7 +177,7 @@ export default function SustainabilityPage({ products = [], loading = false, can
         icon={EcoIcon}
         description={isAppUser
           ? 'Where your products come from, what they are made of, their carbon footprint and how to repair, reuse or recycle them.'
-          : 'Life Cycle Assessment (LCA) and ESG information for your products: materials, where they are made, carbon footprint, certifications and end-of-life options.'}
+          : 'Materials, origin, carbon footprint and end-of-life options for your products.'}
       />
 
       {/* LCA (left) and ESG (right) pictures at the top of the page. */}

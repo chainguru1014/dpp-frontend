@@ -108,7 +108,7 @@ const ProcessStepsPage = ({ token }) => {
     <Box sx={{ pb: 10 }}>
       <PageHeader
         title="Worker App Steps"
-        description={`The numbered buttons your staff see in the mobile app. Each button shows a place (for example "Tokyo DC") and a step type. You can have 1 to ${MAX_STEPS} steps; the app shows the step type in each worker's own language.`}
+        description="The numbered buttons your staff see in the mobile app."
         actions={(
           <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAdd} disabled={steps.length >= MAX_STEPS}>
             Add step

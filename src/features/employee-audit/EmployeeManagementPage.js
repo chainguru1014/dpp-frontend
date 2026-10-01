@@ -18,8 +18,8 @@ const EmployeeManagementPage = ({ token, isAdmin, companyId }) => {
       <PageHeader
         title="Employees"
         description={isAdmin
-          ? 'Staff accounts for every company. Staff sign in with a code sent to their work email.'
-          : 'Your company’s staff. Add people here so they can sign in to the mobile app with their work email.'}
+          ? 'Staff accounts for every company.'
+          : 'The people who can sign in for your company.'}
       />
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tab value="roster" label="Employee list" />

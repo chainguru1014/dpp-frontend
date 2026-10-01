@@ -85,7 +85,7 @@ const AllNotificationsPage = () => {
     <Box>
       <PageHeader
         title="Notifications"
-        description="Messages for you, such as ownership transfer requests. New ones are marked NEW; click one to open it."
+        description="Messages for you. Click one to open it."
         actions={items.some((n) => !n.read) ? <Button variant="outlined" onClick={handleMarkAll}>Mark all as read</Button> : null}
       />
 
