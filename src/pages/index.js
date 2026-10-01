@@ -266,11 +266,13 @@ const InnerPage = () => {
   // Company account (their company's working employees), or a working
   // employee (their own captures only).
   const canSeeCaptureHistory = !isAppUser;
-  // Find an item (search by any code + its history): brands and Supervisors.
+  // Product Activity (a product's history, or one item's by its code): brands and Supervisors.
   const canSeeItemSearch = !isAppUser && !isWorkingEmployee;
-  // A search typed into the top bar, handed to the Find an item page.
+  // A code typed into the top bar, handed to the Product Activity page.
   const [headerSearch, setHeaderSearch] = useState('');
   const [itemSearchQuery, setItemSearchQuery] = useState('');
+  // A product picked on the dashboard ("Analyze products") to open there.
+  const [itemSearchProductId, setItemSearchProductId] = useState('');
 
   // AuthPage and AiConciergeConsentPage are separate conditional
   // early-returns below, each mounting its own <AuthShell> — called once
@@ -1794,7 +1796,7 @@ const InnerPage = () => {
     {
       title: 'Activity',
       items: [
-        ['itemSearch', 'Find an Item', TravelExploreIcon, canSeeItemSearch],
+        ['itemSearch', 'Product Activity', TravelExploreIcon, canSeeItemSearch],
         ['security', 'Security', GppMaybeIcon, canSeeItemSearch],
         ['history', isAppUser ? 'My Scans' : 'Scan History', HistoryIcon, !isWorkingEmployee],
         ['captureHistory', isWorkingEmployee ? 'My Captures' : 'Capture History', AssessmentIcon, canSeeCaptureHistory],
@@ -1802,10 +1804,13 @@ const InnerPage = () => {
       ],
     },
     {
-      title: 'People',
+      title: 'Staff',
       items: [
         ['companies', 'Companies', BusinessIcon, isAdmin && !isEmployeeActor],
-        ['employeeAuditLog', 'Staff', BadgeIcon, canSeeStaffManagement],
+        ['employeeAuditLog', 'Employee', BadgeIcon, canSeeStaffManagement],
+        // Worker app step buttons — per company, a Supervisor or the
+        // company account (never a working employee or the super admin).
+        ['processSteps', 'Worker App Steps', FormatListNumberedIcon, !isAppUser && !isAdmin && (!isEmployeeActor || isSupervisor)],
         ['users', 'App Users', PersonIcon, isAdmin && !isEmployeeActor],
       ],
     },
@@ -1816,14 +1821,6 @@ const InnerPage = () => {
         ['allNotifications', 'Notifications', NotificationsIcon, true],
         ['recommendations', 'Recommendations', AutoAwesomeIcon, !isWorkingEmployee],
         ['chat', 'Chat', ChatBubbleOutlineIcon, !isWorkingEmployee],
-      ],
-    },
-    {
-      title: 'Settings',
-      items: [
-        // Worker app step buttons — per company, a Supervisor or the
-        // company account (never a working employee or the super admin).
-        ['processSteps', 'Worker App Steps', FormatListNumberedIcon, !isAppUser && !isAdmin && (!isEmployeeActor || isSupervisor)],
       ],
     },
   ];
@@ -2024,9 +2021,12 @@ const InnerPage = () => {
               canEditProducts={canEditProducts}
               canSeeStaffManagement={canSeeStaffManagement}
               canEditProcessSteps={!isAppUser && !isAdmin && (!isEmployeeActor || isSupervisor)}
-              productCount={products.length}
-              hasCodes={products.some((p) => (p.total_minted_amount || 0) > 0)}
+              products={products}
               company={company}
+              onAnalyzeProduct={canSeeItemSearch ? (prod) => {
+                setItemSearchProductId(prod._id);
+                go('itemSearch');
+              } : undefined}
               onNavigateToNewProduct={() => {
                 resetFields();
                 setProductPanelMode('edit');
@@ -2081,8 +2081,14 @@ const InnerPage = () => {
           {activePage === 'itemSearch' && canSeeItemSearch && (
             <ItemTracePage
               token={token}
+              products={products}
+              productsLoading={productsLoading}
+              showOwner={isAdmin}
+              onReloadProducts={loadProductsForCurrentCompany}
               query={itemSearchQuery}
               onQueryHandled={() => setItemSearchQuery('')}
+              productId={itemSearchProductId}
+              onProductHandled={() => setItemSearchProductId('')}
             />
           )}
 

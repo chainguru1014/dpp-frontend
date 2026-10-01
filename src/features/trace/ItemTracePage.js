@@ -1,6 +1,7 @@
-import React, { Suspense, useEffect, useState } from 'react';
-import { Alert, Box, Button, Chip, InputAdornment, Link, Stack, TextField, Typography } from '@mui/material';
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Box, Button, Chip, IconButton, InputAdornment, Link, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import GppBadIcon from '@mui/icons-material/GppBad';
@@ -11,6 +12,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PageHeader from '../../components/PageHeader';
 import Loader from '../../components/Loader';
 import CopyIconButton from '../../components/CopyIconButton';
+import ProductsTable from '../products/ProductsTable';
 import { getFileUrl, getTraceItem, getTraceProduct, searchTrace } from '../../helper';
 import { processStepTypeLabel } from '../../utils/processStepTypes';
 import { METHOD_LABELS } from './TracePage';
@@ -128,17 +130,23 @@ function Timeline({ events, showItem, onOpenItem }) {
   );
 }
 
-// "Find an item": one box for any code on a product — passport ID, QR link,
-// serial, RFID/NFC tag, barcode/GTIN — or part of a product name. Shows the
-// item's digital twin: its codes, a timeline of everything recorded for it,
-// and a map of where that happened.
-export default function ItemTracePage({ token, query, onQueryHandled }) {
+// "Product Activity": pick a product from the list (as on the Products page)
+// to see everything recorded for it — every scan, staff capture and
+// ownership transfer, newest first, and where each happened on a map. The
+// search box narrows the list as you type; pressing Find looks the text up
+// as a code (passport ID, QR link, serial, RFID/NFC tag, barcode/GTIN) and
+// opens that one item's own history.
+export default function ItemTracePage({
+  token, products = [], productsLoading = false, showOwner = false, onReloadProducts,
+  query, onQueryHandled, productId, onProductHandled,
+}) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   // The product result we came from, so an item opened from it can go back.
   const [parent, setParent] = useState(null);
+  const resultRef = useRef(null);
 
   const show = async (request, { keepParent = false } = {}) => {
     setLoading(true);
@@ -151,30 +159,49 @@ export default function ItemTracePage({ token, query, onQueryHandled }) {
     }
     if (!keepParent) setParent(null);
     setResult(res.data);
+    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
-  const runSearch = (q) => {
+  const findCode = (q) => {
     const value = String(q || '').trim();
     if (value.length < 2) {
-      setError('Type at least 2 characters to search.');
+      setError('Type at least 2 characters, then press Find.');
       return;
     }
     setInput(value);
     show(searchTrace(token, value));
   };
 
-  // A search typed into the top bar arrives through `query`.
+  const openProduct = (id) => show(getTraceProduct(token, id));
+
+  // A code typed into the top bar arrives through `query`; a product picked
+  // elsewhere (the dashboard's "Analyze products") through `productId`.
   useEffect(() => {
     if (!query) return;
-    runSearch(query);
+    findCode(query);
     if (onQueryHandled) onQueryHandled();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+  useEffect(() => {
+    if (!productId) return;
+    setInput('');
+    openProduct(productId);
+    if (onProductHandled) onProductHandled();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productId]);
 
-  const openItem = (productId, itemId) => {
+  const openItem = (id, itemId) => {
     if (result?.type === 'product') setParent(result);
-    show(getTraceItem(token, productId, itemId), { keepParent: true });
+    show(getTraceItem(token, id, itemId), { keepParent: true });
   };
+
+  // The box narrows the list by product name, model, brand or style number.
+  const filteredProducts = useMemo(() => {
+    const q = input.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter((p) => [p.name, p.model, p.brandInfo?.name, p.skuStyleNumber, p.company_id?.name]
+      .some((v) => String(v || '').toLowerCase().includes(q)));
+  }, [products, input]);
 
   const events = result?.timeline || [];
   // Oldest first, so the line on the map follows the item's journey.
@@ -187,126 +214,129 @@ export default function ItemTracePage({ token, query, onQueryHandled }) {
       color: (EVENT_KINDS[e.kind] || EVENT_KINDS.scan).color,
       label: `${(EVENT_KINDS[e.kind] || EVENT_KINDS.scan).title(e)} — ${formatWhen(e.at)}`,
     }));
+  const selectedId = result && result.type !== 'list' ? result.product._id : undefined;
 
   return (
     <Box>
       <PageHeader
-        title="Find an item"
-        description="Type or scan any code from a product: its passport ID, the QR code's link, a serial number, an RFID or NFC tag ID, or a barcode. You can also search by product name or style number."
+        title="Product Activity"
+        description="Click a product to see where and when it was scanned, captured by staff or changed owner."
       />
+
       <Stack
         component="form"
-        direction={{ xs: 'column', sm: 'row' }}
+        direction="row"
         spacing={1}
+        alignItems="center"
         sx={{ mb: 2 }}
         onSubmit={(e) => {
           e.preventDefault();
-          runSearch(input);
+          findCode(input);
         }}
       >
         <TextField
-          autoFocus
-          fullWidth
-          placeholder="Code, serial number or product name"
-          inputProps={{ 'aria-label': 'Search for an item' }}
+          id="activity-search"
+          placeholder="Search by product or brand, or enter a code"
+          inputProps={{ 'aria-label': 'Search products, or enter a code' }}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          sx={{ maxWidth: 640, bgcolor: 'background.paper', borderRadius: 2 }}
+          onChange={(e) => { setInput(e.target.value); setError(''); }}
+          sx={{ flex: 1, maxWidth: 520, bgcolor: 'background.paper', borderRadius: 2 }}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
         />
-        <Button type="submit" variant="contained" disabled={loading}>Search</Button>
+        <Tooltip title="Look this text up as a code: passport ID, QR link, serial number, RFID or NFC tag, barcode">
+          <span>
+            <Button type="submit" variant="outlined" disabled={loading || input.trim().length < 2}>Find code</Button>
+          </span>
+        </Tooltip>
+        {onReloadProducts && (
+          <Tooltip title="Reload the list">
+            <IconButton onClick={onReloadProducts} color="primary" aria-label="Reload products"><RefreshIcon /></IconButton>
+          </Tooltip>
+        )}
       </Stack>
 
-      {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
-      {loading && <Loader label="Searching…" />}
+      <ProductsTable
+        products={filteredProducts}
+        loading={productsLoading}
+        selectedId={selectedId}
+        showOwner={showOwner}
+        emptyText={input.trim()
+          ? 'No product matches. If this is a code from a label or tag, press "Find code".'
+          : 'No products yet.'}
+        onSelectProduct={(row) => openProduct(row._id)}
+      />
 
-      {!loading && !result && !error && (
-        <Typography color="text.secondary">Results appear here.</Typography>
-      )}
+      <Box ref={resultRef} sx={{ mt: 2.5, scrollMarginTop: 16 }}>
+        {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
+        {loading && <Loader label="Loading the activity…" />}
 
-      {!loading && result?.type === 'list' && (
-        result.products.length === 0 ? (
+        {!loading && result?.type === 'list' && (
           <Alert severity="info">
-            Nothing matches "{input}". Check the code for typing mistakes — a code is only found when it is entered in full.
+            {result.products.length === 0
+              ? `No code matches "${input}". Check it for typing mistakes — a code is only found when it is entered in full.`
+              : 'That is not a code. Click one of the products above to see its activity.'}
           </Alert>
-        ) : (
+        )}
+
+        {!loading && result && result.type !== 'list' && (
           <Box>
-            <Typography variant="subtitle1" sx={{ mb: 1 }}>{result.products.length} products match. Choose one:</Typography>
-            {result.products.map((p) => (
-              <Box
-                key={p._id}
-                component="button"
-                type="button"
-                onClick={() => show(getTraceProduct(token, p._id))}
-                sx={{ display: 'block', width: '100%', textAlign: 'left', border: 0, p: 0, bgcolor: 'transparent', cursor: 'pointer', font: 'inherit' }}
-              >
-                <ProductCard product={p}>
-                  <Typography variant="body2" color="text.secondary">{p.totalCodes} codes</Typography>
-                </ProductCard>
-              </Box>
-            ))}
-          </Box>
-        )
-      )}
-
-      {!loading && result && result.type !== 'list' && (
-        <Box>
-          {result.type === 'item' && parent && (
-            <Button startIcon={<ArrowBackIcon />} onClick={() => { setResult(parent); setParent(null); }} sx={{ mb: 1 }}>
-              Back to {parent.product.name || 'the product'}
-            </Button>
-          )}
-          <ProductCard product={result.product}>
-            <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 0.75 }}>
-              <Chip size="small" color="primary" label={result.type === 'item' ? `Item #${result.item.qrcodeId}` : `All items (${result.product.totalCodes} codes)`} />
-              <Chip size="small" variant="outlined" label={`Found by: ${result.matchedBy}`} />
-              {result.type === 'item' && result.item.blocked && (
-                <Chip size="small" color="error" label="Marked as suspected copy" title={result.item.blockedNote || undefined} />
-              )}
-            </Stack>
-            {result.type === 'item' && (
-              <Box sx={{ mt: 1 }}>
-                <CodeLine label="Passport ID" value={result.item.pmcCode} />
-                {result.item.identifiers.map((id, i) => (
-                  <CodeLine key={`i${i}`} label={IDENTIFIER_LABELS[id.type] || id.type} value={id.value} />
-                ))}
-                {result.item.serials.map((s, i) => (
-                  <CodeLine key={`s${i}`} label={`Serial${s.type ? ` (${s.type})` : ''}`} value={s.value} />
-                ))}
-              </Box>
+            {result.type === 'item' && parent && (
+              <Button startIcon={<ArrowBackIcon />} onClick={() => { setResult(parent); setParent(null); }} sx={{ mb: 1 }}>
+                Back to all items of {parent.product.name || 'the product'}
+              </Button>
             )}
-          </ProductCard>
-
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2, alignItems: 'start' }}>
-            <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2 }}>
-              <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>
-                {result.type === 'item' ? 'History of this item' : 'Latest activity across all items'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Newest first.</Typography>
-              <Timeline
-                events={events}
-                showItem={result.type === 'product'}
-                onOpenItem={(itemId) => openItem(result.product._id, itemId)}
-              />
-            </Box>
-            <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2, position: { lg: 'sticky' }, top: { lg: 0 } }}>
-              <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Where it happened</Typography>
-              {mapPoints.length ? (
-                <>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-                    {mapPoints.length} of {events.length} events have a location. The line follows them in time order; the largest dot is the most recent.
-                  </Typography>
-                  <Suspense fallback={<Loader label="Loading the map…" />}>
-                    <ItemMap points={mapPoints} />
-                  </Suspense>
-                </>
-              ) : (
-                <Typography color="text.secondary">None of these events has a location yet.</Typography>
+            <ProductCard product={result.product}>
+              <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 0.75 }}>
+                <Chip size="small" color="primary" label={result.type === 'item' ? `Item #${result.item.qrcodeId}` : `All items (${result.product.totalCodes} codes)`} />
+                {result.type === 'item' && <Chip size="small" variant="outlined" label={`Found by: ${result.matchedBy}`} />}
+                {result.type === 'item' && result.item.blocked && (
+                  <Chip size="small" color="error" label="Marked as suspected copy" title={result.item.blockedNote || undefined} />
+                )}
+              </Stack>
+              {result.type === 'item' && (
+                <Box sx={{ mt: 1 }}>
+                  <CodeLine label="Passport ID" value={result.item.pmcCode} />
+                  {result.item.identifiers.map((id, i) => (
+                    <CodeLine key={`i${i}`} label={IDENTIFIER_LABELS[id.type] || id.type} value={id.value} />
+                  ))}
+                  {result.item.serials.map((s, i) => (
+                    <CodeLine key={`s${i}`} label={`Serial${s.type ? ` (${s.type})` : ''}`} value={s.value} />
+                  ))}
+                </Box>
               )}
+            </ProductCard>
+
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2, alignItems: 'start' }}>
+              <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2 }}>
+                <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>
+                  {result.type === 'item' ? 'History of this item' : 'Latest activity across all items'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Newest first.</Typography>
+                <Timeline
+                  events={events}
+                  showItem={result.type === 'product'}
+                  onOpenItem={(itemId) => openItem(result.product._id, itemId)}
+                />
+              </Box>
+              <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2, position: { lg: 'sticky' }, top: { lg: 0 } }}>
+                <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Where it happened</Typography>
+                {mapPoints.length ? (
+                  <>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                      {mapPoints.length} of {events.length} events have a location. The line follows them in time order; the largest dot is the most recent.
+                    </Typography>
+                    <Suspense fallback={<Loader label="Loading the map…" />}>
+                      <ItemMap points={mapPoints} />
+                    </Suspense>
+                  </>
+                ) : (
+                  <Typography color="text.secondary">None of these events has a location yet.</Typography>
+                )}
+              </Box>
             </Box>
           </Box>
-        </Box>
-      )}
+        )}
+      </Box>
     </Box>
   );
 }

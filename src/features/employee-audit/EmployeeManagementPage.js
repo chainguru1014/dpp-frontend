@@ -16,13 +16,13 @@ const EmployeeManagementPage = ({ token, isAdmin, companyId }) => {
   return (
     <Box>
       <PageHeader
-        title="Staff"
+        title="Employees"
         description={isAdmin
           ? 'Staff accounts for every company. Staff sign in with a code sent to their work email.'
           : 'Your company’s staff. Add people here so they can sign in to the mobile app with their work email.'}
       />
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab value="roster" label="Staff list" />
+        <Tab value="roster" label="Employee list" />
         <Tab value="auditLog" label="Sign-in history" />
       </Tabs>
       {tab === 'roster' && (
