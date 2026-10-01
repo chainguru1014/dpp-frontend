@@ -1112,3 +1112,27 @@ export const deleteSystemNotification = async (id) => {
     return false;
   }
 };
+// ----- DPP experience (the look of the shopper's product page, per company) -----
+// Returns the raw theme (or null on failure); callers normalize it.
+export const getDppTheme = async (token) => {
+    try {
+        const res = await axios.get(`${Backend_URL}company/dpp-theme`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return res.data?.data?.dppTheme || null;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+};
+
+export const updateDppTheme = async (token, dppTheme) => {
+    try {
+        const res = await axios.put(`${Backend_URL}company/dpp-theme`, { dppTheme }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data?.dppTheme || dppTheme };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Failed to save the design' };
+    }
+};

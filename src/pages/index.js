@@ -85,6 +85,8 @@ import {
   deleteQrCode,
   deleteSecurityQrCode,
   checkUsernameExists,
+  getDppTheme,
+  updateDppTheme,
 } from '../helper';
 import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
@@ -101,6 +103,8 @@ import ProductDraftCard from '../features/products/ProductDraftCard';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import DppPhonePreview from '../features/products/DppPhonePreview';
+import DppThemeEditor from '../features/products/DppThemeEditor';
+import { normalizeDppTheme } from '../utils/dppTheme';
 import PassportReadinessPanel, { PassportScore } from '../features/products/PassportReadinessPanel';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import HistoryPage from '../features/history/HistoryPage';
@@ -158,6 +162,12 @@ const STUDIO_PHASES = [
   { mode: 'experience', label: '2. Experience' },
   { mode: 'print', label: '3. Codes' },
 ];
+// While a colour is being typed it is briefly not a full #rrggbb value —
+// keep what the user typed in the field instead of snapping it back.
+const normalizeThemeDraft = (draft) => ({ ...normalizeDppTheme(draft), ...['pageBg', 'cardBg', 'accent', 'buttonText', 'textColor'].reduce((acc, key) => {
+  if (typeof draft[key] === 'string' && draft[key].length <= 7) acc[key] = draft[key];
+  return acc;
+}, {}) });
 // Default item categories — only used until the managed list (super admin,
 // Products > Manage Categories) loads from the backend.
 const ITEM_CATEGORY_OPTIONS = [
@@ -517,6 +527,39 @@ const InnerPage = () => {
     traceabilityEsg,
     certifications,
     sustainabilityImpact,
+  };
+  // The company's product-page design (studio > Experience). `dppTheme` is
+  // what the editor and preview show; `savedDppTheme` is what the server has.
+  const [dppTheme, setDppTheme] = useState(() => normalizeDppTheme(null));
+  const [savedDppTheme, setSavedDppTheme] = useState(() => normalizeDppTheme(null));
+  const [savingDppTheme, setSavingDppTheme] = useState(false);
+  // Same rule as the worker app's step labels: the company account or a Supervisor.
+  const canEditDppTheme = !isAppUser && (!isEmployeeActor || isSupervisor);
+  const dppThemeDirty = JSON.stringify(dppTheme) !== JSON.stringify(savedDppTheme);
+  useEffect(() => {
+    if (!company || !token || isAppUser) return;
+    let cancelled = false;
+    getDppTheme(token).then((raw) => {
+      if (cancelled) return;
+      const loaded = normalizeDppTheme(raw);
+      setDppTheme(loaded);
+      setSavedDppTheme(loaded);
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [company?._id, token]);
+  const saveDppThemeHandler = async () => {
+    setSavingDppTheme(true);
+    const res = await updateDppTheme(token, dppTheme);
+    setSavingDppTheme(false);
+    if (!res.ok) {
+      notifyError(res.message);
+      return;
+    }
+    const saved = normalizeDppTheme(res.data);
+    setDppTheme(saved);
+    setSavedDppTheme(saved);
+    notifySuccess('Design saved. It now applies to all your products.');
   };
   const [sidebarOpen, setSidebarOpen] = useState(() => loadStateFromStorage('sidebarOpen', true));
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
@@ -2341,6 +2384,17 @@ const InnerPage = () => {
                 {productPanelMode === 'experience' && (
                   <Grid container spacing={3}>
                     <Grid item xs={12} md={7}>
+                      <Box sx={{ mb: 4 }}>
+                        <DppThemeEditor
+                          theme={dppTheme}
+                          onChange={(next) => setDppTheme(normalizeThemeDraft(next))}
+                          onSave={saveDppThemeHandler}
+                          onReset={() => setDppTheme(savedDppTheme)}
+                          saving={savingDppTheme}
+                          dirty={dppThemeDirty}
+                          canEdit={canEditDppTheme}
+                        />
+                      </Box>
                       <PassportReadinessPanel
                         product={formProduct}
                         onGoToStep={(step) => {
@@ -2350,11 +2404,13 @@ const InnerPage = () => {
                       />
                     </Grid>
                     <Grid item xs={12} md={5}>
+                      <Box sx={{ position: { md: 'sticky' }, top: { md: 0 } }}>
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>What shoppers see</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         The product page after scanning the label. Tap a section to open it.
                       </Typography>
-                      <DppPhonePreview product={formProduct} />
+                      <DppPhonePreview product={formProduct} theme={dppTheme} />
+                      </Box>
                     </Grid>
                   </Grid>
                 )}

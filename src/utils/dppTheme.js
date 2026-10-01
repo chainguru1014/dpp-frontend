@@ -2,13 +2,13 @@
 // experience"). A brand can change it per company; anything it leaves out
 // falls back to these defaults, which match the Yometel DPP app.
 
+// One per tab of the app's Product Lifecycle screen, in its default order.
 export const DPP_SECTIONS = [
-  { key: 'details', label: 'Product Details' },
-  { key: 'materials', label: 'Materials' },
+  { key: 'journey', label: 'Journey' },
   { key: 'care', label: 'Care' },
-  { key: 'circularity', label: 'Circularity' },
-  { key: 'compliance', label: 'Compliance' },
-  { key: 'ownership', label: 'Ownership & Warranty' },
+  { key: 'materials', label: 'Materials' },
+  { key: 'dispose', label: 'Repair & recycle' },
+  { key: 'traceability', label: 'Traceability' },
 ];
 
 export const DPP_FONTS = [

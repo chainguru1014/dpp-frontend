@@ -29,7 +29,7 @@ const Empty = ({ color }) => (
 // What each section shows for this product. Returns null when it has nothing,
 // so the preview can say "Nothing added yet" instead of an empty box.
 function sectionBody(key, p, color) {
-  if (key === 'details') {
+  if (key === 'journey') {
     const rows = [
       ['Type', p.productType], ['Color', p.color], ['Size', p.size], ['Style / SKU', p.skuStyleNumber],
       ['Made on', p.manufactureDate], ['Fit', p.detailFacts?.fit], ['Durability', p.detailFacts?.durability],
@@ -46,10 +46,16 @@ function sectionBody(key, p, color) {
   }
   if (key === 'materials') {
     const rows = list(p.materialSize?.materials).filter((m) => text(m?.material));
-    if (!rows.length) return null;
-    return rows.map((m, i) => (
-      <Row key={i} label={`${m.material}${text(m.origin) ? ` · ${m.origin}` : ''}`} value={`${Number(m.percent) || 0}%`} color={color} />
-    ));
+    const certs = list(p.certifications).map((c) => (typeof c === 'string' ? c : c?.title)).filter((c) => text(c));
+    if (!rows.length && !certs.length) return null;
+    return (
+      <>
+        {rows.map((m, i) => (
+          <Row key={i} label={`${m.material}${text(m.origin) ? ` · ${m.origin}` : ''}`} value={`${Number(m.percent) || 0}%`} color={color} />
+        ))}
+        {certs.map((c, i) => <Row key={`c${i}`} label="Certified" value={c} color={color} />)}
+      </>
+    );
   }
   if (key === 'care') {
     const m = p.maintenance || {};
@@ -63,7 +69,7 @@ function sectionBody(key, p, color) {
       </>
     );
   }
-  if (key === 'circularity') {
+  if (key === 'dispose') {
     const d = p.disposal || {};
     const links = [['Repair', d.repairUrl], ['Resell / reuse', d.reuseUrl], ['Rent', d.rentalUrl], ['Recycle', d.disposeUrl]].filter(([, v]) => text(v));
     const s = p.sustainabilityImpact || {};
@@ -78,31 +84,22 @@ function sectionBody(key, p, color) {
       </>
     );
   }
-  if (key === 'compliance') {
+  if (key === 'traceability') {
     const t = p.traceabilityEsg || {};
-    const certs = list(p.certifications).map((c) => (typeof c === 'string' ? c : c?.title)).filter((c) => text(c));
+    const suppliers = list(t.materialOrigins).filter((m) => text(m?.companyName) || text(m?.country));
     const rows = [
       ['Country of origin', t.originCountry || t.madeIn],
+      ['Shipping', t.shippingLog || [t.route?.origin, t.route?.destination].filter((v) => text(v)).join(' → ')],
       ['CO2 from production', t.co2Production],
-      ['CO2 from transport', t.co2Transportation],
+      ['CO2 from transport', t.co2Transportation || t.route?.emissions],
     ].filter(([, v]) => text(v));
-    const docs = list(p.files).length;
-    if (!certs.length && !rows.length && !docs) return null;
+    if (!rows.length && !suppliers.length) return null;
     return (
       <>
-        {certs.map((c, i) => <Row key={i} label="Certified" value={c} color={color} />)}
         {rows.map(([l, v]) => <Row key={l} label={l} value={v} color={color} />)}
-        {docs > 0 && <Row label="Documents" value={`${docs} PDF`} color={color} />}
-      </>
-    );
-  }
-  if (key === 'ownership') {
-    const years = Number(p.warrantyValidYears) || 0;
-    return (
-      <>
-        <Row label="Owner" value="Shown after the shopper claims it" color={color} />
-        {text(p.warrantyStatus) && <Row label="Warranty" value={p.warrantyStatus} color={color} />}
-        {years > 0 && <Row label="Valid for" value={`${years} year${years === 1 ? '' : 's'}`} color={color} />}
+        {suppliers.map((m, i) => (
+          <Row key={i} label={m.material || 'Supplier'} value={[m.companyName, m.country].filter((v) => text(v)).join(' · ')} color={color} />
+        ))}
       </>
     );
   }
@@ -115,7 +112,7 @@ function sectionBody(key, p, color) {
 export default function DppPhonePreview({ product, theme, width = 300 }) {
   const p = product || {};
   const t = normalizeDppTheme(theme);
-  const [open, setOpen] = useState('details');
+  const [open, setOpen] = useState('journey');
   const image = list(p.images)[0];
   const brand = p.brandInfo || {};
   const subtitle = [text(p.color), text(p.skuStyleNumber) && `Style No. ${p.skuStyleNumber}`].filter(Boolean).join(' | ');
