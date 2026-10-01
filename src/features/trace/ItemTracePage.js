@@ -260,6 +260,9 @@ export default function ItemTracePage({ token, query, onQueryHandled }) {
             <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 0.75 }}>
               <Chip size="small" color="primary" label={result.type === 'item' ? `Item #${result.item.qrcodeId}` : `All items (${result.product.totalCodes} codes)`} />
               <Chip size="small" variant="outlined" label={`Found by: ${result.matchedBy}`} />
+              {result.type === 'item' && result.item.blocked && (
+                <Chip size="small" color="error" label="Marked as suspected copy" title={result.item.blockedNote || undefined} />
+              )}
             </Stack>
             {result.type === 'item' && (
               <Box sx={{ mt: 1 }}>

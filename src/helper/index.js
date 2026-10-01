@@ -1155,3 +1155,28 @@ export const searchTrace = (token, q) => traceGet(token, 'search', { q });
 export const getTraceItem = (token, productId, qrcodeId) =>
     traceGet(token, `item/${encodeURIComponent(productId)}/${encodeURIComponent(qrcodeId)}`);
 export const getTraceProduct = (token, productId) => traceGet(token, `product/${encodeURIComponent(productId)}`);
+
+// ----- Security (repeat scans, suspected copies, blocked labels) -----
+export const getSecurityInsights = async (token, days = 90) => {
+    try {
+        const res = await axios.get(`${Backend_URL}security/insights`, {
+            params: { days },
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data || null };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'The security overview could not be loaded' };
+    }
+};
+
+// Marks a label as a suspected copy (shoppers who scan it are warned) or clears that.
+export const setItemBlocked = async (token, product_id, qrcode_id, blocked, note = '') => {
+    try {
+        await axios.post(`${Backend_URL}security/item-status`, { product_id, qrcode_id, blocked, note }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'The label could not be updated' };
+    }
+};

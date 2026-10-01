@@ -58,6 +58,7 @@ import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
+import GppMaybeIcon from '@mui/icons-material/GppMaybe';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
@@ -111,6 +112,7 @@ import DashboardPage from '../features/dashboard/DashboardPage';
 import HistoryPage from '../features/history/HistoryPage';
 import SustainabilityPage from '../features/sustainability/SustainabilityPage';
 import ItemTracePage from '../features/trace/ItemTracePage';
+import SecurityPage from '../features/security/SecurityPage';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ChatPage from '../features/chat/ChatPage';
 import NotificationBell from '../features/notifications/NotificationBell';
@@ -138,7 +140,7 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 const KNOWN_PAGES = [
   'dashboard', 'products', 'newProduct', 'generateCode', 'users', 'companies', 'employeeAuditLog',
   'processSteps', 'captureHistory', 'history', 'sustainability', 'notifications',
-  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch',
+  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security',
 ];
 const pageFromPath = (pathname) => {
   const match = String(pathname || '').match(/^\/admin\/([^/?#]+)/);
@@ -228,7 +230,7 @@ const InnerPage = () => {
   const isEmployeeActor = company?.actorKind === 'Employee';
   // Shared by every non-admin role: LCA, Notifications, Recommendations, Chat.
   const COMMON_PAGES = ['dashboard', 'products', 'profile', 'sustainability', 'allNotifications', 'recommendations', 'chat'];
-  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch'];
+  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security'];
   const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
   const isWorkingEmployee = isEmployeeActor && !isSupervisor;
   // A working employee: only what their job needs — Dashboard, Products
@@ -1768,6 +1770,7 @@ const InnerPage = () => {
       title: 'Activity',
       items: [
         ['itemSearch', 'Find an Item', TravelExploreIcon, canSeeItemSearch],
+        ['security', 'Security', GppMaybeIcon, canSeeItemSearch],
         ['history', isAppUser ? 'My Scans' : 'Scan History', HistoryIcon, !isWorkingEmployee],
         ['captureHistory', isWorkingEmployee ? 'My Captures' : 'Capture History', AssessmentIcon, canSeeCaptureHistory],
         ['sustainability', 'Sustainability', SpaIcon, !isWorkingEmployee],
@@ -2055,6 +2058,18 @@ const InnerPage = () => {
               token={token}
               query={itemSearchQuery}
               onQueryHandled={() => setItemSearchQuery('')}
+            />
+          )}
+
+          {activePage === 'security' && canSeeItemSearch && (
+            <SecurityPage
+              token={token}
+              // Marking a label as a copy: the company account or a Supervisor.
+              canBlock={!isEmployeeActor || isSupervisor}
+              onOpenItem={(row) => {
+                setItemSearchQuery(row.pmcCode || `${window.location.origin}/product/${row.productId}/${row.qrcodeId}`);
+                go('itemSearch');
+              }}
             />
           )}
 

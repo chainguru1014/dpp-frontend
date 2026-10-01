@@ -158,7 +158,7 @@ function sectionBody(key, p, color, live) {
 // The passport itself: the authenticated banner, the product card, then the
 // brand's sections in its order and colours. Shared by the studio's phone
 // preview and the public web product page (`live` there, so links open).
-export function DppPassportView({ product, theme, live = false, itemId = '' }) {
+export function DppPassportView({ product, theme, live = false, itemId = '', blocked = false }) {
   const p = product || {};
   const t = normalizeDppTheme(theme);
   const [open, setOpen] = useState('journey');
@@ -169,6 +169,15 @@ export function DppPassportView({ product, theme, live = false, itemId = '' }) {
 
   return (
       <Box sx={{ fontFamily: dppFontCss(t.fontFamily) }}>
+        {blocked ? (
+          // The brand marked this label as a suspected copy.
+          <Box role="alert" sx={{ bgcolor: '#fdecec', color: '#d32f2f', border: '1px solid #d32f2f', borderRadius: 2, px: 1.25, py: 0.9, mb: 1.5 }}>
+            <Typography sx={{ fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Check this product carefully</Typography>
+            <Typography sx={{ fontSize: 11, fontFamily: 'inherit' }}>
+              This code has been scanned in an unusual pattern. It may be a copy of a genuine label.
+            </Typography>
+          </Box>
+        ) : (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#e7f4e8', color: '#2e7d32', borderRadius: 2, px: 1.25, py: 0.9, mb: 1.5 }}>
           <VerifiedUserIcon sx={{ fontSize: 20 }} />
           <Box>
@@ -176,6 +185,7 @@ export function DppPassportView({ product, theme, live = false, itemId = '' }) {
             {text(itemId) && <Typography sx={{ fontSize: 11, fontFamily: 'inherit' }}>ID: {itemId}</Typography>}
           </Box>
         </Box>
+        )}
 
         <Box sx={{ bgcolor: t.cardBg, borderRadius: 3, p: 1.5, mb: 1.5 }}>
           <Box sx={{ height: 170, borderRadius: 2, bgcolor: '#eef1f6', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', mb: 1.25 }}>

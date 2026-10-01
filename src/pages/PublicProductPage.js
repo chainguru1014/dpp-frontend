@@ -103,6 +103,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId }) => {
             product={product}
             theme={theme}
             live
+            blocked={product.item_status === 'blocked'}
             itemId={product.pmc_code || (product.token_id != null ? String(product.token_id) : '')}
           />
         </Box>
