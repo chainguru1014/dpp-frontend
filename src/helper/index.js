@@ -1136,3 +1136,22 @@ export const updateDppTheme = async (token, dppTheme) => {
         return { ok: false, message: err.response?.data?.message || err.message || 'Failed to save the design' };
     }
 };
+
+// ----- Find an item (search by any code + the item's history) -----
+// Each returns { ok, data } or { ok: false, message }.
+const traceGet = async (token, path, params) => {
+    try {
+        const res = await axios.get(`${Backend_URL}trace/${path}`, {
+            params,
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data || null };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'The search could not be completed' };
+    }
+};
+
+export const searchTrace = (token, q) => traceGet(token, 'search', { q });
+export const getTraceItem = (token, productId, qrcodeId) =>
+    traceGet(token, `item/${encodeURIComponent(productId)}/${encodeURIComponent(qrcodeId)}`);
+export const getTraceProduct = (token, productId) => traceGet(token, `product/${encodeURIComponent(productId)}`);

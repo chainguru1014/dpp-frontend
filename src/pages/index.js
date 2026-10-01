@@ -57,6 +57,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
@@ -109,6 +110,7 @@ import PassportReadinessPanel, { PassportScore } from '../features/products/Pass
 import DashboardPage from '../features/dashboard/DashboardPage';
 import HistoryPage from '../features/history/HistoryPage';
 import SustainabilityPage from '../features/sustainability/SustainabilityPage';
+import ItemTracePage from '../features/trace/ItemTracePage';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ChatPage from '../features/chat/ChatPage';
 import NotificationBell from '../features/notifications/NotificationBell';
@@ -136,7 +138,7 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 const KNOWN_PAGES = [
   'dashboard', 'products', 'newProduct', 'generateCode', 'users', 'companies', 'employeeAuditLog',
   'processSteps', 'captureHistory', 'history', 'sustainability', 'notifications',
-  'allNotifications', 'recommendations', 'chat', 'profile',
+  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch',
 ];
 const pageFromPath = (pathname) => {
   const match = String(pathname || '').match(/^\/admin\/([^/?#]+)/);
@@ -226,7 +228,7 @@ const InnerPage = () => {
   const isEmployeeActor = company?.actorKind === 'Employee';
   // Shared by every non-admin role: LCA, Notifications, Recommendations, Chat.
   const COMMON_PAGES = ['dashboard', 'products', 'profile', 'sustainability', 'allNotifications', 'recommendations', 'chat'];
-  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog'];
+  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch'];
   const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
   const isWorkingEmployee = isEmployeeActor && !isSupervisor;
   // A working employee: only what their job needs — Dashboard, Products
@@ -252,6 +254,11 @@ const InnerPage = () => {
   // Company account (their company's working employees), or a working
   // employee (their own captures only).
   const canSeeCaptureHistory = !isAppUser;
+  // Find an item (search by any code + its history): brands and Supervisors.
+  const canSeeItemSearch = !isAppUser && !isWorkingEmployee;
+  // A search typed into the top bar, handed to the Find an item page.
+  const [headerSearch, setHeaderSearch] = useState('');
+  const [itemSearchQuery, setItemSearchQuery] = useState('');
 
   // AuthPage and AiConciergeConsentPage are separate conditional
   // early-returns below, each mounting its own <AuthShell> — called once
@@ -1760,6 +1767,7 @@ const InnerPage = () => {
     {
       title: 'Activity',
       items: [
+        ['itemSearch', 'Find an Item', TravelExploreIcon, canSeeItemSearch],
         ['history', isAppUser ? 'My Scans' : 'Scan History', HistoryIcon, !isWorkingEmployee],
         ['captureHistory', isWorkingEmployee ? 'My Captures' : 'Capture History', AssessmentIcon, canSeeCaptureHistory],
         ['sustainability', 'Sustainability', SpaIcon, !isWorkingEmployee],
@@ -1858,6 +1866,32 @@ const InnerPage = () => {
             />
           </Box>
           <Box sx={{ flexGrow: 1 }} />
+          {/* Find any item from any page: type or scan a code, press Enter. */}
+          {canSeeItemSearch && (
+            <Box
+              component="form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const q = headerSearch.trim();
+                if (q.length < 2) return;
+                setItemSearchQuery(q);
+                setHeaderSearch('');
+                go('itemSearch');
+              }}
+              sx={{ display: { xs: 'none', md: 'block' }, mr: 1.5, width: { md: 260, lg: 340 } }}
+            >
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="Find an item by any code"
+                inputProps={{ 'aria-label': 'Find an item by any code' }}
+                value={headerSearch}
+                onChange={(e) => setHeaderSearch(e.target.value)}
+                sx={{ bgcolor: '#ffffff', borderRadius: 2, '& .MuiOutlinedInput-notchedOutline': { border: 0 } }}
+                InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
+              />
+            </Box>
+          )}
           <NotificationBell onShowAll={() => setActivePage('allNotifications')} />
           <Button
             color="inherit"
@@ -2013,6 +2047,14 @@ const InnerPage = () => {
                 setPreviousPage('sustainability');
                 editProductHandler(index);
               }}
+            />
+          )}
+
+          {activePage === 'itemSearch' && canSeeItemSearch && (
+            <ItemTracePage
+              token={token}
+              query={itemSearchQuery}
+              onQueryHandled={() => setItemSearchQuery('')}
             />
           )}
 
