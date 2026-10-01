@@ -3,7 +3,6 @@ import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, useMap } from
 import 'leaflet/dist/leaflet.css';
 
 export const LIFECYCLE_COLOR = '#2e7d32';
-export const ACTIVITY_LINE_COLOR = '#2f80c8';
 
 // Keeps every point in view whenever the set of points changes.
 function FitToPoints({ points }) {
@@ -29,7 +28,8 @@ function FitToPoints({ points }) {
 //   lifecycle — the steps the brand entered (materials, made, shipped):
 //               green dots joined by a solid green line;
 //   points    — what was actually recorded (scans, work steps, transfers):
-//               dots in each event's colour joined by a dashed blue line.
+//               a dot in each event's colour, with no line between them
+//               (only the lifecycle is a journey).
 // Each point: { lat, lng, label, color }. Loaded lazily.
 export default function ItemMap({ points = [], lifecycle = [], height = 360 }) {
   const activity = points.map((p) => [p.lat, p.lng]);
@@ -57,7 +57,6 @@ export default function ItemMap({ points = [], lifecycle = [], height = 360 }) {
           <Tooltip>{p.label}</Tooltip>
         </CircleMarker>
       ))}
-      {activity.length > 1 && <Polyline positions={activity} pathOptions={{ color: ACTIVITY_LINE_COLOR, weight: 2, dashArray: '6 6' }} />}
       {points.map((p, i) => (
         <CircleMarker
           key={`a${i}`}

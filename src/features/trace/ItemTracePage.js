@@ -319,7 +319,8 @@ export default function ItemTracePage({
               )}
             </ProductCard>
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2, alignItems: 'start' }}>
+            {/* Lists take a third of the width, the map two thirds. */}
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(0, 2fr)' }, gap: 2, alignItems: 'start' }}>
               <Stack spacing={2}>
               {/* What the brand entered for the product: materials, where it was made, how it was shipped. */}
               <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2 }}>
@@ -375,12 +376,12 @@ export default function ItemTracePage({
                         <Typography variant="body2" color="text.secondary">Product lifecycle ({lifecyclePoints.length} place{lifecyclePoints.length === 1 ? '' : 's'})</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                        <Box sx={{ width: 22, height: 0, borderTop: '4px dashed #2f80c8' }} />
+                        <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: '#2f80c8', border: '2px solid #fff', boxShadow: '0 0 0 1px #c5cbd6' }} />
                         <Typography variant="body2" color="text.secondary">Recorded activity ({mapPoints.length} of {events.length} with a place)</Typography>
                       </Box>
                     </Stack>
                     <Suspense fallback={<Loader label="Loading the map…" />}>
-                      <ItemMap points={mapPoints} lifecycle={lifecyclePoints} height={440} />
+                      <ItemMap points={mapPoints} lifecycle={lifecyclePoints} height={520} />
                     </Suspense>
                   </>
                 ) : (

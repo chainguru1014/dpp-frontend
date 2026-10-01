@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Box } from '@mui/material';
-import { ACTIVITY_LINE_COLOR, LIFECYCLE_COLOR } from './ItemMap';
+import { LIFECYCLE_COLOR } from './ItemMap';
 
 // Set REACT_APP_GOOGLE_MAPS_KEY (a Google Cloud "Maps JavaScript API" key) to
 // show Product Activity on Google Maps. Without it the page uses the
@@ -28,8 +28,8 @@ const loadGoogleMaps = () => {
 };
 
 // The same picture as ItemMap, on Google Maps: the lifecycle steps the brand
-// entered (green, solid line) and what was actually recorded (each event's
-// colour, dashed blue line). Each point: { lat, lng, label, color }.
+// entered (green dots joined by a line, in order) and what was actually
+// recorded (a dot in each event's colour, no line). Each point: { lat, lng, label, color }.
 export default function GoogleItemMap({ points = [], lifecycle = [], height = 360 }) {
   const ref = useRef(null);
   const [failed, setFailed] = useState(false);
@@ -66,15 +66,6 @@ export default function GoogleItemMap({ points = [], lifecycle = [], height = 36
         }
         lifecycle.forEach((p) => dot(p, 8, LIFECYCLE_COLOR));
 
-        if (points.length > 1) {
-          // A dashed line: an invisible stroke carrying repeated dash symbols.
-          drawn.push(new maps.Polyline({
-            map,
-            path: points.map((p) => ({ lat: p.lat, lng: p.lng })),
-            strokeOpacity: 0,
-            icons: [{ icon: { path: 'M 0,-1 0,1', strokeOpacity: 1, strokeColor: ACTIVITY_LINE_COLOR, scale: 3 }, offset: '0', repeat: '14px' }],
-          }));
-        }
         points.forEach((p, i) => dot(p, i === points.length - 1 ? 9 : 6, p.color));
 
         const count = lifecycle.length + points.length;
