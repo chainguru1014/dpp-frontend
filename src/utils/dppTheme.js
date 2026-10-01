@@ -9,6 +9,7 @@ export const DPP_SECTIONS = [
   { key: 'materials', label: 'Materials' },
   { key: 'dispose', label: 'Repair & recycle' },
   { key: 'traceability', label: 'Traceability' },
+  { key: 'compliance', label: 'Compliance' },
 ];
 
 export const DPP_FONTS = [

@@ -1,45 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Container, IconButton, Avatar } from '@mui/material';
-import { Slide } from 'react-slideshow-image';
-import 'react-slideshow-image/dist/styles.css';
-import { Backend_URL, getFileUrl } from '../helper';
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
-import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import yometelLogo from '../assets/logo-y.png';
-import appStoreBadge from '../assets/app-store-badge.png';
-import googlePlayBadge from '../assets/google-play-badge.png';
-import QrCodeIcon from '@mui/icons-material/QrCode';
+import { Box, Typography, IconButton, CircularProgress } from '@mui/material';
 import TwitterIcon from '@mui/icons-material/Twitter';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import InstagramIcon from '@mui/icons-material/Instagram';
+import { Backend_URL } from '../helper';
+import yometelLogo from '../assets/logo-y.png';
+import { DppPassportView } from '../features/products/DppPhonePreview';
+import { normalizeDppTheme } from '../utils/dppTheme';
 
-// Sound wave icon component
-const SoundWaveIcon = () => (
-  <Box
-    sx={{
-      display: 'flex',
-      alignItems: 'center',
-      height: '20px',
-      justifyContent: 'center',
-      gap: '3px',
-    }}
-  >
-    {[8, 12, 16, 12, 8].map((height, index) => (
-      <Box
-        key={index}
-        sx={{
-          width: '3px',
-          height: `${height}px`,
-          backgroundColor: '#1b4f72',
-          borderRadius: '2px',
-        }}
-      />
-    ))}
-  </Box>
-);
-
-const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
+// The web product page a scanned label opens when the shopper isn't using
+// the app: the product's Digital Product Passport in the brand's own look —
+// the same passport view the admin panel's studio previews.
+const PublicProductPage = ({ qrcodeKey, productId, qrcodeId }) => {
   const [product, setProduct] = useState(null);
+  const [theme, setTheme] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -48,7 +22,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
       const hasProductIds = !!productId && qrcodeId != null;
       const hasLegacyKey = !!qrcodeKey;
       if (!hasProductIds && !hasLegacyKey) {
-        setError('Product key is missing');
+        setError('This link is missing its product code.');
         setLoading(false);
         return;
       }
@@ -67,11 +41,11 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
         if (response.ok && data.status === 'success') {
           setProduct(data.data);
         } else {
-          setError(data.message || 'Product not found');
+          setError(data.message || 'We could not find this product.');
         }
       } catch (err) {
         console.error('Error fetching product:', err);
-        setError('Failed to load product information');
+        setError('The product information could not be loaded. Please check your connection and try again.');
       } finally {
         setLoading(false);
       }
@@ -80,512 +54,98 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, onBack }) => {
     fetchProduct();
   }, [qrcodeKey, productId, qrcodeId]);
 
-  const slideProperties = {
-    prevArrow: (
-      <IconButton
-        sx={{
-          position: 'absolute',
-          left: 10,
-          zIndex: 1,
-          bgcolor: 'rgba(255, 255, 255, 0.8)',
-          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' },
-        }}
-      >
-        <ArrowBackIosIcon />
-      </IconButton>
-    ),
-    nextArrow: (
-      <IconButton
-        sx={{
-          position: 'absolute',
-          right: 10,
-          zIndex: 1,
-          bgcolor: 'rgba(255, 255, 255, 0.8)',
-          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' },
-        }}
-      >
-        <ArrowForwardIosIcon />
-      </IconButton>
-    ),
-    indicators: true,
-    autoplay: false,
-  };
+  // The brand's look. Any failure just leaves the standard look.
+  const rawCompany = product?.company_id;
+  const companyId = rawCompany && typeof rawCompany === 'object' ? rawCompany._id : rawCompany;
+  useEffect(() => {
+    if (!companyId) return;
+    let cancelled = false;
+    fetch(`${Backend_URL}company/${encodeURIComponent(String(companyId))}/dpp-theme`)
+      .then((r) => r.json())
+      .then((j) => { if (!cancelled) setTheme(j?.data?.dppTheme || null); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [companyId]);
 
-  // Show mobile app design when loading or no product
+  const t = normalizeDppTheme(theme);
+
   if (loading || error || !product) {
     return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          bgcolor: '#E3F2FD', // Light pastel blue background
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {/* Header */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '15px 20px',
-            backgroundColor: 'transparent',
-          }}
-        >
-          {/* QR Code Icon */}
-          <Box
-            sx={{
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              padding: '8px',
-            }}
-          >
-            <QrCodeIcon sx={{ fontSize: 32, color: '#1b4f72' }} />
-          </Box>
-
-          {/* Yometel Logo with Sound Wave */}
-          <Box
-            sx={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Box
-              component="img"
-              src={yometelLogo}
-              alt="Yometel"
-              sx={{ width: 40, height: 40, display: 'block' }}
-            />
-          </Box>
-
-          {/* Avatar */}
-          <Box
-            sx={{
-              width: '48px',
-              height: '48px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Avatar
-              sx={{
-                width: 36,
-                height: 36,
-                bgcolor: '#1b4f72',
-                fontSize: '16px',
-                fontWeight: 400,
-              }}
-            >
-              K
-            </Avatar>
-          </Box>
-        </Box>
-
-        {/* Main Content - QR Code Scanner Card */}
-        <Box
-          sx={{
-            flex: 1,
-            backgroundColor: '#E3F2FD',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: { xs: '16px 10px', sm: '40px 20px' },
-          }}
-        >
-          <Box
-            sx={{
-              width: '90%',
-              maxWidth: '350px',
-              aspectRatio: '1 / 1',
-              backgroundColor: '#fff',
-              borderRadius: '16px',
-              position: 'relative',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            {/* Four quadrants */}
-            <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
-              <Box sx={{ flex: 1 }} />
-              <Box
-                sx={{
-                  flex: 1,
-                  borderLeft: '1px solid #E0E0E0',
-                }}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
-              <Box
-                sx={{
-                  flex: 1,
-                  borderTop: '1px solid #E0E0E0',
-                }}
-              />
-              <Box
-                sx={{
-                  flex: 1,
-                  borderTop: '1px solid #E0E0E0',
-                  borderLeft: '1px solid #E0E0E0',
-                }}
-              />
-            </Box>
-
-            {/* Text overlay */}
-            <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '20px',
-              }}
-            >
-              <Typography
-                sx={{
-                  fontSize: '16px',
-                  color: '#999',
-                  textAlign: 'center',
-                  fontWeight: 400,
-                }}
-              >
-                Scan QR code to view product
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-
-        {/* Footer */}
-        <Box
-          sx={{
-            backgroundColor: 'transparent',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: '12px',
-              color: '#999',
-              lineHeight: '16px',
-            }}
-          >
-            Digital
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: '12px',
-              color: '#999',
-              lineHeight: '16px',
-            }}
-          >
-            Product
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: '12px',
-              color: '#999',
-              lineHeight: '16px',
-            }}
-          >
-            Passport
-          </Typography>
-        </Box>
+      <Box sx={{ minHeight: '100vh', bgcolor: '#f4f7fc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, p: 3, textAlign: 'center' }}>
+        <Box component="img" src={yometelLogo} alt="Yometel" sx={{ width: 48, height: 48 }} />
+        {loading ? (
+          <>
+            <CircularProgress />
+            <Typography color="text.secondary">Loading the product passport…</Typography>
+          </>
+        ) : (
+          <>
+            <Typography variant="h6" component="h1">Product not found</Typography>
+            <Typography color="text.secondary" sx={{ maxWidth: 420 }}>
+              {error || 'We could not find this product.'} Please scan the label on the product again.
+            </Typography>
+          </>
+        )}
       </Box>
     );
   }
 
-  // When product is loaded, still show mobile app design layout
-  return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: '#E3F2FD', // Light pastel blue background
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '15px 20px',
-          backgroundColor: 'transparent',
-        }}
-      >
-        {/* QR Code Icon */}
-        <Box
-          sx={{
-            width: '48px',
-            height: '48px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: '8px',
-          }}
-        >
-          <QrCodeIcon sx={{ fontSize: 32, color: '#1b4f72' }} />
-        </Box>
+  const shareUrl = window.location.href;
+  const shareText = `${product.name ? `${product.name} — ` : ''}Digital Product Passport`;
 
-        {/* Yometel Logo with Sound Wave */}
-        <Box
-          sx={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Box
-            component="img"
-            src={yometelLogo}
-            alt="Yometel"
-            sx={{ width: 40, height: 40, display: 'block' }}
+  return (
+    <Box sx={{ minHeight: '100vh', bgcolor: t.pageBg, display: 'flex', flexDirection: 'column' }}>
+      <Box component="main" sx={{ flex: 1, width: '100%', maxWidth: 520, mx: 'auto', p: { xs: 1.5, sm: 3 } }}>
+        {/* The passport view is sized for the studio's phone preview; scale
+            it up to a comfortable reading size on a real screen. */}
+        <Box sx={{ zoom: 1.3 }}>
+          <DppPassportView
+            product={product}
+            theme={theme}
+            live
+            itemId={product.pmc_code || (product.token_id != null ? String(product.token_id) : '')}
           />
         </Box>
 
-        {/* Avatar */}
-        <Box
-          sx={{
-            width: '48px',
-            height: '48px',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Avatar
-            sx={{
-              width: 36,
-              height: 36,
-              bgcolor: '#1b4f72',
-              fontSize: '16px',
-              fontWeight: 400,
+        {/* Social share — repost this product to X, LinkedIn or Instagram */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 2 }}>
+          <Typography sx={{ color: t.textColor, mr: 0.5 }}>Share:</Typography>
+          <IconButton
+            aria-label="Share on X"
+            sx={{ color: '#000' }}
+            onClick={() => window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`, '_blank', 'noopener,width=600,height=600')}
+          >
+            <TwitterIcon />
+          </IconButton>
+          <IconButton
+            aria-label="Share on LinkedIn"
+            sx={{ color: '#0a66c2' }}
+            onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank', 'noopener,width=600,height=600')}
+          >
+            <LinkedInIcon />
+          </IconButton>
+          <IconButton
+            aria-label="Share on Instagram"
+            sx={{ color: '#e4405f' }}
+            onClick={() => {
+              // Instagram has no web post-intent; use the native share sheet on
+              // mobile (lets the user pick Instagram), else copy the link.
+              if (navigator.share) {
+                navigator.share({ title: product.name || 'Product', url: shareUrl }).catch(() => {});
+              } else {
+                navigator.clipboard?.writeText(shareUrl);
+                window.open('https://www.instagram.com/', '_blank', 'noopener');
+              }
             }}
           >
-            K
-          </Avatar>
+            <InstagramIcon />
+          </IconButton>
         </Box>
       </Box>
 
-      {/* Main Content - Product Display Card */}
-      <Box
-        sx={{
-          flex: 1,
-          backgroundColor: '#E3F2FD',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: { xs: '16px 10px', sm: '40px 20px' },
-        }}
-      >
-        <Box
-          sx={{
-            width: '90%',
-            maxWidth: '350px',
-            backgroundColor: '#fff',
-            borderRadius: '16px',
-            padding: '20px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          }}
-        >
-          {/* Product Images */}
-          {product.images && product.images.length > 0 && (
-            <Box
-              sx={{
-                borderRadius: 2,
-                overflow: 'hidden',
-                mb: 2,
-                maxHeight: '300px',
-              }}
-            >
-              <Slide {...slideProperties}>
-                {product.images.map((image, index) => (
-                  <Box
-                    key={index}
-                    sx={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: '#fafafa',
-                      padding: 2,
-                    }}
-                  >
-                    <img
-                      src={getFileUrl(image)}
-                      alt={`${product.name || 'Product'} - Image ${index + 1}`}
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: '300px',
-                        width: 'auto',
-                        height: 'auto',
-                        objectFit: 'contain',
-                      }}
-                    />
-                  </Box>
-                ))}
-              </Slide>
-            </Box>
-          )}
-
-          {/* Product Details */}
-          {product.name && (
-            <Typography
-              sx={{
-                fontSize: '18px',
-                fontWeight: 400,
-                mb: 1,
-                color: '#333',
-              }}
-            >
-              {product.name}
-            </Typography>
-          )}
-
-          {product.model && (
-            <Typography
-              sx={{
-                fontSize: '14px',
-                color: '#666',
-                mb: 1,
-              }}
-            >
-              Model: {product.model}
-            </Typography>
-          )}
-
-          {product.company_id && product.company_id.name && (
-            <Typography
-              sx={{
-                fontSize: '14px',
-                color: '#666',
-                mb: 1,
-              }}
-            >
-              Brand: {product.company_id.name}
-            </Typography>
-          )}
-
-          {product.detail && (
-            <Typography
-              sx={{
-                fontSize: '14px',
-                color: '#666',
-                lineHeight: 1.6,
-                whiteSpace: 'pre-wrap',
-                mt: 1,
-              }}
-            >
-              {product.detail}
-            </Typography>
-          )}
-
-          {/* Social share — repost this product to X, LinkedIn or Instagram */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 2, pt: 1.5, borderTop: '1px solid #eee' }}>
-            <Typography sx={{ fontSize: '13px', color: '#666', mr: 0.5 }}>Share:</Typography>
-            <IconButton
-              size="small"
-              aria-label="Share on X"
-              sx={{ color: '#000' }}
-              onClick={() =>
-                window.open(
-                  `https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent((product?.name ? product.name + ' — ' : '') + 'Digital Product Passport')}`,
-                  '_blank',
-                  'noopener,width=600,height=600'
-                )
-              }
-            >
-              <TwitterIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              aria-label="Share on LinkedIn"
-              sx={{ color: '#0a66c2' }}
-              onClick={() =>
-                window.open(
-                  `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`,
-                  '_blank',
-                  'noopener,width=600,height=600'
-                )
-              }
-            >
-              <LinkedInIcon fontSize="small" />
-            </IconButton>
-            <IconButton
-              size="small"
-              aria-label="Share on Instagram"
-              sx={{ color: '#e4405f' }}
-              onClick={() => {
-                // Instagram has no web post-intent; use the native share sheet on
-                // mobile (lets the user pick Instagram), else copy the link.
-                if (navigator.share) {
-                  navigator.share({ title: product?.name || 'Product', url: window.location.href }).catch(() => {});
-                } else {
-                  navigator.clipboard?.writeText(window.location.href);
-                  window.open('https://www.instagram.com/', '_blank', 'noopener');
-                }
-              }}
-            >
-              <InstagramIcon fontSize="small" />
-            </IconButton>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Footer */}
-      <Box
-        sx={{
-          backgroundColor: 'transparent',
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-end',
-        }}
-      >
-        <Typography
-          sx={{
-            fontSize: '12px',
-            color: '#999',
-            lineHeight: '16px',
-          }}
-        >
-          Digital
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '12px',
-            color: '#999',
-            lineHeight: '16px',
-          }}
-        >
-          Product
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: '12px',
-            color: '#999',
-            lineHeight: '16px',
-          }}
-        >
-          Passport
-        </Typography>
+      <Box component="footer" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, p: 2 }}>
+        <Box component="img" src={yometelLogo} alt="" sx={{ width: 20, height: 20 }} />
+        <Typography variant="body2" sx={{ color: t.textColor, opacity: 0.8 }}>Digital Product Passport by Yometel</Typography>
       </Box>
     </Box>
   );

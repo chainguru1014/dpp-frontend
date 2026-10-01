@@ -10,6 +10,26 @@ import { dppFontCss, dppSectionLabel, normalizeDppTheme } from '../../utils/dppT
 const text = (v) => String(v ?? '').trim();
 const list = (v) => (Array.isArray(v) ? v : []);
 
+const safeUrl = (url) => (/^https?:\/\//i.test(text(url)) ? text(url) : `https://${text(url)}`);
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+// A row whose value is a link. In the studio preview (`live` off) it only
+// looks like one, so clicking around the preview never leaves the page.
+function LinkRow({ label, href, color, live, linkText = 'Open ›' }) {
+  return (
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1.5, py: 0.5 }}>
+      <Typography sx={{ fontSize: 12, opacity: 0.7, color, fontFamily: 'inherit', wordBreak: 'break-word' }}>{label}</Typography>
+      {live ? (
+        <Box component="a" href={href} target="_blank" rel="noopener noreferrer" sx={{ fontSize: 12, fontWeight: 600, color, fontFamily: 'inherit', flexShrink: 0 }}>
+          {linkText}
+        </Box>
+      ) : (
+        <Typography sx={{ fontSize: 12, fontWeight: 600, color, fontFamily: 'inherit', flexShrink: 0 }}>{linkText}</Typography>
+      )}
+    </Box>
+  );
+}
+
 function Row({ label, value, color }) {
   if (!text(value)) return null;
   return (
@@ -28,7 +48,7 @@ const Empty = ({ color }) => (
 
 // What each section shows for this product. Returns null when it has nothing,
 // so the preview can say "Nothing added yet" instead of an empty box.
-function sectionBody(key, p, color) {
+function sectionBody(key, p, color, live) {
   if (key === 'journey') {
     const rows = [
       ['Type', p.productType], ['Color', p.color], ['Size', p.size], ['Style / SKU', p.skuStyleNumber],
@@ -78,9 +98,38 @@ function sectionBody(key, p, color) {
     if (!links.length && !impact.length && !legacy.length) return null;
     return (
       <>
-        {links.map(([l]) => <Row key={l} label={l} value="Open link ›" color={color} />)}
+        {links.map(([l, url]) => <LinkRow key={l} label={l} href={safeUrl(url)} color={color} live={live} />)}
         {impact.map((it, i) => <Row key={i} label={it.label || 'Impact'} value={it.value} color={color} />)}
         {!impact.length && legacy.map(([l, v]) => <Row key={l} label={l} value={v} color={color} />)}
+      </>
+    );
+  }
+  if (key === 'compliance') {
+    const certs = list(p.certifications)
+      .map((c) => (typeof c === 'string' ? { title: c } : c))
+      .filter((c) => c && text(c.title));
+    const docs = [...list(p.files), ...list(p.manualsAndCerts?.files)].filter((d) => text(d));
+    const years = Number(p.warrantyValidYears) || 0;
+    const origin = p.traceabilityEsg?.originCountry || p.traceabilityEsg?.madeIn;
+    if (!certs.length && !docs.length && !text(p.warrantyStatus) && !years && !text(origin)) return null;
+    return (
+      <>
+        {certs.map((c, i) => {
+          const expired = text(c.validUntil) && c.validUntil < todayIso();
+          const meta = [
+            text(c.issuer) && `Issued by ${c.issuer}`,
+            text(c.validUntil) && `${expired ? 'Expired' : 'Valid until'} ${c.validUntil}`,
+          ].filter(Boolean).join(' · ');
+          return text(c.fileUrl)
+            ? <LinkRow key={i} label={`${c.title}${meta ? ` — ${meta}` : ''}`} href={getFileUrl(c.fileUrl)} color={color} live={live} linkText="View ›" />
+            : <Row key={i} label={c.title} value={meta || 'Certified'} color={color} />;
+        })}
+        {docs.map((d, i) => (
+          <LinkRow key={`d${i}`} label={decodeURIComponent(String(d).split('/').pop() || 'Document')} href={getFileUrl(d)} color={color} live={live} />
+        ))}
+        <Row label="Country of origin" value={origin} color={color} />
+        <Row label="Warranty" value={p.warrantyStatus} color={color} />
+        {years > 0 && <Row label="Warranty valid for" value={`${years} year${years === 1 ? '' : 's'}`} color={color} />}
       </>
     );
   }
@@ -106,10 +155,10 @@ function sectionBody(key, p, color) {
   return null;
 }
 
-// A phone-sized picture of the product page a shopper sees after scanning,
-// drawn from the product as it is right now (saved or still being typed) and
-// the brand's theme. Sections open and close like the real page.
-export default function DppPhonePreview({ product, theme, width = 300 }) {
+// The passport itself: the authenticated banner, the product card, then the
+// brand's sections in its order and colours. Shared by the studio's phone
+// preview and the public web product page (`live` there, so links open).
+export function DppPassportView({ product, theme, live = false, itemId = '' }) {
   const p = product || {};
   const t = normalizeDppTheme(theme);
   const [open, setOpen] = useState('journey');
@@ -119,24 +168,13 @@ export default function DppPhonePreview({ product, theme, width = 300 }) {
   const sections = t.sections.filter((s) => s.visible);
 
   return (
-    <Box
-      aria-label="Preview of the shopper's product page"
-      sx={{
-        width,
-        maxWidth: '100%',
-        mx: 'auto',
-        border: '10px solid #1f2430',
-        borderRadius: '34px',
-        overflow: 'hidden',
-        boxShadow: 4,
-        bgcolor: t.pageBg,
-        fontFamily: dppFontCss(t.fontFamily),
-      }}
-    >
-      <Box sx={{ height: 520, overflowY: 'auto', p: 1.5 }}>
+      <Box sx={{ fontFamily: dppFontCss(t.fontFamily) }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#e7f4e8', color: '#2e7d32', borderRadius: 2, px: 1.25, py: 0.9, mb: 1.5 }}>
           <VerifiedUserIcon sx={{ fontSize: 20 }} />
-          <Typography sx={{ fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Product ID authenticated</Typography>
+          <Box>
+            <Typography sx={{ fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Product ID authenticated</Typography>
+            {text(itemId) && <Typography sx={{ fontSize: 11, fontFamily: 'inherit' }}>ID: {itemId}</Typography>}
+          </Box>
         </Box>
 
         <Box sx={{ bgcolor: t.cardBg, borderRadius: 3, p: 1.5, mb: 1.5 }}>
@@ -161,7 +199,7 @@ export default function DppPhonePreview({ product, theme, width = 300 }) {
 
         {sections.map(({ key }) => {
           const isOpen = open === key;
-          const body = isOpen ? sectionBody(key, p, t.textColor) : null;
+          const body = isOpen ? sectionBody(key, p, t.textColor, live) : null;
           return (
             <Box key={key} sx={{ mb: 1 }}>
               <Box
@@ -197,6 +235,31 @@ export default function DppPhonePreview({ product, theme, width = 300 }) {
             </Box>
           );
         })}
+      </Box>
+  );
+}
+
+// A phone-sized picture of the product page a shopper sees after scanning,
+// drawn from the product as it is right now (saved or still being typed) and
+// the brand's theme. Sections open and close like the real page.
+export default function DppPhonePreview({ product, theme, width = 300 }) {
+  const t = normalizeDppTheme(theme);
+  return (
+    <Box
+      aria-label="Preview of the shopper's product page"
+      sx={{
+        width,
+        maxWidth: '100%',
+        mx: 'auto',
+        border: '10px solid #1f2430',
+        borderRadius: '34px',
+        overflow: 'hidden',
+        boxShadow: 4,
+        bgcolor: t.pageBg,
+      }}
+    >
+      <Box sx={{ height: 520, overflowY: 'auto', p: 1.5 }}>
+        <DppPassportView product={product} theme={theme} />
       </Box>
     </Box>
   );
