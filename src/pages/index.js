@@ -61,6 +61,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
+import PaletteIcon from '@mui/icons-material/Palette';
 import InsightsIcon from '@mui/icons-material/Insights';
 import GroupsIcon from '@mui/icons-material/Groups';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
@@ -98,6 +99,7 @@ import {
   checkUsernameExists,
   getDppTheme,
   updateDppTheme,
+  getBrand,
 } from '../helper';
 import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
@@ -113,7 +115,6 @@ import ProductsTable, { ProductRow } from '../features/products/ProductsTable';
 import ProductDraftCard from '../features/products/ProductDraftCard';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
-import DppThemeEditor from '../features/products/DppThemeEditor';
 import ProductImportDialog from '../features/products/ProductImportDialog';
 import { downloadCsv } from '../utils/csv';
 import { productsToCsvRows } from '../utils/productCsv';
@@ -125,6 +126,7 @@ import HistoryPage from '../features/history/HistoryPage';
 import SustainabilityPage from '../features/sustainability/SustainabilityPage';
 import ItemTracePage from '../features/trace/ItemTracePage';
 import SecurityPage from '../features/security/SecurityPage';
+import BrandPage from '../features/brand/BrandPage';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ChatPage from '../features/chat/ChatPage';
 import NotificationBell from '../features/notifications/NotificationBell';
@@ -155,7 +157,7 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 const KNOWN_PAGES = [
   'dashboard', 'products', 'newProduct', 'generateCode', 'users', 'companies', 'employeeAuditLog',
   'processSteps', 'captureHistory', 'history', 'sustainability', 'notifications',
-  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security',
+  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security', 'brand',
 ];
 const pageFromPath = (pathname) => {
   const match = String(pathname || '').match(/^\/admin\/([^/?#]+)/);
@@ -245,7 +247,7 @@ const InnerPage = () => {
   const isEmployeeActor = company?.actorKind === 'Employee';
   // Shared by every non-admin role: LCA, Notifications, Recommendations, Chat.
   const COMMON_PAGES = ['dashboard', 'products', 'profile', 'sustainability', 'allNotifications', 'recommendations', 'chat'];
-  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security'];
+  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security', 'brand'];
   const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
   const isWorkingEmployee = isEmployeeActor && !isSupervisor;
   // A working employee: only what their job needs — Dashboard, Products
@@ -570,6 +572,10 @@ const InnerPage = () => {
   const [savingDppTheme, setSavingDppTheme] = useState(false);
   // Same rule as the worker app's step labels: the company account or a Supervisor.
   const canEditDppTheme = !isAppUser && (!isEmployeeActor || isSupervisor);
+  // The company's brand details (Brand page): what a new product starts with.
+  const [companyBrand, setCompanyBrand] = useState(null);
+  // The product just added, while the "What next?" window is open.
+  const [addedProduct, setAddedProduct] = useState(null);
   const dppThemeDirty = JSON.stringify(dppTheme) !== JSON.stringify(savedDppTheme);
   useEffect(() => {
     if (!company || !token || isAppUser) return;
@@ -579,6 +585,9 @@ const InnerPage = () => {
       const loaded = normalizeDppTheme(raw);
       setDppTheme(loaded);
       setSavedDppTheme(loaded);
+    });
+    getBrand(token).then((res) => {
+      if (!cancelled) setCompanyBrand(res?.brand || null);
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -824,12 +833,15 @@ const InnerPage = () => {
     setGtin('');
     setGs1DigitalLink(false);
     setDetailFacts({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
-    // A company's new product starts with the brand of one it already has,
-    // so adding a product does not mean typing the brand in again. With no
-    // product yet it starts from the company's own name — never another
+    // A company's new product starts with the brand set on its Brand page
+    // (or, before that is filled in, the brand of a product it already
+    // has), so adding a product does not mean typing the brand in again.
+    // With neither it starts from the company's own name — never another
     // brand's. The super admin (who sees every company's products) types
     // the brand in.
-    const ownBrand = isAdmin ? null : (products.find((p) => p.brandInfo?.name && p.brandInfo?.logoUrl)?.brandInfo || null);
+    const ownBrand = isAdmin
+      ? null
+      : ((companyBrand?.name && companyBrand) || products.find((p) => p.brandInfo?.name && p.brandInfo?.logoUrl)?.brandInfo || null);
     setBrandInfo({
       name: ownBrand?.name || (isAdmin ? '' : (company?.name || '')),
       detail: ownBrand?.detail || '',
@@ -1048,10 +1060,13 @@ const InnerPage = () => {
     setSavingProduct(false);
     // Keep the form (and everything typed) open if saving failed.
     if (!ok) return;
-    await loadProductsForCurrentCompany();
+    const list = await loadProductsForCurrentCompany();
     resetFields();
     // Redirect to previous page (dashboard or products)
     setActivePage(previousPage === 'newProduct' ? 'products' : (previousPage || 'products'));
+    // ...and ask what to do next with the new product.
+    const added = (list || []).find((p) => p._id === ok._id);
+    if (added) setAddedProduct(added);
   };
 
   const updateProductHandler = async () => {
@@ -1124,9 +1139,10 @@ const InnerPage = () => {
     })();
   }, [company]);
 
-  const editProductHandler = async (index) => {
-    if (typeof index !== 'number' || index < 0 || index >= products.length) return;
-    const prod = products[index];
+  // Opens the product window for a product, given either its position in
+  // `products` or the product itself.
+  const editProductHandler = async (indexOrProduct) => {
+    const prod = typeof indexOrProduct === 'number' ? products[indexOrProduct] : indexOrProduct;
     if (!prod) return;
     setSelectedProduct(prod);
     setTotalAmount(prod.total_minted_amount || 0);
@@ -1387,6 +1403,7 @@ const InnerPage = () => {
     }
 
     setProductsLoading(true);
+    let loaded = [];
     try {
       console.log('Loading products for company:', company);
       console.log('Company _id:', company._id);
@@ -1425,6 +1442,7 @@ const InnerPage = () => {
           ...p,
         }));
         setProducts(ptmp);
+        loaded = ptmp;
         // Default the Products page's info card to the first row of the table
         // (rows render in `ptmp` order) — only when nothing is already
         // selected, so this never clobbers a selection the user (or another
@@ -1442,6 +1460,7 @@ const InnerPage = () => {
     } finally {
       setProductsLoading(false);
     }
+    return loaded;
   };
 
   useEffect(() => {
@@ -1507,9 +1526,16 @@ const InnerPage = () => {
   // Opening the page always starts on the first product; also covers the
   // product list arriving after the page is already open.
   const generateCodeDefaultedRef = useRef(false);
+  // Set when another page opens Generate Code for a product it already chose.
+  const keepGenerateSelectionRef = useRef(false);
   useEffect(() => {
     if (activePage !== 'generateCode') {
       generateCodeDefaultedRef.current = false;
+      return;
+    }
+    if (keepGenerateSelectionRef.current) {
+      keepGenerateSelectionRef.current = false;
+      generateCodeDefaultedRef.current = true;
       return;
     }
     if (generateCodeDefaultedRef.current || !products.length) return;
@@ -1730,8 +1756,9 @@ const InnerPage = () => {
 
   // Closing the product window: a click outside it never closes it, and
   // unsaved changes need a confirmation (they used to vanish silently).
+  // Resolves true when the window closed, false when the user kept editing.
   const closeProductDialog = async (event, reason) => {
-    if (reason === 'backdropClick') return;
+    if (reason === 'backdropClick') return false;
     if (isProductFormDirty) {
       const discard = await confirmAction({
         title: 'Discard your changes?',
@@ -1740,10 +1767,11 @@ const InnerPage = () => {
         cancelText: 'Keep editing',
         danger: true,
       });
-      if (!discard) return;
+      if (!discard) return false;
     }
     setCaptureStart([false, false, false]);
     setActivePage(previousPage && previousPage !== 'newProduct' ? previousPage : 'products');
+    return true;
   };
 
   const go = (page) => {
@@ -1804,6 +1832,7 @@ const InnerPage = () => {
       title: 'Products',
       items: [
         ['products', isAppUser ? 'My Products' : 'Products', Inventory2Icon, true],
+        ['brand', 'Brand', PaletteIcon, canSeeItemSearch],
         ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
       ],
     },
@@ -1839,8 +1868,9 @@ const InnerPage = () => {
       items: [
         ['allNotifications', 'Notifications', NotificationsIcon, true],
         ['notifications', 'Announcements', CampaignIcon, isAdmin],
-        ['recommendations', 'Recommendations', AutoAwesomeIcon, !isWorkingEmployee],
-        ['chat', 'Chat', ChatBubbleOutlineIcon, !isWorkingEmployee],
+        // For a brand these two are previews of what its shoppers get.
+        ['recommendations', isAppUser ? 'Recommendations' : 'Shopper Recommendations', AutoAwesomeIcon, !isWorkingEmployee],
+        ['chat', isAppUser ? 'Chat' : 'Shopper Chat', ChatBubbleOutlineIcon, !isWorkingEmployee],
       ],
     },
   ];
@@ -2127,6 +2157,22 @@ const InnerPage = () => {
               onQueryHandled={() => setItemSearchQuery('')}
               productId={itemSearchProductId}
               onProductHandled={() => setItemSearchProductId('')}
+            />
+          )}
+
+          {activePage === 'brand' && canSeeItemSearch && (
+            <BrandPage
+              token={token}
+              canEdit={canEditDppTheme}
+              // Only the company's own products make sense as a preview.
+              products={isAdmin ? [] : products}
+              onBrandSaved={setCompanyBrand}
+              theme={dppTheme}
+              onThemeChange={(next) => setDppTheme(normalizeThemeDraft(next))}
+              onThemeSave={saveDppThemeHandler}
+              onThemeReset={() => setDppTheme(savedDppTheme)}
+              themeSaving={savingDppTheme}
+              themeDirty={dppThemeDirty}
             />
           )}
 
@@ -2492,17 +2538,6 @@ const InnerPage = () => {
                 {productPanelMode === 'experience' && (
                   <Grid container spacing={3}>
                     <Grid item xs={12} md={7}>
-                      <Box sx={{ mb: 4 }}>
-                        <DppThemeEditor
-                          theme={dppTheme}
-                          onChange={(next) => setDppTheme(normalizeThemeDraft(next))}
-                          onSave={saveDppThemeHandler}
-                          onReset={() => setDppTheme(savedDppTheme)}
-                          saving={savingDppTheme}
-                          dirty={dppThemeDirty}
-                          canEdit={canEditDppTheme}
-                        />
-                      </Box>
                       <PassportReadinessPanel
                         product={formProduct}
                         onGoToStep={(step) => {
@@ -2514,9 +2549,18 @@ const InnerPage = () => {
                     <Grid item xs={12} md={5}>
                       <Box sx={{ position: { md: 'sticky' }, top: { md: 0 } }}>
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>What shoppers see</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                         The product page in the app, in your design. Use Overview and Lifecycle at the bottom to move around.
                       </Typography>
+                      {/* The design is one for all products, so it is changed on the Brand page. */}
+                      <Button
+                        sx={{ mb: 1.5 }}
+                        onClick={async () => {
+                          if (await closeProductDialog(null, 'closeButton')) setActivePage('brand');
+                        }}
+                      >
+                        Change the design (Brand page)
+                      </Button>
                       <Box sx={{ width: 340, maxWidth: '100%', height: 640, mx: 'auto', border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 4 }}>
                         <Suspense fallback={null}>
                           <DppPhoneView productInfo={formProduct} theme={dppTheme} />
@@ -2628,7 +2672,7 @@ const InnerPage = () => {
                           sx={{ width: 48, height: 48, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, bgcolor: '#fff' }} />
                         <Box sx={{ flex: 1, minWidth: 160 }}>
                           <Typography variant="subtitle1">Brand: {brandInfo.name}</Typography>
-                          <Typography variant="body2" color="text.secondary">The same brand as your other products.</Typography>
+                          <Typography variant="body2" color="text.secondary">From your Brand page. “Change” lets this product differ.</Typography>
                         </Box>
                         <Button onClick={() => setQuickAdd(false)}>Change</Button>
                       </Box>
@@ -3300,6 +3344,47 @@ const InnerPage = () => {
       </Box>
 
       <PageHelp page={activePage} isAppUser={isAppUser} />
+
+      {/* "What next?" — right after a product is added. */}
+      <Dialog open={!!addedProduct} onClose={() => setAddedProduct(null)} fullWidth maxWidth="sm">
+        <DialogTitle>
+          “{addedProduct?.name}” is added. What next?
+          <IconButton onClick={() => setAddedProduct(null)} color="inherit" aria-label="Close"><CloseIcon /></IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5} sx={{ pb: 1 }}>
+            <Button
+              variant="contained"
+              size="large"
+              startIcon={<QrCode2Icon />}
+              onClick={() => {
+                const prod = addedProduct;
+                setAddedProduct(null);
+                keepGenerateSelectionRef.current = true;
+                selectGenerateCodeProduct(prod);
+                setPickingCodeProduct(false);
+                go('generateCode');
+              }}
+            >
+              Create its codes
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={() => {
+                const prod = addedProduct;
+                setAddedProduct(null);
+                setProductPanelMode('edit');
+                setPreviousPage('products');
+                editProductHandler(prod);
+              }}
+            >
+              Add more details to its passport
+            </Button>
+            <Button size="large" onClick={() => setAddedProduct(null)}>Done for now</Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
 
       {/* Manage Categories — opened from the Products page (super admin: full
           management) or from the product form's Manage button (add new

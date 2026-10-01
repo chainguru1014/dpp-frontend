@@ -6,6 +6,8 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import PageHeader from '../../components/PageHeader';
 import DashboardAnalytics from './DashboardAnalytics';
 import QuickStartCards from './QuickStartCards';
+import SetupStrip from './SetupStrip';
+import { useAuth } from '../auth/AuthContext';
 
 const DashboardPage = ({
   isAdmin, isAppUser, isWorkingEmployee = false, canEditProducts = false, canSeeStaffManagement = false,
@@ -27,6 +29,9 @@ const DashboardPage = ({
     try { localStorage.setItem('dpp_dashboardMore', open ? '0' : '1'); } catch (e) { /* storage blocked */ }
     return !open;
   });
+  const { token } = useAuth();
+  // Total scans so far; null until the figures have loaded.
+  const [scans, setScans] = useState(null);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [activeFilters, setActiveFilters] = useState(0);
   const filtersButton = (
@@ -69,6 +74,21 @@ const DashboardPage = ({
       {/* The jobs people come here to do, as large cards (brands and staff;
           a shopper has their two buttons above). Each role only gets the
           cards — and the choices inside them — it can actually use. */}
+      {/* A new brand's first steps. Brands only — the super admin and
+          read-only roles have nothing to set up. */}
+      {canEditProducts && !isAdmin && scans !== null && (
+        <SetupStrip
+          products={products}
+          scans={scans}
+          token={token}
+          companyId={ownerId}
+          canManageStaff={canSeeStaffManagement}
+          onAddProduct={onNavigateToNewProduct}
+          onGenerateCodes={onNavigateToGenerateCode}
+          onManageStaff={() => onNavigate('employeeAuditLog')}
+        />
+      )}
+
       {!isAppUser && (
         <QuickStartCards
           products={products}
@@ -89,6 +109,7 @@ const DashboardPage = ({
         onNavigateToProducts={onNavigateToProducts}
         onNavigateToGenerateCode={onNavigateToGenerateCode}
         filtersOpen={filtersOpen}
+        onTotalsLoaded={(totals) => setScans(totals.scans || 0)}
         moreOpen={moreOpen}
         onToggleMore={toggleMore}
         onActiveFilterCountChange={setActiveFilters}

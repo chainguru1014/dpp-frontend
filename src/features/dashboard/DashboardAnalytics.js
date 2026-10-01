@@ -267,6 +267,8 @@ export default function DashboardAnalytics({
   // The dashboard has two layers: four figures and two charts, then
   // everything else once "More analytics" is opened.
   moreOpen = false, onToggleMore,
+  // Told the unfiltered totals once loaded (the setup strip ticks "scanned" from it).
+  onTotalsLoaded,
 }) {
   const [a, setA] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
@@ -275,7 +277,10 @@ export default function DashboardAnalytics({
   useEffect(() => {
     setA(null);
     const cleaned = Object.fromEntries(Object.entries(appliedFilters).filter(([, v]) => v));
-    getAnalytics(ownerKind, ownerId, cleaned).then(setA);
+    getAnalytics(ownerKind, ownerId, cleaned).then((data) => {
+      setA(data);
+      if (onTotalsLoaded && !Object.keys(cleaned).length) onTotalsLoaded(data?.totals || {});
+    });
   }, [ownerKind, ownerId, appliedFilters]);
 
   // Total Captures card: super admin — every capture; company / Supervisor —

@@ -17,6 +17,10 @@ const PAGE_HELP = {
     text: 'Every product you have. Click one to see its details, then preview its page, edit it, or create its codes. "New Product" adds one; the ⋯ button has Import and Export for working with many products in a spreadsheet.',
     appUser: 'The products you own. Click one to see its details and its ownership history.',
   },
+  brand: {
+    title: 'Brand',
+    text: 'What you set once for all your products. “Brand details” is the name, description, website and logo every new product starts with. “Product page design” is how the product page looks in the app: colours, style, layout, a message and a button, with a live preview.',
+  },
   newProduct: {
     title: 'Product window',
     text: 'To add a product you only need its name, category, a photo and your brand. Everything else can be added later: the Passport score shows what is still missing, and each missing item is a link to where it goes.',

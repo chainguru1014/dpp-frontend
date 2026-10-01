@@ -336,9 +336,10 @@ export const getAnalytics = async (ownerKind, ownerId, filters = {}) => {
 
 export const addProduct = async (data) => {
     try {
-        await axios.post(`${Backend_URL}product`, data);
+        const res = await axios.post(`${Backend_URL}product`, data);
         notifySuccess('Product added.');
-        return true;
+        // The new product (truthy), so the caller can offer what to do next with it.
+        return res.data?.data?.doc || true;
     } catch(err) {
         console.log(err);
         notifyError(`Could not add the product: ${err.response?.data?.message || err.message}`);
@@ -1203,5 +1204,31 @@ export const pairTagsWithItems = async (token, product_id, source_type, pairs) =
         return { ok: true, data: res.data?.data || { paired: 0, unchanged: 0, errors: [] } };
     } catch (err) {
         return { ok: false, message: err.response?.data?.message || err.message || 'The tags could not be paired' };
+    }
+};
+
+// ----- Brand details (entered once per company, used to fill in new products) -----
+// Returns { brand, saved } — `saved` is false while the company has not
+// stored any yet (the brand then comes from its latest product).
+export const getBrand = async (token) => {
+    try {
+        const res = await axios.get(`${Backend_URL}company/brand`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return res.data?.data || null;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+};
+
+export const updateBrand = async (token, brand) => {
+    try {
+        const res = await axios.put(`${Backend_URL}company/brand`, { brand }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data?.brand || brand };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'The brand details could not be saved' };
     }
 };
