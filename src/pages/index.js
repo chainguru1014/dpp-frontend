@@ -97,9 +97,7 @@ import {
   deleteQrCode,
   deleteSecurityQrCode,
   checkUsernameExists,
-  getDppTheme,
-  updateDppTheme,
-  getBrand,
+  listBrands,
 } from '../helper';
 import CareSymbols from '../components/CareSymbols';
 import Admin from '../components/admin';
@@ -118,7 +116,6 @@ import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import ProductImportDialog from '../features/products/ProductImportDialog';
 import { downloadCsv } from '../utils/csv';
 import { productsToCsvRows } from '../utils/productCsv';
-import { normalizeDppTheme } from '../utils/dppTheme';
 import { CERTIFICATE_STATUS, certificateStatus, certificateWarnings } from '../utils/certificates';
 import PassportReadinessPanel, { PassportScore } from '../features/products/PassportReadinessPanel';
 import DashboardPage from '../features/dashboard/DashboardPage';
@@ -183,12 +180,6 @@ const STUDIO_PHASES = [
   { mode: 'experience', label: '2. Experience' },
   { mode: 'print', label: '3. Codes' },
 ];
-// While a colour is being typed it is briefly not a full #rrggbb value —
-// keep what the user typed in the field instead of snapping it back.
-const normalizeThemeDraft = (draft) => ({ ...normalizeDppTheme(draft), ...['pageBg', 'cardBg', 'accent', 'buttonText', 'textColor', 'headerColor', 'badgeColor'].reduce((acc, key) => {
-  if (typeof draft[key] === 'string' && draft[key].length <= 7) acc[key] = draft[key];
-  return acc;
-}, {}) });
 // Default item categories — only used until the managed list (super admin,
 // Products > Manage Categories) loads from the backend.
 const ITEM_CATEGORY_OPTIONS = [
@@ -565,46 +556,36 @@ const InnerPage = () => {
     certifications,
     sustainabilityImpact,
   };
-  // The company's product-page design (studio > Experience). `dppTheme` is
-  // what the editor and preview show; `savedDppTheme` is what the server has.
-  const [dppTheme, setDppTheme] = useState(() => normalizeDppTheme(null));
-  const [savedDppTheme, setSavedDppTheme] = useState(() => normalizeDppTheme(null));
-  const [savingDppTheme, setSavingDppTheme] = useState(false);
-  // Same rule as the worker app's step labels: the company account or a Supervisor.
-  const canEditDppTheme = !isAppUser && (!isEmployeeActor || isSupervisor);
-  // The company's brand details (Brand page): what a new product starts with.
-  const [companyBrand, setCompanyBrand] = useState(null);
+  // The brands this account can see (Brand page), each with its details and
+  // its product page design. A new product starts from one of them, and the
+  // previews are drawn in the design of the product's own brand.
+  const [brands, setBrands] = useState([]);
+  // The brand the Brand page should open on ({ companyId, name }), when
+  // another page sends the user there.
+  const [brandPageTarget, setBrandPageTarget] = useState(null);
   // The product just added, while the "What next?" window is open.
   const [addedProduct, setAddedProduct] = useState(null);
-  const dppThemeDirty = JSON.stringify(dppTheme) !== JSON.stringify(savedDppTheme);
   useEffect(() => {
     if (!company || !token || isAppUser) return;
     let cancelled = false;
-    getDppTheme(token).then((raw) => {
-      if (cancelled) return;
-      const loaded = normalizeDppTheme(raw);
-      setDppTheme(loaded);
-      setSavedDppTheme(loaded);
-    });
-    getBrand(token).then((res) => {
-      if (!cancelled) setCompanyBrand(res?.brand || null);
+    listBrands(token).then((res) => {
+      if (!cancelled) setBrands(res?.brands || []);
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company?._id, token]);
-  const saveDppThemeHandler = async () => {
-    setSavingDppTheme(true);
-    const res = await updateDppTheme(token, dppTheme);
-    setSavingDppTheme(false);
-    if (!res.ok) {
-      notifyError(res.message);
-      return;
-    }
-    const saved = normalizeDppTheme(res.data);
-    setDppTheme(saved);
-    setSavedDppTheme(saved);
-    notifySuccess('Design saved. It now applies to all your products.');
+  // The brand a product belongs to: same company, same brand name.
+  const brandOf = (companyRef, brandName) => {
+    const companyId = String(companyRef?._id || companyRef || '');
+    const name = String(brandName || '').trim().toLowerCase();
+    return brands.find((b) => String(b.company_id) === companyId && b.name.trim().toLowerCase() === name) || null;
   };
+  // This account's own brands (for the super admin: of its own account only).
+  const ownBrands = brands.filter((b) => String(b.company_id) === String(company?._id || ''));
+  // The company the product in the form belongs to (the super admin can open
+  // another company's product), and the design of the brand typed into it.
+  const formCompanyId = String((isEditing && (selectedProduct?.company_id?._id || selectedProduct?.company_id)) || company?._id || '');
+  const formTheme = brandOf(formCompanyId, brandInfo.name)?.dppTheme;
   const [sidebarOpen, setSidebarOpen] = useState(() => loadStateFromStorage('sidebarOpen', true));
   // Which menu groups are unfolded. Only Products starts open, so the menu
   // shows a handful of items; the group of the page you are on is always open.
@@ -833,15 +814,15 @@ const InnerPage = () => {
     setGtin('');
     setGs1DigitalLink(false);
     setDetailFacts({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
-    // A company's new product starts with the brand set on its Brand page
-    // (or, before that is filled in, the brand of a product it already
-    // has), so adding a product does not mean typing the brand in again.
+    // A company's new product starts with a brand from its Brand page (its
+    // first one — with several, the quick-add form lets the user pick), so
+    // adding a product does not mean typing the brand in again.
     // With neither it starts from the company's own name — never another
     // brand's. The super admin (who sees every company's products) types
     // the brand in.
     const ownBrand = isAdmin
       ? null
-      : ((companyBrand?.name && companyBrand) || products.find((p) => p.brandInfo?.name && p.brandInfo?.logoUrl)?.brandInfo || null);
+      : (ownBrands.find((b) => b.logoUrl) || ownBrands[0] || products.find((p) => p.brandInfo?.name && p.brandInfo?.logoUrl)?.brandInfo || null);
     setBrandInfo({
       name: ownBrand?.name || (isAdmin ? '' : (company?.name || '')),
       detail: ownBrand?.detail || '',
@@ -2163,16 +2144,11 @@ const InnerPage = () => {
           {activePage === 'brand' && canSeeItemSearch && (
             <BrandPage
               token={token}
-              canEdit={canEditDppTheme}
-              // Only the company's own products make sense as a preview.
-              products={isAdmin ? [] : products}
-              onBrandSaved={setCompanyBrand}
-              theme={dppTheme}
-              onThemeChange={(next) => setDppTheme(normalizeThemeDraft(next))}
-              onThemeSave={saveDppThemeHandler}
-              onThemeReset={() => setDppTheme(savedDppTheme)}
-              themeSaving={savingDppTheme}
-              themeDirty={dppThemeDirty}
+              isAdmin={isAdmin}
+              products={products}
+              target={brandPageTarget}
+              onTargetHandled={() => setBrandPageTarget(null)}
+              onBrandsChanged={setBrands}
             />
           )}
 
@@ -2552,18 +2528,24 @@ const InnerPage = () => {
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                         The product page in the app, in your design. Use Overview and Lifecycle at the bottom to move around.
                       </Typography>
-                      {/* The design is one for all products, so it is changed on the Brand page. */}
+                      {/* The design belongs to the brand (all its products share
+                          it), so it is changed on the Brand page — opened on
+                          this product's brand. */}
                       <Button
                         sx={{ mb: 1.5 }}
                         onClick={async () => {
-                          if (await closeProductDialog(null, 'closeButton')) setActivePage('brand');
+                          const target = { companyId: formCompanyId, name: brandInfo.name };
+                          if (await closeProductDialog(null, 'closeButton')) {
+                            setBrandPageTarget(target);
+                            setActivePage('brand');
+                          }
                         }}
                       >
-                        Change the design (Brand page)
+                        Change the design{brandInfo.name ? ` of ${brandInfo.name}` : ''}
                       </Button>
                       <Box sx={{ width: 340, maxWidth: '100%', height: 640, mx: 'auto', border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 4 }}>
                         <Suspense fallback={null}>
-                          <DppPhoneView productInfo={formProduct} theme={dppTheme} />
+                          <DppPhoneView productInfo={formProduct} theme={formTheme} />
                         </Suspense>
                       </Box>
                       </Box>
@@ -2670,10 +2652,27 @@ const InnerPage = () => {
                       <Box component="section" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                         <Box component="img" src={getFileUrl(brandInfo.logoUrl)} alt=""
                           sx={{ width: 48, height: 48, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, bgcolor: '#fff' }} />
-                        <Box sx={{ flex: 1, minWidth: 160 }}>
-                          <Typography variant="subtitle1">Brand: {brandInfo.name}</Typography>
-                          <Typography variant="body2" color="text.secondary">From your Brand page. “Change” lets this product differ.</Typography>
-                        </Box>
+                        {ownBrands.length > 1 ? (
+                          <TextField
+                            select
+                            label="Brand"
+                            sx={{ flex: 1, minWidth: 200 }}
+                            value={ownBrands.some((b) => b.name === brandInfo.name) ? brandInfo.name : ''}
+                            onChange={(e) => {
+                              const picked = ownBrands.find((b) => b.name === e.target.value);
+                              if (picked) {
+                                setBrandInfo({ name: picked.name, detail: picked.detail, websiteUrl: picked.websiteUrl, logoUrl: picked.logoUrl, coverUrl: picked.coverUrl });
+                              }
+                            }}
+                          >
+                            {ownBrands.map((b) => <MenuItem key={b._id} value={b.name}>{b.name}</MenuItem>)}
+                          </TextField>
+                        ) : (
+                          <Box sx={{ flex: 1, minWidth: 160 }}>
+                            <Typography variant="subtitle1">Brand: {brandInfo.name}</Typography>
+                            <Typography variant="body2" color="text.secondary">From your Brand page. “Change” lets this product differ.</Typography>
+                          </Box>
+                        )}
                         <Button onClick={() => setQuickAdd(false)}>Change</Button>
                       </Box>
                     ) : (
@@ -3463,9 +3462,10 @@ const InnerPage = () => {
         <PreviewModal
           open={openPreviewModal}
           setOpen={setOpenPreviewModal}
-          // From the studio: the design being edited. From the Products
-          // page: left out, so the product's own company's saved design loads.
-          theme={activePage === 'newProduct' ? dppTheme : undefined}
+          // From the studio: the design of the brand typed into the form.
+          // From the Products page: left out, so the saved design of the
+          // product's own brand loads.
+          theme={activePage === 'newProduct' ? formTheme : undefined}
           productInfo={
             // If selectedProduct exists and we're viewing from products page, use it
             // Otherwise use form data

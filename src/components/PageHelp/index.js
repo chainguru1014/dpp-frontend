@@ -19,7 +19,7 @@ const PAGE_HELP = {
   },
   brand: {
     title: 'Brand',
-    text: 'What you set once for all your products. “Brand details” is the name, description, website and logo every new product starts with. “Product page design” is how the product page looks in the app: colours, style, layout, a message and a button, with a live preview.',
+    text: 'What you set once per brand. Choose the brand at the top (add another with “New brand”). “Brand details” is the name, description, website and logo every new product of that brand starts with. “Product page design” is how that brand’s product page looks in the app, with a live preview.',
   },
   newProduct: {
     title: 'Product window',

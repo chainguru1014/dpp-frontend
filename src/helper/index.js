@@ -1232,3 +1232,27 @@ export const updateBrand = async (token, brand) => {
         return { ok: false, message: err.response?.data?.message || err.message || 'The brand details could not be saved' };
     }
 };
+
+// ----- Brands (a company can sell under several; each has its details and its design) -----
+const brandCall = async (token, method, path, data) => {
+    try {
+        const res = await axios({
+            method,
+            url: `${Backend_URL}brand${path}`,
+            data,
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'The brand could not be saved' };
+    }
+};
+
+// Returns { brands, canWrite } — or null when the list could not be loaded.
+export const listBrands = async (token) => {
+    const res = await brandCall(token, 'get', '');
+    return res.ok ? res.data : null;
+};
+export const createBrand = (token, data) => brandCall(token, 'post', '', data);
+export const updateBrandById = (token, id, data) => brandCall(token, 'put', `/${encodeURIComponent(id)}`, data);
+export const deleteBrand = (token, id) => brandCall(token, 'delete', `/${encodeURIComponent(id)}`);

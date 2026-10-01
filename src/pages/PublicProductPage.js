@@ -60,15 +60,16 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, gtin, serial }) => 
   // The brand's look. Any failure just leaves the standard look.
   const rawCompany = product?.company_id;
   const companyId = rawCompany && typeof rawCompany === 'object' ? rawCompany._id : rawCompany;
+  const brandName = String(product?.brandInfo?.name || '');
   useEffect(() => {
     if (!companyId) return;
     let cancelled = false;
-    fetch(`${Backend_URL}company/${encodeURIComponent(String(companyId))}/dpp-theme`)
+    fetch(`${Backend_URL}company/${encodeURIComponent(String(companyId))}/dpp-theme?brand=${encodeURIComponent(brandName)}`)
       .then((r) => r.json())
       .then((j) => { if (!cancelled) setTheme(j?.data?.dppTheme || null); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [companyId]);
+  }, [companyId, brandName]);
 
   const t = normalizeDppTheme(theme);
 

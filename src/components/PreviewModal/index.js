@@ -939,21 +939,23 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
 }
 
 // "Preview product page" dialog. `theme` is the look to draw with; when it
-// is not given, the look of the company the product belongs to is loaded, so
-// the preview always matches what that brand's shoppers see.
+// is not given, the design of the product's own brand is loaded, so the
+// preview always matches what that brand's shoppers see.
 export default function PreviewModal({ open, setOpen, productInfo, theme }) {
   const [loadedTheme, setLoadedTheme] = useState(null);
   const rawCompany = productInfo?.company_id;
   const companyId = rawCompany && typeof rawCompany === 'object' ? rawCompany._id : rawCompany;
+  // A company can have several brands, each with its own design.
+  const brandName = String(productInfo?.brandInfo?.name || '');
   useEffect(() => {
     if (theme || !open || !companyId) return;
     let cancelled = false;
-    fetch(`${Backend_URL}company/${encodeURIComponent(String(companyId))}/dpp-theme`)
+    fetch(`${Backend_URL}company/${encodeURIComponent(String(companyId))}/dpp-theme?brand=${encodeURIComponent(brandName)}`)
       .then((r) => r.json())
       .then((j) => { if (!cancelled) setLoadedTheme(j?.data?.dppTheme || null); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [theme, open, companyId]);
+  }, [theme, open, companyId, brandName]);
 
   return (
     <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="preview-modal-title">
