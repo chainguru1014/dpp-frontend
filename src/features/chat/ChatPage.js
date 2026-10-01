@@ -71,7 +71,7 @@ export default function ChatPage({ company, isAppUser = false }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px - 48px)', minHeight: 360 }}>
       <PageHeader
-        title="Chat"
+        title={isAppUser ? 'Chat' : 'Shopper preview: Chat'}
         icon={AutoAwesomeIcon}
         description={isAppUser
           ? 'Ask about products: materials, care, where they were made, or where to buy. Answers come from an AI assistant.'

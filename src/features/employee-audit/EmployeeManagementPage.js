@@ -18,7 +18,7 @@ const EmployeeManagementPage = ({ token, isAdmin, companyId }) => {
       <PageHeader
         title="Employees"
         description={isAdmin
-          ? 'Staff accounts for every company.'
+          ? 'Employee accounts for every company.'
           : 'The people who can sign in for your company.'}
       />
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>

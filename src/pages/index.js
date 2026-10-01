@@ -2231,7 +2231,7 @@ const InnerPage = () => {
             <Box>
               <PageHeader
                 title="Generate Code"
-                description="Create labels for a product and download them to print."
+                description="Create codes for a product and download them to print."
               />
               <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>1. Choose a product</Typography>
               {generateCodeProduct && !pickingCodeProduct ? (
@@ -2258,7 +2258,7 @@ const InnerPage = () => {
               )}
               {generateCodeProduct && !pickingCodeProduct && (
                 <Box sx={{ mb: 2, p: 2.5, borderRadius: 3, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
-                  <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>2. Choose a label type and create codes</Typography>
+                  <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>2. Choose a code type and create codes</Typography>
                   <ProductOwnerSection
                     company={company}
                     ownerInfo={ownerInfo}
@@ -2409,7 +2409,7 @@ const InnerPage = () => {
                 emptyText={productNameFilter.trim()
                   ? 'No products match your search.'
                   : isAppUser
-                    ? 'You don’t own any products yet. When you scan a product label in the Yometel DPP app and claim it, it appears here.'
+                    ? 'You don’t own any products yet. When you scan a product code in the Yometel DPP app and claim it, it appears here.'
                     : canEditProducts
                       ? 'No products yet. Click "New Product" to add your first one.'
                       : 'Your company has no products yet.'}

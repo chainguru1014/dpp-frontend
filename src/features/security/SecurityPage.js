@@ -106,14 +106,14 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
     const blocking = !row.blocked;
     const sure = await confirmAction(blocking
       ? {
-          title: 'Mark this label as a suspected copy?',
-          message: `Everyone who scans label #${row.qrcodeId} of "${row.productName}" will see a warning that it may be a copy. The genuine item carries the same label, so its owner sees the warning too. You can undo this at any time.`,
+          title: 'Mark this code as a suspected copy?',
+          message: `Everyone who scans code #${row.qrcodeId} of "${row.productName}" will see a warning that it may be a copy. The genuine item carries the same label, so its owner sees the warning too. You can undo this at any time.`,
           confirmText: 'Mark as suspected copy',
           danger: true,
         }
       : {
           title: 'Remove the warning?',
-          message: `Label #${row.qrcodeId} of "${row.productName}" will show as authenticated again.`,
+          message: `Code #${row.qrcodeId} of "${row.productName}" will show as authenticated again.`,
           confirmText: 'Remove warning',
         });
     if (!sure) return;
@@ -135,7 +135,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
     <Box>
       <PageHeader
         title="Security"
-        description="Labels that behave like copies, and how often your labels are scanned."
+        description="Codes that behave like copies, and how often your codes are scanned."
         actions={(
           <>
             <TextField select size="small" value={days} onChange={(e) => setDays(Number(e.target.value))} inputProps={{ 'aria-label': 'Period' }} sx={{ minWidth: 170, bgcolor: 'background.paper' }}>
@@ -149,17 +149,17 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
       />
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      {loading && <Loader label="Checking your labels…" />}
+      {loading && <Loader label="Checking your codes…" />}
 
       {!loading && data && (
         <Stack spacing={2}>
           <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' } }}>
-            <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Labels scanned" sub={`${totals.scans.toLocaleString()} scans in total`} />
+            <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Codes scanned" sub={`${totals.scans.toLocaleString()} scans in total`} />
             <Kpi icon={ReplayIcon} value={totals.repeatItems.toLocaleString()} label="Scanned more than once" />
             <Kpi
               icon={GppMaybeIcon}
               value={(totals.highRisk + totals.mediumRisk).toLocaleString()}
-              label="Labels with warning signs"
+              label="Codes with warning signs"
               sub={`${totals.highRisk} likely copies, ${totals.mediumRisk} worth a look`}
               color={totals.highRisk ? 'error.main' : totals.mediumRisk ? 'warning.main' : 'success.main'}
             />
@@ -167,13 +167,13 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
               icon={VerifiedUserIcon}
               value={totals.securityVerified.toLocaleString()}
               label="Security QR checks passed"
-              sub={`${totals.securityFailed} failed · ${totals.blocked} labels marked as copies`}
+              sub={`${totals.securityFailed} failed · ${totals.blocked} codes marked as copies`}
               color={totals.securityFailed ? 'error.main' : 'success.main'}
             />
           </Box>
 
           <Section
-            title="Labels to check"
+            title="Codes to check"
             description="Location comes from the scanner's GPS or internet address, which can be wrong (for example with a VPN). Treat these as reasons to look, then decide."
           >
             {data.suspects.length === 0 ? (
@@ -193,7 +193,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
                       />
                       <Box sx={{ flex: '1 1 320px', minWidth: 0 }}>
                         <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                          <Typography variant="subtitle1">{row.productName} · label #{row.qrcodeId}</Typography>
+                          <Typography variant="subtitle1">{row.productName} · code #{row.qrcodeId}</Typography>
                           <Chip size="small" color={level.color} label={level.label} />
                           {row.blocked && <Chip size="small" color="error" variant="outlined" icon={<BlockIcon />} label="Marked as suspected copy" />}
                         </Stack>
@@ -227,10 +227,10 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
           </Section>
 
           <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
-            <Section title="How many times each label was scanned" description="Most labels are scanned once or a few times. A long tail on the right is worth a look.">
+            <Section title="How many times each code was scanned" description="Most codes are scanned once or a few times. A long tail on the right is worth a look.">
               <Bars
                 rows={data.repeatHistogram.map((b) => ({ label: `${b.label} ${b.label === '1' ? 'scan' : 'scans'}`, value: b.items }))}
-                unit="labels"
+                unit="codes"
                 emptyText="No scans in this period."
               />
             </Section>

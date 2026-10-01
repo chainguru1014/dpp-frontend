@@ -107,7 +107,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
       return;
     }
     if (!name.trim()) {
-      setError('A name is required — it\'s shown as the Worker on captures in the mobile app.');
+      setError('A name is required — it is shown on the work steps they record in the mobile app.');
       return;
     }
     setSaving(true);
@@ -145,7 +145,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        Add a staff member
+        Add an employee
         <IconButton onClick={onClose} color="inherit" aria-label="Close"><CloseIcon /></IconButton>
       </DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -159,7 +159,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
           error={triedSave && !selectedCompany}
           helperText={isAdmin
             ? (companies.length ? 'The company this person works for.' : 'No companies yet. Create one on the Companies page first.')
-            : 'Staff you add here belong to your company.'}
+            : 'Employees you add here belong to your company.'}
           fullWidth
           SelectProps={{ displayEmpty: true }}
           InputLabelProps={{ shrink: true }}
@@ -179,7 +179,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           error={!!emailError}
-          helperText={emailError || (selectedCompany ? `${domainHint}. They sign in with a code sent to this email.` : 'Choose the company first.')}
+          helperText={emailError || (selectedCompany ? `${domainHint}. They get a welcome email and sign in with a code sent to this address.` : 'Choose the company first.')}
           fullWidth
           autoFocus={!isAdmin}
         />
@@ -189,7 +189,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
           placeholder="Jane Doe"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          helperText="Shown as the worker on captures in the mobile app."
+          helperText="Shown on the work steps they record in the mobile app."
           fullWidth
         />
         <FormControl fullWidth disabled={restrictToWorkingEmployee}>
@@ -201,7 +201,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
           <FormHelperText>
             {restrictToWorkingEmployee
               ? 'Working Employees use the mobile app to record work steps.'
-              : 'Working Employees use the mobile app. Supervisors also manage products and staff on this website.'}
+              : 'Working Employees use the mobile app. Supervisors also manage products and employees on this website.'}
           </FormHelperText>
         </FormControl>
         <Accordion disableGutters variant="outlined" sx={{ borderRadius: 2, '&:before': { display: 'none' } }}>
@@ -228,7 +228,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onClose} disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={handleSave} disabled={saving}>
-          {saving ? 'Adding…' : 'Add staff member'}
+          {saving ? 'Adding…' : 'Add employee'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -322,7 +322,7 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
 
   const handleRemove = async (employee) => {
     const sure = await confirmAction({
-      title: 'Remove this staff member?',
+      title: 'Remove this employee?',
       message: `${employee.name || employee.email || 'This person'} will no longer be able to sign in. Their past captures stay in Capture History.`,
       confirmText: 'Remove',
       danger: true,
@@ -475,9 +475,9 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" component="h2">Staff list</Typography>
+        <Typography variant="h6" component="h2">Employee list</Typography>
         <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => setInviteOpen(true)}>
-          Add a staff member
+          Add an employee
         </Button>
       </Box>
       {!!rowError && (

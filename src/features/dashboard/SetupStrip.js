@@ -49,11 +49,11 @@ function TryScanDialog({ open, onClose, product, onDone }) {
       </DialogTitle>
       <DialogContent sx={{ textAlign: 'center' }}>
         <Typography sx={{ mb: 2 }}>
-          Point your phone’s camera at this code. It is the first label of “{product?.name}” and opens the page your shoppers will see.
+          Point your phone’s camera at this code. It is the first code of “{product?.name}” and opens the page your shoppers will see.
         </Typography>
-        {image && <Box component="img" src={image} alt="A label of your product" sx={{ width: 240, height: 240, border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1 }} />}
+        {image && <Box component="img" src={image} alt="A code of your product" sx={{ width: 240, height: 240, border: '1px solid', borderColor: 'divider', borderRadius: 2, p: 1 }} />}
         {!image && !failed && <LinearProgress sx={{ my: 4 }} />}
-        {failed && <Typography color="text.secondary">The label could not be shown. Open Generate Code to see your labels.</Typography>}
+        {failed && <Typography color="text.secondary">The code could not be shown. Open Generate Code to see your codes.</Typography>}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Not now</Button>
@@ -88,8 +88,8 @@ export default function SetupStrip({ products = [], scans = 0, token, companyId,
   const withLabels = products.find((p) => (p.total_minted_amount || 0) > 0);
   const steps = [
     { label: 'Add a product', done: products.length > 0, action: onAddProduct, button: 'Add a product' },
-    { label: 'Create its labels', done: !!withLabels, action: onGenerateCodes, button: 'Create labels' },
-    { label: 'Print the labels', done: products.some((p) => (p.printed_amount || 0) > 0), action: onGenerateCodes, button: 'Print labels' },
+    { label: 'Create its codes', done: !!withLabels, action: onGenerateCodes, button: 'Create codes' },
+    { label: 'Print the codes', done: products.some((p) => (p.printed_amount || 0) > 0), action: onGenerateCodes, button: 'Print codes' },
     { label: 'Scan one with your phone', done: scans > 0 || tried, action: () => setTryOpen(true), button: 'Try it' },
     canManageStaff && { label: 'Add your team', done: hasTeam, action: onManageStaff, button: 'Add your team' },
   ].filter(Boolean);

@@ -155,7 +155,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
         title={selfOnly ? 'My Captures' : 'Capture History'}
         description={selfOnly
           ? 'Work steps you recorded with the mobile app.'
-          : 'Work steps your staff recorded with the mobile app, per person.'}
+          : 'Work steps your employees recorded with the mobile app, per person.'}
         actions={isAdmin ? (
           <Select
             value={companyFilter}
@@ -177,7 +177,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
         {!selfOnly && (
           <Grid item xs={12} sm={6} md={3}>
             <Stat
-              label="Staff with captures"
+              label="Employees with captures"
               value={`${byWorker.filter((w) => !w.removed && w.total > 0).length} of ${byWorker.filter((w) => !w.removed).length}`}
             />
           </Grid>
@@ -189,7 +189,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
       <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
         <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>Captures per person</Typography>
         {byWorker.length === 0 ? (
-          <Typography color="text.secondary">No staff yet. Add Working Employees on the Staff page.</Typography>
+          <Typography color="text.secondary">No employees yet. Add them on the Employee page.</Typography>
         ) : (
           byWorker.map((w) => (
             <Box key={w.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.25 }}>
@@ -251,7 +251,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
                   <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
                     {dateFrom || dateTo || workerFilter !== 'all'
                       ? 'No captures match these filters.'
-                      : 'No captures yet. They appear here when staff record work steps in the mobile app.'}
+                      : 'No captures yet. They appear here when employees record work steps in the mobile app.'}
                   </Typography>
                 </TableCell>
               </TableRow>

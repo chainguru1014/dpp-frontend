@@ -83,7 +83,7 @@ export default function RecommendationsPage({ company, isAdmin, isAppUser = fals
   return (
     <Box>
       <PageHeader
-        title="Recommendations"
+        title={isAppUser ? 'Recommendations' : 'Shopper preview: Recommendations'}
         icon={AutoAwesomeIcon}
         description={isAppUser
           ? 'Products picked for you, based on what you scan and like.'

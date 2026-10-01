@@ -38,7 +38,7 @@ const Detail = ({ label, value }) => (
 // their details are managed on the Staff page.
 const StaffProfile = ({ company }) => (
   <Box>
-    <PageHeader title="My profile" description="Your staff account. Sign-in uses a code sent to this email." />
+    <PageHeader title="My profile" description="Your employee account. Sign-in uses a code sent to this email." />
     <Card sx={{ maxWidth: 720 }}>
       <CardContent>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -176,7 +176,7 @@ const ProfilePage = () => {
         title="My profile"
         description={isAppUser
           ? 'Your name, email and picture. You sign in with a code sent to this email.'
-          : 'Your company details, shown on your products and to your staff. You sign in with a code sent to this email.'}
+          : 'Your company details, shown on your products and to your employees. You sign in with a code sent to this email.'}
       />
 
       {/* Header card with cover (companies) + picture */}

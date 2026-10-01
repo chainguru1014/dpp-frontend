@@ -10,7 +10,7 @@ const PAGE_HELP = {
   dashboard: {
     title: 'Dashboard',
     text: 'The large cards are the things most people come here to do: click one to start. Below them are your main figures; "More analytics" opens the rest.',
-    appUser: 'Your products and the labels you have scanned, at a glance.',
+    appUser: 'Your products and the codes you have scanned, at a glance.',
   },
   products: {
     title: 'Products',
@@ -27,24 +27,24 @@ const PAGE_HELP = {
   },
   generateCode: {
     title: 'Generate Code',
-    text: 'Choose a product, pick a label type, say how many you need and press Create. Then download the labels as a PDF to print. Each label is unique and opens that product’s page when scanned.',
+    text: 'Choose a product, pick a code type, say how many you need and press Create. Then download the codes as a PDF to print. Each code is unique and opens that product’s page when scanned.',
   },
   itemSearch: {
     title: 'Product Activity',
-    text: 'Click a product to see everything recorded for it: scans, staff captures and changes of owner, with a map of where they happened. To look up one item, type the code from its label or tag and press "Find code".',
+    text: 'Click a product to see everything recorded for it: scans, work steps your employees recorded and changes of owner, with a map of where they happened. To look up one item, type the code from its code or tag and press "Find code".',
   },
   security: {
     title: 'Security',
-    text: 'Shows labels that behave like copies, for example one scanned in two distant places minutes apart. Location can be wrong (a VPN, for instance), so look at the label’s history first. "Mark as suspected copy" warns everyone who scans that label.',
+    text: 'Shows codes that behave like copies, for example one scanned in two distant places minutes apart. Location can be wrong (a VPN, for instance), so look at the code’s history first. "Mark as suspected copy" warns everyone who scans that code.',
   },
   history: {
     title: 'Scan History',
     text: 'Every scan of your product labels, newest first. Use the filters to narrow it down by date, product or place.',
-    appUser: 'Every product label you have scanned, newest first.',
+    appUser: 'Every product code you have scanned, newest first.',
   },
   captureHistory: {
     title: 'Capture History',
-    text: 'The work steps your staff recorded in the mobile app (receiving, packing and so on), per person. Click an entry to see the photo and place.',
+    text: 'The work steps your employees recorded in the mobile app (receiving, packing and so on), per person. Click an entry to see the photo and place.',
   },
   sustainability: {
     title: 'Sustainability',
@@ -60,7 +60,7 @@ const PAGE_HELP = {
   },
   processSteps: {
     title: 'Worker App Steps',
-    text: 'The numbered buttons your staff see in the mobile app. Each has a place (for example "Tokyo DC") and a step type. You can have 1 to 18; the app shows the step type in each worker’s own language.',
+    text: 'The numbered buttons your employees see in the mobile app. Each has a place (for example "Tokyo DC") and a step type. You can have 1 to 18; the app shows the step type in each worker’s own language.',
   },
   users: {
     title: 'App Users',

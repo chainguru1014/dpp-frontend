@@ -101,14 +101,14 @@ const ProcessStepsPage = ({ token }) => {
     }
     savedRef.current = JSON.stringify(cleaned);
     setSteps(cleaned);
-    notifySuccess('Worker app steps saved. Staff see them the next time they open the app.');
+    notifySuccess('Worker app steps saved. Employees see them the next time they open the app.');
   };
 
   return (
     <Box sx={{ pb: 10 }}>
       <PageHeader
         title="Worker App Steps"
-        description="The numbered buttons your staff see in the mobile app."
+        description="The numbered buttons your employees see in the mobile app."
         actions={(
           <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAdd} disabled={steps.length >= MAX_STEPS}>
             Add step

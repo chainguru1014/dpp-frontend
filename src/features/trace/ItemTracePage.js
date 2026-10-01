@@ -35,7 +35,7 @@ const EVENT_KINDS = {
   capture: {
     Icon: AssignmentTurnedInIcon,
     color: '#6a4fb3',
-    title: (e) => `Staff capture: ${e.step || processStepTypeLabel(e.stepType) || 'step'}`,
+    title: (e) => `Work step recorded: ${e.step || processStepTypeLabel(e.stepType) || 'step'}`,
   },
   transfer: {
     Icon: SwapHorizIcon,
@@ -97,7 +97,7 @@ function CodeLine({ label, value }) {
 
 function Timeline({ events, showItem, onOpenItem }) {
   if (!events.length) {
-    return <Typography color="text.secondary">Nothing has been recorded yet. Scans, staff captures and ownership transfers appear here as they happen.</Typography>;
+    return <Typography color="text.secondary">Nothing has been recorded yet. Scans, recorded work steps and ownership transfers appear here as they happen.</Typography>;
   }
   return (
     <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0 }}>
@@ -220,7 +220,7 @@ export default function ItemTracePage({
     <Box>
       <PageHeader
         title="Product Activity"
-        description="Click a product to see where and when it was scanned, captured by staff or changed owner."
+        description="Click a product to see where and when it was scanned, handled by your employees or changed owner."
       />
 
       <Stack
@@ -261,7 +261,7 @@ export default function ItemTracePage({
         selectedId={selectedId}
         showOwner={showOwner}
         emptyText={input.trim()
-          ? 'No product matches. If this is a code from a label or tag, press "Find code".'
+          ? 'No product matches. If this is a code from a code or tag, press "Find code".'
           : 'No products yet.'}
         onSelectProduct={(row) => openProduct(row._id)}
       />

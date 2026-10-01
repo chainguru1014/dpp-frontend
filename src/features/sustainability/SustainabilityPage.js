@@ -34,6 +34,7 @@ import GavelIcon from '@mui/icons-material/Gavel';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import EditIcon from '@mui/icons-material/Edit';
 import PageHeader from '../../components/PageHeader';
+import { passportCompleteness } from '../../utils/passportCompleteness';
 import Loader from '../../components/Loader';
 import { getFileUrl } from '../../helper';
 import lcaImage from '../../assets/LCA.png';
@@ -97,13 +98,15 @@ const summarise = (p) => {
     ['Repair / reuse / recycling links', endOfLife.length > 0],
     ['Impact figures', impactItems.length > 0 || !!(impact.co2Avoided || impact.waterSaved || impact.energySaved)],
   ];
-  const done = checks.filter((c) => c[1]).length;
+  const passport = passportCompleteness(p);
 
   return {
     p, esg, route, materials, origins, certs, impact, impactItems, endOfLife, disposal,
     co2Production, co2Transport, co2Total, madeIn, careCount,
-    checks, completeness: Math.round((done / checks.length) * 100),
-    missing: checks.filter((c) => !c[1]).map((c) => c[0]),
+    // The same Passport score as on the Products page, so a product never
+    // shows two different "how complete" numbers.
+    checks, completeness: passport.percent,
+    missing: passport.missing.map((m) => m.label),
   };
 };
 
@@ -216,7 +219,7 @@ export default function SustainabilityPage({ products = [], loading = false, can
       ) : (
         <>
           <Grid container spacing={1.5} sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={6} md={4} xl={2.4}><Kpi icon={Inventory2Icon} value={`${avgCompleteness}%`} label="Data complete (average)" /></Grid>
+            <Grid item xs={12} sm={6} md={4} xl={2.4}><Kpi icon={Inventory2Icon} value={`${avgCompleteness}%`} label="Passport complete (average)" /></Grid>
             <Grid item xs={12} sm={6} md={4} xl={2.4}><Kpi icon={Co2Icon} value={avgCo2 == null ? '—' : formatKg(avgCo2)} label="Carbon footprint (average)" /></Grid>
             <Grid item xs={12} sm={6} md={4} xl={2.4}><Kpi icon={PublicIcon} value={countries.size} label="Countries of manufacture" /></Grid>
             <Grid item xs={12} sm={6} md={6} xl={2.4}><Kpi icon={VerifiedIcon} value={`${certified} of ${rows.length}`} label="Have certifications" /></Grid>
@@ -356,7 +359,7 @@ export default function SustainabilityPage({ products = [], loading = false, can
                     <Line label="Traceable codes issued" value={String(current.p.total_minted_amount || 0)} />
                     <Line label="Style / SKU" value={current.p.skuStyleNumber} />
                     <Line label="Brand" value={current.p.brandInfo?.name} />
-                    <Line label="Data complete" value={`${current.completeness}%`} />
+                    <Line label="Passport complete" value={`${current.completeness}%`} />
                   </Stage>
                 </Grid>
               </Grid>

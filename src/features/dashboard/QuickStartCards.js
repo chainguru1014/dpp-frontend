@@ -147,7 +147,7 @@ export default function QuickStartCards({
   ].filter(Boolean);
   const organizationOptions = [
     onManageStaff && { icon: BadgeIcon, title: 'Manage staff', text: 'Add people and see who has signed in.', onClick: onManageStaff },
-    onManageWorkerSteps && { icon: FormatListNumberedIcon, title: 'Manage worker app steps', text: 'Set the work steps your staff record in the app.', onClick: onManageWorkerSteps },
+    onManageWorkerSteps && { icon: FormatListNumberedIcon, title: 'Manage worker app steps', text: 'Set the work steps your employees record in the app.', onClick: onManageWorkerSteps },
   ].filter(Boolean);
 
   // One option: no need to ask. Several: ask.
@@ -169,7 +169,7 @@ export default function QuickStartCards({
     organizationOptions.length > 0 && {
       icon: GroupsIcon,
       title: 'Manage organization',
-      text: 'Your staff and the steps they record in the mobile app.',
+      text: 'Your employees and the steps they record in the mobile app.',
       onClick: openOrGo('organization', organizationOptions),
     },
     onAnalyzeProduct && {

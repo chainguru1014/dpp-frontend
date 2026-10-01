@@ -150,7 +150,7 @@ export default function PrintDialog({
                             onChange={(e, v) => v && setPrintMode(v)}
                             fullWidth
                         >
-                            <ToggleButton value="print" disabled={available === 0}>New labels</ToggleButton>
+                            <ToggleButton value="print" disabled={available === 0}>New codes</ToggleButton>
                             <ToggleButton value="reprint" disabled={printed === 0}>Print again</ToggleButton>
                         </ToggleButtonGroup>
                     </Box>
@@ -158,7 +158,7 @@ export default function PrintDialog({
                     {printMode === 'print' ? (
                         <TextField
                             type="number"
-                            label="How many new labels?"
+                            label="How many new codes?"
                             fullWidth
                             value={count}
                             onChange={(e) => setCount(e.target.value)}
@@ -170,7 +170,7 @@ export default function PrintDialog({
                             <Stack direction="row" spacing={2} alignItems="center">
                                 <TextField
                                     type="number"
-                                    label="From label no."
+                                    label="From code no."
                                     fullWidth
                                     value={from}
                                     onChange={(e) => setFrom(e.target.value)}
@@ -179,7 +179,7 @@ export default function PrintDialog({
                                 <Typography color="text.secondary">to</Typography>
                                 <TextField
                                     type="number"
-                                    label="To label no."
+                                    label="To code no."
                                     fullWidth
                                     value={to}
                                     onChange={(e) => setTo(e.target.value)}
@@ -187,19 +187,19 @@ export default function PrintDialog({
                                 />
                             </Stack>
                             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.75 }}>
-                                Labels 1 to {printed} have been printed before.
+                                Codes 1 to {printed} have been printed before.
                             </Typography>
                         </Box>
                     )}
 
                     <TextField
                         type="number"
-                        label="Labels per row on the page"
+                        label="Codes per row on the page"
                         fullWidth
                         value={itemsPerRow}
                         onChange={(e) => setItemsPerRow(e.target.value)}
                         inputProps={{ min: 1, max: 20 }}
-                        helperText="Fewer per row makes each label bigger."
+                        helperText="Fewer per row makes each code bigger."
                     />
 
                     <Stack direction="row" spacing={1.5} justifyContent="flex-end" alignItems="center">

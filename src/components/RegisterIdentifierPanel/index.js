@@ -24,6 +24,7 @@ import { renderEan13ToDataUrl, toValidEan13 } from '../../utils/barcodeRenderer'
 import { truncateCode } from '../../utils/truncateCode';
 import { parseIdentifierCsv } from '../../utils/parseIdentifierCsv';
 import PrintDialog from '../printModal/PrintDialog';
+import { useAuth } from '../../features/auth/AuthContext';
 import { confirmAction } from '../../utils/feedbackBus';
 
 const SOURCE_TYPES = [
@@ -123,6 +124,8 @@ const CodeImage = ({ sourceType, value, onReady }) => {
 // and the list below only shows identifiers of that type, instead of a
 // mixed list with a type dropdown.
 const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, product, onProductChange, enableCsvImport = false }) => {
+  // "Test values" (random stand-in codes) are a tool for the platform team, not for brands.
+  const { isAdmin } = useAuth();
   const [identifiers, setIdentifiers] = useState([]);
   const [sourceType, setSourceType] = useState(lockedSourceType || 'barcode');
   const [rawValue, setRawValue] = useState('');
@@ -276,11 +279,11 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
   return (
     <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
       {!lockedSourceType && (
-        <Typography variant="h6" sx={{ mb: 1, fontWeight: 400 }}>Registered Identifiers</Typography>
+        <Typography variant="h6" sx={{ mb: 1, fontWeight: 400 }}>Codes you already have</Typography>
       )}
       {!lockedSourceType && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Register this product's own barcode, GTIN, NFC tag or RFID tag so scanning it in the app opens this product. Use this for labels printed outside this platform.
+          Register this product's own barcode, GTIN, NFC tag or RFID tag so scanning it in the app opens this product. Use this for codes printed outside this platform.
         </Typography>
       )}
       <Typography variant="subtitle1" sx={{ mb: 1 }}>
@@ -334,9 +337,11 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           onClick={() => setPrintOpen(true)}
           disabled={visibleIdentifiers.length === 0}
         >
-          Download labels to print
+          Download codes to print
         </Button>
         <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
+          {isAdmin && (
+          <>
           <TextField
             type="number"
             label="Test values"
@@ -353,6 +358,8 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           >
             {bulkGenerating ? 'Creating…' : 'Create test values'}
           </Button>
+          </>
+          )}
           {enableCsvImport && (
             <Button
               variant="outlined"
@@ -479,7 +486,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
         </>
       ) : (
         <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-          {lockedSourceType ? `No ${activeLabel} added to this product yet.` : 'No labels added to this product yet.'}
+          {lockedSourceType ? `No ${activeLabel} added to this product yet.` : 'No codes added to this product yet.'}
         </Typography>
       )}
     </Box>

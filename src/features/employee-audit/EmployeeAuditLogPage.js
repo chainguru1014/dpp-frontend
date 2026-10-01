@@ -81,7 +81,7 @@ const EmployeeAuditLogPage = ({ token, showCompanyColumn }) => {
   return (
     <Box>
       <Typography color="text.secondary" sx={{ mb: 2 }}>
-        When staff signed in and what they did. This record cannot be edited or deleted.
+        When employees signed in and what they did. This record cannot be edited or deleted.
       </Typography>
       <Box sx={{ bgcolor: '#fff', borderRadius: 1, boxShadow: 1 }}>
         <DataGrid

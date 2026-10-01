@@ -182,7 +182,7 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
           label="Company admin email (Supervisor)"
           type="email"
           required
-          helperText="A Supervisor staff account is created for this email automatically. They can sign in to this website right away with a code sent to this email."
+          helperText="A Supervisor account is created for this email automatically and a welcome email is sent. They can sign in to this website right away with a code sent to this email."
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           fullWidth
@@ -196,7 +196,7 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
         <TextField
           label="Company domain"
           placeholder={form.email.includes('@') ? form.email.split('@')[1] : 'e.g. hm.com'}
-          helperText="Staff emails must end with this domain. The admin email's domain is added automatically; add more separated by commas."
+          helperText="Employee emails must end with this domain. The admin email's domain is added automatically; add more separated by commas."
           value={form.allowedEmailDomains}
           onChange={(e) => setForm({ ...form, allowedEmailDomains: e.target.value })}
           fullWidth

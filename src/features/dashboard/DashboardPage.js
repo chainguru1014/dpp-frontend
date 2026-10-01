@@ -49,7 +49,7 @@ const DashboardPage = ({
   const description = isAdmin
     ? 'Activity across every company on the platform.'
     : isAppUser
-      ? 'Your products and the labels you have scanned.'
+      ? 'Your products and the codes you have scanned.'
       : isWorkingEmployee
         ? 'Your company’s scan activity and your own captures.'
         : 'How your products are being scanned, and where.';

@@ -516,7 +516,7 @@ export default function DashboardAnalytics({
                   <TableRow>
                     <TableCell colSpan={4 + traceabilityColumns.length}>
                       <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
-                        No scans yet. Figures appear here once people scan your product labels.
+                        No scans yet. Figures appear here once people scan your product codes.
                       </Typography>
                     </TableCell>
                   </TableRow>

@@ -75,7 +75,7 @@ const UserEditDialog = ({ user, onChange, onClose, onSave }) => {
                 <TextField
                   label="Company domain"
                   placeholder="e.g. hm.com, hm.co.jp"
-                  helperText="Staff emails must end with this domain. Separate several domains with commas."
+                  helperText="Employee emails must end with this domain. Separate several domains with commas."
                   value={(user.allowedEmailDomains || []).join(', ')}
                   onChange={(e) =>
                     onChange({

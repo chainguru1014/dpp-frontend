@@ -15,7 +15,9 @@ import PairTagsDialog from './PairTagsDialog';
 const SECURITY_BASE_URL = process.env.REACT_APP_SECURITY_BASE_URL || process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com';
 
 // `help` is one plain sentence under the tabs so a first-time user knows
-// which label type to pick.
+// which code type to pick. The two QR types are what nearly every brand
+// needs, so only they show at first; the rest appear under "Other code types".
+const PRIMARY_TABS = ['qr', 'securityQr'];
 const TABS = [
   { key: 'qr', label: 'QR Code', help: 'The usual choice. Each QR code is a unique label; scanning it with a phone opens this product\u2019s page.' },
   { key: 'securityQr', label: 'Security QR Code', help: 'A QR code with a hidden security key, so shoppers can check the product is genuine. Use it for valuable items.' },
@@ -57,6 +59,8 @@ const GenerateAndPrintPanel = ({
   canGenerate = true,
 }) => {
   const [tab, setTab] = useState('qr');
+  const [showOtherTypes, setShowOtherTypes] = useState(false);
+  const visibleTabs = showOtherTypes ? TABS : TABS.filter((t) => PRIMARY_TABS.includes(t.key));
   const [securityPrintOpen, setSecurityPrintOpen] = useState(false);
   const [pairOpen, setPairOpen] = useState(false);
 
@@ -134,17 +138,30 @@ const GenerateAndPrintPanel = ({
 
   return (
     <Box>
-      <Tabs
-        value={tab}
-        onChange={(e, v) => setTab(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
-      >
-        {TABS.map((t) => (
-          <Tab key={t.key} value={t.key} label={t.label} />
-        ))}
-      </Tabs>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Tabs
+          value={tab}
+          onChange={(e, v) => setTab(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ flex: 1, minWidth: 0 }}
+        >
+          {visibleTabs.map((t) => (
+            <Tab key={t.key} value={t.key} label={t.label} />
+          ))}
+        </Tabs>
+        <Button
+          size="small"
+          onClick={() => {
+            // Folding the list away while on one of the other types goes back to QR.
+            if (showOtherTypes && !PRIMARY_TABS.includes(tab)) setTab('qr');
+            setShowOtherTypes((open) => !open);
+          }}
+          aria-expanded={showOtherTypes}
+        >
+          {showOtherTypes ? 'Fewer types' : 'Other code types'}
+        </Button>
+      </Box>
       <Alert severity="info" icon={false} sx={{ mb: 2 }}>
         {TABS.find((t) => t.key === tab)?.help}
       </Alert>
@@ -178,7 +195,7 @@ const GenerateAndPrintPanel = ({
                 Pair tags with items
               </Button>
               <Button variant="outlined" startIcon={<DownloadIcon />} onClick={onOpenPrint} disabled={total === 0} sx={{ mt: 0.5 }}>
-                Download labels to print
+                Download codes to print
               </Button>
             </Box>
           )}
@@ -244,7 +261,7 @@ const GenerateAndPrintPanel = ({
                 disabled={securityTotal === 0}
                 sx={{ mt: 0.5 }}
               >
-                Download labels to print
+                Download codes to print
               </Button>
             </Box>
           )}

@@ -109,6 +109,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
   const ACCOUNT_TYPE_LABEL = { client: 'Shopper', agent: 'Business', user: 'Shopper', guest: 'Guest' };
   const moreFilterCount = ['source', 'security', 'reaction', 'location'].filter((k) => filters[k] || (k === 'location' && locationInput)).length;
   const [showMore, setShowMore] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const columns = useMemo(
     () => [
@@ -166,7 +167,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
       },
       {
         field: 'identifier_type',
-        headerName: 'Label',
+        headerName: 'Code',
         width: 110,
         renderCell: (p) => (
           <Chip
@@ -204,14 +205,31 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
     [isAppUser]
   );
 
+  // How many filters are on (shown on the Filters button).
+  const activeFilterCount = Object.values(filters).filter(Boolean).length + (usernameInput ? 1 : 0) + (locationInput ? 1 : 0);
+
   return (
     <Box>
       <PageHeader
         title={isAppUser ? 'My Scans' : 'Scan History'}
         description={isAppUser
-          ? 'Every product label you have scanned, newest first.'
+          ? 'Every product code you have scanned, newest first.'
           : 'Every time someone scanned one of your product labels, newest first.'}
+        actions={(
+          <Button
+            variant={filtersOpen || activeFilterCount ? 'contained' : 'outlined'}
+            startIcon={<FilterListIcon />}
+            onClick={() => setFiltersOpen((open) => !open)}
+            aria-expanded={filtersOpen}
+          >
+            {filtersOpen ? 'Hide filters' : `Filters${activeFilterCount ? ` (${activeFilterCount})` : ''}`}
+          </Button>
+        )}
+        moreActions={[{ label: 'Reload', icon: RefreshIcon, onClick: fetchData }]}
       />
+      {/* The table comes first; filters open on request (and stay visible
+          while any is on, so it is never unclear why rows are missing). */}
+      <Collapse in={filtersOpen}>
       <Paper sx={{ p: 2, mb: 2 }}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} sm={6} md={3} xl={2}>
@@ -243,11 +261,6 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
             <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setShowMore((v) => !v)} aria-expanded={showMore} sx={{ whiteSpace: 'nowrap' }}>
               {showMore ? 'Fewer filters' : `More filters${moreFilterCount ? ` (${moreFilterCount})` : ''}`}
             </Button>
-            <Tooltip title="Reload">
-              <IconButton onClick={fetchData} color="primary" aria-label="Reload scan history">
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
           </Grid>
         </Grid>
         <Collapse in={showMore}>
@@ -287,6 +300,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
           </Grid>
         </Collapse>
       </Paper>
+      </Collapse>
 
       <Paper sx={{ p: 1 }}>
         <DataGrid
