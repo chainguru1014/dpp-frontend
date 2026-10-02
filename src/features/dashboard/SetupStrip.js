@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, LinearProgress, Typography } from '@mui/material';
+import { Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, LinearProgress, Typography } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import CloseIcon from '@mui/icons-material/Close';
 import qrcode from 'qrcode';
 import { getProductQRcodes, listEmployees } from '../../helper';
+import { passportCompleteness } from '../../utils/passportCompleteness';
 
 const HIDDEN_KEY = 'dpp_setupStripHidden';
 const TRIED_KEY = 'dpp_setupTriedScan';
+// A passport this complete is ready to put in front of shoppers.
+const PASSPORT_READY = 80;
 const stored = (key) => {
   try { return localStorage.getItem(key) === '1'; } catch (e) { return false; }
 };
@@ -15,7 +18,13 @@ const store = (key) => {
   try { localStorage.setItem(key, '1'); } catch (e) { /* storage blocked */ }
 };
 
-// "Try it": one of the brand's own labels on screen, to scan with a phone and
+// Codes of any kind that were downloaded to print: QR, Security QR, or the
+// barcode / NFC / RFID sheets.
+const printedCount = (p) => (p.printed_amount || 0)
+  + (p.security_printed_amount || 0)
+  + Object.values(p.identifier_printed_amounts || {}).reduce((sum, n) => sum + (Number(n) || 0), 0);
+
+// "Try it": one of the brand's own codes on screen, to scan with a phone and
 // see the product page a shopper gets.
 function TryScanDialog({ open, onClose, product, onDone }) {
   const [image, setImage] = useState('');
@@ -63,11 +72,15 @@ function TryScanDialog({ open, onClose, product, onDone }) {
   );
 }
 
-// A new brand's first steps, as one slim strip: how far along they are and
-// the one thing to do next. Steps are ticked from real data (products,
-// labels, prints, scans, staff). It disappears once everything is done, or
-// when hidden.
-export default function SetupStrip({ products = [], scans = 0, token, companyId, canManageStaff, onAddProduct, onGenerateCodes, onManageStaff }) {
+// A new brand's way from an empty account to products out in the world, in
+// the order the work is really done: brand, product, passport, codes, print,
+// test scan, team. Every step is ticked from real data, says why it matters,
+// and can be clicked to go and do it. The strip disappears once everything
+// is done, or when hidden.
+export default function SetupStrip({
+  products = [], brands = [], scans = 0, token, companyId, canManageStaff,
+  onSetUpBrand, onAddProduct, onCompletePassport, onGenerateCodes, onManageStaff,
+}) {
   const [hidden, setHidden] = useState(() => stored(HIDDEN_KEY));
   const [tried, setTried] = useState(() => stored(TRIED_KEY));
   const [tryOpen, setTryOpen] = useState(false);
@@ -85,13 +98,64 @@ export default function SetupStrip({ products = [], scans = 0, token, companyId,
 
   if (hidden || hasTeam === null) return null;
 
-  const withLabels = products.find((p) => (p.total_minted_amount || 0) > 0);
+  const brandReady = brands.some((b) => ['name', 'detail', 'websiteUrl', 'logoUrl'].every((key) => String(b[key] || '').trim()));
+  const scored = products.map((p) => ({ product: p, percent: passportCompleteness(p).percent }));
+  const best = scored.reduce((top, row) => (!top || row.percent > top.percent ? row : top), null);
+  const withCodes = products.find((p) => (p.total_minted_amount || 0) > 0);
+  const codesProduct = withCodes || best?.product;
+
   const steps = [
-    { label: 'Add a product', done: products.length > 0, action: onAddProduct, button: 'Add a product' },
-    { label: 'Create its codes', done: !!withLabels, action: onGenerateCodes, button: 'Create codes' },
-    { label: 'Print the codes', done: products.some((p) => (p.printed_amount || 0) > 0), action: onGenerateCodes, button: 'Print codes' },
-    { label: 'Scan one with your phone', done: scans > 0 || tried, action: () => setTryOpen(true), button: 'Try it' },
-    canManageStaff && { label: 'Add your team', done: hasTeam, action: onManageStaff, button: 'Add your team' },
+    onSetUpBrand && {
+      label: 'Set up your brand',
+      why: 'Your name, logo, website and a short description. Every product you add starts with them, and shoppers see them on each product page.',
+      done: brandReady,
+      action: onSetUpBrand,
+      button: 'Set up your brand',
+    },
+    {
+      label: 'Add your first product',
+      why: 'A name, a category and one photo are enough to start.',
+      done: products.length > 0,
+      action: onAddProduct,
+      button: 'Add a product',
+    },
+    {
+      label: 'Fill in its passport',
+      why: best
+        ? `“${best.product.name || 'Your product'}” is ${best.percent}% complete. Materials, care, origin and repair are what shoppers (and the EU rules) expect; aim for ${PASSPORT_READY}% or more.`
+        : `Materials, care, origin and repair are what shoppers (and the EU rules) expect; aim for ${PASSPORT_READY}% or more.`,
+      done: !!best && best.percent >= PASSPORT_READY,
+      action: () => (best && onCompletePassport ? onCompletePassport(best.product) : onAddProduct()),
+      button: 'Fill in the passport',
+    },
+    {
+      label: 'Create codes for your items',
+      why: 'One code per physical item. Scanning it opens that product’s page.',
+      done: !!withCodes,
+      action: () => onGenerateCodes(codesProduct),
+      button: 'Create codes',
+    },
+    {
+      label: 'Download and print the codes',
+      why: 'Download the codes as a PDF and print it on labels or hang tags. This step is ticked when you download the PDF.',
+      done: products.some((p) => printedCount(p) > 0),
+      action: () => onGenerateCodes(codesProduct),
+      button: 'Download codes to print',
+    },
+    {
+      label: 'Test a code with your phone',
+      why: 'See the page exactly as a shopper does before the items leave your hands.',
+      done: scans > 0 || tried,
+      action: () => (withCodes ? setTryOpen(true) : onGenerateCodes(codesProduct)),
+      button: 'Try it',
+    },
+    canManageStaff && {
+      label: 'Invite your team',
+      why: 'Add the employees who will record receiving, packing and other work steps in the mobile app.',
+      done: hasTeam,
+      action: onManageStaff,
+      button: 'Invite your team',
+    },
   ].filter(Boolean);
   const done = steps.filter((s) => s.done).length;
   if (done === steps.length) return null;
@@ -100,30 +164,46 @@ export default function SetupStrip({ products = [], scans = 0, token, companyId,
 
   return (
     <Box sx={{ mb: 3, p: 2.5, bgcolor: '#fff', border: '1px solid', borderColor: 'primary.light', borderRadius: 3, boxShadow: 1 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 1.5 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 2 }}>
         <Box sx={{ flex: '1 1 260px', minWidth: 0 }}>
           <Typography variant="h6" component="h2">Getting set up: {done} of {steps.length} done</Typography>
           <LinearProgress variant="determinate" value={(done * 100) / steps.length} sx={{ mt: 1, height: 8, borderRadius: 4, bgcolor: '#e6eaf1', maxWidth: 420 }} />
         </Box>
-        <Button variant="contained" onClick={next.action}>Next: {next.button}</Button>
         <Button onClick={() => { store(HIDDEN_KEY); setHidden(true); }}>Hide</Button>
       </Box>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 3, rowGap: 0.75 }}>
+
+      {/* The one thing to do now, with the reason for it. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', p: 2, mb: 2, bgcolor: 'rgba(47,128,200,0.08)', borderRadius: 2 }}>
+        <Box sx={{ flex: '1 1 320px', minWidth: 0 }}>
+          <Typography variant="body2" color="text.secondary">Next step</Typography>
+          <Typography variant="subtitle1" component="p" sx={{ fontWeight: 600 }}>{steps.indexOf(next) + 1}. {next.label}</Typography>
+          <Typography color="text.secondary">{next.why}</Typography>
+        </Box>
+        <Button variant="contained" onClick={next.action} sx={{ flexShrink: 0 }}>{next.button}</Button>
+      </Box>
+
+      <Box component="ol" sx={{ listStyle: 'none', p: 0, m: 0, display: 'grid', gap: 0.5, gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' } }}>
         {steps.map((s, i) => (
-          <Box key={s.label} sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-            {s.done
-              ? <CheckCircleIcon sx={{ color: 'success.main' }} aria-label="Done" />
-              : <RadioButtonUncheckedIcon sx={{ color: s === next ? 'primary.main' : 'text.disabled' }} aria-label="Not done yet" />}
-            <Typography sx={{ fontWeight: s === next ? 600 : 400 }} color={s.done ? 'text.secondary' : 'text.primary'}>
-              {i + 1}. {s.label}
-            </Typography>
+          <Box component="li" key={s.label}>
+            <ButtonBase
+              onClick={s.action}
+              title={s.why}
+              sx={{ width: '100%', justifyContent: 'flex-start', gap: 1, px: 1, py: 0.75, borderRadius: 1.5, textAlign: 'left', '&:hover': { bgcolor: 'rgba(47,128,200,0.08)' } }}
+            >
+              {s.done
+                ? <CheckCircleIcon sx={{ color: 'success.main' }} aria-label="Done" />
+                : <RadioButtonUncheckedIcon sx={{ color: s === next ? 'primary.main' : 'text.disabled' }} aria-label="Not done yet" />}
+              <Typography sx={{ fontWeight: s === next ? 600 : 400 }} color={s.done ? 'text.secondary' : 'text.primary'}>
+                {i + 1}. {s.label}
+              </Typography>
+            </ButtonBase>
           </Box>
         ))}
       </Box>
       <TryScanDialog
         open={tryOpen}
         onClose={() => setTryOpen(false)}
-        product={withLabels}
+        product={withCodes}
         onDone={() => { store(TRIED_KEY); setTried(true); setTryOpen(false); }}
       />
     </Box>

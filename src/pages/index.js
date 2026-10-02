@@ -1498,6 +1498,34 @@ const InnerPage = () => {
   // Generate Code page — reuses selectedProduct (so the QR/identifier loading
   // effects above run as-is), but only counts it when it's in this account's
   // own `products` list.
+  // A download to print updates the open product only; copy its printed
+  // counts into the list, which the dashboard and the product rows read.
+  // Counts only ever go up here, so an older copy of the product can't undo
+  // a newer list.
+  useEffect(() => {
+    if (!selectedProduct?._id) return;
+    setProducts((list) => {
+      const i = list.findIndex((p) => p._id === selectedProduct._id);
+      if (i < 0) return list;
+      const row = list[i];
+      const tags = { ...(row.identifier_printed_amounts || {}) };
+      Object.entries(selectedProduct.identifier_printed_amounts || {}).forEach(([type, n]) => {
+        tags[type] = Math.max(Number(tags[type]) || 0, Number(n) || 0);
+      });
+      const next = {
+        printed_amount: Math.max(row.printed_amount || 0, selectedProduct.printed_amount || 0),
+        security_printed_amount: Math.max(row.security_printed_amount || 0, selectedProduct.security_printed_amount || 0),
+        identifier_printed_amounts: tags,
+      };
+      if (next.printed_amount === (row.printed_amount || 0)
+        && next.security_printed_amount === (row.security_printed_amount || 0)
+        && JSON.stringify(tags) === JSON.stringify(row.identifier_printed_amounts || {})) return list;
+      const copy = [...list];
+      copy[i] = { ...row, ...next };
+      return copy;
+    });
+  }, [selectedProduct]);
+
   const generateCodeProduct = selectedProduct && products.some((p) => p._id === selectedProduct._id)
     ? selectedProduct
     : null;
@@ -2077,7 +2105,20 @@ const InnerPage = () => {
               canSeeStaffManagement={canSeeStaffManagement}
               canEditProcessSteps={!isAppUser && !isAdmin && (!isEmployeeActor || isSupervisor)}
               products={products}
+              brands={ownBrands}
               company={company}
+              // Getting set up: each step opens the place where it is done.
+              onSetUpBrand={() => go('brand')}
+              onCompletePassport={(prod) => {
+                setPreviousPage(activePage);
+                editProductHandler(prod);
+              }}
+              onGenerateCodesFor={(prod) => {
+                keepGenerateSelectionRef.current = true;
+                selectGenerateCodeProduct(prod);
+                setPickingCodeProduct(false);
+                go('generateCode');
+              }}
               onAnalyzeProduct={canSeeItemSearch ? (prod) => {
                 setItemSearchProductId(prod._id);
                 go('itemSearch');

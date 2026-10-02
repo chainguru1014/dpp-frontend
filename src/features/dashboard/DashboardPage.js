@@ -11,7 +11,8 @@ import { useAuth } from '../auth/AuthContext';
 
 const DashboardPage = ({
   isAdmin, isAppUser, isWorkingEmployee = false, canEditProducts = false, canSeeStaffManagement = false,
-  canEditProcessSteps = false, products = [], company,
+  canEditProcessSteps = false, products = [], brands = [], company,
+  onSetUpBrand, onCompletePassport, onGenerateCodesFor,
   onNavigateToNewProduct, onNavigate = () => {}, onNavigateToProducts,
   onNavigateToScanHistory, onNavigateToCaptureHistory, onNavigateToGenerateCode, onAnalyzeProduct,
 }) => {
@@ -79,12 +80,15 @@ const DashboardPage = ({
       {canEditProducts && !isAdmin && scans !== null && (
         <SetupStrip
           products={products}
+          brands={brands}
           scans={scans}
           token={token}
           companyId={ownerId}
           canManageStaff={canSeeStaffManagement}
+          onSetUpBrand={onSetUpBrand}
           onAddProduct={onNavigateToNewProduct}
-          onGenerateCodes={onNavigateToGenerateCode}
+          onCompletePassport={onCompletePassport}
+          onGenerateCodes={(product) => (product && onGenerateCodesFor ? onGenerateCodesFor(product) : onNavigateToGenerateCode())}
           onManageStaff={() => onNavigate('employeeAuditLog')}
         />
       )}
