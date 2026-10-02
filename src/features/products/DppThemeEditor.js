@@ -155,7 +155,7 @@ export default function DppThemeEditor({ theme, onChange, onSave, onReset, savin
       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Design</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
         {canEdit
-          ? 'How your product page looks in the app. It applies to all your products; the preview changes as you edit.'
+          ? 'How your product page looks in the app. It applies to every product of this brand; the preview changes as you edit.'
           : 'How your company’s product page looks. Only a Supervisor or the company account can change it.'}
       </Typography>
 

@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, MenuItem, Stack, Tab, Tabs,
+  Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton, MenuItem, Stack, Tab, Tabs,
   TextField, Typography,
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
@@ -85,7 +85,7 @@ export default function BrandPage({ token, isAdmin = false, products = [], targe
       applyList(list);
       setCanEdit(!!res?.canWrite);
       const wanted = target && list.find((b) => String(b.company_id) === String(target.companyId)
-        && b.name.trim().toLowerCase() === String(target.name || '').trim().toLowerCase());
+        && String(b.name || '').trim().toLowerCase() === String(target.name || '').trim().toLowerCase());
       select(wanted || list[0] || null);
       if (target) {
         setTab('design');
@@ -236,12 +236,12 @@ export default function BrandPage({ token, isAdmin = false, products = [], targe
             label="Brand"
             value={selectedId}
             onChange={(e) => chooseBrand(e.target.value)}
-            sx={{ mb: 2.5, width: { xs: '100%', sm: 440 }, bgcolor: 'background.paper', borderRadius: 2 }}
+            sx={{ mb: 2.5, width: { xs: '100%', sm: 440 }, '& .MuiOutlinedInput-root': { bgcolor: 'background.paper' } }}
             helperText={brands.length > 1 ? 'Choose the brand to edit.' : undefined}
             SelectProps={{
               renderValue: () => (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                  {selected.logoUrl && <Box component="img" alt="" src={getFileUrl(selected.logoUrl)} sx={{ width: 28, height: 28, objectFit: 'contain' }} />}
+                  {selected.logoUrl && <Box component="img" alt="" src={getFileUrl(selected.logoUrl)} sx={{ width: 28, height: 28, objectFit: 'contain', bgcolor: '#e6eaf0', borderRadius: 1, p: '2px' }} />}
                   <span>{selected.name}{isAdmin && selected.companyName ? ` — ${selected.companyName}` : ''}</span>
                 </Box>
               ),
@@ -250,7 +250,7 @@ export default function BrandPage({ token, isAdmin = false, products = [], targe
             {brands.map((b) => (
               <MenuItem key={b._id} value={b._id} sx={{ gap: 1.25 }}>
                 <Box component="img" alt="" src={b.logoUrl ? getFileUrl(b.logoUrl) : undefined}
-                  sx={{ width: 28, height: 28, objectFit: 'contain', visibility: b.logoUrl ? 'visible' : 'hidden' }} />
+                  sx={{ width: 28, height: 28, objectFit: 'contain', bgcolor: '#e6eaf0', borderRadius: 1, p: '2px', visibility: b.logoUrl ? 'visible' : 'hidden' }} />
                 {b.name}{isAdmin && b.companyName ? ` — ${b.companyName}` : ''}
               </MenuItem>
             ))}
@@ -283,7 +283,7 @@ export default function BrandPage({ token, isAdmin = false, products = [], targe
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       {details.logoUrl && (
                         <Box component="img" src={getFileUrl(details.logoUrl)} alt="Brand logo"
-                          sx={{ width: 84, height: 84, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: '#fff' }} />
+                          sx={{ width: 84, height: 84, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: '#e6eaf0', p: 0.5 }} />
                       )}
                       {canEdit && (
                         <Button variant="outlined" component="label" disabled={uploading === 'logoUrl'}>
@@ -354,7 +354,7 @@ export default function BrandPage({ token, isAdmin = false, products = [], targe
                     </TextField>
                   )}
                   <Box sx={{ width: 340, maxWidth: '100%', height: 640, mx: 'auto', border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 4 }}>
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, bgcolor: '#fff' }}><CircularProgress size={28} /><Typography variant="body2" color="text.secondary">Loading the preview…</Typography></Box>}>
                       <DppPhoneView productInfo={previewProduct} theme={theme} />
                     </Suspense>
                   </Box>

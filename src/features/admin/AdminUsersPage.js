@@ -37,17 +37,17 @@ const AdminLoadingOverlay = () => (
 
 const NormalUsersTable = ({ users, loading, onEdit, onRemove }) => {
   const columns = [
-    { field: 'name', headerName: 'Username', width: 150 },
-    { field: 'email', headerName: 'Email', width: 200 },
-    { field: 'firstName', headerName: 'First Name', width: 130 },
-    { field: 'lastName', headerName: 'Last Name', width: 130 },
-    { field: 'country', headerName: 'Country', width: 130 },
-    { field: 'phoneNumber', headerName: 'Phone Number', width: 150 },
-    { field: 'role', headerName: 'Role', width: 120 },
+    { field: 'name', headerName: 'Username', flex: 1, minWidth: 120 },
+    { field: 'email', headerName: 'Email', flex: 1.5, minWidth: 180 },
+    { field: 'firstName', headerName: 'First Name', flex: 0.8, minWidth: 100 },
+    { field: 'lastName', headerName: 'Last Name', flex: 0.8, minWidth: 100 },
+    { field: 'country', headerName: 'Country', flex: 0.8, minWidth: 100 },
+    { field: 'phoneNumber', headerName: 'Phone Number', flex: 1, minWidth: 120 },
+    { field: 'role', headerName: 'Role', width: 80 },
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 220,
+      width: 110,
       sortable: false,
       renderCell: (data) => (
         <Box sx={{ display: 'flex', gap: 0.5 }}>

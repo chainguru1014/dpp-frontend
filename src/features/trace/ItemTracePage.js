@@ -156,7 +156,7 @@ export default function ItemTracePage({
   const [parent, setParent] = useState(null);
   const resultRef = useRef(null);
 
-  const show = async (request, { keepParent = false } = {}) => {
+  const show = async (request, { keepParent = false, scroll = true } = {}) => {
     setLoading(true);
     setError('');
     const res = await request;
@@ -167,7 +167,7 @@ export default function ItemTracePage({
     }
     if (!keepParent) setParent(null);
     setResult(res.data);
-    setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    if (scroll) setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   };
 
   const findCode = (q) => {
@@ -197,6 +197,15 @@ export default function ItemTracePage({
     if (onProductHandled) onProductHandled();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId]);
+
+  // With only one product there is nothing to choose: show its journey.
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (autoOpened.current || productsLoading || products.length !== 1 || query || productId || result || loading) return;
+    autoOpened.current = true;
+    show(getTraceProduct(token, products[0]._id), { scroll: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [products, productsLoading]);
 
   const openItem = (id, itemId) => {
     if (result?.type === 'product') setParent(result);

@@ -122,8 +122,16 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
-        <CircularProgress />
+      <Box>
+        <PageHeader
+          title={selfEmployee ? 'My Captures' : 'Capture History'}
+          description={selfEmployee
+            ? 'Work steps you recorded with the mobile app.'
+            : 'Work steps your employees recorded with the mobile app, per person.'}
+        />
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
+          <CircularProgress aria-label="Loading captures" />
+        </Box>
       </Box>
     );
   }

@@ -20,6 +20,7 @@ import {
   Typography,
 } from '@mui/material';
 import EcoIcon from '@mui/icons-material/Spa';
+import BalanceIcon from '@mui/icons-material/Balance';
 import Co2Icon from '@mui/icons-material/Co2';
 import PublicIcon from '@mui/icons-material/Public';
 import VerifiedIcon from '@mui/icons-material/Verified';
@@ -139,10 +140,10 @@ const Completeness = ({ value, dense }) => (
 const Stage = ({ icon: Icon, title, children, empty }) => (
   <Paper variant="outlined" sx={{ p: 1.5, height: '100%', borderRadius: 2 }}>
     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-      <Box sx={{ width: 34, height: 34, borderRadius: '50%', bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon sx={{ color: '#fff', fontSize: 20 }} />
+      <Box sx={{ width: 30, height: 30, borderRadius: '50%', bgcolor: 'primary.main', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon sx={{ color: '#fff', fontSize: 18 }} />
       </Box>
-      <Typography variant="subtitle1" component="h3">{title}</Typography>
+      <Typography variant="subtitle1" component="h3" sx={{ fontSize: '1rem', lineHeight: 1.25, minWidth: 0, overflowWrap: 'anywhere' }}>{title}</Typography>
     </Stack>
     {empty ? <Typography color="text.secondary">Not added yet</Typography> : children}
   </Paper>
@@ -202,7 +203,7 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
     <Box>
       <PageHeader
         title={v.title}
-        icon={EcoIcon}
+        icon={isLca ? EcoIcon : BalanceIcon}
         description={isAppUser ? v.appUserDescription : v.description}
       />
 

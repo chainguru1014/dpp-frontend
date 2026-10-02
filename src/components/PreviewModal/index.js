@@ -384,7 +384,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                 <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: C.surfaceAlt, mx: 'auto', mb: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <s.Icon sx={{ fontSize: 20, color: C.primary }} />
                 </Box>
-                <Typography sx={{ fontSize: 9, color: C.muted, lineHeight: 1.1 }}>{s.label}</Typography>
+                <Typography sx={{ fontSize: 7.5, color: C.muted, lineHeight: 1.15, letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>{s.label}</Typography>
               </Box>
               {i < LIFECYCLE_STAGES.length - 1 && (
                 <Box sx={{ flex: 1, height: 2, bgcolor: C.primary, borderRadius: 1, mt: '19px' }} />
@@ -411,7 +411,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     brand: () => !!brand.name && (
       <Box sx={card}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-          {!!brand.logoUrl && <Box component="img" src={getFileUrl(brand.logoUrl)} alt="" sx={{ width: 32, height: 32, objectFit: 'contain' }} />}
+          {!!brand.logoUrl && <Box component="img" src={getFileUrl(brand.logoUrl)} alt="" sx={{ width: 32, height: 32, objectFit: 'contain', bgcolor: '#e6eaf0', borderRadius: 1, p: '2px' }} />}
           <Typography sx={{ ...cardTitle, mb: 0 }}>{brand.name}</Typography>
         </Box>
         {!!brand.detail && <Typography sx={{ fontSize: 12, color: C.text, lineHeight: 1.5 }}>{brand.detail}</Typography>}

@@ -46,7 +46,7 @@ function Kpi({ icon: Icon, label, value, sub, color = 'primary.main' }) {
 }
 
 // Horizontal bars: [{ label, value }]. The longest bar fills the row.
-function Bars({ rows, unit, color = '#2f80c8', emptyText }) {
+function Bars({ rows, unit, unitOne = unit, color = '#2f80c8', emptyText }) {
   const max = Math.max(1, ...rows.map((r) => r.value));
   if (!rows.some((r) => r.value > 0)) return <Typography color="text.secondary">{emptyText}</Typography>;
   return (
@@ -58,7 +58,7 @@ function Bars({ rows, unit, color = '#2f80c8', emptyText }) {
             <Box sx={{ width: `${(r.value / max) * 100}%`, height: '100%', bgcolor: color, borderRadius: 1, minWidth: r.value ? 4 : 0 }} />
           </Box>
           <Typography variant="body2" sx={{ width: 90, flexShrink: 0, textAlign: 'right', fontWeight: 600 }}>
-            {r.value.toLocaleString()} {unit}
+            {r.value.toLocaleString()} {r.value === 1 ? unitOne : unit}
           </Typography>
         </Box>
       ))}
@@ -107,7 +107,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
     const sure = await confirmAction(blocking
       ? {
           title: 'Mark this code as a suspected copy?',
-          message: `Everyone who scans code #${row.qrcodeId} of "${row.productName}" will see a warning that it may be a copy. The genuine item carries the same label, so its owner sees the warning too. You can undo this at any time.`,
+          message: `Everyone who scans code #${row.qrcodeId} of "${row.productName}" will see a warning that it may be a copy. The genuine item carries the same code, so its owner sees the warning too. You can undo this at any time.`,
           confirmText: 'Mark as suspected copy',
           danger: true,
         }
@@ -125,7 +125,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
       notifyError(res.message);
       return;
     }
-    notifySuccess(blocking ? 'Label marked. Shoppers who scan it now see a warning.' : 'Warning removed.');
+    notifySuccess(blocking ? 'Code marked. Shoppers who scan it now see a warning.' : 'Warning removed.');
     load(days);
   };
 
@@ -154,20 +154,20 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
       {!loading && data && (
         <Stack spacing={2}>
           <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' } }}>
-            <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Codes scanned" sub={`${totals.scans.toLocaleString()} scans in total`} />
+            <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Codes scanned" sub={`${totals.scans.toLocaleString()} ${totals.scans === 1 ? 'scan' : 'scans'} in total`} />
             <Kpi icon={ReplayIcon} value={totals.repeatItems.toLocaleString()} label="Scanned more than once" />
             <Kpi
               icon={GppMaybeIcon}
               value={(totals.highRisk + totals.mediumRisk).toLocaleString()}
               label="Codes with warning signs"
-              sub={`${totals.highRisk} likely copies, ${totals.mediumRisk} worth a look`}
+              sub={`${totals.highRisk} likely ${totals.highRisk === 1 ? 'copy' : 'copies'}, ${totals.mediumRisk} worth a look`}
               color={totals.highRisk ? 'error.main' : totals.mediumRisk ? 'warning.main' : 'success.main'}
             />
             <Kpi
               icon={VerifiedUserIcon}
               value={totals.securityVerified.toLocaleString()}
               label="Security QR checks passed"
-              sub={`${totals.securityFailed} failed · ${totals.blocked} codes marked as copies`}
+              sub={`${totals.securityFailed} failed · ${totals.blocked} marked as ${totals.blocked === 1 ? 'a copy' : 'copies'}`}
               color={totals.securityFailed ? 'error.main' : 'success.main'}
             />
           </Box>
@@ -177,7 +177,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
             description="Location comes from the scanner's GPS or internet address, which can be wrong (for example with a VPN). Treat these as reasons to look, then decide."
           >
             {data.suspects.length === 0 ? (
-              <Alert severity="success">No label shows warning signs in this period.</Alert>
+              <Alert severity="success">No code shows warning signs in this period.</Alert>
             ) : (
               <Stack spacing={1.5}>
                 {data.suspects.map((row) => {
@@ -231,6 +231,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
               <Bars
                 rows={data.repeatHistogram.map((b) => ({ label: `${b.label} ${b.label === '1' ? 'scan' : 'scans'}`, value: b.items }))}
                 unit="codes"
+                unitOne="code"
                 emptyText="No scans in this period."
               />
             </Section>
@@ -238,6 +239,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
               <Bars
                 rows={data.countries.map((c) => ({ label: c.country, value: c.count }))}
                 unit="scans"
+                unitOne="scan"
                 color="#3a9d6a"
                 emptyText="No located scans in this period."
               />

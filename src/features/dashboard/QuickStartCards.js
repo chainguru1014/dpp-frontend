@@ -7,6 +7,7 @@ import AddBoxIcon from '@mui/icons-material/AddBox';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import GroupsIcon from '@mui/icons-material/Groups';
+import BusinessIcon from '@mui/icons-material/Business';
 import BadgeIcon from '@mui/icons-material/Badge';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import InsightsIcon from '@mui/icons-material/Insights';
@@ -53,7 +54,7 @@ function ChoiceDialog({ open, title, options, onClose }) {
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
         {title}
-        <IconButton onClick={onClose} aria-label="Close"><CloseIcon /></IconButton>
+        <IconButton onClick={onClose} aria-label="Close" sx={{ color: 'inherit' }}><CloseIcon /></IconButton>
       </DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: `repeat(${options.length}, 1fr)` }, pb: 1 }}>
@@ -79,7 +80,7 @@ function ProductPickerDialog({ open, products, onClose, onPick }) {
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
         Which product do you want to analyze?
-        <IconButton onClick={onClose} aria-label="Close"><CloseIcon /></IconButton>
+        <IconButton onClick={onClose} aria-label="Close" sx={{ color: 'inherit' }}><CloseIcon /></IconButton>
       </DialogTitle>
       <DialogContent>
         {products.length > 6 && (
@@ -136,6 +137,8 @@ function ProductPickerDialog({ open, products, onClose, onPick }) {
 // choices a role cannot use are left out.
 export default function QuickStartCards({
   products = [],
+  // The platform admin sees every company: the wording says so.
+  platform = false, onManageCompanies,
   onAddProduct, onManageProducts, onGenerateCodes, onManageStaff, onManageWorkerSteps, onAnalyzeProduct,
 }) {
   const [dialog, setDialog] = useState('');
@@ -143,10 +146,13 @@ export default function QuickStartCards({
 
   const productOptions = [
     onAddProduct && { icon: AddBoxIcon, title: 'Add a product', text: 'Enter a new product’s details and photos.', onClick: onAddProduct },
-    onManageProducts && { icon: ListAltIcon, title: 'Manage products', text: 'See, edit or remove the products you have.', onClick: onManageProducts },
+    onManageProducts && (onAddProduct
+      ? { icon: ListAltIcon, title: 'Manage products', text: 'See, edit or remove the products you have.', onClick: onManageProducts }
+      : { icon: ListAltIcon, title: 'See products', text: 'Your company’s products and their passports.', onClick: onManageProducts }),
   ].filter(Boolean);
   const organizationOptions = [
-    onManageStaff && { icon: BadgeIcon, title: 'Manage staff', text: 'Add people and see who has signed in.', onClick: onManageStaff },
+    onManageCompanies && { icon: BusinessIcon, title: 'Manage companies', text: 'Add a company or change its details.', onClick: onManageCompanies },
+    onManageStaff && { icon: BadgeIcon, title: 'Manage staff', text: platform ? 'Every company’s employees and who has signed in.' : 'Add people and see who has signed in.', onClick: onManageStaff },
     onManageWorkerSteps && { icon: FormatListNumberedIcon, title: 'Manage worker app steps', text: 'Set the work steps your employees record in the app.', onClick: onManageWorkerSteps },
   ].filter(Boolean);
 
@@ -157,26 +163,27 @@ export default function QuickStartCards({
     productOptions.length > 0 && {
       icon: Inventory2Icon,
       title: productOptions.length > 1 ? 'Add / Manage products' : productOptions[0].title,
-      text: 'Your products and their passports.',
+      text: platform ? 'Every company’s products and their passports.' : onAddProduct ? 'Your products and their passports.' : 'Your company’s products and their passports.',
       onClick: openOrGo('products', productOptions),
     },
     onGenerateCodes && {
       icon: QrCode2Icon,
       title: 'Generate / Print codes',
-      text: 'Create QR codes and labels, then download them to print.',
+      text: 'Create a code for each item, then download the codes to print.',
       onClick: onGenerateCodes,
     },
     organizationOptions.length > 0 && {
       icon: GroupsIcon,
       title: 'Manage organization',
-      text: 'Your employees and the steps they record in the mobile app.',
+      text: platform ? 'The companies on the platform and their employees.' : 'Your employees and the steps they record in the mobile app.',
       onClick: openOrGo('organization', organizationOptions),
     },
     onAnalyzeProduct && {
       icon: InsightsIcon,
       title: 'Analyze products',
       text: 'See a product’s journey: where it was made, shipped and scanned.',
-      onClick: () => setDialog('analyze'),
+      // One product: nothing to choose, go straight to its journey.
+      onClick: () => (products.length === 1 ? onAnalyzeProduct(products[0]) : setDialog('analyze')),
     },
   ].filter(Boolean);
 

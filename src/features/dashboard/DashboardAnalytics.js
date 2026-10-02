@@ -42,7 +42,7 @@ const CATEGORY_ICONS = {
 // `onClick`, when given, makes the whole card a link to that metric's page
 // (shown by a "View" hint); omitted when the role can't see that page.
 const KpiContent = ({ icon: Icon, label, value, delta, sub, linked }) => (
-  <CardContent sx={{ py: 1.25, '&:last-child': { pb: 1.25 }, display: 'flex', alignItems: 'center', gap: 1.25, height: '100%' }}>
+  <CardContent sx={{ py: 1.25, '&:last-child': { pb: 1.25 }, display: 'flex', alignItems: 'center', gap: 1.25, height: '100%', position: 'relative' }}>
     <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: '#eaf2fb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
       <Icon sx={{ fontSize: 24, color: 'primary.main' }} />
     </Box>
@@ -54,8 +54,8 @@ const KpiContent = ({ icon: Icon, label, value, delta, sub, linked }) => (
         {label}
       </Typography>
       {delta != null && (
-        <Typography variant="caption" sx={{ color: delta >= 0 ? 'success.main' : 'error.main', fontWeight: 600, display: 'block' }}>
-          {delta >= 0 ? '▲ +' : '▼ '}{delta}% in 30 days
+        <Typography variant="caption" sx={{ color: delta > 0 ? 'success.main' : delta < 0 ? 'error.main' : 'text.secondary', fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>
+          {delta === 0 ? 'No change in 30 days' : `${delta > 0 ? '▲ +' : '▼ '}${delta}% in 30 days`}
         </Typography>
       )}
       {sub && (
@@ -65,7 +65,7 @@ const KpiContent = ({ icon: Icon, label, value, delta, sub, linked }) => (
       )}
     </Box>
     {linked && (
-      <Box sx={{ display: 'flex', alignItems: 'center', color: 'primary.main', alignSelf: 'flex-end', fontSize: '0.85rem', fontWeight: 500 }}>
+      <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', alignItems: 'center', color: 'primary.main', fontSize: '0.85rem', fontWeight: 500 }}>
         View<ChevronRightIcon fontSize="small" />
       </Box>
     )}

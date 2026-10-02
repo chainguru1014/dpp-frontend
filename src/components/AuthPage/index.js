@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, Divider, Grid, MenuItem, TextField, Typography } from '@mui/material';
 import AppleIcon from '@mui/icons-material/Apple';
 import { useGoogleAuth } from '../../features/auth/useGoogleAuth';
@@ -57,6 +57,17 @@ const outlineButtonSx = {
 // Must match the backend's per-email resend cooldown (see authController.otpRequest).
 const RESEND_COOLDOWN_SECONDS = 60;
 
+// A server or network fault ("read ECONNRESET", "Network Error"…) means
+// nothing to the person signing in: say what to do instead.
+const friendlyError = (message) => {
+  const text = String(message || '').trim();
+  if (!text) return '';
+  if (/ECONN|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|network error|timed out|timeout|buffering|socket|topology|mongo|status code 5dd|internal server error/i.test(text)) {
+    return 'We could not reach the server just now. Please try again in a moment.';
+  }
+  return text;
+};
+
 const AuthPage = ({
   needsProfileCompletion,
   registerData,
@@ -104,7 +115,7 @@ const AuthPage = ({
     if (res?.ok) {
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
     } else {
-      setOtpNotice(res?.message || 'We could not send the code. Please check the email address and try again.');
+      setOtpNotice(friendlyError(res?.message) || 'We could not send the code. Please check the email address and try again.');
     }
     return res;
   };
@@ -117,6 +128,10 @@ const AuthPage = ({
       notifyError(err?.message || 'Apple sign-in did not work. Please try again or use your email.');
     }
   };
+
+  // The "send code" request still under way, if any. Verifying waits for it:
+  // the server has no code to compare with until that request is done.
+  const pendingRequest = useRef(null);
 
   const handleSendCode = async (e) => {
     e.preventDefault();
@@ -134,9 +149,12 @@ const AuthPage = ({
     setOtpCode('');
     setEmailStep('code');
     setResendCooldown(RESEND_COOLDOWN_SECONDS);
-    onRequestOtp(email, authMode).then((res) => {
+    const request = onRequestOtp(email, authMode);
+    pendingRequest.current = request;
+    request.then((res) => {
+      if (pendingRequest.current === request) pendingRequest.current = null;
       if (res?.ok) return;
-      const message = res?.message || 'We could not send the code. Please check the email address and try again.';
+      const message = friendlyError(res?.message) || 'We could not send the code. Please check the email address and try again.';
       // "Please wait…" means a code was sent less than a minute ago — it is
       // still valid, so the code step stays.
       if (/please wait/i.test(message)) {
@@ -160,10 +178,18 @@ const AuthPage = ({
     if (code.length !== 6) return;
     setOtpBusy(true);
     setOtpNotice('');
+    if (pendingRequest.current) {
+      const sent = await pendingRequest.current;
+      // Refused: the request's own handler has gone back to the email step.
+      if (!sent?.ok && !/please wait/i.test(sent?.message || '')) {
+        setOtpBusy(false);
+        return;
+      }
+    }
     const res = await onVerifyOtp(otpEmail.trim(), code, authMode);
     setOtpBusy(false);
     if (!res?.ok) {
-      setOtpNotice(res?.message || 'That code is not right or has expired. Please check it, or ask for a new code.');
+      setOtpNotice(friendlyError(res?.message) || 'That code is not right or has expired. Please check it, or ask for a new code.');
     }
   };
 
@@ -339,7 +365,7 @@ const AuthPage = ({
             <Box>
               <Typography variant="h5" component="h1" sx={{ textAlign: 'center', ...onGlass }}>Check your email</Typography>
               <Typography color={AUTH_MUTED} sx={{ textShadow,  textAlign: 'center', mt: 0.75 }}>
-                We sent a 6-digit code to <Box component="strong" sx={{ color: AUTH_TEXT, wordBreak: 'break-all' }}>{otpEmail}</Box>. Type it below.
+                We sent a 6-digit code to <Box component="strong" sx={{ color: AUTH_TEXT, overflowWrap: 'anywhere' }}>{otpEmail}</Box>. Type it below.
               </Typography>
             </Box>
             <Box component="form" onSubmit={handleVerifyCode} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>

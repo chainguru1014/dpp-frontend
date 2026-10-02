@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Fab, IconButton, Popover, Typography } from '@mui/material';
-import QuestionMarkIcon from '@mui/icons-material/QuestionMark';
+import { Box, Button, IconButton, Popover, Typography } from '@mui/material';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import CloseIcon from '@mui/icons-material/Close';
 
 // What each page is for and how to use it, in two or three plain sentences.
@@ -14,7 +14,7 @@ const PAGE_HELP = {
   },
   products: {
     title: 'Products',
-    text: 'Every product you have. Click one to see its details, then preview its page, edit it, or create its codes. "New Product" adds one; the ⋯ button has Import and Export for working with many products in a spreadsheet.',
+    text: 'Every product you have. Click one to see its details, then preview its page, edit it, or create its codes (editing needs a Supervisor or the company account). "New Product" adds one; the ⋯ button has Import and Export for working with many products in a spreadsheet.',
     appUser: 'The products you own. Click one to see its details and its ownership history.',
   },
   brand: {
@@ -39,12 +39,12 @@ const PAGE_HELP = {
   },
   history: {
     title: 'Scan History',
-    text: 'Every scan of your product labels, newest first. Use the filters to narrow it down by date, product or place.',
+    text: 'Every scan of your product codes, newest first. Use the filters to narrow it down by date, product or place.',
     appUser: 'Every product code you have scanned, newest first.',
   },
   captureHistory: {
     title: 'Capture History',
-    text: 'The work steps your employees recorded in the mobile app (receiving, packing and so on), per person. Click an entry to see the photo and place.',
+    text: 'The work steps your employees recorded in the mobile app (receiving, packing and so on), per person. Narrow the list by date or person; a flagged entry is one the app marked for review.',
   },
   lca: {
     title: 'LCA',
@@ -94,8 +94,9 @@ const PAGE_HELP = {
   },
 };
 
-// The round ? button at the bottom right of every page. Opens a short
-// explanation of the page you are on.
+// The Help button in the top bar (it used to float over the bottom right
+// corner, where it covered buttons such as Save). Opens a short explanation
+// of the page you are on.
 export default function PageHelp({ page, isAppUser = false }) {
   const [anchor, setAnchor] = useState(null);
   const entry = PAGE_HELP[page];
@@ -104,21 +105,27 @@ export default function PageHelp({ page, isAppUser = false }) {
 
   return (
     <>
-      <Fab
-        color="primary"
+      <Button
+        color="inherit"
         aria-label={`Help for ${entry.title}`}
+        aria-haspopup="dialog"
         onClick={(e) => setAnchor(e.currentTarget)}
-        sx={{ position: 'fixed', right: { xs: 16, md: 28 }, bottom: { xs: 16, md: 28 }, zIndex: (theme) => theme.zIndex.speedDial, bgcolor: '#2f80c8', '&:hover': { bgcolor: '#256aa8' } }}
+        startIcon={<HelpOutlineIcon />}
+        sx={{
+          color: '#fff', textTransform: 'none', fontWeight: 500, px: 1.25, mr: 0.5, minWidth: 0, flexShrink: 0,
+          '& .MuiButton-startIcon': { mr: { xs: 0, sm: 0.75 } },
+          '&:hover': { bgcolor: 'rgba(255,255,255,0.14)' },
+        }}
       >
-        <QuestionMarkIcon />
-      </Fab>
+        <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>Help</Box>
+      </Button>
       <Popover
         open={Boolean(anchor)}
         anchorEl={anchor}
         onClose={() => setAnchor(null)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        slotProps={{ paper: { sx: { width: 380, maxWidth: 'calc(100vw - 32px)', p: 2.5, mb: 1.5 } } }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{ paper: { sx: { width: 380, maxWidth: 'calc(100vw - 32px)', p: 2.5, mt: 1 } } }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mb: 1 }}>
           <Typography variant="h6" component="h2">{entry.title}</Typography>

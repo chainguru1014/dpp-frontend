@@ -6,6 +6,8 @@ import {
   Alert,
   AppBar,
   Avatar,
+  Backdrop,
+  CircularProgress,
   Box,
   Button,
   Checkbox,
@@ -580,7 +582,7 @@ const InnerPage = () => {
   const brandOf = (companyRef, brandName) => {
     const companyId = String(companyRef?._id || companyRef || '');
     const name = String(brandName || '').trim().toLowerCase();
-    return brands.find((b) => String(b.company_id) === companyId && b.name.trim().toLowerCase() === name) || null;
+    return brands.find((b) => String(b.company_id) === companyId && String(b.name || '').trim().toLowerCase() === name) || null;
   };
   // This account's own brands (for the super admin: of its own account only).
   const ownBrands = brands.filter((b) => String(b.company_id) === String(company?._id || ''));
@@ -1969,6 +1971,7 @@ const InnerPage = () => {
               />
             </Box>
           )}
+          <PageHelp page={activePage} isAppUser={isAppUser} />
           <NotificationBell onShowAll={() => setActivePage('allNotifications')} />
           <Button
             color="inherit"
@@ -2276,7 +2279,11 @@ const InnerPage = () => {
             <Box>
               <PageHeader
                 title={isAppUser ? 'My Products' : 'Products'}
-                description={isAppUser ? 'The products you own.' : 'Click a product to see it, edit it or create its codes.'}
+                description={isAppUser
+                  ? 'The products you own.'
+                  : canEditProducts
+                    ? 'Click a product to see it, edit it or create its codes.'
+                    : 'Click a product to see it, preview its page or create its codes.'}
                 actions={canEditProducts && (
                   <Button
                     variant="contained"
@@ -2550,7 +2557,7 @@ const InnerPage = () => {
                         Change the design{brandInfo.name ? ` of ${brandInfo.name}` : ''}
                       </Button>
                       <Box sx={{ width: 340, maxWidth: '100%', height: 640, mx: 'auto', border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 4 }}>
-                        <Suspense fallback={null}>
+                        <Suspense fallback={<Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, bgcolor: '#fff' }}><CircularProgress size={28} /><Typography variant="body2" color="text.secondary">Loading the preview…</Typography></Box>}>
                           <DppPhoneView productInfo={formProduct} theme={formTheme} />
                         </Suspense>
                       </Box>
@@ -2657,7 +2664,7 @@ const InnerPage = () => {
                       // Quick add with a brand to reuse: one line instead of the four brand fields.
                       <Box component="section" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                         <Box component="img" src={getFileUrl(brandInfo.logoUrl)} alt=""
-                          sx={{ width: 48, height: 48, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, bgcolor: '#fff' }} />
+                          sx={{ width: 48, height: 48, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, bgcolor: '#e6eaf0', p: '3px' }} />
                         {ownBrands.length > 1 ? (
                           <TextField
                             select
@@ -2707,7 +2714,7 @@ const InnerPage = () => {
                           <Stack direction="row" spacing={1.5} alignItems="center">
                             {brandInfo.logoUrl ? (
                               <Box component="img" src={getFileUrl(brandInfo.logoUrl)} alt="Brand logo"
-                                sx={{ width: 72, height: 72, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, bgcolor: '#fff' }} />
+                                sx={{ width: 72, height: 72, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, bgcolor: '#e6eaf0', p: 0.5 }} />
                             ) : null}
                             <Button variant="outlined" component="label" disabled={isUploadingBrandLogo}>
                               {isUploadingBrandLogo ? 'Uploading…' : brandInfo.logoUrl ? 'Replace logo' : 'Upload logo'}
@@ -3348,8 +3355,6 @@ const InnerPage = () => {
         </Box>
       </Box>
 
-      <PageHelp page={activePage} isAppUser={isAppUser} />
-
       {/* "What next?" — right after a product is added. */}
       <Dialog open={!!addedProduct} onClose={() => setAddedProduct(null)} fullWidth maxWidth="sm">
         <DialogTitle>
@@ -3421,7 +3426,7 @@ const InnerPage = () => {
         />
       )}
       {selectedProduct && openPrintModal && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<Backdrop open sx={{ zIndex: (theme) => theme.zIndex.modal }}><CircularProgress sx={{ color: '#fff' }} /></Backdrop>}>
           <PrintModal
             open={openPrintModal}
             setOpen={setOpenPrintModal}
@@ -3464,7 +3469,7 @@ const InnerPage = () => {
         }}
       />
       {company && openPreviewModal && (
-        <Suspense fallback={null}>
+        <Suspense fallback={<Backdrop open sx={{ zIndex: (theme) => theme.zIndex.modal }}><CircularProgress sx={{ color: '#fff' }} /></Backdrop>}>
         <PreviewModal
           open={openPreviewModal}
           setOpen={setOpenPreviewModal}

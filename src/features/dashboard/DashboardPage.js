@@ -92,6 +92,8 @@ const DashboardPage = ({
       {!isAppUser && (
         <QuickStartCards
           products={products}
+          platform={isAdmin}
+          onManageCompanies={isAdmin ? () => onNavigate('companies') : undefined}
           onAddProduct={canEditProducts ? onNavigateToNewProduct : undefined}
           onManageProducts={onNavigateToProducts}
           onGenerateCodes={onNavigateToGenerateCode}

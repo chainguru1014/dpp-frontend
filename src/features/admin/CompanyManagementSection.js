@@ -145,15 +145,22 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
       notify("Please enter the company admin's email address. It becomes the company's Supervisor login.", 'warning');
       return;
     }
+    // A domain is what follows the @ ("hm.com"), never a whole address.
+    const domains = form.allowedEmailDomains
+      .split(',')
+      .map((d) => d.trim().toLowerCase().replace(/^@/, ''))
+      .filter(Boolean);
+    const badDomain = domains.find((d) => !/^[a-z0-9-]+(.[a-z0-9-]+)+$/.test(d));
+    if (badDomain) {
+      notify(`"${badDomain}" is not a domain. Enter only the part after the @, for example hm.com.`, 'warning');
+      return;
+    }
     setSaving(true);
     const doc = await registerCompany({
       name: form.name.trim(),
       email: form.email.trim(),
       title: form.title.trim() || undefined,
-      allowedEmailDomains: form.allowedEmailDomains
-        .split(',')
-        .map((d) => d.trim().toLowerCase())
-        .filter(Boolean),
+      allowedEmailDomains: domains,
     });
     setSaving(false);
     if (doc) {

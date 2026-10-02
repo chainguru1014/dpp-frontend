@@ -179,13 +179,14 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
       },
       {
         field: 'security_verified',
-        headerName: 'Genuine?',
-        width: 120,
+        headerName: 'Security check',
+        description: 'Only Security QR codes are checked for copies. Other codes show a dash.',
+        width: 140,
         renderCell: (p) => {
           const v = p.row.security_verified;
-          if (v === true) return <Chip size="small" color="success" label="Verified" />;
-          if (v === false) return <Chip size="small" color="error" label="Check failed" />;
-          return <Typography color="text.secondary">Not checked</Typography>;
+          if (v === true) return <Chip size="small" color="success" label="Passed" />;
+          if (v === false) return <Chip size="small" color="error" label="Failed" />;
+          return <Typography color="text.secondary" title="Not a Security QR code">—</Typography>;
         },
       },
       {
@@ -214,7 +215,7 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
         title={isAppUser ? 'My Scans' : 'Scan History'}
         description={isAppUser
           ? 'Every product code you have scanned, newest first.'
-          : 'Every time someone scanned one of your product labels, newest first.'}
+          : 'Every time someone scanned one of your product codes, newest first.'}
         actions={(
           <Button
             variant={filtersOpen || activeFilterCount ? 'contained' : 'outlined'}
@@ -273,11 +274,11 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
-              <TextField select label="Genuine check" fullWidth value={filters.security} onChange={setF('security')}>
+              <TextField select label="Security check" fullWidth value={filters.security} onChange={setF('security')}>
                 <MenuItem value="">Any</MenuItem>
-                <MenuItem value="verified">Verified</MenuItem>
-                <MenuItem value="failed">Check failed</MenuItem>
-                <MenuItem value="na">Not checked</MenuItem>
+                <MenuItem value="verified">Passed</MenuItem>
+                <MenuItem value="failed">Failed</MenuItem>
+                <MenuItem value="na">Not a Security QR code</MenuItem>
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6} md={3}>
