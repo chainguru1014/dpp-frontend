@@ -7,9 +7,13 @@
 // and a test against the product (same shape whether saved or still in the form).
 
 import { certificateStatus, productCertificates, uncoveredRequiredMaterials } from './certificates';
+import { normalizeCircularity, serviceIsReady } from './circularity';
 
 const text = (v) => String(v ?? '').trim();
 const list = (v) => (Array.isArray(v) ? v : []);
+
+// A service counts once a shopper can act on it (link, contact, steps or requests).
+const serviceReady = (p, kind) => serviceIsReady(normalizeCircularity(p.circularity, p.disposal)[kind]);
 
 export const PASSPORT_CHECKS = [
   { group: 'Product details', label: 'Product name', step: 0, test: (p) => !!text(p.name) },
@@ -55,14 +59,14 @@ export const PASSPORT_CHECKS = [
     step: 2,
     test: (p) => list(p.maintenance?.iconIds).length > 0 || !!text(p.maintenance?.description) || list(p.maintenance?.tips).length > 0,
   },
-  { group: 'Circularity', label: 'Repair service link', step: 3, test: (p) => !!text(p.disposal?.repairUrl) },
+  { group: 'Circularity', label: 'Repair service', step: 3, test: (p) => serviceReady(p, 'repair') },
   {
     group: 'Circularity',
-    label: 'Resale, reuse or rental link',
+    label: 'Resale, reuse or rental',
     step: 3,
-    test: (p) => !!text(p.disposal?.reuseUrl) || !!text(p.disposal?.rentalUrl),
+    test: (p) => serviceReady(p, 'resell') || serviceReady(p, 'rent'),
   },
-  { group: 'Circularity', label: 'Recycling / disposal link', step: 3, test: (p) => !!text(p.disposal?.disposeUrl) },
+  { group: 'Circularity', label: 'Recycling or disposal', step: 3, test: (p) => serviceReady(p, 'recycle') },
   {
     group: 'Circularity',
     label: 'Sustainability impact figures',

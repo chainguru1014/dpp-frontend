@@ -58,6 +58,7 @@ import SpaIcon from '@mui/icons-material/Spa';
 import BalanceIcon from '@mui/icons-material/Balance';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import HandymanIcon from '@mui/icons-material/Handyman';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
@@ -126,6 +127,7 @@ import HistoryPage from '../features/history/HistoryPage';
 import SustainabilityPage from '../features/sustainability/SustainabilityPage';
 import ItemTracePage from '../features/trace/ItemTracePage';
 import SecurityPage from '../features/security/SecurityPage';
+import ServiceRequestsPage from '../features/circular/ServiceRequestsPage';
 import BrandPage from '../features/brand/BrandPage';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ChatPage from '../features/chat/ChatPage';
@@ -139,6 +141,8 @@ import ManageCategoriesDialog from '../features/products/ManageCategoriesDialog'
 import CompanyManagementSection from '../features/admin/CompanyManagementSection';
 import PageHeader from '../components/PageHeader';
 import PageHelp from '../components/PageHelp';
+import CircularityEditor from '../features/products/CircularityEditor';
+import { normalizeCircularity, disposalFromCircularity } from '../utils/circularity';
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
 import { compactMediaQuery } from '../theme';
 import { confirmAction, notify, notifyError, notifySuccess } from '../utils/feedbackBus';
@@ -157,7 +161,7 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 const KNOWN_PAGES = [
   'dashboard', 'products', 'newProduct', 'generateCode', 'users', 'companies', 'employeeAuditLog',
   'processSteps', 'captureHistory', 'history', 'lca', 'esg', 'notifications',
-  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security', 'brand',
+  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security', 'serviceRequests', 'brand',
 ];
 const pageFromPath = (pathname) => {
   const match = String(pathname || '').match(/^\/admin\/([^/?#]+)/);
@@ -242,7 +246,7 @@ const InnerPage = () => {
   const isEmployeeActor = company?.actorKind === 'Employee';
   // Shared by every non-admin role: LCA, Notifications, Recommendations, Chat.
   const COMMON_PAGES = ['dashboard', 'products', 'profile', 'lca', 'esg', 'allNotifications', 'recommendations', 'chat'];
-  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security', 'brand'];
+  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security', 'serviceRequests', 'brand'];
   const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
   const isWorkingEmployee = isEmployeeActor && !isSupervisor;
   // A working employee: only what their job needs — Dashboard, Products
@@ -415,6 +419,13 @@ const InnerPage = () => {
 
   const [materialSize, setMaterialSize] = useState({ size: '', materials: [] });
   const [maintenance, setMaintenance] = useState({ iconIds: [], description: '', tips: [] });
+  // Repair / resell / rent / recycle in detail. `disposal` (below) keeps
+  // each service's web link in its old place, for older apps and exports.
+  const [circularity, setCircularity] = useState(() => normalizeCircularity(null, null, { trim: false }));
+  const changeCircularity = (next) => {
+    setCircularity(next);
+    setDisposal(disposalFromCircularity(next));
+  };
   const [disposal, setDisposal] = useState({
     repairUrl: '',
     reuseUrl: '',
@@ -529,7 +540,7 @@ const InnerPage = () => {
   const productFormSignature = JSON.stringify([
     productName, productModel, aboutProduct, productType, color, size, manufactureDate,
     warrantyStatus, warrantyValidYears, itemCategory, skuStyleNumber, gtin, gs1DigitalLink, detailFacts, brandInfo,
-    productImages, productFiles, productVideos, materialSize, maintenance, disposal,
+    productImages, productFiles, productVideos, materialSize, maintenance, disposal, circularity,
     traceabilityEsg, certifications, sustainabilityImpact, parentProduct, parentProductCount,
   ]);
   const productFormSnapshotRef = useRef(null);
@@ -556,6 +567,7 @@ const InnerPage = () => {
     materialSize,
     maintenance,
     disposal,
+    circularity,
     traceabilityEsg,
     certifications,
     sustainabilityImpact,
@@ -878,6 +890,7 @@ const InnerPage = () => {
     setMaterialSize({ size: '', materials: [] });
     setMaintenance({ iconIds: [], description: '', tips: [] });
     setDisposal({ repairUrl: '', reuseUrl: '', rentalUrl: '', disposeUrl: '' });
+    setCircularity(normalizeCircularity(null, null, { trim: false }));
     setTraceabilityEsg({
       madeIn: '',
       originCountry: '',
@@ -1013,6 +1026,7 @@ const InnerPage = () => {
       materialSize,
       maintenance,
       disposal,
+      circularity: normalizeCircularity(circularity, disposal),
       traceabilityEsg,
       certifications,
       sustainabilityImpact,
@@ -1076,6 +1090,7 @@ const InnerPage = () => {
       materialSize,
       maintenance,
       disposal,
+      circularity: normalizeCircularity(circularity, disposal),
       traceabilityEsg,
       certifications,
       sustainabilityImpact,
@@ -1224,6 +1239,7 @@ const InnerPage = () => {
           tips: Array.isArray(prod.maintenance.tips) ? prod.maintenance.tips : [],
         }
       : { iconIds: [], description: '', tips: [] });
+    setCircularity(normalizeCircularity(prod.circularity, prod.disposal, { trim: false }));
     setDisposal(prod.disposal
       ? { repairUrl: prod.disposal.repairUrl || '', reuseUrl: prod.disposal.reuseUrl || '', rentalUrl: prod.disposal.rentalUrl || '', disposeUrl: prod.disposal.disposeUrl || '' }
       : { repairUrl: '', reuseUrl: '', rentalUrl: '', disposeUrl: '' });
@@ -1856,6 +1872,7 @@ const InnerPage = () => {
       items: [
         ['itemSearch', 'Product Journey', TravelExploreIcon, canSeeItemSearch],
         ['security', 'Security', GppMaybeIcon, canSeeItemSearch],
+        ['serviceRequests', 'Service Requests', HandymanIcon, canSeeItemSearch],
         ['history', isAppUser ? 'My Scans' : 'Scan History', HistoryIcon, !isWorkingEmployee],
         ['captureHistory', isWorkingEmployee ? 'My Captures' : 'Capture History', AssessmentIcon, canSeeCaptureHistory],
         ['lca', 'LCA', SpaIcon, !isWorkingEmployee],
@@ -2212,6 +2229,10 @@ const InnerPage = () => {
                 go('itemSearch');
               }}
             />
+          )}
+
+          {activePage === 'serviceRequests' && canSeeItemSearch && (
+            <ServiceRequestsPage token={token} showCompany={isAdmin} onOpenProducts={() => go('products')} />
           )}
 
           {activePage === 'notifications' && isAdmin && <SystemNotificationsPage />}
@@ -3124,28 +3145,7 @@ const InnerPage = () => {
 
                 {detailTab === 3 && (
                   <Stack spacing={4}>
-                    <Box component="section">
-                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Repair, reuse and disposal links</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Web pages where shoppers can repair, resell, rent or recycle this product.</Typography>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={6}>
-                          <TextField label="Repair service link" placeholder="https://" fullWidth value={disposal.repairUrl}
-                            onChange={(e) => setDisposal((prev) => ({ ...prev, repairUrl: e.target.value }))} />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField label="Resale / reuse link" placeholder="https://" fullWidth value={disposal.reuseUrl}
-                            onChange={(e) => setDisposal((prev) => ({ ...prev, reuseUrl: e.target.value }))} />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField label="Rental link" placeholder="https://" fullWidth value={disposal.rentalUrl}
-                            onChange={(e) => setDisposal((prev) => ({ ...prev, rentalUrl: e.target.value }))} />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField label="Recycling / disposal link" placeholder="https://" fullWidth value={disposal.disposeUrl}
-                            onChange={(e) => setDisposal((prev) => ({ ...prev, disposeUrl: e.target.value }))} />
-                        </Grid>
-                      </Grid>
-                    </Box>
+                    <CircularityEditor value={circularity} onChange={changeCircularity} />
 
                     <Box component="section">
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Sustainability impact</Typography>

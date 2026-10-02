@@ -27,10 +27,10 @@ import CheckroomIcon from '@mui/icons-material/Checkroom';
 import RecyclingIcon from '@mui/icons-material/Recycling';
 import GridViewIcon from '@mui/icons-material/GridView';
 import AutorenewIcon from '@mui/icons-material/Autorenew';
-import VolunteerActivismIcon from '@mui/icons-material/VolunteerActivism';
 import BuildIcon from '@mui/icons-material/Build';
 import StorefrontIcon from '@mui/icons-material/Storefront';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import EventRepeatIcon from '@mui/icons-material/EventRepeat';
+import { readyServices } from '../../utils/circularity';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import HubIcon from '@mui/icons-material/Hub';
@@ -66,6 +66,8 @@ const modalStyle = {
   display: 'flex',
   flexDirection: 'column',
 };
+
+const SERVICE_ICON = { repair: BuildIcon, resell: StorefrontIcon, rent: EventRepeatIcon, recycle: RecyclingIcon };
 
 const LIFECYCLE_STAGES = [
   { key: 'materials', label: 'Materials', Icon: SpaIcon },
@@ -204,6 +206,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   }, [lifecycleTabs, lifecycleTab]);
   const [openStage, setOpenStage] = useState(null);
   const [openOrigin, setOpenOrigin] = useState(null);
+  const [openService, setOpenService] = useState(null);
 
   const info = productInfo || {};
   const images = info.images || [];
@@ -252,7 +255,6 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     .filter((c) => c && (c.title || c.content));
   const esg = info.traceabilityEsg || {};
   const materialOrigins = toArray(esg.materialOrigins);
-  const disposal = info.disposal || {};
   const originCountry = esg.originCountry || esg.madeIn || '';
   const originCountries = Array.from(new Set(materialOrigins.map((o) => o.country || o.origin).filter(Boolean)));
   const routeInfo = esg.route || {};
@@ -265,12 +267,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
         impactRaw.energySaved && { value: impactRaw.energySaved, label: 'Energy Saved', Icon: BoltIcon },
       ].filter(Boolean));
 
-  const disposeLinks = [
-    { key: 'reuse', Icon: VolunteerActivismIcon, label: 'Reuse', sub: 'Give it a second life by donating.', url: disposal.reuseUrl },
-    { key: 'repair', Icon: BuildIcon, label: 'Repair', sub: 'Find repair guides and local services.', url: disposal.repairUrl },
-    { key: 'rental', Icon: StorefrontIcon, label: 'Rent or Resell', sub: 'List it for rent or resell to others.', url: disposal.rentalUrl },
-    { key: 'dispose', Icon: DeleteOutlineIcon, label: 'Recycle or return', sub: 'Recycle or return through take-back.', url: disposal.disposeUrl },
-  ];
+  // Repair / resell / rent / recycle: only what the brand offers.
+  const services = readyServices(info);
 
   const renderMediaBox = ({ size = 132, rounded = 1.5 } = {}) => (
     <Box
@@ -523,8 +521,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                   {s.key === 'use' && (careTips.length ? careTips.slice(0, 3).map((tip, ti) => (
                     <Typography key={ti} sx={{ fontSize: 11, color: C.text, py: 0.3 }}>• {tip.primary}</Typography>
                   )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>)}
-                  {s.key === 'endOfLife' && (disposeLinks.some((d) => d.url) ? disposeLinks.filter((d) => d.url).map((d) => (
-                    <Typography key={d.key} sx={{ fontSize: 11, color: C.text, py: 0.3 }}>• {d.label}: {d.sub}</Typography>
+                  {s.key === 'endOfLife' && (services.length ? services.map((d) => (
+                    <Typography key={d.kind} sx={{ fontSize: 11, color: C.text, py: 0.3 }}>• {d.meta.shopperTitle}{d.summary ? `: ${d.summary}` : ''}</Typography>
                   )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>)}
                 </Box>
               )}
@@ -662,31 +660,63 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     <Box sx={{ pt: 1.5 }}>
       <Box sx={card}>
         <Typography sx={cardTitle}>Extend the Life</Typography>
-        {disposeLinks.map((d, i) => (
-          <Box
-            key={d.key}
-            role={d.url ? 'button' : undefined}
-            onClick={d.url ? () => window.open(d.url, '_blank', 'noopener,noreferrer') : undefined}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              py: 1,
-              borderBottom: i < disposeLinks.length - 1 ? `1px solid ${C.border}` : 'none',
-              cursor: d.url ? 'pointer' : 'default',
-              opacity: d.url ? 1 : 0.5,
-            }}
-          >
-            <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: C.surfaceAlt, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <d.Icon sx={{ fontSize: 16, color: C.primary }} />
+        {services.length === 0 && (
+          <Typography sx={{ fontSize: 11, color: C.muted }}>The brand has not added repair, resale, rental or recycling information yet.</Typography>
+        )}
+        {services.map((d, i) => {
+          const Icon = SERVICE_ICON[d.kind];
+          const open = openService === d.kind;
+          const facts = [[d.meta.cost.label, d.cost], [d.meta.time.label, d.time], [d.meta.note.label, d.note]].filter(([, v]) => v);
+          return (
+            <Box key={d.kind} sx={{ borderBottom: i < services.length - 1 ? `1px solid ${C.border}` : 'none' }}>
+              <Box role="button" onClick={() => setOpenService(open ? null : d.kind)} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 1, cursor: 'pointer' }}>
+                <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: C.surfaceAlt, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Icon sx={{ fontSize: 16, color: C.primary }} />
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: C.text }}>{d.meta.shopperTitle}</Typography>
+                  {!!d.summary && <Typography sx={{ fontSize: 10, color: C.muted }}>{d.summary}</Typography>}
+                </Box>
+                {open ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
+              </Box>
+              {open && (
+                <Box sx={{ pl: 5, pb: 1.25 }}>
+                  {facts.map(([label, value]) => (
+                    <Box key={label} sx={{ mb: 0.5 }}>
+                      <Typography sx={{ fontSize: 10, color: C.muted }}>{label}</Typography>
+                      <Typography sx={{ fontSize: 11, color: C.text }}>{value}</Typography>
+                    </Box>
+                  ))}
+                  {d.steps.length > 0 && (
+                    <Box sx={{ mt: 0.5 }}>
+                      <Typography sx={{ fontSize: 10, color: C.muted }}>How it works</Typography>
+                      {d.steps.map((step, si) => (
+                        <Typography key={si} sx={{ fontSize: 11, color: C.text, py: 0.2 }}>{si + 1}. {step}</Typography>
+                      ))}
+                    </Box>
+                  )}
+                  {(d.partnerName || d.email || d.phone) && (
+                    <Typography sx={{ fontSize: 10, color: C.muted, mt: 0.5 }}>{[d.partnerName, d.email, d.phone].filter(Boolean).join(' · ')}</Typography>
+                  )}
+                  <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 1 }}>
+                    {d.acceptRequests && (
+                      <Box sx={{ ...mainButton, borderRadius: buttonRadius, px: 1.25, py: 0.6, fontSize: 11, fontWeight: 600 }}>{d.meta.button}</Box>
+                    )}
+                    {!!d.url && (
+                      <Box
+                        role="button"
+                        onClick={() => window.open(d.url, '_blank', 'noopener,noreferrer')}
+                        sx={{ border: `1px solid ${C.primary}`, color: C.primary, borderRadius: buttonRadius, px: 1.25, py: 0.6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+                      >
+                        Open website
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              )}
             </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontSize: 12, fontWeight: 600, color: C.text }}>{d.label}</Typography>
-              <Typography sx={{ fontSize: 10, color: C.muted }}>{d.sub}</Typography>
-            </Box>
-            {!!d.url && <ChevronRightIcon sx={{ fontSize: 18, color: C.muted }} />}
-          </Box>
-        ))}
+          );
+        })}
       </Box>
       <Box sx={{ ...card, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
         <HelpOutlineIcon sx={{ fontSize: 18, color: C.primary, mt: 0.25 }} />

@@ -23,7 +23,7 @@ const PAGE_HELP = {
   },
   newProduct: {
     title: 'Product window',
-    text: 'To add a product you only need its name, category, a photo and your brand. Everything else can be added later: the Passport score shows what is still missing, and each missing item is a link to where it goes.',
+    text: 'To add a product you only need its name, category, a photo and your brand. Step 4 holds repair, resale, rental and recycling: switch on what you offer and say how it works. Everything else can be added later: the Passport score shows what is still missing, and each missing item is a link to where it goes.',
   },
   generateCode: {
     title: 'Generate Code',
@@ -36,6 +36,10 @@ const PAGE_HELP = {
   security: {
     title: 'Security',
     text: 'Shows codes that behave like copies, for example one scanned in two distant places minutes apart. Location can be wrong (a VPN, for instance), so look at the code’s history first. "Mark as suspected copy" warns everyone who scans that code.',
+  },
+  serviceRequests: {
+    title: 'Service Requests',
+    text: 'Requests your shoppers sent from the app for repair, resale, rental or recycling. Press “Answer” to accept, decline or complete one and to write the shopper a message; they are notified each time. Shoppers can only send a request for a service you switched on in the product (step 4, “Repair & disposal”).',
   },
   history: {
     title: 'Scan History',

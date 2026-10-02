@@ -1182,6 +1182,32 @@ export const setItemBlocked = async (token, product_id, qrcode_id, blocked, note
     }
 };
 
+// ----- Service requests (repair, resale, rental, recycling) sent from the app -----
+// { ok, data: [...], counts: { new: 2, ... }, canWrite }
+export const getServiceRequests = async (token, { status = '', kind = '' } = {}) => {
+    try {
+        const res = await axios.get(`${Backend_URL}circular/requests`, {
+            params: { status: status || undefined, kind: kind || undefined },
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data || [], counts: res.data?.counts || {}, canWrite: !!res.data?.canWrite };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || 'The requests could not be loaded. Please try again.' };
+    }
+};
+
+// Answers a request: a new status, a message to the shopper, or both.
+export const updateServiceRequest = async (token, id, { status, reply }) => {
+    try {
+        const res = await axios.put(`${Backend_URL}circular/requests/${id}`, { status: status || undefined, reply }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || 'The request could not be updated. Please try again.' };
+    }
+};
+
 // ----- Bulk work: import products from a spreadsheet, pair tags with items -----
 // rows: one product object per spreadsheet row (see utils/productCsv.js).
 export const bulkImportProducts = async (token, rows) => {

@@ -5,6 +5,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import ImageIcon from '@mui/icons-material/Image';
 import { getFileUrl } from '../../helper';
+import { readyServices } from '../../utils/circularity';
 import { dppFontCss, dppSectionLabel, normalizeDppTheme } from '../../utils/dppTheme';
 
 const text = (v) => String(v ?? '').trim();
@@ -90,15 +91,27 @@ function sectionBody(key, p, color, live) {
     );
   }
   if (key === 'dispose') {
-    const d = p.disposal || {};
-    const links = [['Repair', d.repairUrl], ['Resell / reuse', d.reuseUrl], ['Rent', d.rentalUrl], ['Recycle', d.disposeUrl]].filter(([, v]) => text(v));
+    const services = readyServices(p);
     const s = p.sustainabilityImpact || {};
     const impact = list(s.items).filter((it) => text(it?.value));
     const legacy = [['CO2 avoided', s.co2Avoided], ['Water saved', s.waterSaved], ['Energy saved', s.energySaved]].filter(([, v]) => text(v));
-    if (!links.length && !impact.length && !legacy.length) return null;
+    if (!services.length && !impact.length && !legacy.length) return null;
     return (
       <>
-        {links.map(([l, url]) => <LinkRow key={l} label={l} href={safeUrl(url)} color={color} live={live} />)}
+        {services.map((sv) => (
+          <Box key={sv.kind} sx={{ mb: 1 }}>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color, fontFamily: 'inherit' }}>{sv.meta.shopperTitle}</Typography>
+            {text(sv.summary) && <Typography sx={{ fontSize: 12, color, fontFamily: 'inherit' }}>{sv.summary}</Typography>}
+            {text(sv.cost) && <Row label={sv.meta.cost.label} value={sv.cost} color={color} />}
+            {text(sv.time) && <Row label={sv.meta.time.label} value={sv.time} color={color} />}
+            {text(sv.note) && <Typography sx={{ fontSize: 12, color, opacity: 0.85, fontFamily: 'inherit' }}>{sv.note}</Typography>}
+            {sv.steps.map((step, i) => <Typography key={i} sx={{ fontSize: 12, color, fontFamily: 'inherit' }}>{i + 1}. {step}</Typography>)}
+            {[sv.partnerName, sv.email, sv.phone].some(text) && (
+              <Typography sx={{ fontSize: 12, color, opacity: 0.75, fontFamily: 'inherit' }}>{[sv.partnerName, sv.email, sv.phone].filter(text).join(' · ')}</Typography>
+            )}
+            {text(sv.url) && <LinkRow label="Open website" href={safeUrl(sv.url)} color={color} live={live} />}
+          </Box>
+        ))}
         {impact.map((it, i) => <Row key={i} label={it.label || 'Impact'} value={it.value} color={color} />)}
         {!impact.length && legacy.map(([l, v]) => <Row key={l} label={l} value={v} color={color} />)}
       </>
