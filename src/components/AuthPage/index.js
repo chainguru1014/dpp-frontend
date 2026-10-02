@@ -122,8 +122,31 @@ const AuthPage = ({
     e.preventDefault();
     const email = otpEmail.trim();
     if (!email) return;
-    const res = await sendOtp(email);
-    if (res?.ok) setEmailStep('code');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setOtpNotice('Please enter a valid email address, for example name@example.com.');
+      return;
+    }
+    // Show the code field at once and send the request in the background —
+    // waiting for the server's answer first made every sign-in feel slow.
+    // If the server refuses (email not registered, no connection), come back
+    // to the email step with the reason.
+    setOtpNotice('');
+    setOtpCode('');
+    setEmailStep('code');
+    setResendCooldown(RESEND_COOLDOWN_SECONDS);
+    onRequestOtp(email, authMode).then((res) => {
+      if (res?.ok) return;
+      const message = res?.message || 'We could not send the code. Please check the email address and try again.';
+      // "Please wait…" means a code was sent less than a minute ago — it is
+      // still valid, so the code step stays.
+      if (/please wait/i.test(message)) {
+        setOtpNotice('A code was sent to this address less than a minute ago. Please use that one.');
+        return;
+      }
+      setResendCooldown(0);
+      setEmailStep('email');
+      setOtpNotice(message);
+    });
   };
 
   const handleResendCode = async () => {
