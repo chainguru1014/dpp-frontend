@@ -175,7 +175,7 @@ export default function QuickStartCards({
     onAnalyzeProduct && {
       icon: InsightsIcon,
       title: 'Analyze products',
-      text: 'See where and how often a product is scanned.',
+      text: 'See a product’s journey: where it was made, shipped and scanned.',
       onClick: () => setDialog('analyze'),
     },
   ].filter(Boolean);

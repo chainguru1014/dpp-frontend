@@ -138,7 +138,7 @@ function Timeline({ events, showItem, onOpenItem }) {
   );
 }
 
-// "Product Activity": pick a product from the list (as on the Products page)
+// "Product Journey": pick a product from the list (as on the Products page)
 // to see everything recorded for it — every scan, staff capture and
 // ownership transfer, newest first, and where each happened on a map. The
 // search box narrows the list as you type; pressing Find looks the text up
@@ -232,7 +232,7 @@ export default function ItemTracePage({
   return (
     <Box>
       <PageHeader
-        title="Product Activity"
+        title="Product Journey"
         description="Click a product to see where and when it was scanned, handled by your employees or changed owner."
       />
 

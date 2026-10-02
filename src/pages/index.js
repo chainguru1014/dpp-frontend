@@ -53,6 +53,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import HistoryIcon from '@mui/icons-material/History';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import SpaIcon from '@mui/icons-material/Spa';
+import BalanceIcon from '@mui/icons-material/Balance';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
@@ -153,13 +154,14 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 // (/admin/<page>) so the browser Back/Forward buttons and bookmarks work.
 const KNOWN_PAGES = [
   'dashboard', 'products', 'newProduct', 'generateCode', 'users', 'companies', 'employeeAuditLog',
-  'processSteps', 'captureHistory', 'history', 'sustainability', 'notifications',
+  'processSteps', 'captureHistory', 'history', 'lca', 'esg', 'notifications',
   'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security', 'brand',
 ];
 const pageFromPath = (pathname) => {
   const match = String(pathname || '').match(/^\/admin\/([^/?#]+)/);
-  // Old bookmarks: the Ownership Transfers page ('trace') became Sustainability.
-  const page = match && match[1] === 'trace' ? 'sustainability' : match && match[1];
+  // Old bookmarks: the Ownership Transfers page ('trace') became
+  // Sustainability, which is now the LCA and ESG pages.
+  const page = match && ['trace', 'sustainability'].includes(match[1]) ? 'lca' : match && match[1];
   return page && KNOWN_PAGES.includes(page) ? page : null;
 };
 
@@ -237,7 +239,7 @@ const InnerPage = () => {
   // they only ever see the pages listed below, never Users/ESG.
   const isEmployeeActor = company?.actorKind === 'Employee';
   // Shared by every non-admin role: LCA, Notifications, Recommendations, Chat.
-  const COMMON_PAGES = ['dashboard', 'products', 'profile', 'sustainability', 'allNotifications', 'recommendations', 'chat'];
+  const COMMON_PAGES = ['dashboard', 'products', 'profile', 'lca', 'esg', 'allNotifications', 'recommendations', 'chat'];
   const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security', 'brand'];
   const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
   const isWorkingEmployee = isEmployeeActor && !isSupervisor;
@@ -264,9 +266,9 @@ const InnerPage = () => {
   // Company account (their company's working employees), or a working
   // employee (their own captures only).
   const canSeeCaptureHistory = !isAppUser;
-  // Product Activity (a product's history, or one item's by its code): brands and Supervisors.
+  // Product Journey (a product's lifecycle and history, or one item's by its code): brands and Supervisors.
   const canSeeItemSearch = !isAppUser && !isWorkingEmployee;
-  // A code typed into the top bar, handed to the Product Activity page.
+  // A code typed into the top bar, handed to the Product Journey page.
   const [headerSearch, setHeaderSearch] = useState('');
   const [itemSearchQuery, setItemSearchQuery] = useState('');
   // A product picked on the dashboard ("Analyze products") to open there.
@@ -1822,11 +1824,12 @@ const InnerPage = () => {
       icon: InsightsIcon,
       title: 'Activity',
       items: [
-        ['itemSearch', 'Product Activity', TravelExploreIcon, canSeeItemSearch],
+        ['itemSearch', 'Product Journey', TravelExploreIcon, canSeeItemSearch],
         ['security', 'Security', GppMaybeIcon, canSeeItemSearch],
         ['history', isAppUser ? 'My Scans' : 'Scan History', HistoryIcon, !isWorkingEmployee],
         ['captureHistory', isWorkingEmployee ? 'My Captures' : 'Capture History', AssessmentIcon, canSeeCaptureHistory],
-        ['sustainability', 'Sustainability', SpaIcon, !isWorkingEmployee],
+        ['lca', 'LCA', SpaIcon, !isWorkingEmployee],
+        ['esg', 'ESG', BalanceIcon, !isWorkingEmployee],
       ],
     },
     {
@@ -2111,8 +2114,11 @@ const InnerPage = () => {
             />
           )}
 
-          {activePage === 'sustainability' && (
+          {(activePage === 'lca' || activePage === 'esg') && (
             <SustainabilityPage
+              // key: switching between the two pages starts each one fresh.
+              key={activePage}
+              view={activePage}
               products={products}
               loading={productsLoading}
               canEdit={canEditProducts}
@@ -2121,7 +2127,7 @@ const InnerPage = () => {
                 const index = products.findIndex((p) => p._id === prod._id);
                 if (index < 0) return;
                 setProductPanelMode('edit');
-                setPreviousPage('sustainability');
+                setPreviousPage(activePage);
                 editProductHandler(index);
               }}
             />

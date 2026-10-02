@@ -154,10 +154,35 @@ const Line = ({ label, value }) => (value ? (
   </Typography>
 ) : null);
 
-// Sustainability page: life-cycle (LCA) and ESG information for the
-// products this account can see — replaces the old ownership-transfer log
-// in the menu (transfers remain available per product: Ownership History).
-export default function SustainabilityPage({ products = [], loading = false, canEdit = false, isAppUser = false, onEditProduct }) {
+// What differs between the two pages this component draws.
+const VIEWS = {
+  lca: {
+    title: 'LCA',
+    image: lcaImage,
+    imageBg: '#10221f',
+    heading: 'Life Cycle Assessment (LCA)',
+    text: 'The environmental impact of a product at every stage: materials, manufacturing, transport, use and end of life.',
+    description: 'Each product’s life cycle: materials, manufacturing, transport, use and end of life.',
+    appUserDescription: 'Where your products come from, how they were made and shipped, and how to repair, reuse or recycle them.',
+  },
+  esg: {
+    title: 'ESG',
+    image: esgImage,
+    imageBg: '#ffffff',
+    heading: 'ESG analysis',
+    text: 'Environmental, Social and Governance performance of the product and its supply chain.',
+    description: 'Each product’s environmental, social and governance information.',
+    appUserDescription: 'The environmental, social and governance information of your products.',
+  },
+};
+
+// The LCA page and the ESG page (`view`: 'lca' | 'esg') for the products
+// this account can see. Both read the same product information; LCA shows
+// it stage by stage along the life cycle, ESG under Environmental, Social
+// and Governance. (They used to be one "Sustainability" page.)
+export default function SustainabilityPage({ view = 'lca', products = [], loading = false, canEdit = false, isAppUser = false, onEditProduct }) {
+  const isLca = view !== 'esg';
+  const v = VIEWS[isLca ? 'lca' : 'esg'];
   const rows = useMemo(() => products.map(summarise), [products]);
   const [selectedId, setSelectedId] = useState('');
   useEffect(() => {
@@ -176,35 +201,24 @@ export default function SustainabilityPage({ products = [], loading = false, can
   return (
     <Box>
       <PageHeader
-        title="Sustainability"
+        title={v.title}
         icon={EcoIcon}
-        description={isAppUser
-          ? 'Where your products come from, what they are made of, their carbon footprint and how to repair, reuse or recycle them.'
-          : 'Materials, origin, carbon footprint and end-of-life options for your products.'}
+        description={isAppUser ? v.appUserDescription : v.description}
       />
 
-      {/* LCA (left) and ESG (right) pictures at the top of the page. */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {[
-          { img: lcaImage, title: 'Life Cycle Assessment (LCA)', text: 'The environmental impact of a product at every stage: materials, manufacturing, transport, use and end of life.', bg: '#10221f', fit: 'contain' },
-          { img: esgImage, title: 'ESG analysis', text: 'Environmental, Social and Governance performance of the product and its supply chain.', bg: '#ffffff', fit: 'contain' },
-        ].map((b) => (
-          <Grid item xs={12} md={6} key={b.title}>
-            <Card sx={{ height: '100%' }}>
-              <Box
-                component="img"
-                src={b.img}
-                alt={b.title}
-                sx={{ display: 'block', width: '100%', height: { xs: 160, md: 180, xl: 210 }, objectFit: b.fit, bgcolor: b.bg, borderBottom: '1px solid', borderColor: 'divider' }}
-              />
-              <CardContent sx={{ py: 1.25, '&:last-child': { pb: 1.25 } }}>
-                <Typography variant="subtitle1" component="h2">{b.title}</Typography>
-                <Typography variant="body2" color="text.secondary">{b.text}</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      {/* What this page is about, in one picture and one sentence. */}
+      <Card sx={{ mb: 2, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'stretch' }}>
+        <Box
+          component="img"
+          src={v.image}
+          alt={v.heading}
+          sx={{ display: 'block', width: { xs: '100%', md: 360 }, height: { xs: 160, md: 170 }, objectFit: 'contain', bgcolor: v.imageBg, flexShrink: 0 }}
+        />
+        <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Typography variant="h6" component="h2">{v.heading}</Typography>
+          <Typography color="text.secondary">{v.text}</Typography>
+        </CardContent>
+      </Card>
 
       {loading && !rows.length ? (
         <Loader label="Loading products…" />
@@ -212,18 +226,26 @@ export default function SustainabilityPage({ products = [], loading = false, can
         <Paper sx={{ p: 3, textAlign: 'center' }}>
           <Typography color="text.secondary">
             {isAppUser
-              ? 'You don’t own any products yet. Sustainability information appears here for products you own.'
-              : 'No products yet. Sustainability information appears here once you add products.'}
+              ? `You don’t own any products yet. ${v.title} information appears here for products you own.`
+              : `No products yet. ${v.title} information appears here once you add products.`}
           </Typography>
         </Paper>
       ) : (
         <>
-          <Grid container spacing={1.5} sx={{ mb: 2 }}>
-            <Grid item xs={12} sm={6} md={4} xl={2.4}><Kpi icon={Inventory2Icon} value={`${avgCompleteness}%`} label="Passport complete (average)" /></Grid>
-            <Grid item xs={12} sm={6} md={4} xl={2.4}><Kpi icon={Co2Icon} value={avgCo2 == null ? '—' : formatKg(avgCo2)} label="Carbon footprint (average)" /></Grid>
-            <Grid item xs={12} sm={6} md={4} xl={2.4}><Kpi icon={PublicIcon} value={countries.size} label="Countries of manufacture" /></Grid>
-            <Grid item xs={12} sm={6} md={6} xl={2.4}><Kpi icon={VerifiedIcon} value={`${certified} of ${rows.length}`} label="Have certifications" /></Grid>
-            <Grid item xs={12} sm={12} md={6} xl={2.4}><Kpi icon={RecyclingIcon} value={`${circular} of ${rows.length}`} label="Can be repaired, reused or recycled" /></Grid>
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            {isLca ? (
+              <>
+                <Grid item xs={12} sm={6} md={4}><Kpi icon={Co2Icon} value={avgCo2 == null ? '—' : formatKg(avgCo2)} label="Carbon footprint (average)" /></Grid>
+                <Grid item xs={12} sm={6} md={4}><Kpi icon={PublicIcon} value={countries.size} label="Countries of manufacture" /></Grid>
+                <Grid item xs={12} sm={12} md={4}><Kpi icon={RecyclingIcon} value={`${circular} of ${rows.length}`} label="Can be repaired, reused or recycled" /></Grid>
+              </>
+            ) : (
+              <>
+                <Grid item xs={12} sm={6} md={4}><Kpi icon={VerifiedIcon} value={`${certified} of ${rows.length}`} label="Have certifications" /></Grid>
+                <Grid item xs={12} sm={6} md={4}><Kpi icon={Co2Icon} value={avgCo2 == null ? '—' : formatKg(avgCo2)} label="Carbon footprint (average)" /></Grid>
+                <Grid item xs={12} sm={12} md={4}><Kpi icon={Inventory2Icon} value={`${avgCompleteness}%`} label="Passport complete (average)" /></Grid>
+              </>
+            )}
           </Grid>
 
           {current && (
@@ -243,7 +265,7 @@ export default function SustainabilityPage({ products = [], loading = false, can
                   ))}
                 </TextField>
                 <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
-                  <Typography color="text.secondary">Sustainability data complete:</Typography>
+                  <Typography color="text.secondary">Passport complete:</Typography>
                   <Completeness value={current.completeness} />
                   {canEdit && onEditProduct && current.missing.length > 0 && (
                     <Button variant="outlined" startIcon={<EditIcon />} onClick={() => onEditProduct(current.p)}>
@@ -259,8 +281,10 @@ export default function SustainabilityPage({ products = [], loading = false, can
               )}
 
               {/* LCA: the five life-cycle stages */}
+              {isLca && (
+              <>
               <Typography variant="h6" component="h2" sx={{ mb: 1 }}>Life cycle (LCA)</Typography>
-              <Grid container spacing={1.5} sx={{ mb: 2.5 }}>
+              <Grid container spacing={1.5}>
                 <Grid item xs={12} sm={6} lg={2.4}>
                   <Stage icon={GrassIcon} title="1. Materials" empty={!current.materials.length && !current.origins.length}>
                     {current.materials.map((m, i) => (
@@ -318,7 +342,12 @@ export default function SustainabilityPage({ products = [], loading = false, can
                 </Grid>
               </Grid>
 
+              </>
+              )}
+
               {/* ESG */}
+              {!isLca && (
+              <>
               <Typography variant="h6" component="h2" sx={{ mb: 1 }}>ESG</Typography>
               <Grid container spacing={1.5}>
                 <Grid item xs={12} md={4}>
@@ -363,24 +392,29 @@ export default function SustainabilityPage({ products = [], loading = false, can
                   </Stage>
                 </Grid>
               </Grid>
+              </>
+              )}
             </Paper>
           )}
 
           {/* All products at a glance */}
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" component="h2" sx={{ mb: 0.5 }}>All products</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Click a product to see its full life cycle above.</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              {isLca ? 'Click a product to see its full life cycle above.' : 'Click a product to see its ESG information above.'}
+            </Typography>
             <Box sx={{ overflowX: 'auto' }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
                     <TableCell>Product</TableCell>
-                    <TableCell>Made in</TableCell>
-                    <TableCell>Main materials</TableCell>
+                    {isLca && <TableCell>Made in</TableCell>}
+                    {isLca && <TableCell>Main materials</TableCell>}
                     <TableCell align="right">Carbon footprint</TableCell>
-                    <TableCell>Certifications</TableCell>
+                    {!isLca && <TableCell>Certifications</TableCell>}
+                    {!isLca && <TableCell>Known suppliers</TableCell>}
                     <TableCell>End of life</TableCell>
-                    <TableCell>Data complete</TableCell>
+                    <TableCell>Passport</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -397,10 +431,11 @@ export default function SustainabilityPage({ products = [], loading = false, can
                           {r.p.name}
                         </Link>
                       </TableCell>
-                      <TableCell>{r.madeIn || '—'}</TableCell>
-                      <TableCell>{r.materials.slice(0, 2).map((m) => `${m.material}${m.percent ? ` ${m.percent}%` : ''}`).join(', ') || '—'}</TableCell>
+                      {isLca && <TableCell>{r.madeIn || '—'}</TableCell>}
+                      {isLca && <TableCell>{r.materials.slice(0, 2).map((m) => `${m.material}${m.percent ? ` ${m.percent}%` : ''}`).join(', ') || '—'}</TableCell>}
                       <TableCell align="right">{formatKg(r.co2Total)}</TableCell>
-                      <TableCell>{r.certs.length ? r.certs.map((c) => c.title).join(', ') : '—'}</TableCell>
+                      {!isLca && <TableCell>{r.certs.length ? r.certs.map((c) => c.title).join(', ') : '—'}</TableCell>}
+                      {!isLca && <TableCell>{r.origins.length || '—'}</TableCell>}
                       <TableCell>{r.endOfLife.length ? r.endOfLife.map((d) => d.label).join(', ') : '—'}</TableCell>
                       <TableCell><Completeness value={r.completeness} dense /></TableCell>
                     </TableRow>

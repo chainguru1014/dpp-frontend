@@ -30,7 +30,7 @@ const PAGE_HELP = {
     text: 'Choose a product, pick a code type, say how many you need and press Create. Then download the codes as a PDF to print. Each code is unique and opens that product’s page when scanned.',
   },
   itemSearch: {
-    title: 'Product Activity',
+    title: 'Product Journey',
     text: 'Click a product to see everything recorded for it: scans, work steps your employees recorded and changes of owner, with a map of where they happened. It also shows the lifecycle you entered for the product (materials, where it was made, shipping) on the same map. To look up one item, type the code from its code or tag and press "Find code".',
   },
   security: {
@@ -46,9 +46,13 @@ const PAGE_HELP = {
     title: 'Capture History',
     text: 'The work steps your employees recorded in the mobile app (receiving, packing and so on), per person. Click an entry to see the photo and place.',
   },
-  sustainability: {
-    title: 'Sustainability',
-    text: 'Materials, origin, carbon footprint, certifications and end-of-life options for each product. Click a product to fill in what is missing.',
+  lca: {
+    title: 'LCA',
+    text: 'Life Cycle Assessment: each product along its five stages — materials, manufacturing, transport, use and end of life. Click a product in the list to see its stages; “Add missing information” opens the product to fill the gaps.',
+  },
+  esg: {
+    title: 'ESG',
+    text: 'Each product’s Environmental (carbon footprint, impact figures), Social (certifications, known suppliers) and Governance (traceable codes, passport completeness) information. Click a product in the list to see it.',
   },
   companies: {
     title: 'Companies',
