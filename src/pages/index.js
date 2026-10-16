@@ -161,7 +161,7 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 // Every page the shell can show. Each one has its own web address
 // (/admin/<page>) so the browser Back/Forward buttons and bookmarks work.
 const KNOWN_PAGES = [
-  'dashboard', 'products', 'newProduct', 'generateCode', 'users', 'companies', 'employeeAuditLog',
+  'dashboard', 'products', 'newProduct', 'generateCode', 'shipmentInspection', 'users', 'companies', 'employeeAuditLog',
   'processSteps', 'captureHistory', 'history', 'lca', 'esg', 'notifications',
   'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security', 'serviceRequests', 'brand',
 ];
@@ -248,7 +248,7 @@ const InnerPage = () => {
   const isEmployeeActor = company?.actorKind === 'Employee';
   // Shared by every non-admin role: LCA, Notifications, Recommendations, Chat.
   const COMMON_PAGES = ['dashboard', 'products', 'profile', 'lca', 'esg', 'allNotifications', 'recommendations', 'chat'];
-  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security', 'serviceRequests', 'brand'];
+  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'shipmentInspection', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security', 'serviceRequests', 'brand'];
   const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
   const isWorkingEmployee = isEmployeeActor && !isSupervisor;
   // A working employee: only what their job needs — Dashboard, Products
