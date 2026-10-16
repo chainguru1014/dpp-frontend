@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DownloadIcon from '@mui/icons-material/Download';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import qrcode from 'qrcode';
 import PageHeader from '../../components/PageHeader';
@@ -250,6 +251,16 @@ function ManifestDetailDialog({ manifest, token, onClose }) {
   if (!manifest) return null;
   const status = STATUS_META[manifest.status] || STATUS_META.pending;
 
+  const downloadQr = () => {
+    if (!qrImage) return;
+    const a = document.createElement('a');
+    a.href = qrImage;
+    a.download = `${manifest.manifest_code}-qr.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   return (
     <Dialog open={!!manifest} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{manifest.label || manifest.manifest_code}</DialogTitle>
@@ -257,9 +268,14 @@ function ManifestDetailDialog({ manifest, token, onClose }) {
         <Stack spacing={2.5} sx={{ mt: 1 }}>
           <Stack direction="row" spacing={3} alignItems="flex-start">
             {qrImage && (
-              <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1, bgcolor: '#fff', flexShrink: 0 }}>
-                <img src={qrImage} alt="Manifest QR" width={120} height={120} />
-              </Box>
+              <Stack spacing={1} alignItems="center" sx={{ flexShrink: 0 }}>
+                <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1, p: 1, bgcolor: '#fff' }}>
+                  <img src={qrImage} alt="Manifest QR" width={120} height={120} />
+                </Box>
+                <Button size="small" startIcon={<DownloadIcon />} onClick={downloadQr}>
+                  Download
+                </Button>
+              </Stack>
             )}
             <Stack spacing={0.5}>
               <Typography variant="body2" color="text.secondary">Code</Typography>
