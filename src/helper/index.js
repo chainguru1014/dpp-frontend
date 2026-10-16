@@ -1282,3 +1282,49 @@ export const listBrands = async (token) => {
 export const createBrand = (token, data) => brandCall(token, 'post', '', data);
 export const updateBrandById = (token, id, data) => brandCall(token, 'put', `/${encodeURIComponent(id)}`, data);
 export const deleteBrand = (token, id) => brandCall(token, 'delete', `/${encodeURIComponent(id)}`);
+
+// ----- Shipment Inspection (manifest expected-item lists + RFID gate-scan matching) -----
+
+export const listShipmentManifests = async (token) => {
+    try {
+        const res = await axios.get(`${Backend_URL}shipment-manifest`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data || [] };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Could not load shipment manifests' };
+    }
+};
+
+export const createShipmentManifest = async (token, { product_id, from_item, to_item, label }) => {
+    try {
+        const res = await axios.post(`${Backend_URL}shipment-manifest`, { product_id, from_item, to_item, label }, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Could not create this shipment manifest' };
+    }
+};
+
+export const getShipmentManifestHistory = async (token, id) => {
+    try {
+        const res = await axios.get(`${Backend_URL}shipment-manifest/${id}/history`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true, data: res.data?.data || [] };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Could not load the inspection history' };
+    }
+};
+
+export const deleteShipmentManifest = async (token, id) => {
+    try {
+        await axios.delete(`${Backend_URL}shipment-manifest/${id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return { ok: true };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Could not delete this shipment manifest' };
+    }
+};

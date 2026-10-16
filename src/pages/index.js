@@ -80,6 +80,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import CategoryIcon from '@mui/icons-material/Category';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import Webcam from 'react-webcam';
 import io from 'socket.io-client';
 
@@ -128,6 +129,7 @@ import SustainabilityPage from '../features/sustainability/SustainabilityPage';
 import ItemTracePage from '../features/trace/ItemTracePage';
 import SecurityPage from '../features/security/SecurityPage';
 import ServiceRequestsPage from '../features/circular/ServiceRequestsPage';
+import ShipmentInspectionPage from '../features/shipment/ShipmentInspectionPage';
 import BrandPage from '../features/brand/BrandPage';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ChatPage from '../features/chat/ChatPage';
@@ -272,6 +274,10 @@ const InnerPage = () => {
   // Company account (their company's working employees), or a working
   // employee (their own captures only).
   const canSeeCaptureHistory = !isAppUser;
+  // Shipment Inspection: super admin (every company) and a Supervisor
+  // ("company advisor" role, per the CEO's naming) only — not a plain
+  // Company account, a working employee, or an app user.
+  const canSeeShipmentInspection = isAdmin || isSupervisor;
   // Product Journey (a product's lifecycle and history, or one item's by its code): brands and Supervisors.
   const canSeeItemSearch = !isAppUser && !isWorkingEmployee;
   // A code typed into the top bar, handed to the Product Journey page.
@@ -1863,6 +1869,7 @@ const InnerPage = () => {
         ['products', isAppUser ? 'My Products' : 'Products', Inventory2Icon, true],
         ['brand', 'Brand', PaletteIcon, canSeeItemSearch],
         ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
+        ['shipmentInspection', 'Shipment Inspection', LocalShippingIcon, canSeeShipmentInspection],
       ],
     },
     {
@@ -2233,6 +2240,10 @@ const InnerPage = () => {
 
           {activePage === 'serviceRequests' && canSeeItemSearch && (
             <ServiceRequestsPage token={token} showCompany={isAdmin} onOpenProducts={() => go('products')} />
+          )}
+
+          {activePage === 'shipmentInspection' && canSeeShipmentInspection && (
+            <ShipmentInspectionPage token={token} products={products} />
           )}
 
           {activePage === 'notifications' && isAdmin && <SystemNotificationsPage />}
