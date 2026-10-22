@@ -211,7 +211,12 @@ export default function ProductsTable({
 
   return (
     <Box>
-      <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${Math.min(columns, 2)}, 1fr)`, md: `repeat(${columns}, 1fr)` } }}>
+      {/* minmax(0, 1fr), not plain 1fr -- an `fr` track's implicit minimum is
+          its content's min-content size, so a card with a longer name (its
+          Typography noWrap can't shrink below that) would end up wider than
+          its neighbors. minmax(0, 1fr) forces every column to the same
+          strict 1/N width regardless of content. */}
+      <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${Math.min(columns, 2)}, minmax(0, 1fr))`, md: `repeat(${columns}, minmax(0, 1fr))` } }}>
         {shown.map((product) => (
           <ProductRow
             key={product._id}

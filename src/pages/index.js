@@ -2311,6 +2311,8 @@ const InnerPage = () => {
                       selectGenerateCodeProduct(prod);
                       setPickingCodeProduct(false);
                     }}
+                    columns={6}
+                    dense
                   />
                 </Box>
               )}
