@@ -2468,6 +2468,8 @@ const InnerPage = () => {
                 selectedId={selectedProduct?._id}
                 isAppUser={isAppUser}
                 showOwner={isAdmin}
+                columns={6}
+                dense
                 emptyText={productNameFilter.trim()
                   ? 'No products match your search.'
                   : isAppUser

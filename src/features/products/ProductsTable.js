@@ -15,7 +15,7 @@ const PAGE_SIZE = 8;
 //    below) — used by ProductsTable's grid below, where each card only gets
 //    ~1/4 (or 1/2) of the row and the wide layout would squeeze everything
 //    unreadably thin.
-export function ProductRow({ product, selected = false, onClick, onOwnerClick, isAppUser = false, showOwner = false, compact = false }) {
+export function ProductRow({ product, selected = false, onClick, onOwnerClick, isAppUser = false, showOwner = false, compact = false, dense = false }) {
   const thumb = Array.isArray(product.images) ? product.images[0] : null;
   const owner = product.company_id;
   const subtitle = [product.model, product.brandInfo?.name || owner?.name].filter(Boolean).join(' · ');
@@ -25,11 +25,11 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
     ? {
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'stretch',
+        alignItems: dense ? 'center' : 'stretch',
         gap: 1,
         width: '100%',
         height: '100%',
-        textAlign: 'left',
+        textAlign: dense ? 'center' : 'left',
         p: 1.5,
         bgcolor: selected ? 'rgba(47,128,200,0.10)' : '#fff',
         border: '1px solid',
@@ -71,11 +71,11 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
             src={thumb ? getFileUrl(thumb) : undefined}
             sx={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 2, objectFit: 'cover', bgcolor: '#eef1f6', visibility: thumb ? 'visible' : 'hidden' }}
           />
-          {onClick && (
+          {onClick && !dense && (
             <ChevronRightIcon sx={{ position: 'absolute', top: 4, right: 4, color: '#fff', bgcolor: 'rgba(0,0,0,0.35)', borderRadius: '50%', p: 0.25, fontSize: 22 }} />
           )}
         </Box>
-        <Box sx={{ minWidth: 0 }}>
+        <Box sx={{ minWidth: 0, width: dense ? '100%' : undefined }}>
           <Typography variant="subtitle2" component="span" sx={{ display: 'block', lineHeight: 1.3 }} noWrap>
             {product.name || 'Untitled product'}
           </Typography>
@@ -99,6 +99,13 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
         </Box>
         {isAppUser ? (
           <Typography variant="caption" color="text.secondary" component="span">{product.ownedQuantity || 0} I own</Typography>
+        ) : dense ? (
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, mt: 'auto' }}>
+            <PassportScore product={product} width={50} />
+            <Typography variant="caption" color="text.secondary" component="span">
+              {(product.total_minted_amount || 0).toLocaleString()} codes
+            </Typography>
+          </Box>
         ) : (
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 'auto' }}>
             <PassportScore product={product} width={50} />
@@ -180,6 +187,8 @@ export default function ProductsTable({
   isAppUser = false,
   showOwner = true,
   emptyText = 'No products yet.',
+  columns = 4,
+  dense = false,
 }) {
   const rows = products || [];
   const [page, setPage] = useState(1);
@@ -202,7 +211,7 @@ export default function ProductsTable({
 
   return (
     <Box>
-      <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' } }}>
+      <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${Math.min(columns, 2)}, 1fr)`, md: `repeat(${columns}, 1fr)` } }}>
         {shown.map((product) => (
           <ProductRow
             key={product._id}
@@ -213,6 +222,7 @@ export default function ProductsTable({
             isAppUser={isAppUser}
             showOwner={showOwner}
             compact
+            dense={dense}
           />
         ))}
       </Box>

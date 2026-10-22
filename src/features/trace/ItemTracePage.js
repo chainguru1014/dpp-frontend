@@ -282,6 +282,8 @@ export default function ItemTracePage({
         loading={productsLoading}
         selectedId={selectedId}
         showOwner={showOwner}
+        columns={6}
+        dense
         emptyText={input.trim()
           ? 'No product matches. If this is a code from a code or tag, press "Find code".'
           : 'No products yet.'}
