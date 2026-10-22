@@ -44,6 +44,17 @@ export const getYoutubeVideoId = (url) => {
     return /^[A-Za-z0-9_-]{11}$/.test(bare) ? bare : '';
 };
 
+// Normalize whatever the API returns for a product's `images` field (a
+// keyed object instead of a flat array, stray non-string entries) into a
+// clean array of filename/URL strings — a plain `images || []` fallback
+// still breaks when images comes back as an object, since the resulting
+// non-array value's own .map() call throws instead of rendering "no image".
+export const normalizeProductImages = (images) => {
+    if (!images) return [];
+    const arr = Array.isArray(images) ? images : Object.values(images);
+    return arr.filter((v) => typeof v === 'string' && v.trim());
+};
+
 // Normalize whatever the API returns for a product's `videos` field into a
 // clean [{ url, description, videoId }] list, dropping anything non-YouTube.
 export const normalizeProductVideos = (videos) => {

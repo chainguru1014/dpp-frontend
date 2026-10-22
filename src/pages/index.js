@@ -2618,6 +2618,8 @@ const InnerPage = () => {
                           it), so it is changed on the Brand page — opened on
                           this product's brand. */}
                       <Button
+                        variant="outlined"
+                        startIcon={<PaletteIcon />}
                         sx={{ mb: 1.5 }}
                         onClick={async () => {
                           const target = { companyId: formCompanyId, name: brandInfo.name };

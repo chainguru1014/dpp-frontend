@@ -7,18 +7,40 @@ import { PassportScore } from './PassportReadinessPanel';
 
 const PAGE_SIZE = 8;
 
-// One product as a large row: its photo first (people recognise products by
-// sight), then name and brand, then the two or three figures that matter.
-export function ProductRow({ product, selected = false, onClick, onOwnerClick, isAppUser = false, showOwner = false }) {
+// One product as a card. Two layouts share the same content:
+//  - the default wide row (photo, then name/brand, then the figures that
+//    matter, left to right) — used standalone, e.g. Generate Code's "already
+//    picked" banner, where the card gets the full container width to itself;
+//  - `compact`, a vertical card (photo on top, text and figures stacked
+//    below) — used by ProductsTable's grid below, where each card only gets
+//    ~1/4 (or 1/2) of the row and the wide layout would squeeze everything
+//    unreadably thin.
+export function ProductRow({ product, selected = false, onClick, onOwnerClick, isAppUser = false, showOwner = false, compact = false }) {
   const thumb = Array.isArray(product.images) ? product.images[0] : null;
   const owner = product.company_id;
   const subtitle = [product.model, product.brandInfo?.name || owner?.name].filter(Boolean).join(' · ');
   const Root = onClick ? ButtonBase : Box;
 
-  return (
-    <Root
-      {...(onClick ? { onClick, focusRipple: true, 'aria-pressed': selected } : {})}
-      sx={{
+  const rootSx = compact
+    ? {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        gap: 1,
+        width: '100%',
+        height: '100%',
+        textAlign: 'left',
+        p: 1.5,
+        bgcolor: selected ? 'rgba(47,128,200,0.10)' : '#fff',
+        border: '1px solid',
+        borderColor: selected ? '#2f80c8' : 'divider',
+        boxShadow: selected ? 'inset 5px 0 0 #2f80c8' : 1,
+        borderRadius: 3,
+        transition: 'box-shadow 120ms, border-color 120ms',
+        ...(onClick ? { '&:hover': { borderColor: '#2f80c8', boxShadow: selected ? 'inset 5px 0 0 #2f80c8' : 3 } } : {}),
+        '&:focus-visible': { outline: '3px solid #2f80c8', outlineOffset: 2 },
+      }
+    : {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'flex-start',
@@ -34,7 +56,65 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
         transition: 'box-shadow 120ms, border-color 120ms',
         ...(onClick ? { '&:hover': { borderColor: '#2f80c8', boxShadow: selected ? 'inset 5px 0 0 #2f80c8' : 3 } } : {}),
         '&:focus-visible': { outline: '3px solid #2f80c8', outlineOffset: 2 },
-      }}
+      };
+
+  if (compact) {
+    return (
+      <Root
+        {...(onClick ? { onClick, focusRipple: true, 'aria-pressed': selected } : {})}
+        sx={rootSx}
+      >
+        <Box sx={{ position: 'relative' }}>
+          <Box
+            component="img"
+            alt=""
+            src={thumb ? getFileUrl(thumb) : undefined}
+            sx={{ width: '100%', aspectRatio: '1 / 1', borderRadius: 2, objectFit: 'cover', bgcolor: '#eef1f6', visibility: thumb ? 'visible' : 'hidden' }}
+          />
+          {onClick && (
+            <ChevronRightIcon sx={{ position: 'absolute', top: 4, right: 4, color: '#fff', bgcolor: 'rgba(0,0,0,0.35)', borderRadius: '50%', p: 0.25, fontSize: 22 }} />
+          )}
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="subtitle2" component="span" sx={{ display: 'block', lineHeight: 1.3 }} noWrap>
+            {product.name || 'Untitled product'}
+          </Typography>
+          {subtitle && <Typography variant="caption" color="text.secondary" component="span" sx={{ display: 'block' }} noWrap>{subtitle}</Typography>}
+          {showOwner && owner && (
+            <Link
+              component="span"
+              role="button"
+              tabIndex={0}
+              underline="hover"
+              variant="caption"
+              sx={{ display: 'block' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onOwnerClick) onOwnerClick(product);
+              }}
+            >
+              <Typography variant="caption" noWrap sx={{ display: 'block' }}>Owner: {owner.name}</Typography>
+            </Link>
+          )}
+        </Box>
+        {isAppUser ? (
+          <Typography variant="caption" color="text.secondary" component="span">{product.ownedQuantity || 0} I own</Typography>
+        ) : (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, mt: 'auto' }}>
+            <PassportScore product={product} width={50} />
+            <Typography variant="caption" color="text.secondary" component="span" sx={{ textAlign: 'right' }}>
+              {(product.total_minted_amount || 0).toLocaleString()} codes
+            </Typography>
+          </Box>
+        )}
+      </Root>
+    );
+  }
+
+  return (
+    <Root
+      {...(onClick ? { onClick, focusRipple: true, 'aria-pressed': selected } : {})}
+      sx={rootSx}
     >
       <Box
         component="img"
@@ -122,7 +202,7 @@ export default function ProductsTable({
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' } }}>
         {shown.map((product) => (
           <ProductRow
             key={product._id}
@@ -132,6 +212,7 @@ export default function ProductsTable({
             onOwnerClick={onOwnerClick}
             isAppUser={isAppUser}
             showOwner={showOwner}
+            compact
           />
         ))}
       </Box>

@@ -77,7 +77,7 @@ function ProductPickerDialog({ open, products, onClose, onPick }) {
   }, [products, filter]);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
         Which product do you want to analyze?
         <IconButton onClick={onClose} aria-label="Close" sx={{ color: 'inherit' }}><CloseIcon /></IconButton>
@@ -97,7 +97,7 @@ function ProductPickerDialog({ open, products, onClose, onPick }) {
         )}
         {products.length === 0 && <Typography color="text.secondary">You have no products yet. Add a product first.</Typography>}
         {products.length > 0 && shown.length === 0 && <Typography color="text.secondary">No products match your search.</Typography>}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pb: 1 }}>
+        <Box sx={{ display: 'grid', gap: 1, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, pb: 1 }}>
           {shown.map((p) => {
             const thumb = Array.isArray(p.images) ? p.images[0] : null;
             return (
@@ -105,7 +105,7 @@ function ProductPickerDialog({ open, products, onClose, onPick }) {
                 key={p._id}
                 onClick={() => { onClose(); onPick(p); }}
                 sx={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 1.5, p: 1.25, textAlign: 'left',
+                  display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 1.5, p: 1.25, textAlign: 'left', width: '100%',
                   border: '1px solid', borderColor: 'divider', borderRadius: 2,
                   '&:hover': { borderColor: 'primary.main', bgcolor: 'rgba(47,128,200,0.06)' },
                 }}

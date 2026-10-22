@@ -1,12 +1,14 @@
 import * as React from 'react';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckIcon from '@mui/icons-material/Check';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -42,7 +44,7 @@ import EcoIcon from '@mui/icons-material/Nature';
 import CameraIcon from '../../assets/camera_icon.png';
 import YoutubeIcon from '../../assets/youtube-icon.png';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import { Backend_URL, getFileUrl, normalizeProductVideos } from '../../helper';
+import { Backend_URL, getFileUrl, normalizeProductVideos, normalizeProductImages } from '../../helper';
 import { DPP_TEXT_SCALE, dppButtonFill, dppFontCss, dppPalette, normalizeDppTheme } from '../../utils/dppTheme';
 import VideoPlayerDialog from '../VideoPlayerDialog';
 
@@ -204,12 +206,35 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   useEffect(() => {
     if (!lifecycleTabs.some((tb) => tb.key === lifecycleTab)) setLifecycleTab(lifecycleTabs[0].key);
   }, [lifecycleTabs, lifecycleTab]);
+
+  // Left/right scroll arrows flanking the lifecycle tab strip, matching
+  // ProductLifecycleScreen's pattern in the app exactly (permanently
+  // reserved slots, disabled + dimmed at the respective scroll edge rather
+  // than hidden, so the strip's own width never shifts).
+  const lifecycleTabScrollRef = useRef(null);
+  const [canScrollTabsLeft, setCanScrollTabsLeft] = useState(false);
+  const [canScrollTabsRight, setCanScrollTabsRight] = useState(false);
+  const updateTabScrollState = () => {
+    const el = lifecycleTabScrollRef.current;
+    if (!el) return;
+    setCanScrollTabsLeft(el.scrollLeft > 1);
+    setCanScrollTabsRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  };
+  useEffect(() => {
+    if (view !== 'lifecycle') return;
+    updateTabScrollState();
+  }, [view, lifecycleTabs]);
+  const scrollLifecycleTabsBy = (dir) => {
+    const el = lifecycleTabScrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * 120, behavior: 'smooth' });
+  };
   const [openStage, setOpenStage] = useState(null);
   const [openOrigin, setOpenOrigin] = useState(null);
   const [openService, setOpenService] = useState(null);
 
   const info = productInfo || {};
-  const images = info.images || [];
+  const images = normalizeProductImages(info.images);
   const videos = normalizeProductVideos(info.videos);
   const slides = [
     ...images.map((src) => ({ type: 'image', src })),
@@ -846,20 +871,23 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
             its own -- two adjacent elements with independently-restarting
             gradients read as a visible seam even when the colors match. */}
         <Box sx={{ background: GRADIENT, flexShrink: 0 }}>
-          <Box sx={{ height: 50, px: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box sx={{ height: 50, pl: 1.5, pr: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
             {/* Empty spacer matching the Close button's width, so the title
                 stays centered via space-between symmetry now that there's no
                 back button on the left (this is a top-level preview, not a
-                navigable screen -- closing the dialog is the only exit). */}
-            <Box sx={{ width: 40 }} />
-            <Typography id="preview-modal-title" sx={{ color: C.onHeader, fontSize: 16, fontWeight: 600 }}>
+                navigable screen -- closing the dialog is the only exit).
+                `gap` + the title's own `noWrap`/`flex` keep a minimum
+                breathing room from the close button even when the title text
+                is long enough to otherwise crowd it. */}
+            <Box sx={{ width: 40, flexShrink: 0 }} />
+            <Typography id="preview-modal-title" noWrap sx={{ color: C.onHeader, fontSize: 16, fontWeight: 600, flex: 1, textAlign: 'center' }}>
               {view === 'lifecycle' ? 'Product Lifecycle' : 'Product Overview'}
             </Typography>
             {onClose ? (
-              <Button onClick={onClose} aria-label="Close preview" sx={{ minWidth: 40, color: C.onHeader }}>
+              <Button onClick={onClose} aria-label="Close preview" sx={{ minWidth: 40, flexShrink: 0, color: C.onHeader }}>
                 <CloseIcon fontSize="small" />
               </Button>
-            ) : <Box sx={{ width: 40 }} />}
+            ) : <Box sx={{ width: 40, flexShrink: 0 }} />}
           </Box>
 
           {view === 'lifecycle' && (
@@ -881,37 +909,61 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
         </Box>
 
         {view === 'lifecycle' && (
-          <Box sx={{ display: 'flex', bgcolor: C.surface, borderBottom: `1px solid ${C.border}`, overflowX: 'auto', flexShrink: 0 }}>
-            {lifecycleTabs.map((tb) => (
-              <Box
-                key={tb.key}
-                role="tab"
-                aria-selected={lifecycleTab === tb.key}
-                onClick={() => setLifecycleTab(tb.key)}
-                sx={look.tabStyle === 'pills' ? {
-                  flex: '0 0 auto',
-                  px: 1.5,
-                  py: 0.6,
-                  my: 0.75,
-                  ml: 0.75,
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  borderRadius: 999,
-                  bgcolor: lifecycleTab === tb.key ? C.primary : C.surfaceAlt,
-                } : {
-                  flex: '0 0 auto',
-                  px: 1.5,
-                  py: 1,
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  borderBottom: lifecycleTab === tb.key ? `2px solid ${C.primary}` : '2px solid transparent',
-                }}
-              >
-                <Typography sx={{ fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', color: lifecycleTab === tb.key ? (look.tabStyle === 'pills' ? C.onPrimary : C.primary) : C.muted }}>
-                  {tb.label}
-                </Typography>
-              </Box>
-            ))}
+          <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+            <IconButton
+              size="small"
+              onClick={() => scrollLifecycleTabsBy(-1)}
+              disabled={!canScrollTabsLeft}
+              aria-label="Show previous lifecycle sections"
+              sx={{ width: 32, flexShrink: 0 }}
+            >
+              <ChevronLeftIcon fontSize="small" sx={{ color: canScrollTabsLeft ? C.primary : undefined }} />
+            </IconButton>
+            <Box
+              ref={lifecycleTabScrollRef}
+              onScroll={updateTabScrollState}
+              sx={{ display: 'flex', overflowX: 'auto', flex: 1, minWidth: 0, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}
+            >
+              {lifecycleTabs.map((tb) => (
+                <Box
+                  key={tb.key}
+                  role="tab"
+                  aria-selected={lifecycleTab === tb.key}
+                  onClick={() => setLifecycleTab(tb.key)}
+                  sx={look.tabStyle === 'pills' ? {
+                    flex: '0 0 auto',
+                    px: 1.5,
+                    py: 0.6,
+                    my: 0.75,
+                    ml: 0.75,
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    borderRadius: 999,
+                    bgcolor: lifecycleTab === tb.key ? C.primary : C.surfaceAlt,
+                  } : {
+                    flex: '0 0 auto',
+                    px: 1.5,
+                    py: 1,
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    borderBottom: lifecycleTab === tb.key ? `2px solid ${C.primary}` : '2px solid transparent',
+                  }}
+                >
+                  <Typography sx={{ fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', color: lifecycleTab === tb.key ? (look.tabStyle === 'pills' ? C.onPrimary : C.primary) : C.muted }}>
+                    {tb.label}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+            <IconButton
+              size="small"
+              onClick={() => scrollLifecycleTabsBy(1)}
+              disabled={!canScrollTabsRight}
+              aria-label="Show more lifecycle sections"
+              sx={{ width: 32, flexShrink: 0 }}
+            >
+              <ChevronRightIcon fontSize="small" sx={{ color: canScrollTabsRight ? C.primary : undefined }} />
+            </IconButton>
           </Box>
         )}
 
