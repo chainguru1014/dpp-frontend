@@ -2599,15 +2599,6 @@ const InnerPage = () => {
 
                 {productPanelMode === 'experience' && (
                   <Grid container spacing={3}>
-                    <Grid item xs={12} md={7}>
-                      <PassportReadinessPanel
-                        product={formProduct}
-                        onGoToStep={(step) => {
-                          setDetailTab(step);
-                          setProductPanelMode('edit');
-                        }}
-                      />
-                    </Grid>
                     <Grid item xs={12} md={5}>
                       <Box sx={{ position: { md: 'sticky' }, top: { md: 0 } }}>
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>What shoppers see</Typography>
@@ -2629,7 +2620,7 @@ const InnerPage = () => {
                           }
                         }}
                       >
-                        Change the design{brandInfo.name ? ` of ${brandInfo.name}` : ''}
+                        Change the DPP design
                       </Button>
                       <Box sx={{ width: 340, maxWidth: '100%', height: 640, mx: 'auto', border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 4 }}>
                         <Suspense fallback={<Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, bgcolor: '#fff' }}><CircularProgress size={28} /><Typography variant="body2" color="text.secondary">Loading the preview…</Typography></Box>}>
@@ -2637,6 +2628,15 @@ const InnerPage = () => {
                         </Suspense>
                       </Box>
                       </Box>
+                    </Grid>
+                    <Grid item xs={12} md={7}>
+                      <PassportReadinessPanel
+                        product={formProduct}
+                        onGoToStep={(step) => {
+                          setDetailTab(step);
+                          setProductPanelMode('edit');
+                        }}
+                      />
                     </Grid>
                   </Grid>
                 )}

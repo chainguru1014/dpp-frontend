@@ -260,6 +260,37 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     setSlideIndex((i) => (i + dir + slides.length) % slides.length);
   };
 
+  // Drag-to-swipe on the media box, alongside the existing left/right
+  // click zones — pointer events cover both mouse-drag (desktop) and touch
+  // (mobile web) in one handler. `justDraggedRef` suppresses the click
+  // zones' own onClick right after a real drag, so a swipe doesn't also
+  // fire a second, click-based navigation on release.
+  const dragStateRef = useRef({ startX: 0, dragging: false });
+  const justDraggedRef = useRef(false);
+  const SWIPE_THRESHOLD_PX = 30;
+  const handleSlidePointerDown = (e) => {
+    dragStateRef.current = { startX: e.clientX, dragging: true };
+  };
+  const handleSlidePointerUp = (e) => {
+    if (!dragStateRef.current.dragging) return;
+    dragStateRef.current.dragging = false;
+    const dx = e.clientX - dragStateRef.current.startX;
+    if (Math.abs(dx) > SWIPE_THRESHOLD_PX) {
+      justDraggedRef.current = true;
+      go(dx < 0 ? 1 : -1);
+    }
+  };
+  const handleSlidePointerLeave = () => {
+    dragStateRef.current.dragging = false;
+  };
+  const handleSlideZoneClick = (dir) => {
+    if (justDraggedRef.current) {
+      justDraggedRef.current = false;
+      return;
+    }
+    go(dir);
+  };
+
   const goToLifecycle = () => {
     setView('lifecycle');
     setLifecycleTab(lifecycleTabs[0].key);
@@ -297,6 +328,9 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
 
   const renderMediaBox = ({ size = 132, rounded = 1.5 } = {}) => (
     <Box
+      onPointerDown={slides.length > 1 ? handleSlidePointerDown : undefined}
+      onPointerUp={slides.length > 1 ? handleSlidePointerUp : undefined}
+      onPointerLeave={slides.length > 1 ? handleSlidePointerLeave : undefined}
       sx={{
         width: size,
         height: size,
@@ -308,6 +342,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        touchAction: slides.length > 1 ? 'pan-y' : undefined,
       }}
     >
       {active ? (
@@ -335,8 +370,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
 
       {slides.length > 1 && (
         <>
-          <Box onClick={() => go(-1)} sx={{ position: 'absolute', inset: '0 auto 0 0', width: '35%', cursor: 'pointer' }} />
-          <Box onClick={() => go(1)} sx={{ position: 'absolute', inset: '0 0 0 auto', width: '35%', cursor: 'pointer' }} />
+          <Box onClick={() => handleSlideZoneClick(-1)} sx={{ position: 'absolute', inset: '0 auto 0 0', width: '35%', cursor: 'pointer' }} />
+          <Box onClick={() => handleSlideZoneClick(1)} sx={{ position: 'absolute', inset: '0 0 0 auto', width: '35%', cursor: 'pointer' }} />
           <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 6, display: 'flex', justifyContent: 'center', gap: 0.5 }}>
             {slides.map((_, i) => (
               <Box

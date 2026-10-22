@@ -64,7 +64,7 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
         {...(onClick ? { onClick, focusRipple: true, 'aria-pressed': selected } : {})}
         sx={rootSx}
       >
-        <Box sx={{ position: 'relative' }}>
+        <Box sx={{ position: 'relative', width: '33%' }}>
           <Box
             component="img"
             alt=""
