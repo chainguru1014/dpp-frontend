@@ -13,7 +13,7 @@ import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import ShieldIcon from '@mui/icons-material/Shield';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import { getFileUrl, normalizeProductVideos } from '../../helper';
-import VideoPlayerDialog from '../../components/VideoPlayerDialog';
+import MediaLightbox from '../../components/MediaLightbox';
 import youtubeIcon from '../../assets/youtube-icon.png';
 
 const DETAIL_FACT_ROWS = [
@@ -76,12 +76,16 @@ function VideoCell({ video }) {
         onClick={() => setOpen(true)}
         sx={{ width: '100%', height: '100%', cursor: 'pointer' }}
       >
-        <Box
-          component="img"
-          src={`https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`}
-          alt={video.description || 'Product video'}
-          sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
+        {video.videoId ? (
+          <Box
+            component="img"
+            src={`https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`}
+            alt={video.description || 'Product video'}
+            sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <Box sx={{ width: '100%', height: '100%', bgcolor: '#000' }} />
+        )}
         <PlayCircleFilledIcon
           sx={{
             position: 'absolute',
@@ -95,7 +99,7 @@ function VideoCell({ video }) {
         />
       </Box>
       <MediaBadge type="video" />
-      <VideoPlayerDialog open={open} onClose={() => setOpen(false)} videoId={video.videoId} />
+      <MediaLightbox open={open} onClose={() => setOpen(false)} slides={[{ type: 'video', video }]} />
     </Box>
   );
 }

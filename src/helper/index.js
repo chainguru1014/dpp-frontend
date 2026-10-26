@@ -55,16 +55,22 @@ export const normalizeProductImages = (images) => {
     return arr.filter((v) => typeof v === 'string' && v.trim());
 };
 
+// An uploaded video file (upload/video) rather than a YouTube link.
+export const isVideoFileUrl = (url) => /\.(mp4|webm|mov|m4v|ogv|ogg)(\?.*)?$/i.test(String(url || ''));
+
 // Normalize whatever the API returns for a product's `videos` field into a
-// clean [{ url, description, videoId }] list, dropping anything non-YouTube.
+// clean [{ url, description, videoId, fileUrl }] list: videoId for a YouTube
+// link, fileUrl for an uploaded video file. Anything else is dropped.
 export const normalizeProductVideos = (videos) => {
     if (!videos) return [];
     const arr = Array.isArray(videos) ? videos : Object.values(videos);
     return arr
         .map((v) => {
             const url = typeof v === 'string' ? v : v?.url || '';
+            const description = (typeof v === 'object' && v?.description) || '';
             const videoId = getYoutubeVideoId(url);
-            return videoId ? { url, description: (typeof v === 'object' && v?.description) || '', videoId } : null;
+            if (videoId) return { url, description, videoId, fileUrl: '' };
+            return isVideoFileUrl(url) ? { url, description, videoId: '', fileUrl: url } : null;
         })
         .filter(Boolean);
 };
@@ -658,6 +664,20 @@ export const uploadFile = async (body) => {
         return res.data.url;
     } catch (error) {
         console.log(error);
+        return '';
+    }
+}
+
+// One product video file (MP4/WebM/MOV, up to 100 MB). Returns the stored
+// filename, or '' with an error message shown.
+export const uploadVideo = async (body) => {
+    try {
+        const res = await axios.post(`${Backend_URL}upload/video`, body);
+        return res.data.url;
+    } catch (error) {
+        notifyError(error.response?.status === 413
+            ? 'This video is too large. Please choose one under 100 MB.'
+            : 'The video could not be uploaded. Please use an MP4, WebM or MOV file under 100 MB.');
         return '';
     }
 }

@@ -105,6 +105,7 @@ import {
   listBrands,
 } from '../helper';
 import CareSymbols from '../components/CareSymbols';
+import VideoListEditor from '../components/VideoListEditor';
 import Admin from '../components/admin';
 import AuthPage from '../components/AuthPage';
 import AiConciergeConsentPage from '../components/AiConciergeConsentPage';
@@ -185,6 +186,12 @@ const PRODUCT_FORM_STEPS = [
 ];
 // The product window is a three-part "DPP Studio": fill in the data, check
 // how the shopper's page looks, then create the codes that go on the item.
+// Per-step video lists (product.tabVideos), keyed by the app Lifecycle tab
+// each one shows on.
+const EMPTY_TAB_VIDEOS = { materials: [], care: [], dispose: [], traceability: [], warranty: [] };
+const normalizeTabVideos = (raw) => Object.fromEntries(
+  Object.keys(EMPTY_TAB_VIDEOS).map((key) => [key, Array.isArray(raw?.[key]) ? raw[key] : []]),
+);
 const STUDIO_PHASES = [
   { mode: 'edit', label: '1. Data' },
   { mode: 'experience', label: '2. Experience' },
@@ -392,6 +399,16 @@ const InnerPage = () => {
     private: '',
   });
   const [productVideos, setProductVideos] = useState([]);
+  // Videos for each data step, shown on the matching app Lifecycle tab.
+  const [tabVideos, setTabVideos] = useState(EMPTY_TAB_VIDEOS);
+  const setTabVideoList = (key) => (list) => setTabVideos((prev) => ({ ...prev, [key]: list }));
+  // Which upload buttons are busy, so each shows "Uploading…" while it works.
+  const [uploadingKeys, setUploadingKeys] = useState({});
+  const setUploadingKey = (key, busy) => setUploadingKeys((prev) => {
+    const next = { ...prev };
+    if (busy) next[key] = true; else delete next[key];
+    return next;
+  });
   const [wgVideos, setWGVideos] = useState([]);
   const [mcVideos, setMCVideos] = useState([]);
   const [noWarranty, setNoWarranty] = useState(false);
@@ -546,7 +563,7 @@ const InnerPage = () => {
   const productFormSignature = JSON.stringify([
     productName, productModel, aboutProduct, productType, color, size, manufactureDate,
     warrantyStatus, warrantyValidYears, itemCategory, skuStyleNumber, gtin, gs1DigitalLink, detailFacts, brandInfo,
-    productImages, productFiles, productVideos, materialSize, maintenance, disposal, circularity,
+    productImages, productFiles, productVideos, tabVideos, materialSize, maintenance, disposal, circularity,
     traceabilityEsg, certifications, sustainabilityImpact, parentProduct, parentProductCount,
   ]);
   const productFormSnapshotRef = useRef(null);
@@ -570,6 +587,7 @@ const InnerPage = () => {
     images: productImages,
     files: productFiles,
     videos: productVideos,
+    tabVideos,
     materialSize,
     maintenance,
     disposal,
@@ -864,6 +882,7 @@ const InnerPage = () => {
     setWGFiles([]);
     setMCFiles([]);
     setProductVideos([]);
+    setTabVideos(EMPTY_TAB_VIDEOS);
     setWGVideos([]);
     setMCVideos([]);
     setProductImageInputs([]);
@@ -956,9 +975,10 @@ const InnerPage = () => {
   };
 
   // Generic small-icon upload for certification / material-origin / impact rows.
-  const uploadRowIcon = async (event, apply) => {
+  const uploadRowIcon = async (event, apply, key) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    if (key) setUploadingKey(key, true);
     try {
       const body = new FormData();
       body.append('file', file);
@@ -968,6 +988,7 @@ const InnerPage = () => {
     } catch (e) {
       notifyError('The icon could not be uploaded.');
     } finally {
+      if (key) setUploadingKey(key, false);
       event.target.value = '';
     }
   };
@@ -1011,7 +1032,9 @@ const InnerPage = () => {
     return false;
   };
 
-  const addProductHandler = async () => {
+  // thenCodes: stay in the product window and open the saved product's
+  // Codes (the Experience step's save button).
+  const addProductHandler = async ({ thenCodes = false } = {}) => {
     if (!validateRequiredProductFields()) return;
     setSavingProduct(true);
     const ok = await addProduct({
@@ -1028,6 +1051,7 @@ const InnerPage = () => {
       images: productImages,
       files: productFiles,
       videos: productVideos,
+      tabVideos,
       serials,
       materialSize,
       maintenance,
@@ -1066,6 +1090,14 @@ const InnerPage = () => {
     // Keep the form (and everything typed) open if saving failed.
     if (!ok) return;
     const list = await loadProductsForCurrentCompany();
+    if (thenCodes) {
+      const saved = (list || []).find((p) => p._id === ok._id);
+      if (saved) {
+        await editProductHandler(saved);
+        setProductPanelMode('print');
+        return;
+      }
+    }
     resetFields();
     // Redirect to previous page (dashboard or products)
     setActivePage(previousPage === 'newProduct' ? 'products' : (previousPage || 'products'));
@@ -1074,7 +1106,7 @@ const InnerPage = () => {
     if (added) setAddedProduct(added);
   };
 
-  const updateProductHandler = async () => {
+  const updateProductHandler = async ({ thenCodes = false } = {}) => {
     if (!validateRequiredProductFields()) return;
     setSavingProduct(true);
     const ok = await updateProduct({
@@ -1092,6 +1124,7 @@ const InnerPage = () => {
       images: productImages,
       files: productFiles,
       videos: productVideos,
+      tabVideos,
       serials,
       materialSize,
       maintenance,
@@ -1128,7 +1161,18 @@ const InnerPage = () => {
     });
     setSavingProduct(false);
     if (!ok) return;
-    await loadProductsForCurrentCompany();
+    const list = await loadProductsForCurrentCompany();
+    if (thenCodes) {
+      // Saved: the form now matches the product, so nothing is unsaved.
+      productFormSnapshotRef.current = productFormSignature;
+      const saved = (list || []).find((p) => p._id === isEditing);
+      if (saved) {
+        setSelectedProduct(saved);
+        setTotalAmount(saved.total_minted_amount || 0);
+      }
+      setProductPanelMode('print');
+      return;
+    }
     resetFields();
     // Close the form and go back to where we came from (same as Add).
     setActivePage(previousPage === 'newProduct' ? 'products' : (previousPage || 'products'));
@@ -1212,6 +1256,7 @@ const InnerPage = () => {
     setWGFiles(Array.isArray(wg.files) ? wg.files : []);
     setMCFiles(Array.isArray(mc.files) ? mc.files : []);
     setProductVideos(Array.isArray(prod.videos) ? prod.videos : []);
+    setTabVideos(normalizeTabVideos(prod.tabVideos));
     setWGVideos(Array.isArray(wg.videos) ? wg.videos : []);
     setMCVideos(Array.isArray(mc.videos) ? mc.videos : []);
     setProductImageInputs(Array.isArray(prod.images) && prod.images.length > 0 ? [prod.images] : []);
@@ -1602,7 +1647,13 @@ const InnerPage = () => {
     const file = base64ToFile(imageSrc, 'webcam-photo.jpg');
     const body = new FormData();
     body.append('file', file);
+    setUploadingKey('camera', true);
     const res = await uploadFile(body);
+    setUploadingKey('camera', false);
+    if (!res) {
+      notifyError('The photo could not be uploaded. Please try again.');
+      return;
+    }
     const temp = [...productCaptureImages, res];
     setProductCaptureImages(temp);
     const images = [...productImageInputs.flat(), ...temp];
@@ -1643,7 +1694,9 @@ const InnerPage = () => {
     if (!picked || !picked.length) return;
     const body = new FormData();
     for (const singleFile of picked) body.append('files', singleFile);
+    setUploadingKey('photos', true);
     const res = await uploadFiles(body);
+    setUploadingKey('photos', false);
     event.target.value = '';
     const fileList = (Array.isArray(res) ? res : (res ? [res] : [])).filter(Boolean);
     if (!fileList.length) {
@@ -1671,7 +1724,9 @@ const InnerPage = () => {
     if (!picked || !picked.length) return;
     const body = new FormData();
     for (const singleFile of picked) body.append('files', singleFile);
+    setUploadingKey('pdfs', true);
     const res = await uploadFiles(body);
+    setUploadingKey('pdfs', false);
     event.target.value = '';
     const fileList = (Array.isArray(res) ? res : (res ? [res] : [])).filter(Boolean);
     if (!fileList.length) {
@@ -1689,19 +1744,6 @@ const InnerPage = () => {
       .filter((group) => Array.isArray(group) && group.length);
     setProductFileInputs(tempInputs);
     setProductFiles(tempInputs.flat().filter(Boolean));
-  };
-
-  const handleProductVideoAddClick = () => {
-    const temp = [...productVideos, { url: '', description: '' }];
-    setProductVideos(temp);
-    setUpdates(updates + 1);
-  };
-
-  const handleVideoFieldChange = (setter, videos, index, field, value) => {
-    const temp = [...videos];
-    temp[index][field] = value;
-    setter(temp);
-    setUpdates(updates + 1);
   };
 
   const handleLogout = () => {
@@ -2525,7 +2567,10 @@ const InnerPage = () => {
               <Box sx={{ px: { xs: 1, sm: 3 }, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', flexShrink: 0 }}>
                 <Tabs
                   value={productPanelMode}
-                  onChange={(e, mode) => setProductPanelMode(mode)}
+                  onChange={(e, mode) => {
+                    if (mode === 'print' && isProductFormDirty) updateProductHandler({ thenCodes: true });
+                    else setProductPanelMode(mode);
+                  }}
                   variant="scrollable"
                   allowScrollButtonsMobile
                   aria-label="Product passport steps"
@@ -2696,12 +2741,12 @@ const InnerPage = () => {
                         Add at least one photo. The first photo is used as the main picture.
                       </Typography>
                       <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ mb: 2 }}>
-                        <Button variant="contained" component="label" startIcon={<AddPhotoAlternateIcon />}>
-                          Add photos
+                        <Button variant="contained" component="label" startIcon={<AddPhotoAlternateIcon />} disabled={!!uploadingKeys.photos}>
+                          {uploadingKeys.photos ? 'Uploading…' : 'Add photos'}
                           <input type="file" accept="image/*" multiple hidden onChange={handleAddProductPhotos} />
                         </Button>
-                        <Button variant="outlined" startIcon={<PhotoCameraIcon />} onClick={productCapturePhoto}>
-                          {!captureStart[0] ? 'Take a photo with the camera' : 'Capture photo'}
+                        <Button variant="outlined" startIcon={<PhotoCameraIcon />} onClick={productCapturePhoto} disabled={!!uploadingKeys.camera}>
+                          {uploadingKeys.camera ? 'Uploading…' : !captureStart[0] ? 'Take a photo with the camera' : 'Capture photo'}
                         </Button>
                         {captureStart[0] && (
                           <Button onClick={() => setCaptureStart([false, captureStart[1], captureStart[2]])}>Close camera</Button>
@@ -2891,9 +2936,9 @@ const InnerPage = () => {
 
                     <Box component="section">
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Documents and videos</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Optional. PDF manuals or certificates, and YouTube videos.</Typography>
-                      <Button variant="outlined" component="label" startIcon={<PictureAsPdfIcon />} sx={{ mb: 1.5 }}>
-                        Add PDF files
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Optional. PDF manuals or certificates, and videos (a YouTube link or a video file you upload).</Typography>
+                      <Button variant="outlined" component="label" startIcon={<PictureAsPdfIcon />} sx={{ mb: 1.5 }} disabled={!!uploadingKeys.pdfs}>
+                        {uploadingKeys.pdfs ? 'Uploading…' : 'Add PDF files'}
                         <input type="file" accept=".pdf,application/pdf" multiple hidden onChange={handleAddProductPdfs} />
                       </Button>
                       {productFiles.length > 0 && (
@@ -2911,23 +2956,7 @@ const InnerPage = () => {
                           ))}
                         </Stack>
                       )}
-                      <Stack spacing={1.5}>
-                        {productVideos.map((video, i) => (
-                          <Box key={i} sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                            <TextField label={`YouTube link ${i + 1}`} placeholder="https://www.youtube.com/watch?v=…" sx={{ flex: '2 1 260px' }}
-                              value={video.url}
-                              onChange={(e) => handleVideoFieldChange(setProductVideos, productVideos, i, 'url', e.target.value)} />
-                            <TextField label="Short description" sx={{ flex: '1 1 200px' }}
-                              value={video.description}
-                              onChange={(e) => handleVideoFieldChange(setProductVideos, productVideos, i, 'description', e.target.value)} />
-                            <IconButton aria-label={`Remove video ${i + 1}`} sx={{ mt: 0.5 }}
-                              onClick={() => setProductVideos(productVideos.filter((_, x) => x !== i))}>
-                              <DeleteIcon color="error" />
-                            </IconButton>
-                          </Box>
-                        ))}
-                      </Stack>
-                      <Button startIcon={<AddIcon />} onClick={handleProductVideoAddClick} sx={{ mt: 1 }}>Add a YouTube video</Button>
+                      <VideoListEditor videos={productVideos} onChange={setProductVideos} />
                     </Box>
 
                     <Accordion disableGutters variant="outlined" sx={{ borderRadius: 2, '&:before': { display: 'none' } }}>
@@ -3077,11 +3106,11 @@ const InnerPage = () => {
                       <Stack spacing={1.5}>
                         {certifications.map((c, i) => (
                           <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap', p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
-                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }}>
-                              {c.icon ? 'Icon added ✓' : 'Add icon'}
+                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }} disabled={!!uploadingKeys[`certIcon${i}`]}>
+                              {uploadingKeys[`certIcon${i}`] ? 'Uploading…' : c.icon ? 'Icon added ✓' : 'Add icon'}
                               <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
-                                const next = [...certifications]; next[i] = { ...next[i], icon: url }; setCertifications(next);
-                              })} />
+                                setCertifications((prev) => { const next = [...prev]; next[i] = { ...next[i], icon: url }; return next; });
+                              }, `certIcon${i}`)} />
                             </Button>
                             <TextField label="Name" sx={{ flex: '1 1 160px' }} value={c.title || ''}
                               onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], title: e.target.value }; setCertifications(next); }} />
@@ -3099,11 +3128,11 @@ const InnerPage = () => {
                             <TextField label="Valid until" type="date" sx={{ width: 180 }} value={c.validUntil || ''}
                               InputLabelProps={{ shrink: true }}
                               onChange={(e) => { const next = [...certifications]; next[i] = { ...next[i], validUntil: e.target.value }; setCertifications(next); }} />
-                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }}>
-                              {c.fileUrl ? 'Certificate file added ✓' : 'Add certificate file'}
+                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }} disabled={!!uploadingKeys[`certFile${i}`]}>
+                              {uploadingKeys[`certFile${i}`] ? 'Uploading…' : c.fileUrl ? 'Certificate file added ✓' : 'Add certificate file'}
                               <input type="file" accept=".pdf,application/pdf,image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
-                                const next = [...certifications]; next[i] = { ...next[i], fileUrl: url }; setCertifications(next);
-                              })} />
+                                setCertifications((prev) => { const next = [...prev]; next[i] = { ...next[i], fileUrl: url }; return next; });
+                              }, `certFile${i}`)} />
                             </Button>
                             {c.validUntil && (
                               <Chip
@@ -3121,6 +3150,12 @@ const InnerPage = () => {
                         Add a certification
                       </Button>
                     </Box>
+                    <VideoListEditor
+                      title="Videos"
+                      hint="Optional. A YouTube link or a video file you upload, shown on the app's Materials tab."
+                      videos={tabVideos.materials}
+                      onChange={setTabVideoList('materials')}
+                    />
                   </Stack>
                 )}
 
@@ -3157,6 +3192,12 @@ const InnerPage = () => {
                       onChange={(e) => setMaintenance((prev) => ({ ...prev, tips: e.target.value.split('\n').map((t) => t.trim()).filter(Boolean) }))}
                       helperText="Shown on the app's Care tab. If left empty, tips are created from the symbols above."
                     />
+                    <VideoListEditor
+                      title="Videos"
+                      hint="Optional. A YouTube link or a video file you upload, shown on the app's Care tab."
+                      videos={tabVideos.care}
+                      onChange={setTabVideoList('care')}
+                    />
                   </Stack>
                 )}
 
@@ -3170,12 +3211,14 @@ const InnerPage = () => {
                       <Stack spacing={1.5}>
                         {(sustainabilityImpact.items || []).map((it, i) => (
                           <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap' }}>
-                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }}>
-                              {it.icon ? 'Icon added ✓' : 'Add icon'}
+                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }} disabled={!!uploadingKeys[`impactIcon${i}`]}>
+                              {uploadingKeys[`impactIcon${i}`] ? 'Uploading…' : it.icon ? 'Icon added ✓' : 'Add icon'}
                               <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
-                                const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], icon: url };
-                                setSustainabilityImpact((prev) => ({ ...prev, items: next }));
-                              })} />
+                                setSustainabilityImpact((prev) => {
+                                  const next = [...prev.items]; next[i] = { ...next[i], icon: url };
+                                  return { ...prev, items: next };
+                                });
+                              }, `impactIcon${i}`)} />
                             </Button>
                             <TextField label="Value" placeholder="e.g. 12.4 kg" sx={{ width: 150 }} value={it.value || ''}
                               onChange={(e) => { const next = [...sustainabilityImpact.items]; next[i] = { ...next[i], value: e.target.value }; setSustainabilityImpact((prev) => ({ ...prev, items: next })); }} />
@@ -3220,6 +3263,12 @@ const InnerPage = () => {
                         </Grid>
                       </AccordionDetails>
                     </Accordion>
+                    <VideoListEditor
+                      title="Videos"
+                      hint="Optional. A YouTube link or a video file you upload, shown on the app's Dispose tab."
+                      videos={tabVideos.dispose}
+                      onChange={setTabVideoList('dispose')}
+                    />
                   </Stack>
                 )}
 
@@ -3264,13 +3313,14 @@ const InnerPage = () => {
                                 next[i] = { ...next[i], country: e.target.value };
                                 setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
                               }} />
-                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }}>
-                              {row.icon ? 'Icon added ✓' : 'Add icon'}
+                            <Button variant="outlined" component="label" sx={{ mt: 0.5 }} disabled={!!uploadingKeys[`supplierIcon${i}`]}>
+                              {uploadingKeys[`supplierIcon${i}`] ? 'Uploading…' : row.icon ? 'Icon added ✓' : 'Add icon'}
                               <input type="file" accept="image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => {
-                                const next = [...traceabilityEsg.materialOrigins];
-                                next[i] = { ...next[i], icon: url };
-                                setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: next }));
-                              })} />
+                                setTraceabilityEsg((prev) => {
+                                  const next = [...prev.materialOrigins]; next[i] = { ...next[i], icon: url };
+                                  return { ...prev, materialOrigins: next };
+                                });
+                              }, `supplierIcon${i}`)} />
                             </Button>
                             <IconButton aria-label={`Remove supplier ${i + 1}`} sx={{ mt: 0.5 }}
                               onClick={() => setTraceabilityEsg((prev) => ({ ...prev, materialOrigins: prev.materialOrigins.filter((_, x) => x !== i) }))}>
@@ -3322,10 +3372,17 @@ const InnerPage = () => {
                         </Grid>
                       </Grid>
                     </Box>
+                    <VideoListEditor
+                      title="Videos"
+                      hint="Optional. A YouTube link or a video file you upload, shown on the app's Traceability tab."
+                      videos={tabVideos.traceability}
+                      onChange={setTabVideoList('traceability')}
+                    />
                   </Stack>
                 )}
 
                 {detailTab === 5 && (
+                  <Stack spacing={4}>
                   <Box component="section">
                     <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Warranty</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
@@ -3344,6 +3401,13 @@ const InnerPage = () => {
                       </Grid>
                     </Grid>
                   </Box>
+                    <VideoListEditor
+                      title="Videos"
+                      hint="Optional. A YouTube link or a video file you upload, shown on the app's Compliance tab."
+                      videos={tabVideos.warranty}
+                      onChange={setTabVideoList('warranty')}
+                    />
+                  </Stack>
                 )}
                 </>
                 )}
@@ -3385,12 +3449,7 @@ const InnerPage = () => {
                         </Button>
                       </>
                     ) : (
-                      <>
-                        <Button onClick={() => setProductPanelMode('edit')}>Back to Data</Button>
-                        {!!isEditing && (
-                          <Button variant="outlined" onClick={() => setProductPanelMode('print')}>Next: Codes</Button>
-                        )}
-                      </>
+                      <Button onClick={() => setProductPanelMode('edit')}>Back to Data</Button>
                     )}
                     <Box sx={{ flexGrow: 1 }} />
                     {!quickAdd && (
@@ -3398,9 +3457,11 @@ const InnerPage = () => {
                         Preview
                       </Button>
                     )}
+                    {/* On Experience — the last step before Codes, which has no
+                        save button of its own — saving also opens Codes. */}
                     <Button
                       variant="contained"
-                      onClick={isEditing ? updateProductHandler : addProductHandler}
+                      onClick={() => (isEditing ? updateProductHandler : addProductHandler)({ thenCodes: productPanelMode === 'experience' })}
                       disabled={savingProduct}
                     >
                       {savingProduct ? 'Saving…' : addLabel}

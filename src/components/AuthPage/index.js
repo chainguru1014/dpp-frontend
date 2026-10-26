@@ -31,11 +31,25 @@ const GoogleIcon = ({ color = AUTH_BLUE }) => (
 // Every control on the sign-in card is at least 48px tall with 16px+ text —
 // easy to read and to tap on an iPad (they used to be 27px with 13px text).
 const CONTROL_HEIGHT = 50;
+// One gray for every field and secondary button on the glass card (the
+// "Use a different email" gray), a step darker on hover. Only the primary
+// submit button stays blue. The Privacy preferences screen uses the same.
+const AUTH_GRAY = '#dde2e8';
+const AUTH_GRAY_HOVER = '#cfd5dd';
+const FIELD_GRAY = AUTH_GRAY;
 const fieldSx = {
-  '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: '#fff', color: AUTH_BLUE },
+  '& .MuiOutlinedInput-root': { borderRadius: 2, bgcolor: FIELD_GRAY, color: AUTH_BLUE },
+  // Chrome paints a picked autofill suggestion pale yellow; an inset shadow
+  // is the only way to keep the field gray.
+  '& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus': {
+    WebkitBoxShadow: `0 0 0 100px ${FIELD_GRAY} inset`,
+    WebkitTextFillColor: AUTH_BLUE,
+    caretColor: AUTH_BLUE,
+    borderRadius: 'inherit',
+  },
   '& .MuiInputLabel-root': { color: AUTH_BLUE },
   '& .MuiInputLabel-root.Mui-focused': { color: AUTH_BLUE },
-  '& .MuiInputLabel-shrink': { bgcolor: '#fff', px: 0.75, borderRadius: 1 },
+  '& .MuiInputLabel-shrink': { bgcolor: FIELD_GRAY, px: 0.75, borderRadius: 1 },
   '& .MuiSvgIcon-root': { color: AUTH_BLUE },
   '& .MuiFormHelperText-root': { ...onGlass },
 };
@@ -48,10 +62,19 @@ const bigFieldSx = {
 const bigButtonSx = { minHeight: CONTROL_HEIGHT, fontSize: '1.05rem', borderRadius: 2, [compactMediaQuery]: { minHeight: CONTROL_HEIGHT, fontSize: '1.05rem' } };
 const outlineButtonSx = {
   ...bigButtonSx,
-  bgcolor: '#fff',
+  bgcolor: AUTH_GRAY,
   color: AUTH_BLUE,
   border: '1px solid #c9d2dd',
-  '&:hover': { bgcolor: '#f5f8fb', borderColor: '#9fb0c3' },
+  '&:hover': { bgcolor: AUTH_GRAY_HOVER, borderColor: '#9fb0c3' },
+};
+
+// Back/sign-out actions.
+const quietButtonSx = {
+  minHeight: 44,
+  borderRadius: 2,
+  bgcolor: AUTH_GRAY,
+  color: AUTH_BLUE,
+  '&:hover': { bgcolor: AUTH_GRAY_HOVER },
 };
 
 // Must match the backend's per-email resend cooldown (see authController.otpRequest).
@@ -278,7 +301,7 @@ const AuthPage = ({
               Finish setting up my account
             </Button>
             {onCancelProfileCompletion && (
-              <Button onClick={onCancelProfileCompletion} fullWidth sx={{ ...onGlass, '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}>
+              <Button onClick={onCancelProfileCompletion} fullWidth sx={quietButtonSx}>
                 Not you? Sign out
               </Button>
             )}
@@ -408,7 +431,7 @@ const AuthPage = ({
               </Button>
               <Button
                 onClick={() => { setEmailStep('email'); setOtpCode(''); setOtpNotice(''); }}
-                sx={{ minHeight: 44, ...onGlass, '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}
+                sx={quietButtonSx}
               >
                 Use a different email
               </Button>

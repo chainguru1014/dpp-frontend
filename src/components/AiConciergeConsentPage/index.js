@@ -10,6 +10,9 @@ import { compactMediaQuery } from '../../theme';
 // Text and icons on the see-through card in the brand blue (#2f80c8), (plain,
 // no glow).
 const AUTH_BLUE = '#2f80c8';
+// Same gray as the sign-in card's fields and secondary buttons (AuthPage).
+const AUTH_GRAY = '#dde2e8';
+const AUTH_GRAY_SELECTED = '#cbd8e8';
 // White on the glass on every photo (CSS variables set by AuthShell).
 const ON_GLASS = 'var(--auth-on-glass, #2f80c8)';
 const onGlass = { color: ON_GLASS, textShadow: 'none' };
@@ -105,7 +108,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                   border: '2px solid',
                   borderColor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? AUTH_BLUE : 'divider',
                   borderRadius: 2,
-                  bgcolor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? '#eef5fc' : '#fff',
+                  bgcolor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? AUTH_GRAY_SELECTED : AUTH_GRAY,
                   '& .MuiFormControlLabel-label': { fontSize: '1.05rem', color: AUTH_BLUE },
                   '& .MuiRadio-root, & .MuiRadio-root.Mui-checked': { color: AUTH_BLUE },
                 }}

@@ -41,12 +41,13 @@ import CloudIcon from '@mui/icons-material/Cloud';
 import BoltIcon from '@mui/icons-material/Bolt';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import EcoIcon from '@mui/icons-material/Nature';
+import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
 import CameraIcon from '../../assets/camera_icon.png';
 import YoutubeIcon from '../../assets/youtube-icon.png';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { Backend_URL, getFileUrl, normalizeProductVideos, normalizeProductImages } from '../../helper';
 import { DPP_TEXT_SCALE, dppButtonFill, dppFontCss, dppPalette, normalizeDppTheme } from '../../utils/dppTheme';
-import VideoPlayerDialog from '../VideoPlayerDialog';
+import MediaLightbox from '../MediaLightbox';
 
 // The colours this preview is drawn with: the app's own tokens (src/theme.ts)
 // or, when the brand has its own look, the same tokens with its colours
@@ -197,7 +198,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   }, [look]);
 
   const [slideIndex, setSlideIndex] = useState(0);
-  const [dialogVideoId, setDialogVideoId] = useState(null);
+  // Slide index open in the full-screen viewer (null = closed).
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   // 'overview' mirrors ResultScreen (Product Overview); 'lifecycle' mirrors
   // ProductLifecycleScreen -- same two destinations as the app's product
   // bottom bar (its third item, Scan, doesn't apply inside a static preview).
@@ -291,6 +293,14 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     go(dir);
   };
 
+  const openLightbox = () => {
+    if (justDraggedRef.current) {
+      justDraggedRef.current = false;
+      return;
+    }
+    if (slides.length) setLightboxIndex(safeIndex);
+  };
+
   const goToLifecycle = () => {
     setView('lifecycle');
     setLifecycleTab(lifecycleTabs[0].key);
@@ -346,24 +356,31 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
       }}
     >
       {active ? (
-        active.type === 'video' ? (
-          <Box
-            role="button"
-            onClick={() => setDialogVideoId(active.video.videoId)}
-            sx={{ width: '100%', height: '100%', position: 'relative', cursor: 'pointer' }}
-          >
-            <img
-              src={`https://img.youtube.com/vi/${active.video.videoId}/hqdefault.jpg`}
-              alt=""
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-            <PlayCircleFilledIcon
-              sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 44, color: '#fff' }}
-            />
-          </Box>
-        ) : (
-          <img src={getFileUrl(active.src)} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-        )
+        // The middle of the box (between the left/right page zones) opens
+        // the full-screen viewer — for photos as well as videos.
+        <Box
+          role="button"
+          aria-label={active.type === 'video' ? 'Play video' : 'View full screen'}
+          onClick={openLightbox}
+          sx={{ width: '100%', height: '100%', position: 'relative', cursor: 'zoom-in', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          {active.type === 'video' ? (
+            <>
+              {active.video.videoId && (
+                <img
+                  src={`https://img.youtube.com/vi/${active.video.videoId}/hqdefault.jpg`}
+                  alt=""
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              )}
+              <PlayCircleFilledIcon
+                sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', fontSize: 44, color: '#fff' }}
+              />
+            </>
+          ) : (
+            <img src={getFileUrl(active.src)} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+          )}
+        </Box>
       ) : (
         <Typography sx={{ color: '#fff', fontSize: 12 }}>No image</Typography>
       )}
@@ -389,8 +406,22 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
       )}
       {active && (
         <Box sx={{ position: 'absolute', right: 6, bottom: 6, bgcolor: 'rgba(0,0,0,0.55)', borderRadius: 1, px: 0.5, py: 0.25 }}>
-          <img src={active.type === 'video' ? YoutubeIcon : CameraIcon} alt="" style={{ height: 12, width: 12, display: 'block' }} />
+          {active.type === 'video' && !active.video.videoId ? (
+            <PlayCircleFilledIcon sx={{ fontSize: 12, color: '#fff', display: 'block' }} />
+          ) : (
+            <img src={active.type === 'video' ? YoutubeIcon : CameraIcon} alt="" style={{ height: 12, width: 12, display: 'block' }} />
+          )}
         </Box>
+      )}
+      {active && size >= 100 && (
+        <IconButton
+          size="small"
+          aria-label="View full screen"
+          onClick={openLightbox}
+          sx={{ position: 'absolute', right: 4, top: 4, zIndex: 1, color: '#fff', bgcolor: 'rgba(0,0,0,0.45)', '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' } }}
+        >
+          <ZoomOutMapIcon sx={{ fontSize: 16 }} />
+        </IconButton>
       )}
     </Box>
   );
@@ -514,13 +545,13 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
       <Box sx={{ ...card, mt: 2 }}>
         {look.heroLayout === 'top' ? (
           <>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.25 }}>{renderMediaBox({ size: 220 })}</Box>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.25 }}>{renderMediaBox({ size: 288 })}</Box>
             {productText}
           </>
         ) : (
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
-            {renderMediaBox()}
-            <Box sx={{ flex: 1, minWidth: 0 }}>{productText}</Box>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 1.5, alignItems: 'center' }}>
+            {renderMediaBox({ size: 198 })}
+            <Box sx={{ flex: '1 1 160px', minWidth: 0 }}>{productText}</Box>
           </Box>
         )}
       </Box>
@@ -926,9 +957,9 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
           </Box>
 
           {view === 'lifecycle' && (
-            <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', px: 2, pb: 1.5 }}>
-              {renderMediaBox({ size: 66, rounded: 1 })}
-              <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 1.5, alignItems: 'center', px: 2, pb: 1.5 }}>
+              {renderMediaBox({ size: 198, rounded: 1 })}
+              <Box sx={{ flex: '1 1 120px', minWidth: 0 }}>
                 <Typography sx={{ fontSize: 15, fontWeight: 700, color: C.onHeader, lineHeight: 1.2 }}>{info.name || '—'}</Typography>
                 {info.model && <Typography sx={{ fontSize: 11, color: C.onHeader, opacity: 0.9, mt: 0.2 }}>{info.model}</Typography>}
                 {look.showProductId && productId !== '' && <Typography sx={{ fontSize: 10, color: C.onHeader, opacity: 0.7, mt: 0.1 }}>ID: {productId}</Typography>}
@@ -1049,7 +1080,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
           })}
         </Box>
 
-        <VideoPlayerDialog open={Boolean(dialogVideoId)} onClose={() => setDialogVideoId(null)} videoId={dialogVideoId} />
+        <MediaLightbox open={lightboxIndex !== null} slides={slides} index={lightboxIndex ?? 0} onClose={() => setLightboxIndex(null)} />
       </Box>
     </PaletteContext.Provider>
   );

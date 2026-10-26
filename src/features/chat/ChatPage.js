@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Button, Typography, Paper, TextField, Avatar, CircularProgress } from '@mui/material';
+import { Box, Button, Typography, Paper, TextField, Avatar, CircularProgress, IconButton, Tooltip } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import MicIcon from '@mui/icons-material/Mic';
+import StopIcon from '@mui/icons-material/Stop';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import axios from 'axios';
 import { Backend_URL } from '../../helper';
+import { notifyError } from '../../utils/feedbackBus';
 import PageHeader from '../../components/PageHeader';
 
 /**
@@ -22,6 +25,73 @@ export default function ChatPage({ company, isAppUser = false }) {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const endRef = useRef(null);
+  const inputRef = useRef(null);
+  // Voice input: record with the microphone, then AI speech-to-text
+  // (backend /chat/transcribe) puts the words in the box to check and send.
+  const [voiceState, setVoiceState] = useState('idle'); // 'idle' | 'recording' | 'transcribing'
+  const recorderRef = useRef(null);
+  const voiceSupported = typeof window !== 'undefined' && !!window.MediaRecorder && !!navigator.mediaDevices?.getUserMedia;
+
+  // Never leave the microphone on after leaving the page.
+  useEffect(() => () => {
+    const rec = recorderRef.current;
+    if (rec && rec.state !== 'inactive') {
+      rec.onstop = null;
+      rec.stop();
+      rec.stream.getTracks().forEach((track) => track.stop());
+    }
+  }, []);
+
+  const transcribe = async (blob) => {
+    setVoiceState('transcribing');
+    try {
+      const body = new FormData();
+      const ext = blob.type.includes('mp4') ? 'mp4' : blob.type.includes('ogg') ? 'ogg' : 'webm';
+      body.append('audio', blob, `speech.${ext}`);
+      const lang = String(navigator.language || '').slice(0, 2).toLowerCase();
+      if (lang) body.append('language', lang);
+      const { data } = await axios.post(`${Backend_URL}chat/transcribe`, body);
+      const text = String(data?.text || '').trim();
+      if (!text) {
+        notifyError('We could not hear any words. Please try again a little closer to the microphone.');
+        return;
+      }
+      setInput((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
+      inputRef.current?.focus();
+    } catch (e) {
+      console.error('Transcription failed:', e?.response?.status, e?.response?.data?.message || e?.message);
+      notifyError('Voice input is not available right now. Please type your question instead.');
+    } finally {
+      setVoiceState('idle');
+    }
+  };
+
+  const toggleVoice = async () => {
+    if (voiceState === 'recording') {
+      recorderRef.current?.stop();
+      return;
+    }
+    if (voiceState !== 'idle') return;
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+      notifyError('Please allow microphone access in your browser to talk to the assistant.');
+      return;
+    }
+    const chunks = [];
+    const recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = (e) => { if (e.data?.size) chunks.push(e.data); };
+    recorder.onstop = () => {
+      stream.getTracks().forEach((track) => track.stop());
+      const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+      if (blob.size) transcribe(blob);
+      else setVoiceState('idle');
+    };
+    recorderRef.current = recorder;
+    recorder.start();
+    setVoiceState('recording');
+  };
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -124,10 +194,33 @@ export default function ChatPage({ company, isAppUser = false }) {
       </Paper>
 
       <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
+        {voiceSupported && (
+          <Tooltip title={voiceState === 'recording' ? 'Stop and turn into text' : 'Ask with your voice'}>
+            <span style={{ alignSelf: 'flex-end' }}>
+              <IconButton
+                onClick={toggleVoice}
+                disabled={voiceState === 'transcribing' || sending}
+                aria-label={voiceState === 'recording' ? 'Stop recording' : 'Ask with your voice'}
+                sx={{
+                  border: '1px solid',
+                  borderColor: voiceState === 'recording' ? 'error.main' : 'divider',
+                  color: voiceState === 'recording' ? '#fff' : 'primary.main',
+                  bgcolor: voiceState === 'recording' ? 'error.main' : 'background.paper',
+                  '&:hover': { bgcolor: voiceState === 'recording' ? 'error.dark' : 'action.hover' },
+                }}
+              >
+                {voiceState === 'transcribing' ? <CircularProgress size={22} /> : voiceState === 'recording' ? <StopIcon /> : <MicIcon />}
+              </IconButton>
+            </span>
+          </Tooltip>
+        )}
         <TextField
           fullWidth
           size="small"
-          placeholder="Type your question and press Enter"
+          inputRef={inputRef}
+          placeholder={voiceState === 'recording'
+            ? 'Listening… press the stop button when you are done'
+            : voiceState === 'transcribing' ? 'Turning your voice into text…' : 'Type or say your question and press Enter'}
           inputProps={{ 'aria-label': 'Your question' }}
           value={input}
           onChange={(e) => setInput(e.target.value)}
