@@ -2716,6 +2716,19 @@ const InnerPage = () => {
                       <Stack spacing={2}>
                         <TextField label="Product name" fullWidth required value={productName} onChange={(e) => setProductName(e.target.value)}
                           error={showFieldErrors && !productName.trim()} helperText={showFieldErrors && !productName.trim() ? 'Please enter the product name.' : undefined} />
+                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                          <TextField label="Price" placeholder="e.g. 89.90" fullWidth
+                            value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ''))}
+                            inputProps={{ inputMode: 'decimal' }}
+                            InputProps={{ startAdornment: <InputAdornment position="start">{currency || 'EUR'}</InputAdornment> }}
+                            helperText="Shown in the app's cart and purchase page. Leave empty if not sold online." />
+                          <TextField label="Currency" placeholder="EUR" sx={{ width: { xs: '100%', sm: 140 }, flexShrink: 0 }}
+                            value={currency} onChange={(e) => setCurrency(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase())}
+                            helperText="e.g. EUR, USD, JPY" />
+                        </Stack>
+                        <TextField label="Buy link" placeholder="https://shop.example.com/item" fullWidth
+                          value={purchaseUrl} onChange={(e) => setPurchaseUrl(e.target.value)}
+                          helperText="Where the app's Buy button opens. Leave empty to use the brand website." />
                         {!quickAdd && (
                         <>
                         <TextField label="Model or short description" placeholder="e.g. Slim Fit" fullWidth value={productModel} onChange={(e) => setProductModel(e.target.value)} />
@@ -2906,21 +2919,6 @@ const InnerPage = () => {
                           <Typography variant="body2" color="text.secondary">
                             The standard link format other systems and retailers can read. QR codes already printed keep working either way.
                           </Typography>
-                        </Grid>
-                        <Grid item xs={12} sm={4}>
-                          <TextField label="Price" placeholder="e.g. 89.90" fullWidth
-                            value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ''))}
-                            inputProps={{ inputMode: 'decimal' }}
-                            helperText="Shown in the app's cart. Leave empty if not sold online." />
-                        </Grid>
-                        <Grid item xs={12} sm={2}>
-                          <TextField label="Currency" placeholder="EUR" fullWidth
-                            value={currency} onChange={(e) => setCurrency(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase())} />
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <TextField label="Buy link" placeholder="https://shop.example.com/item" fullWidth
-                            value={purchaseUrl} onChange={(e) => setPurchaseUrl(e.target.value)}
-                            helperText="Where the app's Buy button opens. Empty = the brand website." />
                         </Grid>
                         <Grid item xs={12} sm={6}>
                           <TextField label="Product type" placeholder="e.g. Men's outerwear" fullWidth
