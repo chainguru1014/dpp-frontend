@@ -339,6 +339,10 @@ const InnerPage = () => {
   // GS1 product number, and whether new QR codes carry the GS1 Digital Link.
   const [gtin, setGtin] = useState('');
   const [gs1DigitalLink, setGs1DigitalLink] = useState(false);
+  // Shown on the app's Cart / Purchase pages.
+  const [price, setPrice] = useState('');
+  const [currency, setCurrency] = useState('EUR');
+  const [purchaseUrl, setPurchaseUrl] = useState('');
   // Managed item categories (product form options). Reloaded after the super
   // admin edits them in Manage Categories.
   const [itemCategoryOptions, setItemCategoryOptions] = useState(ITEM_CATEGORY_OPTIONS);
@@ -562,7 +566,7 @@ const InnerPage = () => {
   const productFormOpen = activePage === 'newProduct' && canEditProducts;
   const productFormSignature = JSON.stringify([
     productName, productModel, aboutProduct, productType, color, size, manufactureDate,
-    warrantyStatus, warrantyValidYears, itemCategory, skuStyleNumber, gtin, gs1DigitalLink, detailFacts, brandInfo,
+    warrantyStatus, warrantyValidYears, itemCategory, skuStyleNumber, gtin, gs1DigitalLink, price, currency, purchaseUrl, detailFacts, brandInfo,
     productImages, productFiles, productVideos, tabVideos, materialSize, maintenance, disposal, circularity,
     traceabilityEsg, certifications, sustainabilityImpact, parentProduct, parentProductCount,
   ]);
@@ -852,6 +856,9 @@ const InnerPage = () => {
     setItemCategory('');
     setSkuStyleNumber('');
     setGtin('');
+    setPrice('');
+    setCurrency('EUR');
+    setPurchaseUrl('');
     setGs1DigitalLink(false);
     setDetailFacts({ material: '', fit: '', wash: '', durability: '', traceableIdentity: '' });
     // A company's new product starts with a brand from its Brand page (its
@@ -1045,6 +1052,7 @@ const InnerPage = () => {
       productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
       itemCategory, skuStyleNumber: skuStyleNumber.trim(),
       gtin: gtin.trim(), gs1DigitalLink: gs1DigitalLink && !!gtin.trim(),
+      price: price === '' ? null : Number(price), currency: currency.trim().toUpperCase() || 'EUR', purchaseUrl: purchaseUrl.trim(),
       detailFacts,
       brandInfo,
       company_id: company._id,
@@ -1118,6 +1126,7 @@ const InnerPage = () => {
       productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
       itemCategory, skuStyleNumber: skuStyleNumber.trim(),
       gtin: gtin.trim(), gs1DigitalLink: gs1DigitalLink && !!gtin.trim(),
+      price: price === '' ? null : Number(price), currency: currency.trim().toUpperCase() || 'EUR', purchaseUrl: purchaseUrl.trim(),
       detailFacts,
       brandInfo,
       company_id: company._id,
@@ -1218,6 +1227,9 @@ const InnerPage = () => {
     setItemCategory(prod.itemCategory || '');
     setSkuStyleNumber(prod.skuStyleNumber || '');
     setGtin(prod.gtin || '');
+    setPrice(prod.price != null ? String(prod.price) : '');
+    setCurrency(prod.currency || 'EUR');
+    setPurchaseUrl(prod.purchaseUrl || '');
     setGs1DigitalLink(!!prod.gs1DigitalLink);
     setDetailFacts({
       material: prod.detailFacts?.material || '',
@@ -2894,6 +2906,21 @@ const InnerPage = () => {
                           <Typography variant="body2" color="text.secondary">
                             The standard link format other systems and retailers can read. QR codes already printed keep working either way.
                           </Typography>
+                        </Grid>
+                        <Grid item xs={12} sm={4}>
+                          <TextField label="Price" placeholder="e.g. 89.90" fullWidth
+                            value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ''))}
+                            inputProps={{ inputMode: 'decimal' }}
+                            helperText="Shown in the app's cart. Leave empty if not sold online." />
+                        </Grid>
+                        <Grid item xs={12} sm={2}>
+                          <TextField label="Currency" placeholder="EUR" fullWidth
+                            value={currency} onChange={(e) => setCurrency(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase())} />
+                        </Grid>
+                        <Grid item xs={12} sm={6}>
+                          <TextField label="Buy link" placeholder="https://shop.example.com/item" fullWidth
+                            value={purchaseUrl} onChange={(e) => setPurchaseUrl(e.target.value)}
+                            helperText="Where the app's Buy button opens. Empty = the brand website." />
                         </Grid>
                         <Grid item xs={12} sm={6}>
                           <TextField label="Product type" placeholder="e.g. Men's outerwear" fullWidth
