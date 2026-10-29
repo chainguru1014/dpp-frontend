@@ -9,10 +9,10 @@
 // Lifecycle tabs: one per tab of the app's Product Lifecycle screen.
 export const DPP_SECTIONS = [
   { key: 'journey', label: 'Journey' },
-  { key: 'care', label: 'Care' },
   { key: 'materials', label: 'Materials' },
   { key: 'dispose', label: 'Repair & recycle' },
   { key: 'traceability', label: 'Traceability' },
+  { key: 'care', label: 'Care' },
   { key: 'compliance', label: 'Compliance' },
 ];
 

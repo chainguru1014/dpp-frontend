@@ -6,7 +6,6 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import CloseIcon from '@mui/icons-material/Close';
-import CheckIcon from '@mui/icons-material/Check';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -14,8 +13,11 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
+import SyncIcon from '@mui/icons-material/Sync';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
-import IosShareIcon from '@mui/icons-material/IosShare';
 import CategoryIcon from '@mui/icons-material/Category';
 import PaletteIcon from '@mui/icons-material/Palette';
 import StraightenIcon from '@mui/icons-material/Straighten';
@@ -70,15 +72,10 @@ const modalStyle = {
   flexDirection: 'column',
 };
 
-const SERVICE_ICON = { repair: BuildIcon, resell: StorefrontIcon, rent: EventRepeatIcon, recycle: RecyclingIcon };
+// Overview blocks the app pins above the bottom bar instead of scrolling.
+const PINNED_BLOCKS = ['feedback', 'actions'];
 
-const LIFECYCLE_STAGES = [
-  { key: 'materials', label: 'Materials', Icon: SpaIcon },
-  { key: 'manufacturing', label: 'Manufacturing', Icon: PrecisionManufacturingIcon },
-  { key: 'transportation', label: 'Transportation', Icon: LocalShippingIcon },
-  { key: 'use', label: 'Use Phase', Icon: CheckroomIcon },
-  { key: 'endOfLife', label: 'End of Life', Icon: RecyclingIcon },
-];
+const SERVICE_ICON = { repair: BuildIcon, resell: StorefrontIcon, rent: EventRepeatIcon, recycle: RecyclingIcon };
 
 // Mirrors ProductLifecycleScreen's JOURNEY_STAGES in the app.
 const JOURNEY_STAGES = [
@@ -91,10 +88,10 @@ const JOURNEY_STAGES = [
 
 const LIFECYCLE_TABS = [
   { key: 'journey', label: 'Journey' },
-  { key: 'care', label: 'Care' },
   { key: 'materials', label: 'Materials' },
   { key: 'dispose', label: 'Reuse & Recycle' },
   { key: 'traceability', label: 'Origin & Impact' },
+  { key: 'care', label: 'Care' },
   { key: 'compliance', label: 'Compliance' },
 ];
 
@@ -232,6 +229,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     el.scrollBy({ left: dir * 120, behavior: 'smooth' });
   };
   const [openStage, setOpenStage] = useState(null);
+  const [aboutExpanded, setAboutExpanded] = useState(false);
   const [openOrigin, setOpenOrigin] = useState(null);
   const [openService, setOpenService] = useState(null);
 
@@ -248,6 +246,9 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   const productId = info._id || info.pmc_code || (info.token_id != null ? info.token_id : '');
 
   const highlightRows = [
+    info.name && { Icon: LocalOfferIcon, text: info.name, strong: true },
+    info.model && { Icon: CheckroomIcon, text: info.model },
+    look.showProductId && productId !== '' && { Icon: QrCode2Icon, text: `ID: ${productId}` },
     info.productType && { Icon: CategoryIcon, text: `Type: ${info.productType}` },
     info.color && { Icon: PaletteIcon, text: `Color: ${info.color}` },
     info.size && { Icon: StraightenIcon, text: `Size: ${info.size}` },
@@ -336,17 +337,17 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   // Repair / resell / rent / recycle: only what the brand offers.
   const services = readyServices(info);
 
-  const renderMediaBox = ({ size = 132, rounded = 1.5 } = {}) => (
+  const renderMediaBox = ({ size = 132, width, height, rounded = 1.5, bg = '#000', dots = true } = {}) => (
     <Box
       onPointerDown={slides.length > 1 ? handleSlidePointerDown : undefined}
       onPointerUp={slides.length > 1 ? handleSlidePointerUp : undefined}
       onPointerLeave={slides.length > 1 ? handleSlidePointerLeave : undefined}
       sx={{
-        width: size,
-        height: size,
+        width: width ?? size,
+        height: height ?? size,
         flexShrink: 0,
         position: 'relative',
-        bgcolor: '#000',
+        bgcolor: bg,
         borderRadius: rounded,
         overflow: 'hidden',
         display: 'flex',
@@ -389,7 +390,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
         <>
           <Box onClick={() => handleSlideZoneClick(-1)} sx={{ position: 'absolute', inset: '0 auto 0 0', width: '35%', cursor: 'pointer' }} />
           <Box onClick={() => handleSlideZoneClick(1)} sx={{ position: 'absolute', inset: '0 0 0 auto', width: '35%', cursor: 'pointer' }} />
-          <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 6, display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+          {dots && <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 6, display: 'flex', justifyContent: 'center', gap: 0.5 }}>
             {slides.map((_, i) => (
               <Box
                 key={i}
@@ -401,7 +402,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                 }}
               />
             ))}
-          </Box>
+          </Box>}
         </>
       )}
       {active && (
@@ -427,25 +428,49 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   );
 
   const brand = info.brandInfo || {};
-  const productText = (
-    <>
-      <Typography sx={{ fontSize: 16, fontWeight: 700, color: C.text, lineHeight: 1.25 }}>
-        {info.name || '—'}
-      </Typography>
-      {info.model && <Typography sx={{ fontSize: 12, color: C.muted, mt: 0.25 }}>{info.model}</Typography>}
-      {look.showProductId && productId !== '' && (
-        <Typography sx={{ fontSize: 11, color: C.placeholder, mt: 0.25 }}>ID: {productId}</Typography>
+  // Slider with a column of thumbnails on its right, like the app's
+  // Product Summary / Overview; tapping a thumbnail shows it in the slider.
+  const renderMediaWithThumbs = () => (
+    <Box sx={{ display: 'flex', gap: 1 }}>
+      <Box sx={{ flex: 1, minWidth: 0 }}>{renderMediaBox({ width: '100%', height: 200, bg: C.surface, dots: false })}</Box>
+      {slides.length > 1 && (
+        <Box sx={{ width: 50, height: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0.75, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+          {slides.map((sl, i) => (
+            <Box
+              key={i}
+              role="button"
+              aria-label={sl.type === 'video' ? 'Play video' : `Image ${i + 1}`}
+              onClick={() => setSlideIndex(i)}
+              sx={{
+                width: 46,
+                height: 46,
+                flexShrink: 0,
+                borderRadius: 1,
+                overflow: 'hidden',
+                cursor: 'pointer',
+                position: 'relative',
+                bgcolor: sl.type === 'video' ? '#000' : C.surface,
+                border: i === safeIndex ? `2px solid ${C.primaryDark || C.primary}` : `1px solid ${C.border}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              {sl.type === 'video' ? (
+                <>
+                  {sl.video.videoId && (
+                    <img src={`https://img.youtube.com/vi/${sl.video.videoId}/default.jpg`} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                  )}
+                  <PlayCircleFilledIcon sx={{ position: 'relative', fontSize: 20, color: '#fff' }} />
+                </>
+              ) : (
+                <img src={getFileUrl(sl.src)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
+            </Box>
+          ))}
+        </Box>
       )}
-      <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, mt: 1, bgcolor: C.authBg, borderRadius: 1.5, px: 1, py: 0.75 }}>
-        <Box sx={{ width: 16, height: 16, borderRadius: '50%', bgcolor: C.badge, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <CheckIcon sx={{ fontSize: 11, color: C.onBadge }} />
-        </Box>
-        <Box>
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.text, lineHeight: 1.1 }}>Authenticated</Typography>
-          <Typography sx={{ fontSize: 10, color: C.muted, lineHeight: 1.1 }}>Verified by Yometel</Typography>
-        </Box>
-      </Box>
-    </>
+    </Box>
   );
 
   // The blocks of the Overview below the product card. The brand chooses
@@ -454,43 +479,28 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   const overviewBlocks = {
     highlights: () => highlightRows.length > 0 && (
       <Box sx={card}>
-        <Typography sx={cardTitle}>Key Highlights</Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
+          <Typography sx={{ ...cardTitle, mb: 0, flex: 1 }}>Key Highlights</Typography>
+          <Box
+            role="button"
+            onClick={goToLifecycle}
+            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.25, py: 0.5, borderRadius: 999, bgcolor: C.primary, color: '#fff', cursor: 'pointer' }}
+          >
+            <SyncIcon sx={{ fontSize: 15 }} />
+            <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: '#fff' }}>Lifecycle</Typography>
+          </Box>
+        </Box>
         {highlightRows.map((row, i) => (
           <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.4 }}>
             <row.Icon sx={{ fontSize: 15, color: C.primary }} />
-            <Typography sx={{ fontSize: 12, color: C.text }}>{row.text}</Typography>
+            <Typography sx={{ fontSize: 12, color: row.strong ? C.primary : C.text, fontWeight: row.strong ? 700 : 400 }}>{row.text}</Typography>
           </Box>
         ))}
       </Box>
     ),
-    lifecycle: () => (
-      <Box sx={card}>
-        <Typography sx={{ ...cardTitle, mb: 1.5 }}>Lifecycle Preview</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          {LIFECYCLE_STAGES.map((s, i) => (
-            <React.Fragment key={s.key}>
-              <Box sx={{ width: 58, textAlign: 'center' }}>
-                <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: C.surfaceAlt, mx: 'auto', mb: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <s.Icon sx={{ fontSize: 20, color: C.primary }} />
-                </Box>
-                <Typography sx={{ fontSize: 7.5, color: C.muted, lineHeight: 1.15, letterSpacing: '-0.2px', whiteSpace: 'nowrap' }}>{s.label}</Typography>
-              </Box>
-              {i < LIFECYCLE_STAGES.length - 1 && (
-                <Box sx={{ flex: 1, height: 2, bgcolor: C.primary, borderRadius: 1, mt: '19px' }} />
-              )}
-            </React.Fragment>
-          ))}
-        </Box>
-        <Box
-          role="button"
-          onClick={goToLifecycle}
-          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.25, mt: 1.5, cursor: 'pointer' }}
-        >
-          <Typography sx={{ fontSize: 12, fontWeight: 600, color: C.primary }}>View Full Lifecycle</Typography>
-          <ChevronRightIcon sx={{ fontSize: 16, color: C.primary }} />
-        </Box>
-      </Box>
-    ),
+    // The Lifecycle Preview strip is gone from the app; the Key Highlights
+    // Lifecycle button and the bottom bar open the Lifecycle page.
+    lifecycle: () => null,
     about: () => !!info.aboutProduct && (
       <Box sx={card}>
         <Typography sx={cardTitle}>About This Product</Typography>
@@ -520,8 +530,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     ),
     feedback: () => (
       <Box sx={{ display: 'flex', gap: 1, mx: 2, mt: 1 }}>
-        {[ThumbUpOffAltIcon, ThumbDownOffAltIcon, IosShareIcon].map((Ico, i) => (
-          <Box key={i} sx={{ flex: 1, height: 36, borderRadius: 1.5, border: `1px solid ${C.border}`, bgcolor: C.surface, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {[ThumbUpOffAltIcon, AddShoppingCartIcon, ThumbDownOffAltIcon].map((Ico, i) => (
+          <Box key={i} sx={{ flex: 1, height: 36, borderRadius: 1.5, border: `1.5px solid ${C.primary}`, bgcolor: C.surface, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Ico sx={{ fontSize: 19, color: C.primary }} />
           </Box>
         ))}
@@ -532,7 +542,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
         <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 700, ...mainButton }}>
           Scan Product
         </Box>
-        <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 600, color: C.primary, border: `1px solid ${C.primary}`, bgcolor: C.surface }}>
+        <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 600, color: C.primary, border: `1.5px solid ${C.primary}`, bgcolor: C.surface }}>
           Request ownership
         </Box>
       </Box>
@@ -541,21 +551,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
 
   const renderOverview = () => (
     <>
-      {/* Product card — photo beside the name, or a large photo on top. */}
-      <Box sx={{ ...card, mt: 2 }}>
-        {look.heroLayout === 'top' ? (
-          <>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: 1.25 }}>{renderMediaBox({ size: 288 })}</Box>
-            {productText}
-          </>
-        ) : (
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 1.5, alignItems: 'center' }}>
-            {renderMediaBox({ size: 198 })}
-            <Box sx={{ flex: '1 1 160px', minWidth: 0 }}>{productText}</Box>
-          </Box>
-        )}
-      </Box>
-      {look.blocks.filter((b) => b.visible).map((b) => (
+      <Box sx={{ ...card, mt: 2 }}>{renderMediaWithThumbs()}</Box>
+      {look.blocks.filter((b) => b.visible && !PINNED_BLOCKS.includes(b.key)).map((b) => (
         <React.Fragment key={b.key}>{overviewBlocks[b.key]?.()}</React.Fragment>
       ))}
     </>
@@ -566,7 +563,22 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
       {!!info.aboutProduct && (
         <Box sx={{ ...card, mb: 1.5 }}>
           <Typography sx={cardTitle}>About This Product</Typography>
-          <Typography sx={{ fontSize: 12, color: C.text, lineHeight: 1.5 }}>{info.aboutProduct}</Typography>
+          <Typography
+            sx={{
+              fontSize: 12,
+              color: C.text,
+              lineHeight: 1.5,
+              ...(aboutExpanded ? {} : { display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }),
+            }}
+          >
+            {info.aboutProduct}
+          </Typography>
+          {info.aboutProduct.length > 140 && (
+            <Box role="button" onClick={() => setAboutExpanded((v) => !v)} sx={{ display: 'inline-flex', alignItems: 'center', mt: 0.5, cursor: 'pointer' }}>
+              <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.primary }}>{aboutExpanded ? 'Show less' : 'Show more'}</Typography>
+              {aboutExpanded ? <ExpandLessIcon sx={{ fontSize: 16, color: C.primary }} /> : <ExpandMoreIcon sx={{ fontSize: 16, color: C.primary }} />}
+            </Box>
+          )}
         </Box>
       )}
       {JOURNEY_STAGES.map((s, i) => {
@@ -956,23 +968,12 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
             ) : <Box sx={{ width: 40, flexShrink: 0 }} />}
           </Box>
 
-          {view === 'lifecycle' && (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 1.5, alignItems: 'center', px: 2, pb: 1.5 }}>
-              {renderMediaBox({ size: 198, rounded: 1 })}
-              <Box sx={{ flex: '1 1 120px', minWidth: 0 }}>
-                <Typography sx={{ fontSize: 15, fontWeight: 700, color: C.onHeader, lineHeight: 1.2 }}>{info.name || '—'}</Typography>
-                {info.model && <Typography sx={{ fontSize: 11, color: C.onHeader, opacity: 0.9, mt: 0.2 }}>{info.model}</Typography>}
-                {look.showProductId && productId !== '' && <Typography sx={{ fontSize: 10, color: C.onHeader, opacity: 0.7, mt: 0.1 }}>ID: {productId}</Typography>}
-                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, mt: 0.75 }}>
-                  <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: C.onHeader, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <CheckIcon sx={{ fontSize: 10, color: C.header }} />
-                  </Box>
-                  <Typography sx={{ fontSize: 11, fontWeight: 700, color: C.onHeader }}>Genuine product</Typography>
-                </Box>
-              </Box>
-            </Box>
-          )}
         </Box>
+
+        {/* Content layer with rounded top corners over the top bar's colour,
+            as in the app. */}
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: `linear-gradient(90deg, ${C.headerLight}, ${C.header})` }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', bgcolor: C.bg, borderTopLeftRadius: 16, borderTopRightRadius: 16, overflow: 'hidden' }}>
 
         {view === 'lifecycle' && (
           <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
@@ -1039,6 +1040,16 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
           <Box sx={{ zoom: DPP_TEXT_SCALE[look.textScale] }}>
             {view === 'overview' ? renderOverview() : renderLifecycleTabContent()}
           </Box>
+        </Box>
+
+        {view === 'overview' && (
+          <Box sx={{ flexShrink: 0, pb: 1, borderTop: `1px solid ${C.border}`, bgcolor: C.bg }}>
+            {look.blocks.filter((b) => b.visible && PINNED_BLOCKS.includes(b.key)).map((b) => (
+              <React.Fragment key={b.key}>{overviewBlocks[b.key]?.()}</React.Fragment>
+            ))}
+          </Box>
+        )}
+        </Box>
         </Box>
 
         {/* Product bottom bar — Overview / Lifecycle, matching the app's
