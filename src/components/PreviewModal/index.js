@@ -88,8 +88,8 @@ const JOURNEY_STAGES = [
 
 const LIFECYCLE_TABS = [
   { key: 'journey', label: 'Journey' },
-  { key: 'materials', label: 'Materials' },
   { key: 'dispose', label: 'Reuse & Recycle' },
+  { key: 'materials', label: 'Materials' },
   { key: 'traceability', label: 'Origin & Impact' },
   { key: 'care', label: 'Care' },
   { key: 'compliance', label: 'Compliance' },
