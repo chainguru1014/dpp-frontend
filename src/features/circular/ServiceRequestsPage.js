@@ -229,7 +229,7 @@ export default function ServiceRequestsPage({ token, showCompany = false, onOpen
                     {row.message}
                   </Typography>
                 </Box>
-                <Button variant={OPEN.includes(row.status) && canWrite ? 'contained' : 'outlined'} onClick={() => setSelected(row)} sx={{ flexShrink: 0 }}>
+                <Button variant={OPEN.includes(row.status) && canWrite ? 'contained' : 'outlined'} onClick={() => setSelected(row)} sx={{ flexShrink: 0, alignSelf: 'center' }}>
                   {OPEN.includes(row.status) && canWrite ? 'Answer' : 'Open'}
                 </Button>
               </Box>
