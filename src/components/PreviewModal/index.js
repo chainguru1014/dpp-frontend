@@ -16,13 +16,13 @@ import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
-import SyncIcon from '@mui/icons-material/Sync';
+import SvgIcon from '@mui/material/SvgIcon';
+import CropFreeIcon from '@mui/icons-material/CropFree';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
 import CategoryIcon from '@mui/icons-material/Category';
 import PaletteIcon from '@mui/icons-material/Palette';
 import StraightenIcon from '@mui/icons-material/Straighten';
 import SpaIcon from '@mui/icons-material/Spa';
-import AccessibilityNewIcon from '@mui/icons-material/AccessibilityNew';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import ShieldIcon from '@mui/icons-material/Shield';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
@@ -30,7 +30,6 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import RecyclingIcon from '@mui/icons-material/Recycling';
 import GridViewIcon from '@mui/icons-material/GridView';
-import AutorenewIcon from '@mui/icons-material/Autorenew';
 import BuildIcon from '@mui/icons-material/Build';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import EventRepeatIcon from '@mui/icons-material/EventRepeat';
@@ -71,6 +70,13 @@ const modalStyle = {
   display: 'flex',
   flexDirection: 'column',
 };
+
+// The app's Lifecycle icon (Material "eco"), which @mui/icons-material does not ship.
+const LeafIcon = (props) => (
+  <SvgIcon {...props}>
+    <path d="M6.05 8.05c-2.73 2.73-2.73 7.15-.02 9.88 1.47-3.4 4.09-6.24 7.36-7.93-2.77 2.34-4.71 5.61-5.39 9.32 2.6 1.23 5.8.78 7.95-1.37C19.43 14.47 20 4 20 4S9.53 4.57 6.05 8.05z" />
+  </SvgIcon>
+);
 
 // Overview blocks the app groups right under the photos.
 const BUTTON_BLOCKS = ['feedback', 'actions'];
@@ -229,7 +235,6 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     el.scrollBy({ left: dir * 120, behavior: 'smooth' });
   };
   const [openStage, setOpenStage] = useState(null);
-  const [aboutExpanded, setAboutExpanded] = useState(false);
   const [openOrigin, setOpenOrigin] = useState(null);
   const [openService, setOpenService] = useState(null);
 
@@ -242,8 +247,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   ];
   const safeIndex = slides.length ? Math.min(slideIndex, slides.length - 1) : 0;
   const active = slides[safeIndex];
-  const facts = info.detailFacts || {};
-  const productId = info._id || info.pmc_code || (info.token_id != null ? info.token_id : '');
+  const productId = info.pmc_code || (info.token_id != null ? info.token_id : '');
 
   const highlightRows = [
     info.name && { Icon: LocalOfferIcon, text: info.name, strong: true },
@@ -252,10 +256,6 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     info.productType && { Icon: CategoryIcon, text: `Type: ${info.productType}` },
     info.color && { Icon: PaletteIcon, text: `Color: ${info.color}` },
     info.size && { Icon: StraightenIcon, text: `Size: ${info.size}` },
-    facts.material && { Icon: SpaIcon, text: `Material: ${facts.material}` },
-    facts.fit && { Icon: AccessibilityNewIcon, text: `Fit: ${facts.fit}` },
-    facts.wash && { Icon: WaterDropIcon, text: `Wash: ${facts.wash}` },
-    facts.durability && { Icon: ShieldIcon, text: `Durability: ${facts.durability}` },
   ].filter(Boolean);
 
   const go = (dir) => {
@@ -386,11 +386,11 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
         <Typography sx={{ color: '#fff', fontSize: 12 }}>No image</Typography>
       )}
 
-      {slides.length > 1 && (
+      {slides.length > 1 && dots && (
         <>
           <Box onClick={() => handleSlideZoneClick(-1)} sx={{ position: 'absolute', inset: '0 auto 0 0', width: '35%', cursor: 'pointer' }} />
           <Box onClick={() => handleSlideZoneClick(1)} sx={{ position: 'absolute', inset: '0 0 0 auto', width: '35%', cursor: 'pointer' }} />
-          {dots && <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 6, display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+          <Box sx={{ position: 'absolute', left: 0, right: 0, bottom: 6, display: 'flex', justifyContent: 'center', gap: 0.5 }}>
             {slides.map((_, i) => (
               <Box
                 key={i}
@@ -402,10 +402,15 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                 }}
               />
             ))}
-          </Box>}
+          </Box>
         </>
       )}
-      {active && (
+      {active && !dots && (
+        <Box sx={{ position: 'absolute', right: 6, bottom: 6, width: 24, height: 24, borderRadius: '50%', bgcolor: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+          <ZoomOutMapIcon sx={{ fontSize: 14, color: '#fff' }} />
+        </Box>
+      )}
+      {active && dots && (
         <Box sx={{ position: 'absolute', right: 6, bottom: 6, bgcolor: 'rgba(0,0,0,0.55)', borderRadius: 1, px: 0.5, py: 0.25 }}>
           {active.type === 'video' && !active.video.videoId ? (
             <PlayCircleFilledIcon sx={{ fontSize: 12, color: '#fff', display: 'block' }} />
@@ -414,7 +419,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
           )}
         </Box>
       )}
-      {active && size >= 100 && (
+      {active && dots && size >= 100 && (
         <IconButton
           size="small"
           aria-label="View full screen"
@@ -434,7 +439,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     <Box sx={{ display: 'flex', gap: 1 }}>
       <Box sx={{ flex: 1, minWidth: 0 }}>{renderMediaBox({ width: '100%', height: 200, bg: C.surface, dots: false })}</Box>
       {slides.length > 1 && (
-        <Box sx={{ width: 50, height: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0.75, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+        <Box sx={{ flexShrink: 0, height: 200, width: Math.ceil(slides.length / 4) * 45 + (Math.ceil(slides.length / 4) - 1) * 6, display: 'flex', flexDirection: 'column', flexWrap: 'wrap', alignContent: 'flex-start', gap: '6px' }}>
           {slides.map((sl, i) => (
             <Box
               key={i}
@@ -442,8 +447,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
               aria-label={sl.type === 'video' ? 'Play video' : `Image ${i + 1}`}
               onClick={() => setSlideIndex(i)}
               sx={{
-                width: 46,
-                height: 46,
+                width: 45,
+                height: 45,
                 flexShrink: 0,
                 borderRadius: 1,
                 overflow: 'hidden',
@@ -484,10 +489,11 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
           <Box
             role="button"
             onClick={goToLifecycle}
-            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.25, py: 0.5, borderRadius: 999, bgcolor: C.primary, color: '#fff', cursor: 'pointer' }}
+            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.25, py: 0.5, borderRadius: 999, ...mainButton, cursor: 'pointer' }}
           >
-            <SyncIcon sx={{ fontSize: 15 }} />
-            <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: '#fff' }}>Lifecycle</Typography>
+            <LeafIcon sx={{ fontSize: 15 }} />
+            <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: 'inherit' }}>Lifecycle</Typography>
+            <ChevronRightIcon sx={{ fontSize: 16 }} />
           </Box>
         </Box>
         {highlightRows.map((row, i) => (
@@ -563,27 +569,6 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
 
   const renderJourney = () => (
     <Box sx={{ pt: 1.5 }}>
-      {!!info.aboutProduct && (
-        <Box sx={{ ...card, mb: 1.5 }}>
-          <Typography sx={cardTitle}>About This Product</Typography>
-          <Typography
-            sx={{
-              fontSize: 12,
-              color: C.text,
-              lineHeight: 1.5,
-              ...(aboutExpanded ? {} : { display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }),
-            }}
-          >
-            {info.aboutProduct}
-          </Typography>
-          {info.aboutProduct.length > 140 && (
-            <Box role="button" onClick={() => setAboutExpanded((v) => !v)} sx={{ display: 'inline-flex', alignItems: 'center', mt: 0.5, cursor: 'pointer' }}>
-              <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.primary }}>{aboutExpanded ? 'Show less' : 'Show more'}</Typography>
-              {aboutExpanded ? <ExpandLessIcon sx={{ fontSize: 16, color: C.primary }} /> : <ExpandMoreIcon sx={{ fontSize: 16, color: C.primary }} />}
-            </Box>
-          )}
-        </Box>
-      )}
       {JOURNEY_STAGES.map((s, i) => {
         const isOpen = openStage === s.key;
         return (
@@ -1048,8 +1033,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
         </Box>
         </Box>
 
-        {/* Product bottom bar — Overview / Lifecycle, matching the app's
-            product bar (its Scan item doesn't apply inside a static preview). */}
+        {/* Product bottom bar — Overview / Scan / Lifecycle, as in the app. Scan
+            is only drawn here: there is no camera inside a preview. */}
         <Box
           sx={{
             flexShrink: 0,
@@ -1058,6 +1043,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
             alignItems: 'center',
             justifyContent: 'space-around',
             px: 1,
+            position: 'relative',
+            zIndex: 1,
             bgcolor: C.surface,
             borderTop: `1px solid ${C.border}`,
             borderTopLeftRadius: 24,
@@ -1066,12 +1053,17 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
         >
           {[
             { key: 'overview', label: 'Overview', Icon: GridViewIcon },
-            { key: 'lifecycle', label: 'Lifecycle', Icon: AutorenewIcon },
-          ].map((tab) => {
+            { key: 'lifecycle', label: 'Lifecycle', Icon: LeafIcon },
+          ].map((tab, tabIndex) => {
             const active = view === tab.key;
             return (
+              <React.Fragment key={tab.key}>
+              {tabIndex === 1 && (
+                <Box aria-hidden sx={{ flexShrink: 0, width: 54, height: 54, mt: '-22px', borderRadius: '50%', border: `3px solid ${C.surface}`, background: GRADIENT, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 3px 8px rgba(27,79,114,0.25)' }}>
+                  <CropFreeIcon sx={{ fontSize: 26, color: C.onHeader }} />
+                </Box>
+              )}
               <Box
-                key={tab.key}
                 role="tab"
                 aria-selected={active}
                 onClick={() => setView(tab.key)}
@@ -1081,8 +1073,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                 <Typography sx={{ fontSize: 10, mt: 0.4, color: active ? C.primary : '#333', fontWeight: active ? 600 : 400 }}>
                   {tab.label}
                 </Typography>
-                {active && <Box sx={{ position: 'absolute', bottom: 0, width: 34, height: 3, borderRadius: 1, bgcolor: C.primary }} />}
               </Box>
+              </React.Fragment>
             );
           })}
         </Box>
