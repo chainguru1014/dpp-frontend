@@ -145,7 +145,7 @@ const toArray = (v) => (v == null ? [] : Array.isArray(v) ? v : typeof v === 'ob
 // Generic label/value row -- mirrors ProductLifecycleScreen's <Row>. Renders
 // nothing when there's no value so callers can list every possible field
 // without hand-guarding each one.
-function Row({ icon: Icon, label, value, onClick, chevron, expanded }) {
+function Row({ icon: Icon, label, value, onClick, chevron, expanded, arrow }) {
   const C = useContext(PaletteContext);
   if (!value) return null;
   return (
@@ -165,6 +165,7 @@ function Row({ icon: Icon, label, value, onClick, chevron, expanded }) {
       <Typography sx={{ fontSize: 12, color: C.text, flex: 1 }}>{label}</Typography>
       <Typography sx={{ fontSize: 12, color: C.muted, textAlign: 'right' }}>{value}</Typography>
       {chevron && (expanded ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />)}
+      {arrow && <ChevronRightIcon sx={{ fontSize: 18, color: C.muted }} />}
     </Box>
   );
 }
@@ -614,7 +615,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                     <Typography key={ti} sx={{ fontSize: 11, color: C.text, py: 0.3 }}>• {tip.primary}</Typography>
                   )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>)}
                   {s.key === 'endOfLife' && (services.length ? services.map((d) => (
-                    <Typography key={d.kind} sx={{ fontSize: 11, color: C.text, py: 0.3 }}>• {d.meta.shopperTitle}{d.summary ? `: ${d.summary}` : ''}</Typography>
+                    <Row key={d.kind} label={d.meta.shopperTitle} value={d.partnerName || d.cost || 'Reuse & Recycle'} arrow onClick={() => setLifecycleTab('dispose')} />
                   )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>)}
                 </Box>
               )}
