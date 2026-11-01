@@ -768,7 +768,6 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography sx={{ fontSize: 12, fontWeight: 600, color: C.text }}>{d.meta.shopperTitle}</Typography>
-                  {!!d.summary && <Typography sx={{ fontSize: 10, color: C.muted }}>{d.summary}</Typography>}
                 </Box>
                 {open ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
               </Box>
