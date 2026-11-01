@@ -72,8 +72,8 @@ const modalStyle = {
   flexDirection: 'column',
 };
 
-// Overview blocks the app pins above the bottom bar instead of scrolling.
-const PINNED_BLOCKS = ['feedback', 'actions'];
+// Overview blocks the app groups right under the photos.
+const BUTTON_BLOCKS = ['feedback', 'actions'];
 
 const SERVICE_ICON = { repair: BuildIcon, resell: StorefrontIcon, rent: EventRepeatIcon, recycle: RecyclingIcon };
 
@@ -539,11 +539,11 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     ),
     actions: () => (
       <Box sx={{ display: 'flex', gap: 1, mx: 2, mt: 1 }}>
+        <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 600, color: C.primary, border: `1.5px solid ${C.primary}`, bgcolor: C.surface }}>
+          Brand Company
+        </Box>
         <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 700, ...mainButton }}>
           Scan Product
-        </Box>
-        <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 600, color: C.primary, border: `1.5px solid ${C.primary}`, bgcolor: C.surface }}>
-          Request ownership
         </Box>
       </Box>
     ),
@@ -552,7 +552,10 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   const renderOverview = () => (
     <>
       <Box sx={{ ...card, mt: 2 }}>{renderMediaWithThumbs()}</Box>
-      {look.blocks.filter((b) => b.visible && !PINNED_BLOCKS.includes(b.key)).map((b) => (
+      {look.blocks.filter((b) => b.visible && BUTTON_BLOCKS.includes(b.key)).map((b) => (
+        <React.Fragment key={b.key}>{overviewBlocks[b.key]?.()}</React.Fragment>
+      ))}
+      {look.blocks.filter((b) => b.visible && !BUTTON_BLOCKS.includes(b.key)).map((b) => (
         <React.Fragment key={b.key}>{overviewBlocks[b.key]?.()}</React.Fragment>
       ))}
     </>
@@ -1042,13 +1045,6 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
           </Box>
         </Box>
 
-        {view === 'overview' && (
-          <Box sx={{ flexShrink: 0, pb: 1, borderTop: `1px solid ${C.border}`, bgcolor: C.bg }}>
-            {look.blocks.filter((b) => b.visible && PINNED_BLOCKS.includes(b.key)).map((b) => (
-              <React.Fragment key={b.key}>{overviewBlocks[b.key]?.()}</React.Fragment>
-            ))}
-          </Box>
-        )}
         </Box>
         </Box>
 

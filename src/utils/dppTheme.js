@@ -25,8 +25,8 @@ export const DPP_BLOCKS = [
   { key: 'brand', label: 'About the brand', on: false },
   { key: 'message', label: 'Your message', on: false },
   { key: 'cta', label: 'Your button', on: false },
-  { key: 'feedback', label: 'Helpful / Share buttons', on: true },
-  { key: 'actions', label: 'Scan / Request ownership buttons', on: true },
+  { key: 'feedback', label: 'Like / Cart / Dislike buttons', on: true },
+  { key: 'actions', label: 'Brand Company / Scan buttons', on: true },
 ];
 
 export const DPP_FONTS = [
