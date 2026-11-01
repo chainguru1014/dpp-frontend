@@ -449,6 +449,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
               sx={{
                 width: 45,
                 height: 45,
+                boxSizing: 'border-box',
                 flexShrink: 0,
                 borderRadius: 1,
                 overflow: 'hidden',
