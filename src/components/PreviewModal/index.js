@@ -85,11 +85,11 @@ const SERVICE_ICON = { repair: BuildIcon, resell: StorefrontIcon, rent: EventRep
 
 // Mirrors ProductLifecycleScreen's JOURNEY_STAGES in the app.
 const JOURNEY_STAGES = [
-  { key: 'materials', label: 'Materials', desc: 'Responsible sourcing of raw materials.', Icon: SpaIcon },
-  { key: 'manufacturing', label: 'Manufacturing', desc: 'Assembled with quality and care.', Icon: PrecisionManufacturingIcon },
-  { key: 'transportation', label: 'Transportation', desc: 'Shipped efficiently to reduce emissions.', Icon: LocalShippingIcon },
-  { key: 'use', label: 'Use Phase', desc: 'Built to last and easy to care for.', Icon: CheckroomIcon },
-  { key: 'endOfLife', label: 'Reuse & Recycling', desc: 'Repair, reuse, or recycle options.', Icon: RecyclingIcon },
+  { key: 'materials', label: 'Materials', Icon: SpaIcon },
+  { key: 'manufacturing', label: 'Manufacturing', Icon: PrecisionManufacturingIcon },
+  { key: 'transportation', label: 'Transportation', Icon: LocalShippingIcon },
+  { key: 'use', label: 'Use Phase', Icon: CheckroomIcon },
+  { key: 'endOfLife', label: 'Reuse & Recycling', Icon: RecyclingIcon },
 ];
 
 const LIFECYCLE_TABS = [
@@ -582,11 +582,10 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
               {i < JOURNEY_STAGES.length - 1 && <Box sx={{ flex: 1, width: 2, bgcolor: C.border, my: 0.5, minHeight: 20 }} />}
             </Box>
             <Box role="button" onClick={() => setOpenStage(isOpen ? null : s.key)} sx={{ flex: 1, pb: 2.5, cursor: 'pointer' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 34 }}>
                 <Typography sx={{ fontSize: 13, fontWeight: 700, color: C.text }}>{s.label}</Typography>
                 {isOpen ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
               </Box>
-              <Typography sx={{ fontSize: 11, color: C.muted, mt: 0.25 }}>{s.desc}</Typography>
               {isOpen && (
                 // Journey rows sit directly on the tab's own background (not
                 // inside a white card), so the expanded detail matches that
