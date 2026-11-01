@@ -615,7 +615,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
                     <Typography key={ti} sx={{ fontSize: 11, color: C.text, py: 0.3 }}>• {tip.primary}</Typography>
                   )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>)}
                   {s.key === 'endOfLife' && (services.length ? services.map((d) => (
-                    <Row key={d.kind} label={d.meta.shopperTitle} value={d.partnerName || d.cost || 'Reuse & Recycle'} arrow onClick={() => setLifecycleTab('dispose')} />
+                    <Row key={d.kind} label={d.meta.shopperTitle} value={d.partnerName || d.cost || 'Reuse & Recycle'} arrow onClick={() => { setOpenService(d.kind); setLifecycleTab('dispose'); }} />
                   )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>)}
                 </Box>
               )}
