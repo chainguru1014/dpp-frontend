@@ -232,8 +232,8 @@ const LineChart = ({ data, noun = 'scans' }) => {
 };
 
 // Horizontal bars for [{country,count}].
-const CountryBars = ({ items, emptyText }) => {
-  if (!items || !items.length) return <EmptyChart text={emptyText} />;
+const CountryBars = ({ items }) => {
+  if (!items || !items.length) return <EmptyChart />;
   const total = items.reduce((s, x) => s + x.count, 0) || 1;
   const max = Math.max(1, ...items.map((i) => i.count));
   return (
@@ -461,21 +461,14 @@ export default function DashboardAnalytics({
           table. */}
       <Collapse in={moreOpen || !onToggleMore} unmountOnExit>
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} md={6} lg={showCaptures ? 4 : 6}>
+        <Grid item xs={12} md={6}>
           <Section title={isAppUser ? 'My scans by product category' : 'Scans by product category'}>
             <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
           </Section>
         </Grid>
         {showCaptures && (
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid item xs={12} md={6}>
             {scanCountries}
-          </Grid>
-        )}
-        {showCaptures && (
-          <Grid item xs={12} md={6} lg={4}>
-            <Section title="Countries where products were captured">
-              <CountryBars items={captureStats?.countryBreakdown || []} emptyText="No captures yet." />
-            </Section>
           </Grid>
         )}
       </Grid>
