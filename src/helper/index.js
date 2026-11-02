@@ -899,6 +899,18 @@ export const getCapturesCount = async (token, { mine = false } = {}) => {
     }
 };
 
+export const getCaptureStats = async (token, { mine = false } = {}) => {
+    try {
+        const res = await axios.get(`${Backend_URL}captures/stats${mine ? '?mine=true' : ''}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        return res.data?.data || null;
+    } catch (err) {
+        console.log(err);
+        return null;
+    }
+};
+
 export const getCaptures = async (token, { mine = false } = {}) => {
     try {
         const res = await axios.get(`${Backend_URL}captures?date=all${mine ? '&mine=true' : ''}`, {

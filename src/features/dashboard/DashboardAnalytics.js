@@ -9,10 +9,8 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import SellIcon from '@mui/icons-material/Sell';
-import PublicIcon from '@mui/icons-material/Public';
-import VerifiedIcon from '@mui/icons-material/Verified';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
-import { getAnalytics, getCapturesCount } from '../../helper';
+import { getAnalytics, getCapturesCount, getCaptureStats } from '../../helper';
 import { useAuth } from '../auth/AuthContext';
 import Loader from '../../components/Loader';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -171,8 +169,8 @@ const formatDay = (iso) => {
 // Area chart with Y gridlines and weekly X labels. Drawn in a fixed
 // coordinate space that scales proportionally (no stretched text), with room
 // at the top and sides so the outermost labels are never clipped.
-const LineChart = ({ data }) => {
-  if (!data.length || !data.some((d) => d.count > 0)) return <EmptyChart text="No scans in the last 30 days." />;
+const LineChart = ({ data, noun = 'scans' }) => {
+  if (!data.length || !data.some((d) => d.count > 0)) return <EmptyChart text={`No ${noun} in the last 30 days.`} />;
   const leftPad = 34;
   const rightPad = 14;
   const topPad = 12;
@@ -205,7 +203,7 @@ const LineChart = ({ data }) => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <svg width="100%" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Scans per day for the last 30 days" style={{ display: 'block' }}>
+      <svg width="100%" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${noun} per day for the last 30 days`} style={{ display: 'block' }}>
         {ticks.map((tick) => (
           <g key={tick}>
             <line x1={leftPad} x2={leftPad + plotWidth} y1={yAt(tick)} y2={yAt(tick)} stroke="#e3e8ef" strokeWidth="1" />
@@ -234,8 +232,8 @@ const LineChart = ({ data }) => {
 };
 
 // Horizontal bars for [{country,count}].
-const CountryBars = ({ items }) => {
-  if (!items || !items.length) return <EmptyChart />;
+const CountryBars = ({ items, emptyText }) => {
+  if (!items || !items.length) return <EmptyChart text={emptyText} />;
   const total = items.reduce((s, x) => s + x.count, 0) || 1;
   const max = Math.max(1, ...items.map((i) => i.count));
   return (
@@ -289,9 +287,11 @@ export default function DashboardAnalytics({
   const isWorkingEmployee = company?.actorKind === 'Employee' && company?.employeeType !== 'supervisor';
   const showCaptures = !isAppUser;
   const [capturesTotal, setCapturesTotal] = useState(null);
+  const [captureStats, setCaptureStats] = useState(null);
   useEffect(() => {
     if (!showCaptures || !token) return;
     getCapturesCount(token, { mine: isWorkingEmployee }).then(setCapturesTotal);
+    getCaptureStats(token, { mine: isWorkingEmployee }).then(setCaptureStats);
   }, [showCaptures, token, isWorkingEmployee]);
 
   // Countries with at least one scan (from the backend, most-scanned first).
@@ -322,9 +322,13 @@ export default function DashboardAnalytics({
     showCaptures && { key: 'captures', icon: CameraAltIcon, label: isWorkingEmployee ? 'My captures' : 'Captures', value: capturesTotal ?? 0, onClick: onNavigateToCaptureHistory },
     { key: 'products', icon: Inventory2Icon, label: 'Products scanned', value: t.uniqueSkus ?? 0, delta: t.deltas?.uniqueSkus, onClick: onNavigateToProducts },
     !isAppUser && { key: 'codes', icon: QrCode2Icon, label: 'Codes scanned', value: t.uniqueItems ?? 0, delta: t.deltas?.uniqueItems, onClick: onNavigateToGenerateCode },
-    { key: 'countries', icon: PublicIcon, label: 'Countries', value: t.countries ?? 0, delta: t.deltas?.countries },
-    !isAppUser && { key: 'integrity', icon: VerifiedIcon, label: 'Records verified', value: `${t.dataIntegrity ?? 100}%` },
   ].filter(Boolean);
+
+  const scanCountries = (
+    <Section title="Countries where products were scanned">
+      <CountryBars items={a.countryBreakdown || []} />
+    </Section>
+  );
 
   const filterPanel = (
     <Collapse in={filtersOpen || applied > 0} unmountOnExit>
@@ -409,9 +413,9 @@ export default function DashboardAnalytics({
     <Box>
       {filterPanel}
 
-      {/* First layer: four figures, two charts. */}
+      {/* First layer: the figures and two charts. */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        {cards.slice(0, 4).map((c) => (
+        {cards.map((c) => (
           <Grid item key={c.key} xs={12} sm={6} lg={3}>
             <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} onClick={c.onClick} />
           </Grid>
@@ -425,9 +429,11 @@ export default function DashboardAnalytics({
           </Section>
         </Grid>
         <Grid item xs={12} md={6}>
-          <Section title="Countries where products were scanned">
-            <CountryBars items={a.countryBreakdown || []} />
-          </Section>
+          {showCaptures ? (
+            <Section title="Captures per day (last 30 days)">
+              <LineChart data={captureStats?.capturesByDay || []} noun="captures" />
+            </Section>
+          ) : scanCountries}
         </Grid>
       </Grid>
 
@@ -444,25 +450,27 @@ export default function DashboardAnalytics({
         </Box>
       )}
 
-      {/* Second layer: the remaining figures, the category split and the
-          traceability table. */}
+      {/* Second layer: the category and country splits and the traceability
+          table. */}
       <Collapse in={moreOpen || !onToggleMore} unmountOnExit>
-      {cards.length > 4 && (
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          {cards.slice(4).map((c) => (
-            <Grid item key={c.key} xs={12} sm={6} lg={3}>
-              <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} onClick={c.onClick} />
-            </Grid>
-          ))}
-        </Grid>
-      )}
-
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6} lg={showCaptures ? 4 : 6}>
           <Section title={isAppUser ? 'My scans by product category' : 'Scans by product category'}>
             <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
           </Section>
         </Grid>
+        {showCaptures && (
+          <Grid item xs={12} md={6} lg={4}>
+            {scanCountries}
+          </Grid>
+        )}
+        {showCaptures && (
+          <Grid item xs={12} md={6} lg={4}>
+            <Section title="Countries where products were captured">
+              <CountryBars items={captureStats?.countryBreakdown || []} emptyText="No captures yet." />
+            </Section>
+          </Grid>
+        )}
       </Grid>
 
       {/* Brand/traceability detail — not meaningful for shoppers. */}
