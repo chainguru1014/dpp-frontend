@@ -10,7 +10,7 @@ import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import SellIcon from '@mui/icons-material/Sell';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
-import { getAnalytics, getCapturesCount, getCaptureStats } from '../../helper';
+import { getAnalytics, getCaptureStats } from '../../helper';
 import { useAuth } from '../auth/AuthContext';
 import Loader from '../../components/Loader';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -281,16 +281,14 @@ export default function DashboardAnalytics({
     });
   }, [ownerKind, ownerId, appliedFilters]);
 
-  // Total Captures card: super admin — every capture; company / Supervisor —
+  // Capture figures: super admin — every capture; company / Supervisor —
   // its company's; working employee — their own. Not shown to app users.
   const { token, company, isAppUser } = useAuth();
   const isWorkingEmployee = company?.actorKind === 'Employee' && company?.employeeType !== 'supervisor';
   const showCaptures = !isAppUser;
-  const [capturesTotal, setCapturesTotal] = useState(null);
   const [captureStats, setCaptureStats] = useState(null);
   useEffect(() => {
     if (!showCaptures || !token) return;
-    getCapturesCount(token, { mine: isWorkingEmployee }).then(setCapturesTotal);
     getCaptureStats(token, { mine: isWorkingEmployee }).then(setCaptureStats);
   }, [showCaptures, token, isWorkingEmployee]);
 
@@ -317,12 +315,25 @@ export default function DashboardAnalytics({
 
   // Field mapping (see backend qrcodeController): `uniqueSkus` is distinct
   // product types scanned; `uniqueItems` is distinct scanned item codes.
-  const cards = [
+  const scanCards = [
     { key: 'scans', icon: QrCodeScannerIcon, label: isAppUser ? 'My scans' : 'Scans', value: t.scans ?? 0, delta: t.deltas?.scans, onClick: onNavigateToScanHistory },
-    showCaptures && { key: 'captures', icon: CameraAltIcon, label: isWorkingEmployee ? 'My captures' : 'Captures', value: capturesTotal ?? 0, onClick: onNavigateToCaptureHistory },
     { key: 'products', icon: Inventory2Icon, label: 'Products scanned', value: t.uniqueSkus ?? 0, delta: t.deltas?.uniqueSkus, onClick: onNavigateToProducts },
     !isAppUser && { key: 'codes', icon: QrCode2Icon, label: 'Codes scanned', value: t.uniqueItems ?? 0, delta: t.deltas?.uniqueItems, onClick: onNavigateToGenerateCode },
   ].filter(Boolean);
+  const captureCards = [
+    { key: 'captures', icon: CameraAltIcon, label: isWorkingEmployee ? 'My captures' : 'Captures', value: captureStats?.total ?? 0, onClick: onNavigateToCaptureHistory },
+    { key: 'capturedProducts', icon: Inventory2Icon, label: 'Products captured', value: captureStats?.uniqueProducts ?? 0, onClick: onNavigateToCaptureHistory },
+    { key: 'capturedCodes', icon: QrCode2Icon, label: 'Codes captured', value: captureStats?.uniqueCodes ?? 0, onClick: onNavigateToCaptureHistory },
+  ];
+  const kpiRow = (items) => (
+    <Grid container spacing={2} sx={{ mb: 2 }}>
+      {items.map((c) => (
+        <Grid item key={c.key} xs={12} sm={12 / items.length}>
+          <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} onClick={c.onClick} />
+        </Grid>
+      ))}
+    </Grid>
+  );
 
   const scanCountries = (
     <Section title="Countries where products were scanned">
@@ -413,26 +424,22 @@ export default function DashboardAnalytics({
     <Box>
       {filterPanel}
 
-      {/* First layer: the figures and two charts. */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        {cards.map((c) => (
-          <Grid item key={c.key} xs={12} sm={6} lg={3}>
-            <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} onClick={c.onClick} />
-          </Grid>
-        ))}
-      </Grid>
-
+      {/* First layer: scan figures and chart beside capture figures and chart. */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12} md={6}>
-          <Section title="Scans per day (last 30 days)">
+          {kpiRow(scanCards)}
+          <Section title="Scans per day (last 30 days)" sx={{ height: 'auto' }}>
             <LineChart data={a.scansByDay || []} />
           </Section>
         </Grid>
         <Grid item xs={12} md={6}>
           {showCaptures ? (
-            <Section title="Captures per day (last 30 days)">
-              <LineChart data={captureStats?.capturesByDay || []} noun="captures" />
-            </Section>
+            <>
+              {kpiRow(captureCards)}
+              <Section title="Captures per day (last 30 days)" sx={{ height: 'auto' }}>
+                <LineChart data={captureStats?.capturesByDay || []} noun="captures" />
+              </Section>
+            </>
           ) : scanCountries}
         </Grid>
       </Grid>
