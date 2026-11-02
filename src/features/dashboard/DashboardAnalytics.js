@@ -9,6 +9,8 @@ import QrCode2Icon from '@mui/icons-material/QrCode2';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import SellIcon from '@mui/icons-material/Sell';
+import PublicIcon from '@mui/icons-material/Public';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import { getAnalytics, getCaptureStats } from '../../helper';
 import { useAuth } from '../auth/AuthContext';
@@ -325,6 +327,10 @@ export default function DashboardAnalytics({
     { key: 'capturedProducts', icon: Inventory2Icon, label: 'Products captured', value: captureStats?.uniqueProducts ?? 0, onClick: onNavigateToCaptureHistory },
     { key: 'capturedCodes', icon: QrCode2Icon, label: 'Codes captured', value: captureStats?.uniqueCodes ?? 0, onClick: onNavigateToCaptureHistory },
   ];
+  const categoryCards = [
+    { key: 'countries', icon: PublicIcon, label: 'Countries', value: t.countries ?? 0, delta: t.deltas?.countries },
+    !isAppUser && { key: 'integrity', icon: VerifiedIcon, label: 'Records verified', value: `${t.dataIntegrity ?? 100}%` },
+  ].filter(Boolean);
   const kpiRow = (items) => (
     <Grid container spacing={2} sx={{ mb: 2 }}>
       {items.map((c) => (
@@ -464,6 +470,15 @@ export default function DashboardAnalytics({
         <Grid item xs={12} md={6}>
           <Section title={isAppUser ? 'My scans by product category' : 'Scans by product category'}>
             <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
+            <Box sx={{ mt: 2 }}>
+              <Grid container spacing={2}>
+                {categoryCards.map((c) => (
+                  <Grid item key={c.key} xs={12} sm={12 / categoryCards.length}>
+                    <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} />
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
           </Section>
         </Grid>
         {showCaptures && (
