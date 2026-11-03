@@ -35,11 +35,9 @@ export const useGoogleAuth = (onCredential) => {
     // width (200-400), so match the visible button's width: a narrower Google
     // button left part of the visible one dead to clicks.
     let renderedWidth = 0;
-    let initialized = false;
     const renderButton = () => {
       const el = buttonContainerRef.current;
-      // ResizeObserver also fires before initialize(); rendering then draws nothing.
-      if (!el || !initialized) return;
+      if (!el || !window.google?.accounts?.id) return;
       const width = Math.max(200, Math.min(400, Math.round(el.offsetWidth)));
       if (width === renderedWidth) return;
       renderedWidth = width;
@@ -63,7 +61,6 @@ export const useGoogleAuth = (onCredential) => {
             if (response?.credential) onCredentialRef.current?.(response.credential);
           },
         });
-        initialized = true;
         renderButton();
         setReady(true);
       } catch (err) {
