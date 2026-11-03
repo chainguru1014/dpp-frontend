@@ -358,7 +358,7 @@ const AuthPage = ({
                 </Button>
                 <Box
                   ref={googleButtonRef}
-                  sx={{ position: 'absolute', inset: 0, zIndex: 1, opacity: 0, overflow: 'hidden', cursor: 'pointer' }}
+                  sx={{ position: 'absolute', inset: 0, zIndex: 1, opacity: 0, overflow: 'hidden', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 />
               </Box>
               <Button fullWidth onClick={handleAppleClick} startIcon={<AppleIcon sx={{ color: AUTH_BLUE }} />} sx={outlineButtonSx}>
