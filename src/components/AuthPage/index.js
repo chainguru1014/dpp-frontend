@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Box, Button, Divider, Grid, MenuItem, TextField, Typography } from '@mui/material';
 import AppleIcon from '@mui/icons-material/Apple';
-import { useGoogleAuth } from '../../features/auth/useGoogleAuth';
+import { signInWithGoogle } from '../../features/auth/useGoogleAuth';
 import { useAppleAuth } from '../../features/auth/useAppleAuth';
 import AuthShell from '../AuthShell';
 import yometelLogoWhite from '../../assets/yometel-logo-white.png';
@@ -113,7 +113,6 @@ const AuthPage = ({
   const [otpNotice, setOtpNotice] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  const { buttonContainerRef: googleButtonRef } = useGoogleAuth(onGoogleCredential);
   const { signIn: appleSignIn } = useAppleAuth();
 
   // The email was just verified — pre-fill it on the details form.
@@ -141,6 +140,16 @@ const AuthPage = ({
       setOtpNotice(friendlyError(res?.message) || 'We could not send the code. Please check the email address and try again.');
     }
     return res;
+  };
+
+  const handleGoogleClick = async () => {
+    try {
+      // signInWithGoogle opens Google's window before its first await.
+      const idToken = await signInWithGoogle();
+      if (idToken) await onGoogleCredential?.(idToken);
+    } catch (err) {
+      notifyError(err?.message || 'Google sign-in did not work. Please try again or use your email.');
+    }
   };
 
   const handleAppleClick = async () => {
@@ -350,17 +359,9 @@ const AuthPage = ({
             <Divider sx={{ '&::before, &::after': { borderColor: 'var(--auth-line)' } }}><Typography variant="body2" sx={{ color: AUTH_MUTED, textShadow }}>or</Typography></Divider>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-              {/* Custom-styled Google button with the real (invisible) Google
-                  button stacked on top — see useGoogleAuth for why. */}
-              <Box sx={{ position: 'relative' }}>
-                <Button fullWidth startIcon={<GoogleIcon />} tabIndex={-1} aria-hidden="true" sx={outlineButtonSx}>
-                  Continue with Google
-                </Button>
-                <Box
-                  ref={googleButtonRef}
-                  sx={{ position: 'absolute', inset: 0, zIndex: 1, opacity: 0, overflow: 'hidden', cursor: 'pointer' }}
-                />
-              </Box>
+              <Button fullWidth onClick={handleGoogleClick} startIcon={<GoogleIcon />} sx={outlineButtonSx}>
+                Continue with Google
+              </Button>
               <Button fullWidth onClick={handleAppleClick} startIcon={<AppleIcon sx={{ color: AUTH_BLUE }} />} sx={outlineButtonSx}>
                 Continue with Apple
               </Button>

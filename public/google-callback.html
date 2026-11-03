@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Signing in…</title>
+</head>
+<body style="font-family: -apple-system, Segoe UI, Roboto, sans-serif; text-align: center; padding-top: 40px; color: #1b4f7a;">
+<p>Signing in…</p>
+<script>
+  // Google redirects here with the sign-in result in the URL fragment. Google's
+  // pages cut the link to the window that opened this popup, so hand the result
+  // back through same-origin channels instead of window.opener.
+  (function () {
+    var result = { params: location.hash.replace(/^#/, '') || location.search.replace(/^\?/, ''), at: Date.now() };
+    try { new BroadcastChannel('google-oauth').postMessage(result); } catch (e) {}
+    try { localStorage.setItem('google-oauth-result', JSON.stringify(result)); } catch (e) {}
+    try { if (window.opener) window.opener.postMessage({ type: 'google-oauth', result: result }, location.origin); } catch (e) {}
+    setTimeout(function () { window.close(); }, 300);
+  })();
+</script>
+</body>
+</html>
