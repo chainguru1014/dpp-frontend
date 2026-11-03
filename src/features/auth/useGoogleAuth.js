@@ -31,27 +31,6 @@ export const useGoogleAuth = (onCredential) => {
   onCredentialRef.current = onCredential;
 
   useEffect(() => {
-    // Rendered invisibly — see the positioning note above. GIS only takes a px
-    // width (200-400), so match the visible button's width: a narrower Google
-    // button left part of the visible one dead to clicks.
-    let renderedWidth = 0;
-    const renderButton = () => {
-      const el = buttonContainerRef.current;
-      if (!el || !window.google?.accounts?.id) return;
-      const width = Math.max(200, Math.min(400, Math.round(el.offsetWidth)));
-      if (width === renderedWidth) return;
-      renderedWidth = width;
-      el.innerHTML = '';
-      window.google.accounts.id.renderButton(el, {
-        type: 'standard',
-        theme: 'outline',
-        size: 'large',
-        width,
-      });
-    };
-    const resizeObserver = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(renderButton) : null;
-    if (resizeObserver && buttonContainerRef.current) resizeObserver.observe(buttonContainerRef.current);
-
     const init = () => {
       if (!window.google?.accounts?.id || !buttonContainerRef.current) return;
       try {
@@ -61,21 +40,23 @@ export const useGoogleAuth = (onCredential) => {
             if (response?.credential) onCredentialRef.current?.(response.credential);
           },
         });
-        renderButton();
+        // Rendered invisibly — see the positioning note above. Width is a
+        // fixed px value because GIS doesn't support percentage widths.
+        window.google.accounts.id.renderButton(buttonContainerRef.current, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          width: 300,
+        });
         setReady(true);
       } catch (err) {
         console.error('Google Identity Services init failed:', err);
       }
     };
 
-    const cleanup = () => resizeObserver?.disconnect();
-
-    const existing = document.getElementById(SCRIPT_ID);
-    if (existing) {
-      // The script may still be loading when the page is shown again.
-      if (window.google?.accounts?.id) init();
-      else existing.addEventListener('load', init, { once: true });
-      return cleanup;
+    if (document.getElementById(SCRIPT_ID)) {
+      init();
+      return;
     }
 
     const script = document.createElement('script');
@@ -86,7 +67,6 @@ export const useGoogleAuth = (onCredential) => {
     script.onload = init;
     script.onerror = () => console.error('Failed to load Google Identity Services');
     document.head.appendChild(script);
-    return cleanup;
   }, []);
 
   return { ready, buttonContainerRef };
