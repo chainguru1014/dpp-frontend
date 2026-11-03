@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
-// Apple "Services ID" (NOT the App ID/bundle id) + the web redirect URI
-// registered for it in the Apple Developer portal. These don't exist yet —
-// until the user sets up Sign in with Apple (Certificates, Identifiers &
-// Profiles -> Identifiers -> Services IDs) these are inert placeholders and
-// `signIn()` will simply fail with an Apple-side error, which the caller
-// already handles. Override via env once real values exist.
+// Apple "Services ID" (NOT the App ID/bundle id), shared with the DPP app's web
+// and Android sign-in. Its return URLs in the Apple Developer portal must include
+// this site's origin (https://admin.innosynch.com).
 const APPLE_CLIENT_ID =
-  process.env.REACT_APP_APPLE_CLIENT_ID || 'com.yometel.dpp.web-PLACEHOLDER';
+  process.env.REACT_APP_APPLE_CLIENT_ID || 'com.yometeldpp.signin';
 const APPLE_REDIRECT_URI =
   process.env.REACT_APP_APPLE_REDIRECT_URI ||
   (typeof window !== 'undefined' ? window.location.origin : '');
