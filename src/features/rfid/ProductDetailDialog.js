@@ -32,14 +32,39 @@ const Empty = () => <Typography color="text.secondary" variant="body2">No inform
 // Label / value pair; nothing when there is no value.
 const Fact = ({ label, value }) => (value ? (
   <Box>
-    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</Typography>
-    <Typography sx={{ fontWeight: 500 }}>{value}</Typography>
+    <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.4, display: 'block' }}>{label}</Typography>
+    <Typography sx={{ fontWeight: 500, lineHeight: 1.35 }}>{value}</Typography>
   </Box>
 ) : null);
 
+// Two lines of a long text, with Show more / Show less when it is longer.
+function ClampedText({ text }) {
+  const [open, setOpen] = useState(false);
+  const [long, setLong] = useState(false);
+  const measure = (el) => {
+    if (el && !open) setLong(el.scrollHeight > el.clientHeight + 1);
+  };
+  return (
+    <Box sx={{ mt: 1.5 }}>
+      <Typography
+        ref={measure}
+        color="text.secondary"
+        sx={{ lineHeight: 1.6, ...(open ? {} : { display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }) }}
+      >
+        {text}
+      </Typography>
+      {(long || open) && (
+        <Button size="small" onClick={() => setOpen((v) => !v)} sx={{ px: 0, minWidth: 0 }}>
+          {open ? 'Show less' : 'Show more…'}
+        </Button>
+      )}
+    </Box>
+  );
+}
+
 const Section = ({ title, children }) => (
-  <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2, height: '100%' }}>
-    {title && <Typography sx={{ fontWeight: 700, mb: 1.5 }}>{title}</Typography>}
+  <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
+    {title && <Typography sx={{ fontWeight: 700, mb: 1 }}>{title}</Typography>}
     {children}
   </Paper>
 );
@@ -84,34 +109,35 @@ export default function ProductDetailDialog({ open, product, loadProduct, onClos
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" PaperProps={{ sx: { borderRadius: 3 } }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', px: 3, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', px: 3, py: 1, borderBottom: 1, borderColor: 'divider' }}>
         <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', flex: 1 }} noWrap>Product details</Typography>
         {loading && <CircularProgress size={20} sx={{ mr: 1 }} />}
         <IconButton onClick={onClose} aria-label="Close"><CloseIcon /></IconButton>
       </Box>
-      <DialogContent sx={{ p: 3 }}>
-        <Grid container spacing={4}>
+      <DialogContent sx={{ px: 3, py: 2 }}>
+        <Grid container spacing={3}>
           {/* Photos */}
           <Grid item xs={12} md={5}>
             <Box
               role={active ? 'button' : undefined}
               onClick={() => active && setLightbox(slides.indexOf(active))}
               sx={{
-                height: 380, borderRadius: 2, bgcolor: 'grey.50', border: 1, borderColor: 'divider', overflow: 'hidden',
+                // Sized to the window, so the dialog fits a laptop screen.
+                height: 'clamp(200px, 30vh, 300px)', borderRadius: 2, bgcolor: 'grey.50', border: 1, borderColor: 'divider', overflow: 'hidden',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', cursor: active ? 'zoom-in' : 'default',
               }}
             >
-              {active?.type === 'image' && <img src={getFileUrl(active.src)} alt="" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />}
+              {active?.type === 'image' && <img src={getFileUrl(active.src)} alt="" style={{ height: '100%', maxWidth: '100%', objectFit: 'contain' }} />}
               {active?.type === 'video' && (
                 <>
                   {active.video.videoId && <img src={`https://img.youtube.com/vi/${active.video.videoId}/hqdefault.jpg`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
-                  <PlayCircleFilledIcon sx={{ position: 'absolute', fontSize: 64, color: '#fff' }} />
+                  <PlayCircleFilledIcon sx={{ position: 'absolute', fontSize: 56, color: '#fff' }} />
                 </>
               )}
-              {!active && <InventoryIcon sx={{ fontSize: 64, color: 'text.disabled' }} />}
+              {!active && <InventoryIcon sx={{ fontSize: 56, color: 'text.disabled' }} />}
             </Box>
             {slides.length > 1 && (
-              <Stack direction="row" spacing={1} sx={{ mt: 1.5, overflowX: 'auto', pb: 0.5 }}>
+              <Stack direction="row" spacing={1} sx={{ mt: 1, overflowX: 'auto', pb: 0.5 }}>
                 {slides.map((s, i) => (
                   <Box
                     key={i}
@@ -119,7 +145,7 @@ export default function ProductDetailDialog({ open, product, loadProduct, onClos
                     aria-label={s.type === 'video' ? 'Video' : `Photo ${i + 1}`}
                     onClick={() => setSlide(i)}
                     sx={{
-                      width: 64, height: 64, flexShrink: 0, borderRadius: 1.5, overflow: 'hidden', cursor: 'pointer', position: 'relative',
+                      width: 52, height: 52, flexShrink: 0, borderRadius: 1.5, overflow: 'hidden', cursor: 'pointer', position: 'relative',
                       border: 2, borderColor: i === slide ? 'primary.main' : 'transparent', bgcolor: s.type === 'video' ? '#000' : 'grey.50',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}
@@ -140,14 +166,28 @@ export default function ProductDetailDialog({ open, product, loadProduct, onClos
 
           {/* Overview */}
           <Grid item xs={12} md={7}>
-            {!!brand.name && <Typography sx={{ textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.secondary', fontWeight: 600, fontSize: '0.85rem' }}>{brand.name}</Typography>}
-            <Typography sx={{ fontWeight: 700, fontSize: '1.9rem', lineHeight: 1.2, mt: 0.5 }}>{info.name || 'Unnamed product'}</Typography>
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 1.5 }}>
-              {!!price && <Typography sx={{ fontWeight: 700, fontSize: '1.5rem', color: 'primary.main' }}>{price}</Typography>}
-              <Chip icon={<VerifiedIcon />} label="Genuine product" color="success" variant="outlined" size="small" />
+            <Stack direction="row" spacing={2} alignItems="flex-start" justifyContent="space-between">
+              <Box sx={{ minWidth: 0 }}>
+                {!!brand.name && <Typography sx={{ textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.secondary', fontWeight: 600, fontSize: '0.8rem' }}>{brand.name}</Typography>}
+                <Typography sx={{ fontWeight: 700, fontSize: '1.7rem', lineHeight: 1.2 }}>{info.name || 'Unnamed product'}</Typography>
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 0.75 }}>
+                  {!!price && <Typography sx={{ fontWeight: 700, fontSize: '1.35rem', color: 'primary.main' }}>{price}</Typography>}
+                  <Chip icon={<VerifiedIcon />} label="Genuine product" color="success" variant="outlined" size="small" />
+                </Stack>
+              </Box>
+              {!!website && (
+                <Button
+                  variant="outlined"
+                  endIcon={<OpenInNewIcon />}
+                  sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+                  onClick={() => window.open(/^https?:\/\//i.test(website) ? website : `https://${website}`, '_blank', 'noopener,noreferrer')}
+                >
+                  {brand.name ? `Brand: ${brand.name}` : 'Brand website'}
+                </Button>
+              )}
             </Stack>
-            <Divider sx={{ my: 2.5 }} />
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
+            <Divider sx={{ my: 1.5 }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: 'repeat(3, 1fr)' }, columnGap: 2, rowGap: 1 }}>
               <Fact label="Type" value={info.productType} />
               <Fact label="Color" value={info.color} />
               <Fact label="Size" value={info.size} />
@@ -155,29 +195,17 @@ export default function ProductDetailDialog({ open, product, loadProduct, onClos
               <Fact label="Made in" value={madeIn} />
               <Fact label="Manufactured" value={info.manufactureDate} />
             </Box>
-            {!!info.aboutProduct && (
-              <Typography color="text.secondary" sx={{ mt: 2.5, lineHeight: 1.7 }}>{info.aboutProduct}</Typography>
-            )}
-            {!!website && (
-              <Button
-                variant="outlined"
-                endIcon={<OpenInNewIcon />}
-                sx={{ mt: 2.5 }}
-                onClick={() => window.open(/^https?:\/\//i.test(website) ? website : `https://${website}`, '_blank', 'noopener,noreferrer')}
-              >
-                {brand.name ? `Visit ${brand.name}` : 'Brand website'}
-              </Button>
-            )}
+            {!!info.aboutProduct && <ClampedText text={info.aboutProduct} />}
           </Grid>
         </Grid>
 
         {/* Lifecycle */}
-        <Box sx={{ mt: 4, borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ mt: 2, borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tab} onChange={(e, v) => setTab(v)} variant="scrollable" scrollButtons="auto">
             {TABS.map((tb) => <Tab key={tb.key} value={tb.key} label={tb.label} />)}
           </Tabs>
         </Box>
-        <Box sx={{ pt: 3, minHeight: 220 }}>
+        <Box sx={{ pt: 2 }}>
           {tab === 'journey' && <JourneyTab info={info} />}
           {tab === 'materials' && <MaterialsTab info={info} />}
           {tab === 'origin' && <OriginTab info={info} />}

@@ -20,6 +20,9 @@ import {
   RFID_TEST_MODE, connectVirtualReader, disconnectVirtualReader,
 } from './rfidReader';
 
+// The one text size used across the page (the large count aside).
+const TEXT = { fontSize: '0.95rem' };
+
 const STATUS_TEXT = {
   idle: 'Not connected',
   connecting: 'Connecting…',
@@ -172,15 +175,15 @@ export default function RfidScanPage() {
 
       {/* Count and reader controls (2/5) beside the scanned products (3/5). */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 3fr' }, gap: 2, alignItems: 'start' }}>
-        <Paper sx={{ p: { xs: 2, md: 3 }, textAlign: 'center', position: { md: 'sticky' }, top: { md: 88 } }}>
+        <Paper sx={{ p: { xs: 2, md: 3 }, textAlign: 'center' }}>
           <Typography sx={{ fontSize: { xs: '3.5rem', md: '4.5rem' }, fontWeight: 300, lineHeight: 1, color: 'text.primary' }} aria-live="polite">
             {registered}
           </Typography>
-          <Typography sx={{ mt: 1, letterSpacing: '0.18em', fontWeight: 600, color: 'text.secondary', fontSize: '0.9rem' }}>
+          <Typography sx={{ ...TEXT, mt: 1, letterSpacing: '0.18em', fontWeight: 600, color: 'text.secondary' }}>
             {registered === 1 ? 'PRODUCT SCANNED' : 'PRODUCTS SCANNED'}
           </Typography>
           {unregistered > 0 && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            <Typography color="text.secondary" sx={{ ...TEXT, mt: 0.5 }}>
               and {unregistered} unregistered {unregistered === 1 ? 'tag' : 'tags'}
             </Typography>
           )}
@@ -220,34 +223,34 @@ export default function RfidScanPage() {
 
           <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" sx={{ mt: 2 }}>
             <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: STATUS_COLOR[status], flexShrink: 0 }} />
-            <Typography variant="body2" color="text.secondary">
+            <Typography color="text.secondary" sx={TEXT}>
               {isImpinj ? IMPINJ_READER_DISPLAY_NAME : `${RFID_READER_TYPES.find((r) => r.key === readerType)?.label} reader`} · {STATUS_TEXT[status]}
             </Typography>
           </Stack>
           {!isImpinj && (
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+            <Typography color="text.secondary" sx={{ ...TEXT, display: 'block', mt: 0.5 }}>
               A browser can't reach this reader directly; it connects virtually and lists the tags the reader reports to the server.
             </Typography>
           )}
-          {!!error && <Alert severity="error" sx={{ mt: 2, textAlign: 'left' }}>{error}</Alert>}
+          {!!error && <Alert severity="error" sx={{ ...TEXT, mt: 2, textAlign: 'left' }}>{error}</Alert>}
           {RFID_TEST_MODE && (
-            <Alert severity="info" sx={{ mt: 2, textAlign: 'left' }}>
+            <Alert severity="info" sx={{ ...TEXT, mt: 2, textAlign: 'left' }}>
               Test mode: Connect uses dummy tags, and no reader is contacted.
             </Alert>
           )}
         </Paper>
 
         <Paper sx={{ p: { xs: 2, md: 2.5 }, minHeight: { md: 'calc(100vh - 230px)' } }}>
-          <Typography sx={{ fontWeight: 700, mb: 2 }}>Scanned products</Typography>
+          <Typography sx={{ ...TEXT, fontWeight: 700, mb: 1.5 }}>Scanned products</Typography>
           {items.length === 0 ? (
             <Box sx={{ py: 8, textAlign: 'center' }}>
               <SensorsIcon sx={{ fontSize: 44, color: 'text.disabled' }} />
-              <Typography color="text.secondary" sx={{ mt: 1 }}>
+              <Typography color="text.secondary" sx={{ ...TEXT, mt: 1 }}>
                 {connected ? 'Waiting for tags… Hold a tagged product near the reader.' : 'Connect a reader to start scanning.'}
               </Typography>
             </Box>
           ) : (
-            <Stack spacing={1.25}>
+            <Stack spacing={1}>
               {items.map((it) => <ScannedRow key={it.epc} item={it} onOpen={() => setDetail(it)} />)}
             </Stack>
           )}
@@ -268,31 +271,32 @@ export default function RfidScanPage() {
 function ScannedRow({ item, onOpen }) {
   const p = item.product;
   const image = p ? normalizeProductImages(p.images)[0] : '';
-  const facts = p ? [p.color && `Color: ${p.color}`, p.size && `Size: ${p.size}`].filter(Boolean).join(' · ') : '';
+  const facts = p ? [p.color && `Color: ${p.color}`, p.size && `Size: ${p.size}`].filter(Boolean) : [];
   const price = p ? formatPrice(p.price, p.currency) : '';
   return (
-    <Paper variant="outlined" sx={{ p: 1.5, display: 'flex', alignItems: 'center', gap: 2, borderRadius: 2 }}>
-      <Box sx={{ width: 72, height: 72, borderRadius: 1.5, bgcolor: 'grey.100', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <Paper variant="outlined" sx={{ px: 1.5, py: 1, display: 'flex', alignItems: 'center', gap: 1.5, borderRadius: 2 }}>
+      <Box sx={{ width: 48, height: 48, borderRadius: 1, bgcolor: 'grey.100', overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {image ? (
           <img src={getFileUrl(image)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : p === undefined ? (
-          <CircularProgress size={22} />
+          <CircularProgress size={18} />
         ) : (
-          <InventoryIcon sx={{ color: 'text.disabled', fontSize: 30 }} />
+          <InventoryIcon sx={{ color: 'text.disabled', fontSize: 24 }} />
         )}
       </Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: '1.05rem' }} noWrap>
+        <Typography sx={{ ...TEXT, fontWeight: 700 }} noWrap>
           {p ? p.name || 'Unnamed product' : p === null ? 'Unregistered tag' : 'Looking up…'}
+          {!!p?.brandInfo?.name && <Box component="span" sx={{ fontWeight: 400, color: 'text.secondary' }}>{` (Brand: ${p.brandInfo.name})`}</Box>}
         </Typography>
-        {!!facts && <Typography variant="body2" color="text.secondary">{facts}</Typography>}
-        {!!p?.brandInfo?.name && <Typography variant="body2" color="text.secondary">{p.brandInfo.name}</Typography>}
-        <Typography variant="caption" color="text.disabled" sx={{ fontFamily: 'monospace' }}>{item.epc}</Typography>
+        <Typography sx={{ ...TEXT, color: 'text.secondary' }} noWrap>
+          {[...facts, item.epc].join(' · ')}
+        </Typography>
       </Box>
-      {p === null && <Chip size="small" label="Not registered" variant="outlined" />}
-      {!!price && <Typography sx={{ fontWeight: 700, fontSize: '1.05rem', color: 'primary.main', whiteSpace: 'nowrap' }}>{price}</Typography>}
+      {p === null && <Chip size="small" label="Not registered" variant="outlined" sx={TEXT} />}
+      {!!price && <Typography sx={{ ...TEXT, fontWeight: 700, color: 'primary.main', whiteSpace: 'nowrap' }}>{price}</Typography>}
       {p && (
-        <Button variant="outlined" endIcon={<ChevronRightIcon />} onClick={onOpen} sx={{ whiteSpace: 'nowrap' }}>
+        <Button size="small" variant="outlined" endIcon={<ChevronRightIcon />} onClick={onOpen} sx={{ ...TEXT, whiteSpace: 'nowrap' }}>
           Product details
         </Button>
       )}
