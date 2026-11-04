@@ -166,77 +166,84 @@ export default function RfidScanPage() {
         description="Connect an RFID reader and see every product whose tag passes it."
       />
 
-      <Paper sx={{ p: { xs: 2, md: 3 }, mb: 2, textAlign: 'center' }}>
-        <Typography sx={{ fontSize: { xs: '3.5rem', md: '4.5rem' }, fontWeight: 300, lineHeight: 1, color: 'text.primary' }} aria-live="polite">
-          {registered}
-        </Typography>
-        <Typography sx={{ mt: 1, letterSpacing: '0.18em', fontWeight: 600, color: 'text.secondary', fontSize: '0.9rem' }}>
-          {registered === 1 ? 'PRODUCT SCANNED' : 'PRODUCTS SCANNED'}
-        </Typography>
-        {unregistered > 0 && (
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            and {unregistered} unregistered {unregistered === 1 ? 'tag' : 'tags'}
+      {/* Count and reader controls (2/5) beside the scanned products (3/5). */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 3fr' }, gap: 2, alignItems: 'start' }}>
+        <Paper sx={{ p: { xs: 2, md: 3 }, textAlign: 'center', position: { md: 'sticky' }, top: { md: 88 } }}>
+          <Typography sx={{ fontSize: { xs: '3.5rem', md: '4.5rem' }, fontWeight: 300, lineHeight: 1, color: 'text.primary' }} aria-live="polite">
+            {registered}
           </Typography>
-        )}
+          <Typography sx={{ mt: 1, letterSpacing: '0.18em', fontWeight: 600, color: 'text.secondary', fontSize: '0.9rem' }}>
+            {registered === 1 ? 'PRODUCT SCANNED' : 'PRODUCTS SCANNED'}
+          </Typography>
+          {unregistered > 0 && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              and {unregistered} unregistered {unregistered === 1 ? 'tag' : 'tags'}
+            </Typography>
+          )}
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="center" alignItems="center" sx={{ mt: 3 }}>
           <TextField
             select
             size="small"
+            fullWidth
             label="Reader"
             value={readerType}
             onChange={(e) => changeReaderType(e.target.value)}
             disabled={busy}
-            sx={{ minWidth: 180 }}
+            sx={{ mt: 3, textAlign: 'left' }}
           >
             {RFID_READER_TYPES.map((r) => <MenuItem key={r.key} value={r.key}>{r.label}</MenuItem>)}
           </TextField>
-          <Button
-            variant="contained"
-            color={connected ? 'error' : 'primary'}
-            startIcon={busy ? <CircularProgress size={18} color="inherit" /> : connected ? <BluetoothDisabledIcon /> : <BluetoothIcon />}
-            onClick={connected ? disconnect : connect}
-            disabled={busy}
-            sx={{ minWidth: 150 }}
-          >
-            {connected ? 'Disconnect' : 'Connect'}
-          </Button>
-          <Button variant="outlined" startIcon={<ClearAllIcon />} onClick={clear} disabled={!items.length} sx={{ minWidth: 120 }}>
-            Clear
-          </Button>
-          <Tooltip title="Reader settings">
-            <IconButton onClick={() => setSettingsOpen(true)} aria-label="Reader settings" sx={{ border: 1, borderColor: 'divider' }}>
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
-        </Stack>
+          <Stack direction="row" spacing={1.25} alignItems="center" sx={{ mt: 1.5 }}>
+            <Button
+              variant="contained"
+              color={connected ? 'error' : 'primary'}
+              startIcon={busy ? <CircularProgress size={18} color="inherit" /> : connected ? <BluetoothDisabledIcon /> : <BluetoothIcon />}
+              onClick={connected ? disconnect : connect}
+              disabled={busy}
+              sx={{ flex: 1 }}
+            >
+              {connected ? 'Disconnect' : 'Connect'}
+            </Button>
+            <Button variant="outlined" startIcon={<ClearAllIcon />} onClick={clear} disabled={!items.length}>
+              Clear
+            </Button>
+            <Tooltip title="Reader settings">
+              <IconButton onClick={() => setSettingsOpen(true)} aria-label="Reader settings" sx={{ border: 1, borderColor: 'divider' }}>
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
 
-        <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" sx={{ mt: 2 }}>
-          <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: STATUS_COLOR[status] }} />
-          <Typography variant="body2" color="text.secondary">
-            {isImpinj ? IMPINJ_READER_DISPLAY_NAME : `${RFID_READER_TYPES.find((r) => r.key === readerType)?.label} reader`} · {STATUS_TEXT[status]}
-          </Typography>
-        </Stack>
-        {!isImpinj && (
-          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-            A browser can't reach this reader directly; it connects virtually and lists the tags the reader reports to the server.
-          </Typography>
-        )}
-        {!!error && <Alert severity="error" sx={{ mt: 2, textAlign: 'left', maxWidth: 640, mx: 'auto' }}>{error}</Alert>}
-      </Paper>
-
-      {items.length === 0 ? (
-        <Paper sx={{ p: 5, textAlign: 'center' }}>
-          <SensorsIcon sx={{ fontSize: 44, color: 'text.disabled' }} />
-          <Typography color="text.secondary" sx={{ mt: 1 }}>
-            {connected ? 'Waiting for tags… Hold a tagged product near the reader.' : 'Connect a reader to start scanning.'}
-          </Typography>
+          <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" sx={{ mt: 2 }}>
+            <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: STATUS_COLOR[status], flexShrink: 0 }} />
+            <Typography variant="body2" color="text.secondary">
+              {isImpinj ? IMPINJ_READER_DISPLAY_NAME : `${RFID_READER_TYPES.find((r) => r.key === readerType)?.label} reader`} · {STATUS_TEXT[status]}
+            </Typography>
+          </Stack>
+          {!isImpinj && (
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              A browser can't reach this reader directly; it connects virtually and lists the tags the reader reports to the server.
+            </Typography>
+          )}
+          {!!error && <Alert severity="error" sx={{ mt: 2, textAlign: 'left' }}>{error}</Alert>}
         </Paper>
-      ) : (
-        <Stack spacing={1.25}>
-          {items.map((it) => <ScannedRow key={it.epc} item={it} onOpen={() => setDetail(it)} />)}
-        </Stack>
-      )}
+
+        <Paper sx={{ p: { xs: 2, md: 2.5 }, minHeight: { md: 'calc(100vh - 230px)' } }}>
+          <Typography sx={{ fontWeight: 700, mb: 2 }}>Scanned products</Typography>
+          {items.length === 0 ? (
+            <Box sx={{ py: 8, textAlign: 'center' }}>
+              <SensorsIcon sx={{ fontSize: 44, color: 'text.disabled' }} />
+              <Typography color="text.secondary" sx={{ mt: 1 }}>
+                {connected ? 'Waiting for tags… Hold a tagged product near the reader.' : 'Connect a reader to start scanning.'}
+              </Typography>
+            </Box>
+          ) : (
+            <Stack spacing={1.25}>
+              {items.map((it) => <ScannedRow key={it.epc} item={it} onOpen={() => setDetail(it)} />)}
+            </Stack>
+          )}
+        </Paper>
+      </Box>
 
       <ProductDetailDialog
         open={!!detail}

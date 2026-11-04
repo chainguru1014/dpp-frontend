@@ -20,12 +20,12 @@ export const IMPINJ_DEFAULT_READER_SETTINGS = {
   autoConnectOnStartup: true,
 };
 
-// Reader types, as in the app. Only Impinj reaches a real reader from a
-// browser; Yometel (Bluetooth, phone only) and Zebra connect virtually and
-// take their tags from /rfid/recent, like the app's web build.
+// Reader types offered on the admin site (the app also has Yometel, a
+// Bluetooth reader only a phone can use). Impinj reaches the real reader;
+// Zebra connects virtually and takes its tags from /rfid/recent, like the
+// app's web build.
 export const RFID_READER_TYPES = [
   { key: 'impinj', label: 'Impinj' },
-  { key: 'yometel', label: 'Yometel' },
   { key: 'zebra', label: 'Zebra' },
 ];
 
