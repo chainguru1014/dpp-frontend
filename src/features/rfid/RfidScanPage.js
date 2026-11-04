@@ -163,7 +163,6 @@ export default function RfidScanPage() {
       <PageHeader
         icon={SensorsIcon}
         title="RFID Scan"
-        description="Connect an RFID reader and see every product whose tag passes it."
       />
 
       {/* Count and reader controls (2/5) beside the scanned products (3/5). */}
