@@ -17,6 +17,7 @@ import {
   IMPINJ_DEFAULT_READER_SETTINGS, IMPINJ_READER_DISPLAY_NAME, RFID_POLL_MS, RFID_READER_TYPES, STATUS_CHECK_EVERY_N_TICKS,
   connectAndStartImpinj, fetchProduct, formatPrice, getImpinjReaderSettings, getImpinjReaderStatus, getImpinjTagsInView,
   getRecentTags, lookupTagProduct, stopAndDisconnectImpinj, updateImpinjReaderSettings,
+  RFID_TEST_MODE, connectVirtualReader, disconnectVirtualReader,
 } from './rfidReader';
 
 const STATUS_TEXT = {
@@ -114,6 +115,7 @@ export default function RfidScanPage() {
   const connect = async () => {
     setError('');
     if (!isImpinj) {
+      await connectVirtualReader();
       setStatus('reading');
       return;
     }
@@ -132,7 +134,10 @@ export default function RfidScanPage() {
 
   const disconnect = async () => {
     setStatus('idle');
-    if (!isImpinj) return;
+    if (!isImpinj) {
+      await disconnectVirtualReader();
+      return;
+    }
     setBusy(true);
     try {
       await stopAndDisconnectImpinj();
@@ -225,6 +230,11 @@ export default function RfidScanPage() {
             </Typography>
           )}
           {!!error && <Alert severity="error" sx={{ mt: 2, textAlign: 'left' }}>{error}</Alert>}
+          {RFID_TEST_MODE && (
+            <Alert severity="info" sx={{ mt: 2, textAlign: 'left' }}>
+              Test mode: Connect uses dummy tags, and no reader is contacted.
+            </Alert>
+          )}
         </Paper>
 
         <Paper sx={{ p: { xs: 2, md: 2.5 }, minHeight: { md: 'calc(100vh - 230px)' } }}>
