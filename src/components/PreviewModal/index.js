@@ -15,7 +15,6 @@ import PlayCircleFilledIcon from '@mui/icons-material/PlayCircleFilled';
 import ThumbUpOffAltIcon from '@mui/icons-material/ThumbUpOffAlt';
 import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
 import SvgIcon from '@mui/material/SvgIcon';
 import CropFreeIcon from '@mui/icons-material/CropFree';
 import ThumbDownOffAltIcon from '@mui/icons-material/ThumbDownOffAlt';
@@ -248,12 +247,9 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   ];
   const safeIndex = slides.length ? Math.min(slideIndex, slides.length - 1) : 0;
   const active = slides[safeIndex];
-  const productId = info.pmc_code || (info.token_id != null ? info.token_id : '');
 
   const highlightRows = [
     info.name && { Icon: LocalOfferIcon, text: info.name, strong: true },
-    info.model && { Icon: CheckroomIcon, text: info.model },
-    look.showProductId && productId !== '' && { Icon: QrCode2Icon, text: `ID: ${productId}` },
     info.productType && { Icon: CategoryIcon, text: `Type: ${info.productType}` },
     info.color && { Icon: PaletteIcon, text: `Color: ${info.color}` },
     info.size && { Icon: StraightenIcon, text: `Size: ${info.size}` },
