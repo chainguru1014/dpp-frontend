@@ -16,8 +16,7 @@ import ProductDetailDialog from './ProductDetailDialog';
 import {
   IMPINJ_DEFAULT_READER_SETTINGS, IMPINJ_READER_DISPLAY_NAME, RFID_POLL_MS, RFID_READER_TYPES, STATUS_CHECK_EVERY_N_TICKS,
   connectAndStartImpinj, fetchProduct, formatPrice, getImpinjReaderSettings, getImpinjReaderStatus, getImpinjTagsInView,
-  getRecentTags, lookupTagProduct, stopAndDisconnectImpinj, updateImpinjReaderSettings,
-  RFID_TEST_MODE, connectVirtualReader, disconnectVirtualReader,
+  lookupTagProduct, stopAndDisconnectImpinj, updateImpinjReaderSettings,
 } from './rfidReader';
 
 // The one text size used across the page (the large count aside).
@@ -35,7 +34,8 @@ const STATUS_COLOR = { idle: '#8a94a6', connecting: '#d9822b', reading: '#2e7d32
 // The reader is driven exactly as in the staff app's RFID capture (see
 // rfidReader.js); the list only lives on this page, and Clear empties it.
 export default function RfidScanPage() {
-  const [readerType, setReaderType] = useState('impinj');
+  // Impinj is the only working reader; picking Zebra opens a notice.
+  const [zebraNoticeOpen, setZebraNoticeOpen] = useState(false);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -46,7 +46,6 @@ export default function RfidScanPage() {
   const [detail, setDetail] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const isImpinj = readerType === 'impinj';
   const connected = status === 'reading';
 
   // Adds tags not seen before, then looks up their products.
@@ -83,23 +82,18 @@ export default function RfidScanPage() {
       if (inFlight) return;
       inFlight = true;
       try {
-        if (isImpinj) {
-          tick += 1;
-          if (tick % STATUS_CHECK_EVERY_N_TICKS === 0) {
-            const s = await getImpinjReaderStatus();
-            if (cancelled) return;
-            if (!s.isStarted) {
-              setStatus('failed');
-              setError(s.lastError || 'The connection to the reader was lost.');
-              return;
-            }
+        tick += 1;
+        if (tick % STATUS_CHECK_EVERY_N_TICKS === 0) {
+          const s = await getImpinjReaderStatus();
+          if (cancelled) return;
+          if (!s.isStarted) {
+            setStatus('failed');
+            setError(s.lastError || 'The connection to the reader was lost.');
+            return;
           }
-          const tags = await getImpinjTagsInView();
-          if (!cancelled) addTags(tags || []);
-        } else {
-          const tags = await getRecentTags();
-          if (!cancelled) addTags(tags);
         }
+        const tags = await getImpinjTagsInView();
+        if (!cancelled) addTags(tags || []);
       } catch (err) {
         // A missed poll is retried on the next tick.
       } finally {
@@ -113,15 +107,10 @@ export default function RfidScanPage() {
       clearInterval(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connected, isImpinj]);
+  }, [connected]);
 
   const connect = async () => {
     setError('');
-    if (!isImpinj) {
-      await connectVirtualReader();
-      setStatus('reading');
-      return;
-    }
     setBusy(true);
     setStatus('connecting');
     try {
@@ -137,10 +126,6 @@ export default function RfidScanPage() {
 
   const disconnect = async () => {
     setStatus('idle');
-    if (!isImpinj) {
-      await disconnectVirtualReader();
-      return;
-    }
     setBusy(true);
     try {
       await stopAndDisconnectImpinj();
@@ -156,11 +141,8 @@ export default function RfidScanPage() {
     setItems([]);
   };
 
-  const changeReaderType = async (next) => {
-    if (connected) await disconnect();
-    setError('');
-    setStatus('idle');
-    setReaderType(next);
+  const changeReaderType = (next) => {
+    if (next === 'zebra') setZebraNoticeOpen(true);
   };
 
   const registered = items.filter((it) => it.product).length;
@@ -193,7 +175,7 @@ export default function RfidScanPage() {
             size="small"
             fullWidth
             label="Reader"
-            value={readerType}
+            value="impinj"
             onChange={(e) => changeReaderType(e.target.value)}
             disabled={busy}
             sx={{ mt: 3, textAlign: 'left' }}
@@ -224,20 +206,10 @@ export default function RfidScanPage() {
           <Stack direction="row" spacing={1} justifyContent="center" alignItems="center" sx={{ mt: 2 }}>
             <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: STATUS_COLOR[status], flexShrink: 0 }} />
             <Typography color="text.secondary" sx={TEXT}>
-              {isImpinj ? IMPINJ_READER_DISPLAY_NAME : `${RFID_READER_TYPES.find((r) => r.key === readerType)?.label} reader`} · {STATUS_TEXT[status]}
+              {IMPINJ_READER_DISPLAY_NAME} · {STATUS_TEXT[status]}
             </Typography>
           </Stack>
-          {!isImpinj && (
-            <Typography color="text.secondary" sx={{ ...TEXT, display: 'block', mt: 0.5 }}>
-              A browser can't reach this reader directly; it connects virtually and lists the tags the reader reports to the server.
-            </Typography>
-          )}
           {!!error && <Alert severity="error" sx={{ ...TEXT, mt: 2, textAlign: 'left' }}>{error}</Alert>}
-          {RFID_TEST_MODE && (
-            <Alert severity="info" sx={{ ...TEXT, mt: 2, textAlign: 'left' }}>
-              Test mode: Connect uses dummy tags, and no reader is contacted.
-            </Alert>
-          )}
         </Paper>
 
         <Paper sx={{ p: { xs: 2, md: 2.5 }, minHeight: { md: 'calc(100vh - 230px)' } }}>
@@ -264,6 +236,15 @@ export default function RfidScanPage() {
         onClose={() => setDetail(null)}
       />
       <ReaderSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <Dialog open={zebraNoticeOpen} onClose={() => setZebraNoticeOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Zebra reader</DialogTitle>
+        <DialogContent>
+          <Typography sx={TEXT}>Zebra readers are under construction. Please use the Impinj reader for now.</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={() => setZebraNoticeOpen(false)}>OK</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
