@@ -47,6 +47,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import SensorsIcon from '@mui/icons-material/Sensors';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import PersonIcon from '@mui/icons-material/Person';
@@ -131,6 +132,7 @@ import ItemTracePage from '../features/trace/ItemTracePage';
 import SecurityPage from '../features/security/SecurityPage';
 import ServiceRequestsPage from '../features/circular/ServiceRequestsPage';
 import ShipmentInspectionPage from '../features/shipment/ShipmentInspectionPage';
+import RfidScanPage from '../features/rfid/RfidScanPage';
 import BrandPage from '../features/brand/BrandPage';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ChatPage from '../features/chat/ChatPage';
@@ -162,7 +164,7 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 // Every page the shell can show. Each one has its own web address
 // (/admin/<page>) so the browser Back/Forward buttons and bookmarks work.
 const KNOWN_PAGES = [
-  'dashboard', 'products', 'newProduct', 'generateCode', 'shipmentInspection', 'users', 'companies', 'employeeAuditLog',
+  'dashboard', 'rfidScan', 'products', 'newProduct', 'generateCode', 'shipmentInspection', 'users', 'companies', 'employeeAuditLog',
   'processSteps', 'captureHistory', 'history', 'lca', 'esg', 'notifications',
   'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security', 'serviceRequests', 'brand',
 ];
@@ -255,14 +257,14 @@ const InnerPage = () => {
   const isEmployeeActor = company?.actorKind === 'Employee';
   // Shared by every non-admin role: LCA, Notifications, Recommendations, Chat.
   const COMMON_PAGES = ['dashboard', 'products', 'profile', 'lca', 'esg', 'allNotifications', 'recommendations', 'chat'];
-  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'newProduct', 'generateCode', 'shipmentInspection', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security', 'serviceRequests', 'brand'];
+  const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'rfidScan', 'newProduct', 'generateCode', 'shipmentInspection', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security', 'serviceRequests', 'brand'];
   const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
   const isWorkingEmployee = isEmployeeActor && !isSupervisor;
   // A working employee: only what their job needs — Dashboard, Products
   // (read-only), Generate Code and their own Capture History (plus Profile
   // and their notification inbox). Transfers/Recommendations/Chat are for
   // brands and shoppers and only cluttered their menu.
-  const WORKING_EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'products', 'profile', 'allNotifications', 'generateCode', 'captureHistory'];
+  const WORKING_EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'rfidScan', 'products', 'profile', 'allNotifications', 'generateCode', 'captureHistory'];
   // A normal DPP (app) user: the common pages (Products read-only), plus
   // Scan History.
   const APP_USER_ALLOWED_PAGES = [...COMMON_PAGES, 'history'];
@@ -1913,7 +1915,8 @@ const InnerPage = () => {
   const navGroups = [
     {
       title: null,
-      items: [['dashboard', 'Dashboard', DashboardIcon, true]],
+      // RFID Scan: everyone except app users (shoppers have no reader).
+      items: [['dashboard', 'Dashboard', DashboardIcon, true], ['rfidScan', 'RFID Scan', SensorsIcon, !isAppUser]],
     },
     {
       key: 'products',
@@ -2295,6 +2298,8 @@ const InnerPage = () => {
           {activePage === 'serviceRequests' && canSeeItemSearch && (
             <ServiceRequestsPage token={token} showCompany={isAdmin} onOpenProducts={() => go('products')} />
           )}
+
+          {activePage === 'rfidScan' && !isAppUser && <RfidScanPage />}
 
           {activePage === 'shipmentInspection' && canSeeShipmentInspection && (
             <ShipmentInspectionPage token={token} products={products} />

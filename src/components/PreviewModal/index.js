@@ -80,10 +80,10 @@ const LeafIcon = (props) => (
 // Overview blocks the app groups right under the photos.
 const BUTTON_BLOCKS = ['feedback', 'actions'];
 
-const SERVICE_ICON = { repair: BuildIcon, resell: StorefrontIcon, rent: EventRepeatIcon, recycle: RecyclingIcon };
+export const SERVICE_ICON = { repair: BuildIcon, resell: StorefrontIcon, rent: EventRepeatIcon, recycle: RecyclingIcon };
 
 // Mirrors ProductLifecycleScreen's JOURNEY_STAGES in the app.
-const JOURNEY_STAGES = [
+export const JOURNEY_STAGES = [
   { key: 'materials', label: 'Materials', Icon: SpaIcon },
   { key: 'manufacturing', label: 'Manufacturing', Icon: PrecisionManufacturingIcon },
   { key: 'transportation', label: 'Transportation', Icon: LocalShippingIcon },
@@ -102,7 +102,7 @@ const LIFECYCLE_TABS = [
 
 // Mirrors ProductLifecycleScreen's CARE_TIP_BY_ICON fallback (used when the
 // brand hasn't supplied its own maintenance.tips list).
-const CARE_TIP_BY_ICON = {
+export const CARE_TIP_BY_ICON = {
   wash_30: { primary: 'Machine wash cold.', detail: 'Maximum 30°C' },
   wash_40: { primary: 'Machine wash warm.', detail: 'Maximum 40°C' },
   wash_50: { primary: 'Machine wash.', detail: 'Maximum 50°C' },
@@ -119,14 +119,14 @@ const CARE_TIP_BY_ICON = {
   tumble_dry_high: { primary: 'Tumble dry on a normal / high setting.' },
 };
 
-const CARE_SYMBOL_GLYPH = {
+export const CARE_SYMBOL_GLYPH = {
   wash_30: '30°', wash_40: '40°', wash_50: '50°', wash_60: '60°', wash_70: '70°',
   dry_clean_P: 'P', dry_clean_F: 'F',
   iron_low: '•', iron_med: '••', iron_high: '•••',
   bleach_no: '⌀', bleach_any: '△',
   tumble_dry_low: '○', tumble_dry_high: '◎',
 };
-const CARE_SYMBOL_LABEL = {
+export const CARE_SYMBOL_LABEL = {
   wash_30: 'Wash up to 30°C', wash_40: 'Wash up to 40°C', wash_50: 'Wash up to 50°C', wash_60: 'Wash up to 60°C', wash_70: 'Wash up to 70°C',
   dry_clean_P: 'Dry clean P', dry_clean_F: 'Dry clean F',
   iron_low: 'Iron low', iron_med: 'Iron med', iron_high: 'Iron high',
@@ -135,11 +135,11 @@ const CARE_SYMBOL_LABEL = {
 };
 
 // "25kg" -> "25 kg" -- purely a spacing fix, never invents/changes the unit.
-const formatUnitSpacing = (raw) => {
+export const formatUnitSpacing = (raw) => {
   if (!raw) return raw;
   return String(raw).replace(/^(\s*[\d.,]+)\s*([a-zA-Zµ].*)$/, '$1 $2').trim();
 };
-const toArray = (v) => (v == null ? [] : Array.isArray(v) ? v : typeof v === 'object' ? Object.values(v) : [v]);
+export const toArray = (v) => (v == null ? [] : Array.isArray(v) ? v : typeof v === 'object' ? Object.values(v) : [v]);
 
 // Generic label/value row -- mirrors ProductLifecycleScreen's <Row>. Renders
 // nothing when there's no value so callers can list every possible field
