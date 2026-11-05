@@ -133,6 +133,7 @@ import SecurityPage from '../features/security/SecurityPage';
 import ServiceRequestsPage from '../features/circular/ServiceRequestsPage';
 import ShipmentInspectionPage from '../features/shipment/ShipmentInspectionPage';
 import RfidScanPage from '../features/rfid/RfidScanPage';
+import { isDesktopApp } from '../features/rfid/rfidReader';
 import BrandPage from '../features/brand/BrandPage';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ChatPage from '../features/chat/ChatPage';
@@ -549,7 +550,10 @@ const InnerPage = () => {
             : KNOWN_PAGES.filter((p) => !ADMIN_ONLY.includes(p));
     // Opening a product's own code panel ('newProduct' in print mode) stays
     // reachable from the Products page for read-only roles.
-    if (!allowed.includes(activePage) && activePage !== 'newProduct') {
+    // RFID Scan exists only in the desktop app; a browser bookmark or typed
+    // /admin/rfidScan lands on Dashboard instead.
+    const desktopOnlyBlocked = activePage === 'rfidScan' && !isDesktopApp;
+    if (desktopOnlyBlocked || (!allowed.includes(activePage) && activePage !== 'newProduct')) {
       setActivePage('dashboard');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1915,8 +1919,10 @@ const InnerPage = () => {
   const navGroups = [
     {
       title: null,
-      // RFID Scan: everyone except app users (shoppers have no reader).
-      items: [['dashboard', 'Dashboard', DashboardIcon, true], ['rfidScan', 'RFID Scan', SensorsIcon, !isAppUser]],
+      // RFID Scan: everyone except app users (shoppers have no reader), and
+      // only in the desktop app (Windows, Mac or Linux): a web browser can't
+      // reach the reader.
+      items: [['dashboard', 'Dashboard', DashboardIcon, true], ['rfidScan', 'RFID Scan', SensorsIcon, !isAppUser && isDesktopApp]],
     },
     {
       key: 'products',
@@ -2299,7 +2305,7 @@ const InnerPage = () => {
             <ServiceRequestsPage token={token} showCompany={isAdmin} onOpenProducts={() => go('products')} />
           )}
 
-          {activePage === 'rfidScan' && !isAppUser && <RfidScanPage />}
+          {activePage === 'rfidScan' && !isAppUser && isDesktopApp && <RfidScanPage />}
 
           {activePage === 'shipmentInspection' && canSeeShipmentInspection && (
             <ShipmentInspectionPage token={token} products={products} />

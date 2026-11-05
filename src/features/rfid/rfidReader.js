@@ -56,6 +56,13 @@ async function request(method, path, body) {
 // on the local network; the app's web build switches to it the same way.
 const desktop = typeof window !== 'undefined' ? window.electronImpinj : undefined;
 
+// True only inside the desktop app (Windows, Mac or Linux). A web browser can't
+// reach the reader, so the RFID Scan page is offered only here.
+export const isDesktopApp = Boolean(desktop);
+// 'win32' | 'darwin' | 'linux' from the desktop app, undefined in a browser
+// (and in desktop builds from before the preload reported it).
+export const desktopPlatform = desktop && desktop.platform;
+
 export const getImpinjReaderStatus = () => (desktop ? desktop.getStatus() : request('GET', 'status'));
 export const connectImpinjReader = () => (desktop ? desktop.connect() : request('POST', 'connect'));
 export const disconnectImpinjReader = () => (desktop ? desktop.disconnect() : request('POST', 'disconnect'));
