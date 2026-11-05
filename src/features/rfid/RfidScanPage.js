@@ -365,6 +365,24 @@ function ReaderSettingsDialog({ open, onClose }) {
               </Stack>
             )}
             <FormControlLabel control={<Switch checked={!!form.autoConnectOnStartup} onChange={setFlag('autoConnectOnStartup')} />} label="Connect when the service starts" />
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>Reader admin login</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+                The reader allows one connection at a time. When another device is connected, Connect uses this login to make the reader drop it.
+              </Typography>
+              <Stack direction="row" spacing={2}>
+                <TextField label="Admin user" value={form.adminUsername || ''} onChange={set('adminUsername')} sx={{ width: 180 }} autoComplete="off" />
+                <TextField
+                  label="Admin password"
+                  type="password"
+                  value={form.adminPassword || ''}
+                  onChange={set('adminPassword')}
+                  fullWidth
+                  autoComplete="new-password"
+                  helperText={form.adminPasswordSet ? 'Saved. Leave blank to keep it.' : 'Not set: the factory password is tried.'}
+                />
+              </Stack>
+            </Box>
             {antennas.length > 0 && (
               <Box>
                 <Typography variant="body2" sx={{ mb: 0.5 }}>Enabled antennas</Typography>

@@ -77,8 +77,16 @@ export const updateImpinjReaderSettings = (settings) => (desktop ? desktop.updat
 // then always issue start, because the service's isStarted flag can be
 // stale. Throws with the reader's own error when either step fails.
 export async function connectAndStartImpinj() {
-  let status = await getImpinjReaderStatus();
-  if (!status.isConnected) status = await connectImpinjReader();
+  // In the desktop app Connect always reconnects: it drops this app's old
+  // connection and, if another device holds the reader, has the reader close
+  // that one (desktop/impinjLlrpMain.js connectReader).
+  let status;
+  if (desktop) {
+    status = await connectImpinjReader();
+  } else {
+    status = await getImpinjReaderStatus();
+    if (!status.isConnected) status = await connectImpinjReader();
+  }
   if (!status.isConnected) throw new Error(status.lastError || 'Could not connect to the reader.');
   const started = await startImpinjReading();
   if (!started.isStarted) throw new Error(started.lastError || 'Could not start reading.');

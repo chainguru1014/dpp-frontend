@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
@@ -7,6 +7,24 @@ import CloseIcon from '@mui/icons-material/Close';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { getFileUrl } from '../../helper';
+import { attachYoutubeSound, youtubeEmbedUrl } from '../../utils/youtubeSound';
+
+// A YouTube video that plays with sound (see utils/youtubeSound).
+function YoutubeEmbed({ videoId, title }) {
+  const ref = useRef(null);
+  useEffect(() => attachYoutubeSound(ref.current), [videoId]);
+  return (
+    <Box
+      ref={ref}
+      component="iframe"
+      title={title}
+      src={youtubeEmbedUrl(videoId)}
+      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+      allowFullScreen
+      sx={{ border: 0, width: '100%', height: '100%' }}
+    />
+  );
+}
 
 const navButtonSx = {
   position: 'absolute',
@@ -63,14 +81,10 @@ export default function MediaLightbox({ open, slides, index = 0, onClose }) {
           <Box component="img" src={getFileUrl(slide.src)} alt="" sx={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
         )}
         {slide?.type === 'video' && slide.video.videoId && (
-          <Box
+          <YoutubeEmbed
             key={slide.video.videoId}
-            component="iframe"
+            videoId={slide.video.videoId}
             title={slide.video.description || 'Product video'}
-            src={`https://www.youtube.com/embed/${slide.video.videoId}?autoplay=1&rel=0&modestbranding=1`}
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            allowFullScreen
-            sx={{ border: 0, width: '100%', height: '100%' }}
           />
         )}
         {slide?.type === 'video' && !slide.video.videoId && slide.video.fileUrl && (

@@ -9,4 +9,8 @@ export const IMPINJ_DEFAULT_READER_SETTINGS = {
   maxReconnectAttempts: 10,
   unlimitedReconnectAttempts: false,
   autoConnectOnStartup: true,
+  // Desktop app only: the reader's admin login, used to free the reader when
+  // another device is connected to it.
+  adminUsername: 'root',
+  adminPassword: '',
 };

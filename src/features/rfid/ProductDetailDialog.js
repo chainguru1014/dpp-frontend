@@ -109,10 +109,11 @@ export default function ProductDetailDialog({ open, product, loadProduct, onClos
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" PaperProps={{ sx: { borderRadius: 3 } }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', px: 3, py: 1, borderBottom: 1, borderColor: 'divider' }}>
-        <Typography sx={{ fontWeight: 700, fontSize: '1.1rem', flex: 1 }} noWrap>Product details</Typography>
-        {loading && <CircularProgress size={20} sx={{ mr: 1 }} />}
-        <IconButton onClick={onClose} aria-label="Close"><CloseIcon /></IconButton>
+      {/* Gradient header bar, the same as the theme's DialogTitle. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', px: 3, py: 1, color: '#fff', backgroundImage: 'linear-gradient(135deg, #4a96dd 0%, #1b4f72 100%)' }}>
+        <Typography sx={{ fontWeight: 600, fontSize: '1.1rem', flex: 1 }} noWrap>Product details</Typography>
+        {loading && <CircularProgress size={20} sx={{ mr: 1, color: '#fff' }} />}
+        <IconButton onClick={onClose} aria-label="Close" sx={{ color: '#fff' }}><CloseIcon /></IconButton>
       </Box>
       <DialogContent sx={{ px: 3, py: 2 }}>
         <Grid container spacing={3}>

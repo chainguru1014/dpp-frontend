@@ -93,10 +93,25 @@ const theme = createTheme({
           [compactMediaQuery]: { minHeight: 38, paddingInline: 14 },
           [touchMediaQuery]: { minHeight: 44 },
         },
+        // Filled buttons use the app's button gradient (GradientButton.tsx:
+        // light azure to navy, top-left to bottom-right). Disabled buttons
+        // drop it so MUI's grey shows.
         containedPrimary: {
-          backgroundColor: buttonBlue,
+          backgroundColor: navy,
+          backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navy} 100%)`,
           color: '#ffffff',
-          '&:hover': { backgroundColor: buttonBlueDark },
+          '&:hover': { backgroundColor: navyDark, backgroundImage: `linear-gradient(135deg, ${buttonBlueDark} 0%, ${navyDark} 100%)` },
+          '&.Mui-disabled': { backgroundImage: 'none' },
+        },
+        containedError: {
+          backgroundImage: 'linear-gradient(135deg, #ef6b63 0%, #b71c1c 100%)',
+          '&:hover': { backgroundImage: 'linear-gradient(135deg, #e0544c 0%, #8e1515 100%)' },
+          '&.Mui-disabled': { backgroundImage: 'none' },
+        },
+        containedSuccess: {
+          backgroundImage: 'linear-gradient(135deg, #5cc489 0%, #1b6e30 100%)',
+          '&:hover': { backgroundImage: 'linear-gradient(135deg, #46b074 0%, #145524 100%)' },
+          '&.Mui-disabled': { backgroundImage: 'none' },
         },
         outlinedPrimary: {
           color: buttonBlueDark,

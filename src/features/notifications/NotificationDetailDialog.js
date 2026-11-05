@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   Dialog,
+  DialogTitle,
   DialogContent,
   DialogActions,
   IconButton,
@@ -95,15 +96,18 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 2 } }}>
-      <IconButton onClick={onClose} aria-label="Close" sx={{ position: 'absolute', right: 8, top: 8, zIndex: 2 }}>
-        <CloseIcon />
-      </IconButton>
+      {/* The theme's gradient header bar, like every other dialog. */}
+      <DialogTitle>
+        <Box component="span" sx={{ flex: 1, minWidth: 0, pr: 1 }}>
+          {isTransfer ? 'Request to take ownership of this product' : notification.title}
+        </Box>
+        <IconButton onClick={onClose} aria-label="Close" sx={{ color: '#fff', mr: -1 }}>
+          <CloseIcon />
+        </IconButton>
+      </DialogTitle>
 
       {isTransfer ? (
-        <DialogContent sx={{ pt: 4 }}>
-          <Typography variant="h6" sx={{ fontWeight: 400, mb: 2, pr: 3 }}>
-            Request to take ownership of this product
-          </Typography>
+        <DialogContent>
           {loading ? (
             <Box sx={{ textAlign: 'center', py: 4 }}>
               <CircularProgress size={26} />
@@ -173,10 +177,7 @@ const NotificationDetailDialog = ({ open, notification, recipientKind, recipient
           )}
         </DialogContent>
       ) : (
-        <DialogContent sx={{ pt: 4 }}>
-          <Typography variant="h6" sx={{ fontWeight: 400, mb: 1.5, pr: 3 }}>
-            {notification.title}
-          </Typography>
+        <DialogContent>
           {maxSteps > 0 && (
             <Box sx={{ mb: 2 }}>
               <Box

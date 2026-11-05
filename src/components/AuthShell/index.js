@@ -58,7 +58,8 @@ export function useAuthBackgroundSlide() {
 
 // Cochin is a macOS/iOS system serif — falls through to the nearest
 // look-alikes on Windows/Linux/Android, where it isn't installed.
-const taglineFontFamily = 'Cochin, Georgia, "Times New Roman", Times, serif';
+// Georgia first so every computer (Mac included) shows the same face.
+const taglineFontFamily = 'Georgia, "Times New Roman", Times, serif';
 
 // Fluid size for the flanking taglines: was a fixed 1.15rem regardless of
 // viewport, so it read oversized at 1280x720 and even at 1920x1080. Scales
@@ -190,13 +191,13 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
         zIndex: 1,
       }}
     >
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 400, fontSize: taglineFontSize, lineHeight: 1.2 }}>
         Digital Product Passport
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 400, fontSize: taglineFontSize, lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
         for
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 400, fontSize: taglineFontSize, lineHeight: 1.2 }}>
         Circular Economy Environment
       </Typography>
     </Box>
@@ -214,10 +215,10 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
         // font color changes (see useAuthShellBright), never the card
         // container itself.
         // See-through frosted glass like the original card (which was 20%
-        // white with a 3px blur): 40% white with a 10px blur. Grey helper
+        // white with a 3px blur): 50% white with a 10px blur. Grey helper
         // text inside is darkened (AUTH_MUTED in AuthPage / consent page) so
         // it stays readable over the dark photos.
-        bgcolor: alpha('#ffffff', 0.4),
+        bgcolor: alpha('#ffffff', 0.5),
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         border: '1px solid rgba(255,255,255,0.55)',
@@ -275,13 +276,13 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
         zIndex: 1,
       }}
     >
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 400, fontSize: taglineFontSize, lineHeight: 1.2 }}>
         Improved Traceability
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2, my: 0.3 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 400, fontSize: taglineFontSize, lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
         as
       </Typography>
-      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 700, fontSize: taglineFontSize, lineHeight: 1.2 }}>
+      <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 400, fontSize: taglineFontSize, lineHeight: 1.2 }}>
         Your Concierge
       </Typography>
     </Box>
