@@ -4,14 +4,14 @@ import AppleIcon from '@mui/icons-material/Apple';
 import { signInWithGoogle } from '../../features/auth/useGoogleAuth';
 import { useAppleAuth } from '../../features/auth/useAppleAuth';
 import AuthShell from '../AuthShell';
-import yometelLogoWhite from '../../assets/yometel-logo-white.png';
+import yometelLogo from '../../assets/yometel-logo-trans.png';
 import { compactMediaQuery } from '../../theme';
 import { notifyError } from '../../utils/feedbackBus';
 
-// Colours on the see-through sign-in card: the brand blue (#2f80c8) for
-// text, labels, icons and button text; the logo is the white version.
+// Colours on the see-through sign-in card: dark blue text, lines and icons;
+// the logo is the dark-blue transparent version.
 const AUTH_BLUE = '#2f80c8';
-// Text, lines and icons on the glass are white (CSS variable set by
+// Text, lines and icons on the glass are dark blue (CSS variable set by
 // AuthShell).
 const AUTH_TEXT = 'var(--auth-on-glass, #2f80c8)';
 const AUTH_MUTED = AUTH_TEXT;
@@ -239,7 +239,7 @@ const AuthPage = ({
 
   const logo = (
     <Box sx={{ textAlign: 'center', mb: 2.5, flexShrink: 0 }}>
-      <Box component="img" src={yometelLogoWhite} alt="Yometel" sx={{ width: { xs: 140, sm: 170 }, height: 'auto', display: 'inline-block' }} />
+      <Box component="img" src={yometelLogo} alt="Yometel" sx={{ width: { xs: 140, sm: 170 }, height: 'auto', display: 'inline-block' }} />
     </Box>
   );
 

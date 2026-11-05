@@ -3,10 +3,8 @@ import {
   Alert, Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControlLabel, IconButton, MenuItem, Paper, Stack, Switch, TextField, Tooltip, Typography,
 } from '@mui/material';
-import SensorsIcon from '@mui/icons-material/Sensors';
+import RfidIcon from '../../components/icons/RfidIcon';
 import SettingsIcon from '@mui/icons-material/Settings';
-import BluetoothIcon from '@mui/icons-material/Bluetooth';
-import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import InventoryIcon from '@mui/icons-material/Inventory2Outlined';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -34,8 +32,8 @@ const STATUS_COLOR = { idle: '#8a94a6', connecting: '#d9822b', reading: '#2e7d32
 // The reader is driven exactly as in the staff app's RFID capture (see
 // rfidReader.js); the list only lives on this page, and Clear empties it.
 export default function RfidScanPage() {
-  // Impinj is the only working reader; picking Zebra opens a notice.
-  const [zebraNoticeOpen, setZebraNoticeOpen] = useState(false);
+  // Impinj is the only working reader; picking another type opens a notice.
+  const [noticeReader, setNoticeReader] = useState(null);
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -142,7 +140,8 @@ export default function RfidScanPage() {
   };
 
   const changeReaderType = (next) => {
-    if (next === 'zebra') setZebraNoticeOpen(true);
+    const type = RFID_READER_TYPES.find((r) => r.key === next);
+    if (type?.underConstruction) setNoticeReader(type);
   };
 
   const registered = items.filter((it) => it.product).length;
@@ -151,7 +150,7 @@ export default function RfidScanPage() {
   return (
     <Box>
       <PageHeader
-        icon={SensorsIcon}
+        icon={RfidIcon}
         title="RFID Scan"
       />
 
@@ -186,7 +185,7 @@ export default function RfidScanPage() {
             <Button
               variant="contained"
               color={connected ? 'error' : 'primary'}
-              startIcon={busy ? <CircularProgress size={18} color="inherit" /> : connected ? <BluetoothDisabledIcon /> : <BluetoothIcon />}
+              startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <RfidIcon />}
               onClick={connected ? disconnect : connect}
               disabled={busy}
               sx={{ flex: 1 }}
@@ -216,7 +215,7 @@ export default function RfidScanPage() {
           <Typography sx={{ ...TEXT, fontWeight: 700, mb: 1.5 }}>Scanned products</Typography>
           {items.length === 0 ? (
             <Box sx={{ py: 8, textAlign: 'center' }}>
-              <SensorsIcon sx={{ fontSize: 44, color: 'text.disabled' }} />
+              <RfidIcon sx={{ fontSize: 44, color: 'text.disabled' }} />
               <Typography color="text.secondary" sx={{ ...TEXT, mt: 1 }}>
                 {connected ? 'Waiting for tags… Hold a tagged product near the reader.' : 'Connect a reader to start scanning.'}
               </Typography>
@@ -236,13 +235,13 @@ export default function RfidScanPage() {
         onClose={() => setDetail(null)}
       />
       <ReaderSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <Dialog open={zebraNoticeOpen} onClose={() => setZebraNoticeOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Zebra reader</DialogTitle>
+      <Dialog open={!!noticeReader} onClose={() => setNoticeReader(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>{noticeReader?.label} reader</DialogTitle>
         <DialogContent>
-          <Typography sx={TEXT}>Zebra readers are under construction. Please use the Impinj reader for now.</Typography>
+          <Typography sx={TEXT}>{noticeReader?.label} readers are under construction. Please use the Impinj reader for now.</Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={() => setZebraNoticeOpen(false)}>OK</Button>
+          <Button variant="contained" onClick={() => setNoticeReader(null)}>OK</Button>
         </DialogActions>
       </Dialog>
     </Box>

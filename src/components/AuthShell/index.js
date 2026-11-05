@@ -222,10 +222,10 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         border: '1px solid rgba(255,255,255,0.55)',
-        // Text, lines and icons on the glass are white on every photo.
-        '--auth-on-glass': '#ffffff',
-        '--auth-line': 'rgba(255,255,255,0.75)',
-        '--auth-icon-bg': 'rgba(255,255,255,0.22)',
+        // Text, lines and icons on the glass are dark blue (the app's navy).
+        '--auth-on-glass': '#1b4f72',
+        '--auth-line': 'rgba(27,79,114,0.35)',
+        '--auth-icon-bg': 'rgba(27,79,114,0.1)',
         '& *': { transition: 'color 0.9s ease, border-color 0.9s ease, background-color 0.9s ease' },
         borderRadius: 3,
         boxShadow: '0 24px 60px rgba(0,0,0,0.28)',

@@ -7,7 +7,6 @@ import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
@@ -42,6 +41,13 @@ import BoltIcon from '@mui/icons-material/Bolt';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import EcoIcon from '@mui/icons-material/Nature';
 import ZoomOutMapIcon from '@mui/icons-material/ZoomOutMap';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import PublicIcon from '@mui/icons-material/Public';
+import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import SignalCellularAltIcon from '@mui/icons-material/SignalCellularAlt';
+import WifiIcon from '@mui/icons-material/Wifi';
+import Battery80Icon from '@mui/icons-material/Battery80';
 import CameraIcon from '../../assets/camera_icon.png';
 import YoutubeIcon from '../../assets/youtube-icon.png';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
@@ -54,21 +60,14 @@ import MediaLightbox from '../MediaLightbox';
 // swapped in (utils/dppTheme.dppPalette). Row reads them through context.
 const PaletteContext = React.createContext(dppPalette(null));
 
-const modalStyle = {
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: '400px',
-  maxWidth: '92vw',
-  height: '86vh',
-  maxHeight: '820px',
-  borderRadius: 3,
-  boxShadow: 24,
-  overflow: 'hidden',
-  display: 'flex',
-  flexDirection: 'column',
-};
+// The preview dialog is an iPhone 16: a 393 x 852 pt screen (54 pt status
+// bar with the Dynamic Island, 34 pt home indicator) in a thin bezel, scaled
+// down as a whole when the window is too small to show it at full size.
+const IPHONE_16 = { width: 393, height: 852, statusBar: 54, homeIndicator: 34, radius: 55, bezel: 12 };
+// The phone view below is drawn at a smaller scale than the app's real
+// sizes (fonts, icons, bars); inside the iPhone frame it is enlarged by
+// this much so it matches the app on a real iPhone 16.
+const DEVICE_CONTENT_ZOOM = 1.2;
 
 // The app's Lifecycle icon (Material "eco"), which @mui/icons-material does not ship.
 const LeafIcon = (props) => (
@@ -99,6 +98,19 @@ const LIFECYCLE_TABS = [
   { key: 'care', label: 'Care' },
   { key: 'compliance', label: 'Compliance' },
 ];
+
+// The section each Journey step opens (Transportation has none and shows its
+// shipping details), and icons for sections no step covers -- those are
+// listed after the steps. Same as the app's STAGE_TAB / TAB_ICON.
+const STAGE_TAB = { materials: 'materials', manufacturing: 'traceability', transportation: null, use: 'care', endOfLife: 'dispose' };
+const TAB_ICON = {
+  journey: TimelineIcon,
+  care: LocalLaundryServiceIcon,
+  materials: SpaIcon,
+  dispose: RecyclingIcon,
+  traceability: PublicIcon,
+  compliance: VerifiedUserIcon,
+};
 
 // Mirrors ProductLifecycleScreen's CARE_TIP_BY_ICON fallback (used when the
 // brand hasn't supplied its own maintenance.tips list).
@@ -174,7 +186,32 @@ function Row({ icon: Icon, label, value, onClick, chevron, expanded, arrow }) {
 // (`theme`: colours, font, button corners, which lifecycle tabs and in what
 // order). Fills its parent — the preview dialog below, or the studio's
 // Experience panel. `onClose` adds the close button (dialog only).
-export function DppPhoneView({ productInfo, theme, onClose }) {
+// iPhone 16 status bar (time, Dynamic Island, signal/Wi-Fi/battery) above
+// the phone view and the home indicator below it. The status bar sits on the
+// same gradient as the app's top bar, as on a real phone.
+function DeviceShell({ device, gradient, C, children }) {
+  if (!device) return children;
+  const ink = C.onHeader;
+  return (
+    <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: gradient }}>
+      <Box sx={{ height: IPHONE_16.statusBar, flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', px: '32px', pt: '6px' }}>
+        <Typography sx={{ flex: 1, fontSize: 17, fontWeight: 600, color: ink, fontFamily: '-apple-system, "SF Pro Text", "Segoe UI", sans-serif' }}>9:41</Typography>
+        <Box aria-hidden sx={{ position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)', width: 125, height: 37, borderRadius: 20, bgcolor: '#000' }} />
+        <Box aria-hidden sx={{ display: 'flex', alignItems: 'center', gap: '5px', color: ink }}>
+          <SignalCellularAltIcon sx={{ fontSize: 19 }} />
+          <WifiIcon sx={{ fontSize: 19 }} />
+          <Battery80Icon sx={{ fontSize: 22, transform: 'rotate(90deg)' }} />
+        </Box>
+      </Box>
+      <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>{children}</Box>
+      <Box aria-hidden sx={{ height: IPHONE_16.homeIndicator, flexShrink: 0, bgcolor: C.surface, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', pb: '8px' }}>
+        <Box sx={{ width: 134, height: 5, borderRadius: 3, bgcolor: '#000' }} />
+      </Box>
+    </Box>
+  );
+}
+
+export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
   const look = useMemo(() => normalizeDppTheme(theme), [theme]);
   const C = useMemo(() => dppPalette(theme), [theme]);
   // Same diagonal direction as the app's top bar / buttons (see GradientButton /
@@ -207,34 +244,38 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
   // ProductLifecycleScreen -- same two destinations as the app's product
   // bottom bar (its third item, Scan, doesn't apply inside a static preview).
   const [view, setView] = useState('overview');
-  const [lifecycleTab, setLifecycleTab] = useState('journey');
+  // The lifecycle page's steps: Journey steps whose section the brand shows,
+  // then any shown section no step covers (e.g. Compliance).
+  const lifecycleItems = useMemo(() => {
+    const shown = new Set(lifecycleTabs.map((tb) => tb.key));
+    const steps = JOURNEY_STAGES
+      .filter((st) => !STAGE_TAB[st.key] || shown.has(STAGE_TAB[st.key]))
+      .map((st) => ({ key: st.key, label: st.label, Icon: st.Icon, tab: STAGE_TAB[st.key] }));
+    const covered = new Set(steps.map((it) => it.tab).filter(Boolean));
+    const extra = lifecycleTabs
+      .filter((tb) => tb.key !== 'journey' && !covered.has(tb.key))
+      .map((tb) => ({ key: `tab-${tb.key}`, label: tb.label, Icon: TAB_ICON[tb.key] || InfoOutlinedIcon, tab: tb.key }));
+    return [...steps, ...extra];
+  }, [lifecycleTabs]);
+  // The one expanded step; its row is pinned at the top of the page while
+  // its content scrolls, as in the app.
+  const [openItem, setOpenItem] = useState(null);
+  const scrollerRef = useRef(null);
+  const stepRowRefs = useRef({});
   useEffect(() => {
-    if (!lifecycleTabs.some((tb) => tb.key === lifecycleTab)) setLifecycleTab(lifecycleTabs[0].key);
-  }, [lifecycleTabs, lifecycleTab]);
-
-  // Left/right scroll arrows flanking the lifecycle tab strip, matching
-  // ProductLifecycleScreen's pattern in the app exactly (permanently
-  // reserved slots, disabled + dimmed at the respective scroll edge rather
-  // than hidden, so the strip's own width never shifts).
-  const lifecycleTabScrollRef = useRef(null);
-  const [canScrollTabsLeft, setCanScrollTabsLeft] = useState(false);
-  const [canScrollTabsRight, setCanScrollTabsRight] = useState(false);
-  const updateTabScrollState = () => {
-    const el = lifecycleTabScrollRef.current;
-    if (!el) return;
-    setCanScrollTabsLeft(el.scrollLeft > 1);
-    setCanScrollTabsRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
-  };
-  useEffect(() => {
-    if (view !== 'lifecycle') return;
-    updateTabScrollState();
-  }, [view, lifecycleTabs]);
-  const scrollLifecycleTabsBy = (dir) => {
-    const el = lifecycleTabScrollRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * 120, behavior: 'smooth' });
-  };
-  const [openStage, setOpenStage] = useState(null);
+    if (!openItem) return undefined;
+    const id = requestAnimationFrame(() => {
+      const sc = scrollerRef.current;
+      const row = stepRowRefs.current[openItem];
+      if (!sc || !row) return;
+      // Screen pixels -> the scroller's own units (the preview may be zoomed
+      // or scaled down as a whole).
+      const rect = sc.getBoundingClientRect();
+      const perPx = rect.height ? sc.clientHeight / rect.height : 1;
+      sc.scrollBy({ top: (row.getBoundingClientRect().top - rect.top) * perPx, behavior: 'smooth' });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [openItem]);
   const [openOrigin, setOpenOrigin] = useState(null);
   const [openService, setOpenService] = useState(null);
 
@@ -301,7 +342,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
 
   const goToLifecycle = () => {
     setView('lifecycle');
-    setLifecycleTab(lifecycleTabs[0].key);
+    setOpenItem(null);
   };
 
   // ---- Lifecycle data (mirrors ProductLifecycleScreen's field mapping --
@@ -565,57 +606,60 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     </>
   );
 
-  const renderJourney = () => (
+  // Transportation has no section of its own: its shipping details.
+  const renderTransportDetail = () => (
+    <Box sx={{ mx: 2, mt: 1, bgcolor: C.bg, borderRadius: 1.5, p: 1 }}>
+      <Row label="Shipping Log" value={esg.shippingLog} />
+      <Row label="Distance" value={esg.distance} />
+      <Row label="Est. Emissions" value={formatUnitSpacing(routeInfo.emissions || esg.co2Transportation)} />
+      {!esg.shippingLog && !esg.distance && !routeInfo.emissions && !esg.co2Transportation && (
+        <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>
+      )}
+    </Box>
+  );
+
+  // Lifecycle page: each step's row (round icon on a line to the next step);
+  // the open step's section right below its row, which stays pinned at the
+  // top while the section scrolls. Opening another step closes the first.
+  const renderLifecycleList = () => (
     <Box sx={{ pt: 1.5 }}>
-      {JOURNEY_STAGES.map((s, i) => {
-        const isOpen = openStage === s.key;
+      {lifecycleItems.map((it, i) => {
+        const isOpen = openItem === it.key;
+        const last = i === lifecycleItems.length - 1;
         return (
-          <Box key={s.key} sx={{ display: 'flex', gap: 1.5, px: 2 }}>
-            <Box sx={{ alignItems: 'center', width: 34, display: 'flex', flexDirection: 'column' }}>
-              <Box sx={{ width: 34, height: 34, borderRadius: '50%', bgcolor: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <s.Icon sx={{ fontSize: 17, color: '#fff' }} />
+          <React.Fragment key={it.key}>
+            <Box
+              ref={(el) => { stepRowRefs.current[it.key] = el; }}
+              role="button"
+              aria-expanded={isOpen}
+              onClick={() => setOpenItem(isOpen ? null : it.key)}
+              sx={{
+                display: 'flex',
+                gap: 1.5,
+                px: 2,
+                cursor: 'pointer',
+                bgcolor: C.bg,
+                ...(isOpen ? { position: 'sticky', top: 0, zIndex: 2, py: 0.75, mb: 0.5, borderBottom: `1px solid ${C.border}` } : {}),
+              }}
+            >
+              <Box sx={{ width: 34, display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                <Box sx={{ width: 34, height: 34, borderRadius: '50%', bgcolor: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <it.Icon sx={{ fontSize: 17, color: '#fff' }} />
+                </Box>
+                {!last && !isOpen && <Box sx={{ width: 2, height: 14, bgcolor: C.primary, my: 0.5, borderRadius: 1 }} />}
               </Box>
-              {i < JOURNEY_STAGES.length - 1 && <Box sx={{ flex: 1, width: 2, bgcolor: C.border, my: 0.5, minHeight: 20 }} />}
-            </Box>
-            <Box role="button" onClick={() => setOpenStage(isOpen ? null : s.key)} sx={{ flex: 1, pb: 2.5, cursor: 'pointer' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 34 }}>
-                <Typography sx={{ fontSize: 13, fontWeight: 700, color: C.text }}>{s.label}</Typography>
+              <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 34 }}>
+                <Typography sx={{ fontSize: 13, fontWeight: 700, color: C.text }}>{it.label}</Typography>
                 {isOpen ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
               </Box>
-              {isOpen && (
-                // Journey rows sit directly on the tab's own background (not
-                // inside a white card), so the expanded detail matches that
-                // background instead of an unrelated gray block -- mirrors
-                // the app's jDetail/cardDetail split.
-                <Box sx={{ mt: 1, bgcolor: C.bg, borderRadius: 1.5, p: 1 }}>
-                  {s.key === 'materials' && (materials.length ? materials.map((m, mi) => (
-                    <Row key={mi} label={m.material || '—'} value={m.percent != null ? `${m.percent}%` : ''} />
-                  )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>)}
-                  {s.key === 'manufacturing' && (
-                    <>
-                      <Row label="Country of Manufacture" value={originCountry} />
-                      <Row label="Manufacture Date" value={info.manufactureDate} />
-                      <Row label="Brand" value={info.brandInfo?.name} />
-                      <Row label="CO2 (Production)" value={formatUnitSpacing(esg.co2Production)} />
-                    </>
-                  )}
-                  {s.key === 'transportation' && (
-                    <>
-                      <Row label="Shipping Log" value={esg.shippingLog} />
-                      <Row label="Distance" value={esg.distance} />
-                      <Row label="Est. Emissions" value={formatUnitSpacing(routeInfo.emissions || esg.co2Transportation)} />
-                    </>
-                  )}
-                  {s.key === 'use' && (careTips.length ? careTips.slice(0, 3).map((tip, ti) => (
-                    <Typography key={ti} sx={{ fontSize: 11, color: C.text, py: 0.3 }}>• {tip.primary}</Typography>
-                  )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>)}
-                  {s.key === 'endOfLife' && (services.length ? services.map((d) => (
-                    <Row key={d.kind} label={d.meta.shopperTitle} value={d.partnerName || d.cost || 'Reuse & Recycle'} arrow onClick={() => { setOpenService(d.kind); setLifecycleTab('dispose'); }} />
-                  )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>)}
-                </Box>
-              )}
             </Box>
-          </Box>
+            {isOpen && (
+              // Tall enough that the row can always reach the top.
+              <Box sx={{ minHeight: 'calc(100cqh - 56px)', pb: 2 }}>
+                {it.tab ? renderSection(it.tab) : renderTransportDetail()}
+              </Box>
+            )}
+          </React.Fragment>
         );
       })}
       <Box sx={{ ...card, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
@@ -902,9 +946,8 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
     </Box>
   );
 
-  const renderLifecycleTabContent = () => {
-    switch (lifecycleTab) {
-      case 'journey': return renderJourney();
+  const renderSection = (key) => {
+    switch (key) {
       case 'care': return renderCare();
       case 'materials': return renderMaterials();
       case 'dispose': return renderReuseRecycle();
@@ -916,11 +959,15 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
 
   return (
     <PaletteContext.Provider value={C}>
+      <DeviceShell device={device} gradient={GRADIENT} C={C}>
       <Box
         sx={{
           width: '100%',
           height: '100%',
           bgcolor: C.bg,
+          // In the iPhone frame: enlarged to the app's real sizes, on the
+          // shell's gradient (so the status bar and top bar are one piece).
+          ...(device ? { zoom: DEVICE_CONTENT_ZOOM, flex: 1, minHeight: 0, height: 'auto', bgcolor: 'transparent' } : {}),
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -932,7 +979,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
             below it share ONE gradient background instead of each having
             its own -- two adjacent elements with independently-restarting
             gradients read as a visible seam even when the colors match. */}
-        <Box sx={{ background: GRADIENT, flexShrink: 0 }}>
+        <Box sx={{ background: device ? 'transparent' : GRADIENT, flexShrink: 0 }}>
           <Box sx={{ height: 50, pl: 1.5, pr: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
             {/* Empty spacer matching the Close button's width, so the title
                 stays centered via space-between symmetry now that there's no
@@ -956,73 +1003,15 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
 
         {/* Content layer with rounded top corners over the top bar's colour,
             as in the app. */}
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: `linear-gradient(90deg, ${C.headerLight}, ${C.header})` }}>
+        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: device ? 'transparent' : `linear-gradient(90deg, ${C.headerLight}, ${C.header})` }}>
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', bgcolor: C.bg, borderTopLeftRadius: 16, borderTopRightRadius: 16, overflow: 'hidden' }}>
 
-        {view === 'lifecycle' && (
-          <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: C.surface, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-            <IconButton
-              size="small"
-              onClick={() => scrollLifecycleTabsBy(-1)}
-              disabled={!canScrollTabsLeft}
-              aria-label="Show previous lifecycle sections"
-              sx={{ width: 32, flexShrink: 0 }}
-            >
-              <ChevronLeftIcon fontSize="small" sx={{ color: canScrollTabsLeft ? C.primary : undefined }} />
-            </IconButton>
-            <Box
-              ref={lifecycleTabScrollRef}
-              onScroll={updateTabScrollState}
-              sx={{ display: 'flex', overflowX: 'auto', flex: 1, minWidth: 0, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}
-            >
-              {lifecycleTabs.map((tb) => (
-                <Box
-                  key={tb.key}
-                  role="tab"
-                  aria-selected={lifecycleTab === tb.key}
-                  onClick={() => setLifecycleTab(tb.key)}
-                  sx={look.tabStyle === 'pills' ? {
-                    flex: '0 0 auto',
-                    px: 1.5,
-                    py: 0.6,
-                    my: 0.75,
-                    ml: 0.75,
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    borderRadius: 999,
-                    bgcolor: lifecycleTab === tb.key ? C.primary : C.surfaceAlt,
-                  } : {
-                    flex: '0 0 auto',
-                    px: 1.5,
-                    py: 1,
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    borderBottom: lifecycleTab === tb.key ? `2px solid ${C.primary}` : '2px solid transparent',
-                  }}
-                >
-                  <Typography sx={{ fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', color: lifecycleTab === tb.key ? (look.tabStyle === 'pills' ? C.onPrimary : C.primary) : C.muted }}>
-                    {tb.label}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-            <IconButton
-              size="small"
-              onClick={() => scrollLifecycleTabsBy(1)}
-              disabled={!canScrollTabsRight}
-              aria-label="Show more lifecycle sections"
-              sx={{ width: 32, flexShrink: 0 }}
-            >
-              <ChevronRightIcon fontSize="small" sx={{ color: canScrollTabsRight ? C.primary : undefined }} />
-            </IconButton>
-          </Box>
-        )}
-
-        {/* Scrollable content layer */}
-        <Box sx={{ flex: 1, overflow: 'auto', pb: 2 }}>
+        {/* Scrollable content layer (a size container, so an open step can
+            be made as tall as it: see renderLifecycleList). */}
+        <Box ref={scrollerRef} sx={{ flex: 1, minHeight: 0, overflow: 'auto', pb: 2, containerType: 'size' }}>
           {/* The brand's text size, approximated here by scaling the content. */}
           <Box sx={{ zoom: DPP_TEXT_SCALE[look.textScale] }}>
-            {view === 'overview' ? renderOverview() : renderLifecycleTabContent()}
+            {view === 'overview' ? renderOverview() : renderLifecycleList()}
           </Box>
         </Box>
 
@@ -1077,6 +1066,7 @@ export function DppPhoneView({ productInfo, theme, onClose }) {
 
         <MediaLightbox open={lightboxIndex !== null} slides={slides} index={lightboxIndex ?? 0} onClose={() => setLightboxIndex(null)} />
       </Box>
+      </DeviceShell>
     </PaletteContext.Provider>
   );
 }
@@ -1100,10 +1090,40 @@ export default function PreviewModal({ open, setOpen, productInfo, theme }) {
     return () => { cancelled = true; };
   }, [theme, open, companyId, brandName]);
 
+  // Whole phone scaled down (never up) to fit 94% of the window.
+  const outerW = IPHONE_16.width + IPHONE_16.bezel * 2;
+  const outerH = IPHONE_16.height + IPHONE_16.bezel * 2;
+  const fitScale = () => (typeof window === 'undefined' ? 1 : Math.min(1, (window.innerHeight * 0.94) / outerH, (window.innerWidth * 0.94) / outerW));
+  const [scale, setScale] = useState(fitScale);
+  useEffect(() => {
+    if (!open) return undefined;
+    const onResize = () => setScale(fitScale());
+    onResize();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
   return (
     <Modal open={open} onClose={() => setOpen(false)} aria-labelledby="preview-modal-title">
-      <Box sx={modalStyle}>
-        <DppPhoneView productInfo={productInfo} theme={theme || loadedTheme} onClose={() => setOpen(false)} />
+      <Box
+        sx={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          width: outerW,
+          height: outerH,
+          transform: `translate(-50%, -50%) scale(${scale})`,
+          p: `${IPHONE_16.bezel}px`,
+          bgcolor: '#1d1d1f',
+          borderRadius: `${IPHONE_16.radius + IPHONE_16.bezel}px`,
+          boxShadow: '0 30px 80px rgba(0,0,0,0.45), inset 0 0 0 2px #3a3a3c',
+          outline: 'none',
+        }}
+      >
+        <Box sx={{ width: IPHONE_16.width, height: IPHONE_16.height, borderRadius: `${IPHONE_16.radius}px`, overflow: 'hidden', position: 'relative' }}>
+          <DppPhoneView productInfo={productInfo} theme={theme || loadedTheme} onClose={() => setOpen(false)} device />
+        </Box>
       </Box>
     </Modal>
   );

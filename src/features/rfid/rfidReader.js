@@ -9,12 +9,13 @@ export const IMPINJ_READER_DISPLAY_NAME = 'Impinj R700 (fixed reader)';
 
 export { IMPINJ_DEFAULT_READER_SETTINGS } from './rfidReaderDefaults';
 
-// Reader types offered on the admin site (the app also has Yometel, a
-// Bluetooth reader only a phone can use). Zebra is not supported yet; the
-// page says so when it is picked.
+// Reader types offered on the admin site. Only Impinj works here; Yometel
+// (a Bluetooth handheld) and Zebra are under construction, and the page
+// says so when one is picked.
 export const RFID_READER_TYPES = [
   { key: 'impinj', label: 'Impinj' },
-  { key: 'zebra', label: 'Zebra' },
+  { key: 'yometel', label: 'Yometel', underConstruction: true },
+  { key: 'zebra', label: 'Zebra', underConstruction: true },
 ];
 
 // The app's polling: every 1.5 s, re-checking the reader's status every 10 polls.

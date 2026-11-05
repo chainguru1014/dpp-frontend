@@ -47,7 +47,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import SensorsIcon from '@mui/icons-material/Sensors';
+import RfidIcon from '../components/icons/RfidIcon';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
 import PersonIcon from '@mui/icons-material/Person';
@@ -1922,7 +1922,7 @@ const InnerPage = () => {
       // RFID Scan: everyone except app users (shoppers have no reader), and
       // only in the desktop app (Windows, Mac or Linux): a web browser can't
       // reach the reader.
-      items: [['dashboard', 'Dashboard', DashboardIcon, true], ['rfidScan', 'RFID Scan', SensorsIcon, !isAppUser && isDesktopApp]],
+      items: [['dashboard', 'Dashboard', DashboardIcon, true], ['rfidScan', 'RFID Scan', RfidIcon, !isAppUser && isDesktopApp]],
     },
     {
       key: 'products',
