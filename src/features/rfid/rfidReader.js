@@ -51,14 +51,19 @@ async function request(method, path, body) {
   return data;
 }
 
-export const getImpinjReaderStatus = () => request('GET', 'status');
-export const connectImpinjReader = () => request('POST', 'connect');
-export const disconnectImpinjReader = () => request('POST', 'disconnect');
-export const startImpinjReading = () => request('POST', 'start');
-export const stopImpinjReading = () => request('POST', 'stop');
-export const getImpinjTagsInView = () => request('GET', 'tags');
-export const getImpinjReaderSettings = () => request('GET', 'settings');
-export const updateImpinjReaderSettings = (settings) => request('PUT', 'settings', settings);
+// Inside the Yometel DPP Manager desktop app (the dpp-desktop repo), its
+// preload exposes window.electronImpinj, which reaches the reader directly
+// on the local network; the app's web build switches to it the same way.
+const desktop = typeof window !== 'undefined' ? window.electronImpinj : undefined;
+
+export const getImpinjReaderStatus = () => (desktop ? desktop.getStatus() : request('GET', 'status'));
+export const connectImpinjReader = () => (desktop ? desktop.connect() : request('POST', 'connect'));
+export const disconnectImpinjReader = () => (desktop ? desktop.disconnect() : request('POST', 'disconnect'));
+export const startImpinjReading = () => (desktop ? desktop.start() : request('POST', 'start'));
+export const stopImpinjReading = () => (desktop ? desktop.stop() : request('POST', 'stop'));
+export const getImpinjTagsInView = () => (desktop ? desktop.getTagsInView() : request('GET', 'tags'));
+export const getImpinjReaderSettings = () => (desktop ? desktop.getSettings() : request('GET', 'settings'));
+export const updateImpinjReaderSettings = (settings) => (desktop ? desktop.updateSettings(settings) : request('PUT', 'settings', settings));
 
 // The app's Connect for Impinj: check status first (a reader left connected
 // by an earlier session would answer connect() with 409), connect if needed,
