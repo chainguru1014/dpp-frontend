@@ -9,12 +9,12 @@ import { compactMediaQuery } from '../../theme';
 
 // Text and icons on the see-through card in the brand blue (#2f80c8), (plain,
 // no glow).
-const AUTH_BLUE = '#2f80c8';
+const AUTH_BLUE = '#1b4f72'; // dark blue: every text, label and icon on the card
 // Same gray as the sign-in card's fields and secondary buttons (AuthPage).
 const AUTH_GRAY = '#dde2e8';
 const AUTH_GRAY_SELECTED = '#cbd8e8';
 // White on the glass on every photo (CSS variables set by AuthShell).
-const ON_GLASS = 'var(--auth-on-glass, #2f80c8)';
+const ON_GLASS = 'var(--auth-on-glass, #1b4f72)';
 const onGlass = { color: ON_GLASS, textShadow: 'none' };
 
 const FEATURES = [

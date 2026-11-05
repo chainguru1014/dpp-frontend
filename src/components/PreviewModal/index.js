@@ -967,7 +967,9 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
           bgcolor: C.bg,
           // In the iPhone frame: enlarged to the app's real sizes, on the
           // shell's gradient (so the status bar and top bar are one piece).
-          ...(device ? { zoom: DEVICE_CONTENT_ZOOM, flex: 1, minHeight: 0, height: 'auto', bgcolor: 'transparent' } : {}),
+          // Top half see-through (the top bar shows the shell's gradient), bottom
+          // half the page colour (behind the bottom bar's rounded corners).
+          ...(device ? { zoom: DEVICE_CONTENT_ZOOM, flex: 1, minHeight: 0, height: 'auto', bgcolor: 'transparent', background: `linear-gradient(to bottom, transparent 50%, ${C.bg} 50%)` } : {}),
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
