@@ -4,7 +4,8 @@ import AppleIcon from '@mui/icons-material/Apple';
 import { signInWithGoogle } from '../../features/auth/useGoogleAuth';
 import { useAppleAuth } from '../../features/auth/useAppleAuth';
 import AuthShell from '../AuthShell';
-import yometelLogo from '../../assets/yometel-logo-trans.png';
+// The logo in exactly the card's dark blue (#1b4f72), transparent background.
+import yometelLogo from '../../assets/yometel-logo-navy.png';
 import { compactMediaQuery } from '../../theme';
 import { notifyError } from '../../utils/feedbackBus';
 

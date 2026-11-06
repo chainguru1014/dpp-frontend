@@ -13,9 +13,9 @@ export { IMPINJ_DEFAULT_READER_SETTINGS } from './rfidReaderDefaults';
 // (a Bluetooth handheld) and Zebra are under construction, and the page
 // says so when one is picked.
 export const RFID_READER_TYPES = [
-  { key: 'impinj', label: 'Impinj' },
-  { key: 'yometel', label: 'Yometel', underConstruction: true },
-  { key: 'zebra', label: 'Zebra', underConstruction: true },
+  { key: 'impinj', label: 'Impinj Fixed Reader' },
+  { key: 'yometel', label: 'Yometel Fixed Reader', underConstruction: true },
+  { key: 'zebra', label: 'Zebra Fixed Reader', underConstruction: true },
 ];
 
 // The app's polling: every 1.5 s, re-checking the reader's status every 10 polls.

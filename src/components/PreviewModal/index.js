@@ -622,7 +622,7 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
   // the open step's section right below its row, which stays pinned at the
   // top while the section scrolls. Opening another step closes the first.
   const renderLifecycleList = () => (
-    <Box sx={{ pt: 1.5 }}>
+    <Box sx={{ pt: 2.5 }}>
       {lifecycleItems.map((it, i) => {
         const isOpen = openItem === it.key;
         const last = i === lifecycleItems.length - 1;
@@ -654,8 +654,7 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
               </Box>
             </Box>
             {isOpen && (
-              // Tall enough that the row can always reach the top.
-              <Box sx={{ minHeight: 'calc(100cqh - 56px)', pb: 2 }}>
+              <Box sx={{ pb: 2 }}>
                 {it.tab ? renderSection(it.tab) : renderTransportDetail()}
               </Box>
             )}
@@ -1008,9 +1007,8 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: device ? 'transparent' : `linear-gradient(90deg, ${C.headerLight}, ${C.header})` }}>
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', bgcolor: C.bg, borderTopLeftRadius: 16, borderTopRightRadius: 16, overflow: 'hidden' }}>
 
-        {/* Scrollable content layer (a size container, so an open step can
-            be made as tall as it: see renderLifecycleList). */}
-        <Box ref={scrollerRef} sx={{ flex: 1, minHeight: 0, overflow: 'auto', pb: 2, containerType: 'size' }}>
+        {/* Scrollable content layer */}
+        <Box ref={scrollerRef} sx={{ flex: 1, minHeight: 0, overflow: 'auto', pb: 2 }}>
           {/* The brand's text size, approximated here by scaling the content. */}
           <Box sx={{ zoom: DPP_TEXT_SCALE[look.textScale] }}>
             {view === 'overview' ? renderOverview() : renderLifecycleList()}

@@ -4,6 +4,8 @@ import {
   FormControlLabel, IconButton, MenuItem, Paper, Stack, Switch, TextField, Tooltip, Typography,
 } from '@mui/material';
 import RfidIcon from '../../components/icons/RfidIcon';
+import BluetoothIcon from '@mui/icons-material/Bluetooth';
+import BluetoothDisabledIcon from '@mui/icons-material/BluetoothDisabled';
 import SettingsIcon from '@mui/icons-material/Settings';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import InventoryIcon from '@mui/icons-material/Inventory2Outlined';
@@ -185,7 +187,7 @@ export default function RfidScanPage() {
             <Button
               variant="contained"
               color={connected ? 'error' : 'primary'}
-              startIcon={busy ? <CircularProgress size={18} color="inherit" /> : <RfidIcon />}
+              startIcon={busy ? <CircularProgress size={18} color="inherit" /> : connected ? <BluetoothDisabledIcon /> : <BluetoothIcon />}
               onClick={connected ? disconnect : connect}
               disabled={busy}
               sx={{ flex: 1 }}
@@ -236,9 +238,9 @@ export default function RfidScanPage() {
       />
       <ReaderSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <Dialog open={!!noticeReader} onClose={() => setNoticeReader(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>{noticeReader?.label} reader</DialogTitle>
+        <DialogTitle>{noticeReader?.label}</DialogTitle>
         <DialogContent>
-          <Typography sx={TEXT}>{noticeReader?.label} readers are under construction. Please use the Impinj reader for now.</Typography>
+          <Typography sx={TEXT}>The {noticeReader?.label} is under construction. Please use the Impinj Fixed Reader for now.</Typography>
         </DialogContent>
         <DialogActions>
           <Button variant="contained" onClick={() => setNoticeReader(null)}>OK</Button>
