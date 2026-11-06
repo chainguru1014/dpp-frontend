@@ -661,7 +661,7 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
           </React.Fragment>
         );
       })}
-      <Box sx={{ ...card, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+      <Box sx={{ ...card, mt: 2.5, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
         <InfoOutlinedIcon sx={{ fontSize: 18, color: C.primary, mt: 0.25 }} />
         <Box>
           <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.text }}>Understanding the Product Lifecycle</Typography>
