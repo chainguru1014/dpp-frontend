@@ -4,7 +4,8 @@ import TwitterIcon from '@mui/icons-material/Twitter';
 import LinkedInIcon from '@mui/icons-material/LinkedIn';
 import InstagramIcon from '@mui/icons-material/Instagram';
 import { Backend_URL } from '../helper';
-import yometelLogo from '../assets/logo-y.png';
+// The Yometel DPP logo (made from app/src/assets/logo.jpg).
+import yometelLogo from '../assets/dpp-logo.png';
 import { DppPassportView } from '../features/products/DppPhonePreview';
 import { normalizeDppTheme } from '../utils/dppTheme';
 
