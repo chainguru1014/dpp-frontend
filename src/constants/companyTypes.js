@@ -23,7 +23,7 @@ export const COMPANY_TYPES = [
 ];
 
 // Companies registered before types existed.
-export const DEFAULT_COMPANY_TYPE = 'retailSupermarkets';
+export const DEFAULT_COMPANY_TYPE = 'bookstoreRfid';
 
 export const companyTypeLabel = (key) =>
   (COMPANY_TYPES.find((t) => t.key === (key || DEFAULT_COMPANY_TYPE)) || {}).label || '—';
