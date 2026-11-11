@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { getFileUrl } from '../../helper';
+import { companyTypeLabel } from '../../constants/companyTypes';
 
 const Row = ({ label, children }) => (
   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '170px 1fr' }, gap: { xs: 0.25, sm: 2 }, py: 1.25, borderBottom: '1px solid', borderColor: 'divider' }}>
@@ -48,6 +49,7 @@ export default function CompanyPreview({ companyInfo, setCompanyInfo }) {
           </Avatar>
           <Typography variant="h6">{companyInfo?.name}</Typography>
         </Box>
+        <Row label="Company type"><Typography>{companyTypeLabel(companyInfo?.companyType)}</Typography></Row>
         <Row label="Admin email"><Typography>{companyInfo?.email || '—'}</Typography></Row>
         <Row label="Tagline"><Typography>{companyInfo?.title || '—'}</Typography></Row>
         <Row label="Location"><Typography>{companyInfo?.location || '—'}</Typography></Row>

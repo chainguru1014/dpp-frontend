@@ -8,6 +8,7 @@ import {
   DialogActions,
   Button,
   TextField,
+  MenuItem,
   IconButton,
   CircularProgress,
   Tooltip,
@@ -24,6 +25,7 @@ import {
   removeCompany,
   registerCompany,
 } from '../../helper';
+import { COMPANY_TYPES, companyTypeLabel } from '../../constants/companyTypes';
 
 // The built-in platform admin account lives in the Company collection too,
 // but it's not a brand/company and never shows up here — mirrors the isAdmin
@@ -58,6 +60,13 @@ const NoCompanies = () => (
 const CompanyUsersTable = ({ companies, loading, onView, onEdit, onRemove }) => {
   const columns = [
     { field: 'name', headerName: 'Company', flex: 1, minWidth: 160 },
+    {
+      field: 'companyType',
+      headerName: 'Type',
+      flex: 1,
+      minWidth: 170,
+      valueGetter: (p) => companyTypeLabel(p.row.companyType),
+    },
     { field: 'email', headerName: 'Admin email', flex: 1.2, minWidth: 200 },
     {
       field: 'allowedEmailDomains',
@@ -130,12 +139,17 @@ const CompanyUsersTable = ({ companies, loading, onView, onEdit, onRemove }) => 
 // the only way a Company account gets created (self-signup is not available).
 // Reuses the POST /company endpoint (registerCompany in helper.js).
 const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
-  const [form, setForm] = useState({ name: '', email: '', title: '', allowedEmailDomains: '' });
+  const emptyForm = { name: '', companyType: '', email: '', title: '', allowedEmailDomains: '' };
+  const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     if (!form.name.trim()) {
       notify('Please enter the company name.', 'warning');
+      return;
+    }
+    if (!form.companyType) {
+      notify('Please choose the company type.', 'warning');
       return;
     }
     // The admin email is required: it becomes the company's Supervisor
@@ -158,13 +172,14 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
     setSaving(true);
     const doc = await registerCompany({
       name: form.name.trim(),
+      companyType: form.companyType,
       email: form.email.trim(),
       title: form.title.trim() || undefined,
       allowedEmailDomains: domains,
     });
     setSaving(false);
     if (doc) {
-      setForm({ name: '', email: '', title: '', allowedEmailDomains: '' });
+      setForm(emptyForm);
       onCreated();
       onClose();
     }
@@ -185,6 +200,18 @@ const CreateCompanyDialog = ({ open, onClose, onCreated }) => {
           fullWidth
           autoFocus
         />
+        <TextField
+          select
+          label="Company type"
+          required
+          value={form.companyType}
+          onChange={(e) => setForm({ ...form, companyType: e.target.value })}
+          fullWidth
+        >
+          {COMPANY_TYPES.map((t) => (
+            <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>
+          ))}
+        </TextField>
         <TextField
           label="Company admin email (Supervisor)"
           type="email"

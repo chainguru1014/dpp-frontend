@@ -6,8 +6,10 @@ import {
   DialogActions,
   Button,
   TextField,
+  MenuItem,
   IconButton,
 } from '@mui/material';
+import { COMPANY_TYPES, DEFAULT_COMPANY_TYPE } from '../../constants/companyTypes';
 import CloseIcon from '@mui/icons-material/Close';
 import { notify } from '../../utils/feedbackBus';
 
@@ -60,6 +62,17 @@ const UserEditDialog = ({ user, onChange, onClose, onSave }) => {
             />
             {isCompany ? (
               <>
+                <TextField
+                  select
+                  label="Company type"
+                  value={user.companyType || DEFAULT_COMPANY_TYPE}
+                  onChange={(e) => onChange({ ...user, companyType: e.target.value })}
+                  fullWidth
+                >
+                  {COMPANY_TYPES.map((t) => (
+                    <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>
+                  ))}
+                </TextField>
                 <TextField
                   label="Short tagline"
                   value={user.title || ''}
