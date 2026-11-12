@@ -1,0 +1,161 @@
+{
+  "projectId": "beb4f503-2ada-4637-867b-86f0e13db040",
+  "shape": "package",
+  "pkg": "@yometel/dpp-admin",
+  "globalName": "YometelDppAdmin",
+  "buildCmd": "node .design-sync/build-ds.mjs",
+  "cssEntry": "fonts.css",
+  "provider": {
+    "component": "YometelAdminProvider"
+  },
+  "docsMap": {
+    "YometelAdminProvider": "../../groups/foundations.md",
+    "RfidIcon": "../../groups/foundations.md",
+    "PageHeader": "../../groups/page.md",
+    "PageHelp": "../../groups/page.md",
+    "AuthShell": "../../groups/page.md",
+    "AuthPage": "../../groups/page.md",
+    "AiConciergeConsentPage": "../../groups/page.md",
+    "GlobalFeedback": "../../groups/feedback.md",
+    "GlobalLoadingBar": "../../groups/feedback.md",
+    "Loader": "../../groups/feedback.md",
+    "CircularProgressWithLabel": "../../groups/feedback.md",
+    "QRCode": "../../groups/codes.md",
+    "SecurityQRCode": "../../groups/codes.md",
+    "WebQRCode": "../../groups/codes.md",
+    "CopyIconButton": "../../groups/codes.md",
+    "Stat": "../../groups/codes.md",
+    "PreviewModal": "../../groups/product.md",
+    "DppPhoneView": "../../groups/product.md",
+    "CareSymbols": "../../groups/product.md",
+    "CareSymbol": "../../groups/product.md",
+    "MediaLightbox": "../../groups/product.md",
+    "VideoListEditor": "../../groups/product.md",
+    "CompanyPreview": "../../groups/admin.md",
+    "UserEditDialog": "../../groups/admin.md"
+  },
+  "componentSrcMap": {
+    "Box": null,
+    "Stack": null,
+    "Grid": null,
+    "Container": null,
+    "Typography": null,
+    "Button": null,
+    "IconButton": null,
+    "TextField": null,
+    "MenuItem": null,
+    "Select": null,
+    "FormControl": null,
+    "InputLabel": null,
+    "InputAdornment": null,
+    "Card": null,
+    "CardContent": null,
+    "CardActions": null,
+    "Paper": null,
+    "Chip": null,
+    "Avatar": null,
+    "Divider": null,
+    "Dialog": null,
+    "DialogTitle": null,
+    "DialogContent": null,
+    "DialogActions": null,
+    "Tabs": null,
+    "Tab": null,
+    "Table": null,
+    "TableHead": null,
+    "TableBody": null,
+    "TableRow": null,
+    "TableCell": null,
+    "TableContainer": null,
+    "Alert": null,
+    "Switch": null,
+    "Checkbox": null,
+    "FormControlLabel": null,
+    "Tooltip": null,
+    "LinearProgress": null,
+    "CircularProgress": null,
+    "Badge": null,
+    "List": null,
+    "ListItem": null,
+    "ListItemButton": null,
+    "ListItemIcon": null,
+    "ListItemText": null,
+    "ToggleButton": null,
+    "ToggleButtonGroup": null,
+    "Link": null,
+    "AppBar": null,
+    "Toolbar": null,
+    "Drawer": null,
+    "Icons": null
+  },
+  "overrides": {
+    "MediaLightbox": {
+      "cardMode": "single",
+      "viewport": "900x700"
+    },
+    "CompanyPreview": {
+      "cardMode": "single",
+      "viewport": "900x700"
+    },
+    "UserEditDialog": {
+      "cardMode": "single",
+      "viewport": "900x700"
+    },
+    "GlobalFeedback": {
+      "cardMode": "single",
+      "viewport": "900x700"
+    },
+    "AuthShell": {
+      "cardMode": "single",
+      "viewport": "1100x820"
+    },
+    "AuthPage": {
+      "cardMode": "single",
+      "viewport": "1100x820"
+    },
+    "AiConciergeConsentPage": {
+      "cardMode": "single",
+      "viewport": "1280x820"
+    },
+    "PageHeader": {
+      "cardMode": "column"
+    },
+    "VideoListEditor": {
+      "cardMode": "column"
+    },
+    "YometelAdminProvider": {
+      "cardMode": "column"
+    },
+    "DppPhoneView": {
+      "cardMode": "column"
+    },
+    "CareSymbols": {
+      "cardMode": "column"
+    },
+    "Stat": {
+      "cardMode": "column"
+    },
+    "CopyIconButton": {
+      "cardMode": "column"
+    },
+    "CircularProgressWithLabel": {
+      "cardMode": "column"
+    },
+    "Loader": {
+      "cardMode": "column"
+    },
+    "CareSymbol": {
+      "cardMode": "column"
+    },
+    "PreviewModal": {
+      "cardMode": "single",
+      "viewport": "900x900"
+    }
+  },
+  "dtsPropsFor": {
+    "QRCode": "/** Code payload (usually the item's public product URL). */ data: string; /** The item's other identifiers; a 'PMC Code' entry gets its own copy row. */ identifer?: { type: string; serial: string }[]; /** Shows a delete button when set. */ onDelete?: () => void;",
+    "SecurityQRCode": "/** The item's encrypted key; encoded into the product link. */ data: string; identifer?: { type: string; serial: string }[]; onDelete?: () => void;",
+    "WebQRCode": "/** The item's encrypted key; encoded into the web passport link. */ data: string; identifer?: { type: string; serial: string }[];"
+  },
+  "readmeHeader": ".design-sync/conventions.md"
+}

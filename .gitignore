@@ -30,3 +30,10 @@ yarn-error.log*
 *.err
 .local-dev.log
 .dev.log
+
+# /design-sync (Claude Design) build output and machine state
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
