@@ -17,7 +17,7 @@ import { normalizeDppTheme } from '../../utils/dppTheme';
 // The same phone view the Preview dialog shows.
 const DppPhoneView = React.lazy(() => import('../../components/PreviewModal').then((m) => ({ default: m.DppPhoneView })));
 
-const DETAIL_KEYS = ['name', 'detail', 'websiteUrl', 'logoUrl', 'coverUrl'];
+const DETAIL_KEYS = ['name', 'tagline', 'detail', 'websiteUrl', 'logoUrl', 'coverUrl'];
 const detailsOf = (brand) => Object.fromEntries(DETAIL_KEYS.map((key) => [key, brand?.[key] || '']));
 const COLOR_KEYS = ['pageBg', 'cardBg', 'accent', 'buttonText', 'textColor', 'headerColor', 'badgeColor'];
 // While a colour is being typed it is briefly not a full #rrggbb value —
@@ -270,6 +270,9 @@ export default function BrandPage({ token, isAdmin = false, products = [], targe
                 <TextField label="Brand name" required fullWidth value={details.name} disabled={!canEdit} onChange={setField('name')}
                   error={showErrors && !details.name.trim()}
                   helperText={showErrors && !details.name.trim() ? 'Please enter the brand name.' : 'Renaming a brand also renames it on its products.'} />
+                <TextField label="Tagline" fullWidth placeholder="e.g. Maison Européenne" value={details.tagline} disabled={!canEdit} onChange={setField('tagline')}
+                  inputProps={{ maxLength: 120 }}
+                  helperText="Optional. A short line under the brand name; staff see it when they scan this brand's products." />
                 <TextField label="About the brand" required fullWidth multiline minRows={3} value={details.detail} disabled={!canEdit} onChange={setField('detail')}
                   error={showErrors && !details.detail.trim()}
                   helperText={showErrors && !details.detail.trim() ? 'Please describe the brand in a sentence or two.' : 'A sentence or two. Shoppers see it on your products.'} />
