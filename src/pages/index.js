@@ -35,6 +35,7 @@ import {
   Toolbar,
   Typography,
   Dialog,
+  Divider,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -120,7 +121,7 @@ import EmployeeManagementPage from '../features/employee-audit/EmployeeManagemen
 import ProcessStepsPage from '../features/process-steps/ProcessStepsPage';
 import CaptureHistoryPage from '../features/capture-history/CaptureHistoryPage';
 import ProductsTable, { ProductRow } from '../features/products/ProductsTable';
-import ProductDraftCard from '../features/products/ProductDraftCard';
+import ProductSidePanel from '../features/products/ProductSidePanel';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
 import ProductImportDialog from '../features/products/ProductImportDialog';
@@ -128,6 +129,10 @@ import { downloadCsv } from '../utils/csv';
 import { productsToCsvRows } from '../utils/productCsv';
 import { CERTIFICATE_STATUS, certificateStatus, certificateWarnings } from '../utils/certificates';
 import PassportReadinessPanel, { PassportScore } from '../features/products/PassportReadinessPanel';
+import { passportCompleteness } from '../utils/passportCompleteness';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import DashboardPage from '../features/dashboard/DashboardPage';
 import HistoryPage from '../features/history/HistoryPage';
 import SustainabilityPage from '../features/sustainability/SustainabilityPage';
@@ -679,6 +684,8 @@ const InnerPage = () => {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // The product editor shows its step list and live preview beside the form.
+  const wideEditor = useMediaQuery('(min-width:1280px)');
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -2527,42 +2534,6 @@ const InnerPage = () => {
                 ]}
               />
 
-              {/* Guarded on the product actually being in the current (filtered)
-                  list — selectedProduct persists to localStorage across
-                  sessions/companies, so without this a stale selection kept
-                  showing the summary card even when the table was empty. */}
-              {selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) && (
-                <Box ref={productCardRef} sx={{ mb: 3, scrollMarginTop: 16 }}>
-                                    <ProductDraftCard
-                    product={selectedProduct}
-                    onPreview={() => setOpenPreviewModal(true)}
-                    onTransferHistory={() => {
-                      setHistoryProduct(selectedProduct);
-                      setOpenProductHistory(true);
-                    }}
-                    onPrintCode={isAppUser ? undefined : () => {
-                      const index = products.findIndex((p) => p._id === selectedProduct._id);
-                      if (index >= 0) {
-                        setProductPanelMode('print');
-                        setPreviousPage('products');
-                        editProductHandler(index);
-                      }
-                    }}
-                    onEdit={canEditProducts ? () => {
-                      const index = products.findIndex((p) => p._id === selectedProduct._id);
-                      if (index >= 0) {
-                        setProductPanelMode('edit');
-                        setPreviousPage('products');
-                        editProductHandler(index);
-                      }
-                    } : undefined}
-                    onRemove={canEditProducts ? () => {
-                      const index = products.findIndex((p) => p._id === selectedProduct._id);
-                      if (index >= 0) deleteProductHandler(index);
-                    } : undefined}
-                  />
-                </Box>
-              )}
               {/* Certificates that ran out or are about to — brands only. */}
               {canEditProducts && (() => {
                 const warnings = certificateWarnings(products);
@@ -2584,6 +2555,8 @@ const InnerPage = () => {
                   </Alert>
                 );
               })()}
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: { xs: 'wrap', lg: 'nowrap' } }}>
+                <Box sx={{ flex: '999 1 560px', minWidth: 0 }}>
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
                 <TextField
                   id="product-search"
@@ -2606,7 +2579,7 @@ const InnerPage = () => {
                 selectedId={selectedProduct?._id}
                 isAppUser={isAppUser}
                 showOwner={isAdmin}
-                columns={6}
+                columns={selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) ? 3 : 6}
                 dense
                 emptyText={productNameFilter.trim()
                   ? 'No products match your search.'
@@ -2617,7 +2590,7 @@ const InnerPage = () => {
                       : 'Your company has no products yet.'}
                 onSelectProduct={(row) => {
                   productSelectHandler(row);
-                  setTimeout(() => productCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+                  setTimeout(() => { if (window.innerWidth < 1200) productCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
                 }}
                 onOwnerClick={(product) => {
                   if (product.company_id) {
@@ -2628,6 +2601,52 @@ const InnerPage = () => {
                   }
                 }}
               />
+                </Box>
+                {/* The selected product, beside the list (it must be in the
+                    current filtered list: the selection is remembered across
+                    sessions). */}
+                {selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) && (
+                  <Box ref={productCardRef} sx={{ flex: { xs: '1 1 100%', lg: '0 0 400px' }, maxWidth: { lg: 420 }, scrollMarginTop: 16 }}>
+                    <ProductSidePanel
+                      product={selectedProduct}
+                      onClose={() => setSelectedProduct(null)}
+                      onPreview={() => setOpenPreviewModal(true)}
+                      onHistory={() => {
+                        setHistoryProduct(selectedProduct);
+                        setOpenProductHistory(true);
+                      }}
+                      onCodes={isAppUser ? undefined : () => {
+                        const index = products.findIndex((p) => p._id === selectedProduct._id);
+                        if (index >= 0) {
+                          setProductPanelMode('print');
+                          setPreviousPage('products');
+                          editProductHandler(index);
+                        }
+                      }}
+                      onEdit={canEditProducts ? () => {
+                        const index = products.findIndex((p) => p._id === selectedProduct._id);
+                        if (index >= 0) {
+                          setProductPanelMode('edit');
+                          setPreviousPage('products');
+                          editProductHandler(index);
+                        }
+                      } : undefined}
+                      onCompletePassport={canEditProducts ? () => {
+                        const index = products.findIndex((p) => p._id === selectedProduct._id);
+                        if (index >= 0) {
+                          setProductPanelMode('edit');
+                          setPreviousPage('products');
+                          editProductHandler(index);
+                        }
+                      } : undefined}
+                      onRemove={canEditProducts ? () => {
+                        const index = products.findIndex((p) => p._id === selectedProduct._id);
+                        if (index >= 0) deleteProductHandler(index);
+                      } : undefined}
+                    />
+                  </Box>
+                )}
+              </Box>
 
             </Box>
           )}
@@ -2638,7 +2657,7 @@ const InnerPage = () => {
             open={activePage === 'newProduct' && (canEditProducts || productPanelMode === 'print')}
             onClose={closeProductDialog}
             fullWidth
-            maxWidth={quickAdd ? 'sm' : productPanelMode === 'edit' ? 'md' : 'lg'}
+            maxWidth={quickAdd ? 'sm' : productPanelMode === 'edit' ? (wideEditor ? 'xl' : 'md') : 'lg'}
             fullScreen={isMobile}
             scroll="paper"
             PaperProps={{ sx: { height: productPanelMode !== 'print' && !quickAdd && !isMobile ? 'calc(100% - 48px)' : undefined } }}
@@ -2688,7 +2707,7 @@ const InnerPage = () => {
               </Box>
             )}
 
-            {productPanelMode === 'edit' && !quickAdd && (
+            {productPanelMode === 'edit' && !quickAdd && !wideEditor && (
               <Box sx={{ px: { xs: 1, sm: 3 }, pt: 2, pb: 1.5, borderBottom: 1, borderColor: 'divider', overflowX: 'auto', flexShrink: 0 }}>
                 <Stepper nonLinear activeStep={detailTab} alternativeLabel sx={{ minWidth: 640 }}>
                   {PRODUCT_FORM_STEPS.map((label, i) => (
@@ -2707,7 +2726,55 @@ const InnerPage = () => {
               </Box>
             )}
 
-            <DialogContent dividers={productPanelMode === 'print'}>
+            <Box sx={{ display: 'flex', flex: '1 1 auto', minHeight: 0 }}>
+            {productPanelMode === 'edit' && !quickAdd && wideEditor && (() => {
+              // One step list with a tick for each step whose passport
+              // fields are all filled in (step 1 also needs its required ones).
+              const { missing: passportMissing } = passportCompleteness(formProduct);
+              const stepState = (i) => {
+                if (i === 0 && showFieldErrors && missingProductFields().length) return 'need';
+                return passportMissing.some((m) => m.step === i) ? 'todo' : 'done';
+              };
+              return (
+                <Box component="nav" aria-label="Product steps" sx={{ flex: '0 0 240px', borderRight: 1, borderColor: 'divider', p: 1.25, overflowY: 'auto' }}>
+                  {PRODUCT_FORM_STEPS.map((label, i) => {
+                    const state = stepState(i);
+                    const on = detailTab === i;
+                    return (
+                      <Box
+                        key={label}
+                        component="button"
+                        type="button"
+                        onClick={() => setDetailTab(i)}
+                        aria-current={on ? 'step' : undefined}
+                        sx={{
+                          width: '100%', minHeight: 52, display: 'flex', alignItems: 'center', gap: 1.5, px: 1.5, border: 0, borderRadius: 2.5, cursor: 'pointer',
+                          bgcolor: on ? '#eaf2fc' : 'transparent', color: '#16324a', font: 'inherit', fontSize: 15.5, fontWeight: on ? 700 : 500, textAlign: 'left',
+                          '&:hover': { bgcolor: on ? '#eaf2fc' : '#f2f5f9' },
+                        }}
+                      >
+                        {state === 'done' ? <CheckCircleIcon sx={{ color: '#2e7d32' }} />
+                          : state === 'need' ? <ErrorOutlineIcon sx={{ color: '#b26a00' }} />
+                            : <RadioButtonUncheckedIcon sx={{ color: '#8a97aa' }} />}
+                        <span>{i + 1}. {label}</span>
+                      </Box>
+                    );
+                  })}
+                  {!!isEditing && (
+                    <>
+                      <Divider sx={{ my: 1 }} />
+                      <Box component="button" type="button"
+                        onClick={() => (isProductFormDirty ? updateProductHandler({ thenCodes: true }) : setProductPanelMode('print'))}
+                        sx={{ width: '100%', minHeight: 52, display: 'flex', alignItems: 'center', gap: 1.5, px: 1.5, border: 0, borderRadius: 2.5, cursor: 'pointer', bgcolor: 'transparent', color: '#16324a', font: 'inherit', fontSize: 15.5, '&:hover': { bgcolor: '#f2f5f9' } }}>
+                        <QrCode2Icon /><span style={{ flex: 1 }}>Codes</span>
+                        <Typography variant="body2" color="text.secondary">{(Number(selectedProduct?.total_minted_amount) || 0).toLocaleString()}</Typography>
+                      </Box>
+                    </>
+                  )}
+                </Box>
+              );
+            })()}
+            <DialogContent dividers={productPanelMode === 'print'} sx={{ flex: '1 1 auto', minWidth: 0 }}>
               <Box sx={{ pb: 1 }}>
                 {selectedProduct && productPanelMode === 'print' && (
                   <Box sx={{ mb: 2, p: 2, borderRadius: 2, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
@@ -3543,6 +3610,18 @@ const InnerPage = () => {
                 )}
               </Box>
             </DialogContent>
+            {productPanelMode === 'edit' && !quickAdd && wideEditor && (
+              <Box component="aside" aria-label="What shoppers see" sx={{ flex: '0 0 340px', borderLeft: 1, borderColor: 'divider', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, overflowY: 'auto', bgcolor: '#f8fafc' }}>
+                <Typography sx={{ fontWeight: 600, color: '#16324a' }}>What shoppers see</Typography>
+                <Box sx={{ width: 300, height: 600, flex: 'none', border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 3, bgcolor: '#fff' }}>
+                  <Suspense fallback={<Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={28} /></Box>}>
+                    <DppPhoneView productInfo={formProduct} theme={formTheme} />
+                  </Suspense>
+                </Box>
+                <Typography variant="body2" color="text.secondary">Changes show here as you type.</Typography>
+              </Box>
+            )}
+            </Box>
             {/* Pinned footer: what's still needed, step navigation, save. */}
             {productPanelMode !== 'print' && (() => {
               const missing = missingProductFields();

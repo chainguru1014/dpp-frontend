@@ -1,5 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Box, Button, Tab, Tabs, TextField, Typography, Pagination } from '@mui/material';
+import { Box, Button, TextField, Typography, Pagination, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import LanguageIcon from '@mui/icons-material/Language';
+import SensorsIcon from '@mui/icons-material/Sensors';
+import NfcIcon from '@mui/icons-material/Nfc';
+import ViewWeekIcon from '@mui/icons-material/ViewWeek';
+import CodeList from './CodeList';
 import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
 import LinkIcon from '@mui/icons-material/Link';
@@ -17,12 +24,12 @@ const SECURITY_BASE_URL = process.env.REACT_APP_SECURITY_BASE_URL || process.env
 // `help` is one plain sentence under the tabs so a first-time user knows
 // which code type to pick.
 const TABS = [
-  { key: 'qr', label: 'QR Code', help: 'The usual choice. Each QR code is a unique label; scanning it with a phone opens this product\u2019s page.' },
-  { key: 'securityQr', label: 'Security QR Code', help: 'A QR code with a hidden security key, so shoppers can check the product is genuine. Use it for valuable items.' },
-  { key: 'gs1dl', label: 'GS1 Digital Link', help: 'For products that already have a GS1 barcode number (GTIN). Enter your GS1 link to connect it to this product.' },
-  { key: 'rfid', label: 'RFID Tag', help: 'For RFID tags sewn into or attached to the product. Enter each tag\u2019s number (EPC) or import a list from a CSV file.' },
-  { key: 'nfc', label: 'NFC Tag', help: 'For NFC tags that phones read by touching them. Enter each tag\u2019s ID.' },
-  { key: 'barcode', label: 'Barcode', help: 'For an existing printed barcode (EAN-13). Enter the 13-digit number to connect it to this product.' },
+  { key: 'qr', label: 'QR Code', icon: QrCode2Icon, short: 'The usual choice: one label per item', help: 'The usual choice. Each QR code is a unique label; scanning it with a phone opens this product\u2019s page.' },
+  { key: 'securityQr', label: 'Security QR Code', icon: VerifiedUserIcon, short: 'Shoppers can check it is genuine', help: 'A QR code with a hidden security key, so shoppers can check the product is genuine. Use it for valuable items.' },
+  { key: 'gs1dl', label: 'GS1 Digital Link', icon: LanguageIcon, short: 'Your GTIN as a link', help: 'For products that already have a GS1 barcode number (GTIN). Enter your GS1 link to connect it to this product.' },
+  { key: 'rfid', label: 'RFID Tag', icon: SensorsIcon, short: 'Tags sewn in or attached', help: 'For RFID tags sewn into or attached to the product. Enter each tag\u2019s number (EPC) or import a list from a CSV file.' },
+  { key: 'nfc', label: 'NFC Tag', icon: NfcIcon, short: 'Phones read it by touch', help: 'For NFC tags that phones read by touching them. Enter each tag\u2019s ID.' },
+  { key: 'barcode', label: 'Barcode', icon: ViewWeekIcon, short: 'An existing EAN-13 barcode', help: 'For an existing printed barcode (EAN-13). Enter the 13-digit number to connect it to this product.' },
 ];
 
 // 5 per row, filling the dialog's full width — same sizing for every tab
@@ -59,6 +66,8 @@ const GenerateAndPrintPanel = ({
   const [tab, setTab] = useState('qr');
   const [securityPrintOpen, setSecurityPrintOpen] = useState(false);
   const [pairOpen, setPairOpen] = useState(false);
+  // QR codes as a list (default) or as pictures.
+  const [qrView, setQrView] = useState('list');
 
   // Same 10-per-display-page / 100-per-backend-batch split ProductMintSection
   // used — the backend serves codes in batches of 100 (parent's page/setPage).
@@ -134,22 +143,39 @@ const GenerateAndPrintPanel = ({
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs
-          value={tab}
-          onChange={(e, v) => setTab(v)}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{ flex: 1, minWidth: 0 }}
-        >
-          {TABS.map((t) => (
-            <Tab key={t.key} value={t.key} label={t.label} />
-          ))}
-        </Tabs>
+      {/* Code types as cards, each with one line on what it is for. */}
+      <Box role="radiogroup" aria-label="Type of code" sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 1.25, mb: 1.5 }}>
+        {TABS.map((t) => {
+          const on = tab === t.key;
+          const Icon = t.icon;
+          return (
+            <Box
+              key={t.key}
+              component="button"
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => setTab(t.key)}
+              sx={{
+                display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, textAlign: 'left', cursor: 'pointer', font: 'inherit',
+                borderRadius: 3, border: '1.5px solid', borderColor: on ? '#1b4f72' : '#dfe5ec', bgcolor: on ? '#eef5fd' : '#fff', color: '#16324a',
+                '&:hover': { borderColor: '#1b4f72' },
+              }}
+            >
+              <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: on ? '#1b4f72' : '#e8f1fb', color: on ? '#fff' : '#1b4f72', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                <Icon />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ fontWeight: 700, fontSize: 15.5 }}>{t.label}</Typography>
+                <Typography variant="body2" color="text.secondary">{t.short}</Typography>
+              </Box>
+            </Box>
+          );
+        })}
       </Box>
-      <Alert severity="info" icon={false} sx={{ mb: 2 }}>
+      <Typography color="text.secondary" sx={{ mb: 2 }}>
         {TABS.find((t) => t.key === tab)?.help}
-      </Alert>
+      </Typography>
 
       {tab === 'qr' && (
         <Box>
@@ -186,8 +212,16 @@ const GenerateAndPrintPanel = ({
           )}
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1.5, mb: 1.5 }}>
             <Typography variant="body2" color="text.secondary">
-              {total > 0 ? `Showing ${startItem}–${endItem} of ${total} QR codes` : 'No QR codes yet. Enter how many you need and press Create.'}
+              {total > 0
+                ? `Showing ${startItem}–${endItem} of ${total} QR codes · ${Math.min(total, Number(selectedProduct?.printed_amount) || 0)} printed`
+                : 'No QR codes yet. Enter how many you need and press Create.'}
             </Typography>
+            {total > 0 && (
+              <ToggleButtonGroup size="small" exclusive value={qrView} onChange={(e, v) => v && setQrView(v)} aria-label="Show codes as">
+                <ToggleButton value="list">List</ToggleButton>
+                <ToggleButton value="pictures">Pictures</ToggleButton>
+              </ToggleButtonGroup>
+            )}
             {total > PAGE_SIZE && (
               <Pagination
                 count={totalPages}
@@ -202,6 +236,14 @@ const GenerateAndPrintPanel = ({
             )}
           </Box>
           <PairTagsDialog open={pairOpen} onClose={() => setPairOpen(false)} product={selectedProduct} totalItems={total} />
+          {qrView === 'list' ? (
+            <CodeList
+              codes={pageCodes}
+              printedAmount={selectedProduct?.printed_amount || 0}
+              identifiersByQrcodeId={identifiersByQrcodeId}
+              onDelete={onDeleteQrCode}
+            />
+          ) : (
           <Box sx={GRID_SX}>
             {pageCodes.map((item) => (
               <QRCode
@@ -212,6 +254,7 @@ const GenerateAndPrintPanel = ({
               />
             ))}
           </Box>
+          )}
         </Box>
       )}
 

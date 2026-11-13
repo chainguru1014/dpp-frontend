@@ -229,10 +229,12 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
     employeeType: 'working_employee',
   });
   const [rowError, setRowError] = useState('');
-  const [emailFilter, setEmailFilter] = useState('');
-  const [nameFilter, setNameFilter] = useState('');
-  const [companyFilter, setCompanyFilter] = useState('');
-  const [domainFilter, setDomainFilter] = useState('');
+  // One search box (name, email, domain, brand) and a Role filter.
+  const [query, setQuery] = useState('');
+  const [emailFilter] = useState('');
+  const [nameFilter] = useState('');
+  const [companyFilter] = useState('');
+  const [domainFilter] = useState('');
   const [employeeTypeFilter, setEmployeeTypeFilter] = useState('all');
 
   const reload = () => {
@@ -252,7 +254,9 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
     const name = nameFilter.trim().toLowerCase();
     const company = companyFilter.trim().toLowerCase();
     const domain = domainFilter.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
     return employees.filter((e) => {
+      if (q && ![e.email, e.name, e.companyName, e.emailDomain].some((v) => String(v || '').toLowerCase().includes(q))) return false;
       if (email && !(e.email || '').toLowerCase().includes(email)) return false;
       if (name && !(e.name || '').toLowerCase().includes(name)) return false;
       if (company && !(e.companyName || '').toLowerCase().includes(company)) return false;
@@ -260,7 +264,7 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
       if (employeeTypeFilter !== 'all' && (e.employeeType || 'working_employee') !== employeeTypeFilter) return false;
       return true;
     });
-  }, [employees, emailFilter, nameFilter, companyFilter, domainFilter, employeeTypeFilter]);
+  }, [employees, emailFilter, nameFilter, companyFilter, domainFilter, employeeTypeFilter, query]);
 
   const startEdit = (employee) => {
     setRowError('');
@@ -409,37 +413,18 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
           {rowError}
         </Alert>
       )}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 2, alignItems: 'center' }}>
         <TextField
-          label="Email"
-          size="small"
-          value={emailFilter}
-          onChange={(e) => setEmailFilter(e.target.value)}
+          placeholder={showCompanyColumn ? 'Search by name, email, domain or brand' : 'Search by name, email or domain'}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          inputProps={{ 'aria-label': 'Search employees' }}
+          sx={{ flex: '1 1 300px', maxWidth: 460, bgcolor: 'background.paper', borderRadius: 2 }}
         />
-        <TextField
-          label="Name"
-          size="small"
-          value={nameFilter}
-          onChange={(e) => setNameFilter(e.target.value)}
-        />
-        {showCompanyColumn && (
-          <TextField
-            label="Company"
-            size="small"
-            value={companyFilter}
-            onChange={(e) => setCompanyFilter(e.target.value)}
-          />
-        )}
-        <TextField
-          label="Domain"
-          size="small"
-          value={domainFilter}
-          onChange={(e) => setDomainFilter(e.target.value)}
-        />
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Employee Type</InputLabel>
+        <FormControl sx={{ minWidth: 200, bgcolor: 'background.paper', borderRadius: 2 }}>
+          <InputLabel>Role</InputLabel>
           <Select
-            label="Employee Type"
+            label="Role"
             value={employeeTypeFilter}
             onChange={(e) => setEmployeeTypeFilter(e.target.value)}
           >
@@ -448,6 +433,9 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
             <MenuItem value="supervisor">Supervisor</MenuItem>
           </Select>
         </FormControl>
+        <Typography color="text.secondary" sx={{ ml: 'auto' }}>
+          {filteredEmployees.length} {filteredEmployees.length === 1 ? 'person' : 'people'}
+        </Typography>
       </Box>
       <Box sx={{ bgcolor: '#fff', borderRadius: 1, boxShadow: 1 }}>
         <DataGrid

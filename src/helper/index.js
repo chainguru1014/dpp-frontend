@@ -19,6 +19,30 @@ export const Backend_URL = normalizeBaseUrl(
 );
 export const FILE_BASE_URL = buildUrl(Backend_URL, 'files/');
 
+// Every call to our API carries the signed-in session's token, unless the
+// call sets its own. Adding, changing and removing brand companies and the
+// admin lists need it (the server checks it is the Yometel admin).
+const storedToken = () => {
+    try {
+        return window.sessionStorage.getItem('dpp_auth_token') || window.localStorage.getItem('dpp_auth_token') || '';
+    } catch (e) {
+        return '';
+    }
+};
+axios.interceptors.request.use((config) => {
+    const url = String(config.url || '');
+    const token = storedToken();
+    if (token && url.startsWith(Backend_URL)) {
+        config.headers = config.headers || {};
+        const has = typeof config.headers.get === 'function' ? config.headers.get('Authorization') : config.headers.Authorization;
+        if (!has) {
+            if (typeof config.headers.set === 'function') config.headers.set('Authorization', `Bearer ${token}`);
+            else config.headers.Authorization = `Bearer ${token}`;
+        }
+    }
+    return config;
+});
+
 export const getFileUrl = (filename) => {
     if (!filename) return '';
     // If it's already an absolute URL, return as-is

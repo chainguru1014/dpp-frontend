@@ -6,6 +6,8 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import PageHeader from '../../components/PageHeader';
 import DashboardAnalytics from './DashboardAnalytics';
 import QuickStartCards from './QuickStartCards';
+import NeedsAttention from './NeedsAttention';
+import AddIcon from '@mui/icons-material/Add';
 import SetupStrip from './SetupStrip';
 import { useAuth } from '../auth/AuthContext';
 
@@ -60,6 +62,8 @@ const DashboardPage = ({
       <Button variant="outlined" startIcon={<Inventory2Icon />} onClick={onNavigateToProducts}>My products</Button>
       <Button variant="contained" startIcon={<HistoryIcon />} onClick={onNavigateToScanHistory}>My scans</Button>
     </>
+  ) : canEditProducts && onNavigateToNewProduct ? (
+    <Button variant="contained" startIcon={<AddIcon />} onClick={onNavigateToNewProduct}>New product</Button>
   ) : null;
 
   return (
@@ -93,7 +97,23 @@ const DashboardPage = ({
         />
       )}
 
-      {!isAppUser && (
+      {/* Brands, Supervisors and the super admin: the work waiting, each
+          with the button that deals with it (instead of cards that repeat
+          the menu). Working employees keep their quick-start cards. */}
+      {!isAppUser && !isWorkingEmployee && (
+        <NeedsAttention
+          token={token}
+          products={products}
+          brands={brands}
+          company={company}
+          isAdmin={isAdmin}
+          onNavigate={onNavigate}
+          onCompletePassport={onCompletePassport}
+          onGenerateCodesFor={(product) => (product && onGenerateCodesFor ? onGenerateCodesFor(product) : onNavigateToGenerateCode())}
+        />
+      )}
+
+      {isWorkingEmployee && (
         <QuickStartCards
           products={products}
           platform={isAdmin}
