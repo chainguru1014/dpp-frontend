@@ -21,6 +21,7 @@ import {
   ListItem,
   ListItemButton,
   ListItemIcon,
+  ListSubheader,
   ListItemText,
   Menu,
   MenuItem,
@@ -82,6 +83,8 @@ import CategoryIcon from '@mui/icons-material/Category';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import StorefrontIcon from '@mui/icons-material/Storefront';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import Webcam from 'react-webcam';
 import io from 'socket.io-client';
 
@@ -135,6 +138,7 @@ import ShipmentInspectionPage from '../features/shipment/ShipmentInspectionPage'
 import RfidScanPage from '../features/rfid/RfidScanPage';
 import { isDesktopApp } from '../features/rfid/rfidReader';
 import BrandPage from '../features/brand/BrandPage';
+import PageTabs from '../components/PageTabs';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ChatPage from '../features/chat/ChatPage';
 import NotificationBell from '../features/notifications/NotificationBell';
@@ -546,15 +550,28 @@ const InnerPage = () => {
         : isAppUser
           ? APP_USER_ALLOWED_PAGES
           : isAdmin
-            ? KNOWN_PAGES.filter((p) => p !== 'processSteps')
+            ? KNOWN_PAGES
             : KNOWN_PAGES.filter((p) => !ADMIN_ONLY.includes(p));
+    // Pages a role's menu hides can't be opened by typing their address.
+    const hiddenForRole = (page) => (
+      (page === 'shipmentInspection' && !canSeeShipmentInspection)
+      || (['itemSearch', 'security', 'serviceRequests', 'brand'].includes(page) && !canSeeItemSearch && !isWorkingEmployee)
+      || (page === 'employeeAuditLog' && !canSeeStaffManagement)
+      || (page === 'processSteps' && !(isAdmin || isCompanyAccount || isSupervisor))
+    );
     // Opening a product's own code panel ('newProduct' in print mode) stays
     // reachable from the Products page for read-only roles.
     // RFID Scan exists only in the desktop app; a browser bookmark or typed
     // /admin/rfidScan lands on Dashboard instead.
     const desktopOnlyBlocked = activePage === 'rfidScan' && !isDesktopApp;
-    if (desktopOnlyBlocked || (!allowed.includes(activePage) && activePage !== 'newProduct')) {
+    if (desktopOnlyBlocked || hiddenForRole(activePage) || (!allowed.includes(activePage) && activePage !== 'newProduct')) {
       setActivePage('dashboard');
+      return;
+    }
+    // The product window without a product to show (e.g. a working employee
+    // typing /admin/newProduct): back to Products instead of a blank page.
+    if (activePage === 'newProduct' && !canEditProducts && !selectedProduct) {
+      setActivePage('products');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [company, isAdmin, isEmployeeActor, isWorkingEmployee, isAppUser, activePage]);
@@ -613,6 +630,8 @@ const InnerPage = () => {
   // The brand the Brand page should open on ({ companyId, name }), when
   // another page sends the user there.
   const [brandPageTarget, setBrandPageTarget] = useState(null);
+  // Super admin: the brand company a new product is added to.
+  const [productCompanyId, setProductCompanyId] = useState('');
   // The product just added, while the "What next?" window is open.
   const [addedProduct, setAddedProduct] = useState(null);
   useEffect(() => {
@@ -634,15 +653,27 @@ const InnerPage = () => {
   const ownBrands = brands.filter((b) => String(b.company_id) === String(company?._id || ''));
   // The company the product in the form belongs to (the super admin can open
   // another company's product), and the design of the brand typed into it.
-  const formCompanyId = String((isEditing && (selectedProduct?.company_id?._id || selectedProduct?.company_id)) || company?._id || '');
-  const formTheme = brandOf(formCompanyId, brandInfo.name)?.dppTheme;
-  const [sidebarOpen, setSidebarOpen] = useState(() => loadStateFromStorage('sidebarOpen', true));
-  // Which menu groups are unfolded. Only Products starts open, so the menu
-  // shows a handful of items; the group of the page you are on is always open.
-  const [openNavGroups, setOpenNavGroups] = useState(() => loadStateFromStorage('navGroups', { products: true }));
+  const formCompanyId = String((isEditing && (selectedProduct?.company_id?._id || selectedProduct?.company_id)) || (isAdmin && productCompanyId) || company?._id || '');
+  // One brand per company: the product shows its company's brand (the super
+  // admin's own account is not a brand; its products keep what they have).
+  const formIsBrandCompany = !(isAdmin && formCompanyId === String(company?._id || ''));
+  const formBrand = formIsBrandCompany ? (brands.find((b) => String(b.company_id) === formCompanyId) || null) : null;
+  const formTheme = formBrand?.dppTheme || brandOf(formCompanyId, brandInfo.name)?.dppTheme;
+  // Brand companies the super admin can add a product to.
+  const brandCompanies = brands.filter((b, i, all) => String(b.company_id) !== String(company?._id || '')
+    && all.findIndex((x) => String(x.company_id) === String(b.company_id)) === i);
   useEffect(() => {
-    saveStateToStorage('navGroups', openNavGroups);
-  }, [openNavGroups]);
+    if (!formBrand) return;
+    setBrandInfo((prev) => ({
+      name: formBrand.name || prev.name,
+      detail: formBrand.detail || prev.detail,
+      websiteUrl: formBrand.websiteUrl || prev.websiteUrl,
+      logoUrl: formBrand.logoUrl || prev.logoUrl,
+      coverUrl: formBrand.coverUrl || prev.coverUrl,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formBrand?._id, formBrand?.name, formBrand?.logoUrl, formBrand?.detail, formBrand?.websiteUrl, formBrand?.coverUrl]);
+  const [sidebarOpen, setSidebarOpen] = useState(() => loadStateFromStorage('sidebarOpen', true));
   const [profileMenuAnchor, setProfileMenuAnchor] = useState(null);
   // Mobile/tablet: the left nav becomes a toggleable overlay drawer.
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -884,6 +915,7 @@ const InnerPage = () => {
       coverUrl: ownBrand?.coverUrl || '',
     });
     setQuickAdd(true);
+    setProductCompanyId(isAdmin ? (brandPageTarget?.companyId || '') : '');
     setIsUploadingBrandLogo(false);
     setIsUploadingBrandCover(false);
     setCertifications([]);
@@ -1012,14 +1044,9 @@ const InnerPage = () => {
     !productName.trim() && 'Product name',
     !itemCategory && 'Item category',
     productImages.length === 0 && 'At least one product photo',
-    !brandInfo.name.trim() && 'Brand name',
-    !brandInfo.detail.trim() && 'Brand description',
-    !brandInfo.websiteUrl.trim() && 'Brand website',
-    !brandInfo.logoUrl.trim() && 'Brand logo',
+    !brandInfo.name.trim() && 'Brand',
   ].filter(Boolean);
 
-  // All four brand details the server requires are filled in.
-  const brandComplete = ['name', 'detail', 'websiteUrl', 'logoUrl'].every((key) => String(brandInfo[key] || '').trim());
   const [savingProduct, setSavingProduct] = useState(false);
   // Turns on red "required" marks after the user presses Next / Add product
   // with something missing (not before — an empty new form shouldn't shout).
@@ -1061,7 +1088,7 @@ const InnerPage = () => {
       price: price === '' ? null : Number(price), currency: currency.trim().toUpperCase() || 'EUR', purchaseUrl: purchaseUrl.trim(),
       detailFacts,
       brandInfo,
-      company_id: company._id,
+      company_id: isAdmin && productCompanyId ? productCompanyId : company._id,
       images: productImages,
       files: productFiles,
       videos: productVideos,
@@ -1893,10 +1920,13 @@ const InnerPage = () => {
       border: '1px solid transparent',
       mx: 1,
       my: 0.25,
-      py: 1.1,
+      py: 0.5,
       px: 1.25,
-      [compactMediaQuery]: { mx: 0.75, my: 0.2, py: 0.8, px: 1 },
+      // 46 px rows: every page fits on a laptop screen without folding.
+      minHeight: 46,
+      [compactMediaQuery]: { mx: 0.75, my: 0.2, py: 0.4, px: 1, minHeight: 44 },
     },
+    '& .MuiListItemText-root': { my: 0 },
     '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 42, justifyContent: 'center' },
     '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 26 },
     '& .MuiListItemText-primary': { fontSize: '1.1rem', fontWeight: 500, color: '#ffffff', [compactMediaQuery]: { fontSize: '1.02rem' } },
@@ -1914,80 +1944,104 @@ const InnerPage = () => {
     '& .nav-sub .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 22 },
   };
 
-  // Menu: Dashboard, then four groups that fold open and shut, so only a
-  // handful of items show at once. Each entry: [page, label, Icon, visible].
-  const navGroups = [
+  // Menu: Dashboard, then sections named after the work, always open (no
+  // folding), in the order of the work: products and codes, daily work,
+  // results, shoppers, then the rarely used set-up last. Working employees
+  // and shoppers get a plain list. Notifications live on the bell.
+  // Each entry: [page, label, Icon, visible, alsoActiveOn?].
+  const flatMenu = isWorkingEmployee || isAppUser;
+  const navGroups = flatMenu ? [
     {
       title: null,
-      // RFID Scan: everyone except app users (shoppers have no reader), and
-      // only in the desktop app (Windows, Mac or Linux): a web browser can't
-      // reach the reader.
-      items: [['dashboard', 'Dashboard', DashboardIcon, true], ['rfidScan', 'RFID Scan', RfidIcon, !isAppUser && isDesktopApp]],
+      items: isAppUser ? [
+        ['dashboard', 'Dashboard', DashboardIcon, true],
+        ['products', 'My Products', Inventory2Icon, true],
+        ['history', 'My Scans', HistoryIcon, true],
+        ['lca', 'Sustainability', SpaIcon, true, ['esg']],
+        ['recommendations', 'Recommendations', AutoAwesomeIcon, true],
+        ['chat', 'Chat', ChatBubbleOutlineIcon, true],
+      ] : [
+        ['dashboard', 'Dashboard', DashboardIcon, true],
+        ['products', 'Products', Inventory2Icon, true],
+        ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
+        ['captureHistory', 'My Captures', AssessmentIcon, canSeeCaptureHistory],
+        ['rfidScan', 'RFID Scan', RfidIcon, isDesktopApp],
+      ],
     },
+  ] : [
+    { title: null, items: [['dashboard', 'Dashboard', DashboardIcon, true]] },
     {
       key: 'products',
-      icon: Inventory2Icon,
       title: 'Products',
       items: [
-        ['products', isAppUser ? 'My Products' : 'Products', Inventory2Icon, true],
-        ['brand', 'Brand', PaletteIcon, canSeeItemSearch],
+        ['products', 'Products', Inventory2Icon, true],
         ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
-        ['shipmentInspection', 'Shipment Inspection', LocalShippingIcon, canSeeShipmentInspection],
       ],
     },
     {
-      key: 'activity',
-      icon: InsightsIcon,
-      title: 'Activity',
+      key: 'daily',
+      title: 'Daily work',
+      items: [
+        ['captureHistory', 'Captures', AssessmentIcon, canSeeCaptureHistory],
+        ['shipmentInspection', 'Shipments', LocalShippingIcon, canSeeShipmentInspection],
+        // Only in the desktop app (Windows, Mac or Linux): a web browser can't reach the reader.
+        ['rfidScan', 'RFID Scan', RfidIcon, isDesktopApp],
+      ],
+    },
+    {
+      key: 'insights',
+      title: 'Insights',
       items: [
         ['itemSearch', 'Product Journey', TravelExploreIcon, canSeeItemSearch],
-        ['security', 'Security', GppMaybeIcon, canSeeItemSearch],
+        ['history', 'Scans & Security', GppMaybeIcon, true, ['security']],
+        ['lca', 'Sustainability', SpaIcon, true, ['esg']],
+      ],
+    },
+    {
+      key: 'shoppers',
+      title: 'Shoppers',
+      items: [
         ['serviceRequests', 'Service Requests', HandymanIcon, canSeeItemSearch],
-        ['history', isAppUser ? 'My Scans' : 'Scan History', HistoryIcon, !isWorkingEmployee],
-        ['captureHistory', isWorkingEmployee ? 'My Captures' : 'Capture History', AssessmentIcon, canSeeCaptureHistory],
-        ['lca', 'LCA', SpaIcon, !isWorkingEmployee],
-        ['esg', 'ESG', BalanceIcon, !isWorkingEmployee],
-      ],
-    },
-    {
-      key: 'staff',
-      icon: GroupsIcon,
-      title: 'Staff',
-      items: [
-        ['companies', 'Companies', BusinessIcon, isAdmin && !isEmployeeActor],
-        ['employeeAuditLog', 'Employee', BadgeIcon, canSeeStaffManagement],
-        // Worker app step buttons — per company, a Supervisor or the
-        // company account (never a working employee or the super admin).
-        ['processSteps', 'Worker App Steps', FormatListNumberedIcon, !isAppUser && !isAdmin && (!isEmployeeActor || isSupervisor)],
-        ['users', 'App Users', PersonIcon, isAdmin && !isEmployeeActor],
-      ],
-    },
-    {
-      key: 'more',
-      icon: MoreHorizIcon,
-      title: 'More',
-      items: [
-        ['allNotifications', 'Notifications', NotificationsIcon, true],
-        ['notifications', 'Announcements', CampaignIcon, isAdmin],
         // For a brand these two are previews of what its shoppers get.
-        ['recommendations', isAppUser ? 'Recommendations' : 'Shopper Recommendations', AutoAwesomeIcon, !isWorkingEmployee],
-        ['chat', isAppUser ? 'Chat' : 'Shopper Chat', ChatBubbleOutlineIcon, !isWorkingEmployee],
+        ['recommendations', 'Shopper Preview', AutoAwesomeIcon, true, ['chat']],
+        ['notifications', 'Announcements', CampaignIcon, isAdmin],
+      ],
+    },
+    isAdmin ? {
+      key: 'platform',
+      title: 'Platform',
+      items: [
+        ['companies', 'Brands', StorefrontIcon, !isEmployeeActor],
+        ['processSteps', 'Workflows', AccountTreeIcon, true],
+        ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
+        ['users', 'App Users', PersonIcon, !isEmployeeActor],
+      ],
+    } : {
+      key: 'brand',
+      title: 'Your brand',
+      items: [
+        ['brand', 'Brand profile', PaletteIcon, canSeeItemSearch],
+        ['processSteps', 'Workflows', AccountTreeIcon, isCompanyAccount || isSupervisor],
+        ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
       ],
     },
   ];
 
-  const navItem = ([page, label, Icon]) => (
-    <ListItem disablePadding key={page}>
-      <ListItemButton
-        selected={activePage === page}
-        aria-current={activePage === page ? 'page' : undefined}
-        onClick={() => go(page)}
-      >
-        <ListItemIcon><Icon /></ListItemIcon>
-        <ListItemText primary={label} />
-      </ListItemButton>
-    </ListItem>
-  );
+  const navItem = ([page, label, Icon, , alsoOn]) => {
+    const on = activePage === page || (alsoOn || []).includes(activePage);
+    return (
+      <ListItem disablePadding key={page}>
+        <ListItemButton
+          selected={on}
+          aria-current={on ? 'page' : undefined}
+          onClick={() => go(page)}
+        >
+          <ListItemIcon><Icon /></ListItemIcon>
+          <ListItemText primary={label} />
+        </ListItemButton>
+      </ListItem>
+    );
+  };
 
   const navList = (
     <List component="nav" aria-label="Main menu" sx={{ pt: 0.5 }}>
@@ -1995,25 +2049,16 @@ const InnerPage = () => {
         const visible = group.items.filter((item) => item[3]);
         if (!visible.length) return null;
         if (!group.title) return visible.map(navItem);
-        // A group with a single item is shown as that item — nothing to fold.
-        if (visible.length === 1) return navItem(visible[0]);
-        const holdsActivePage = visible.some((item) => item[0] === activePage);
-        const open = holdsActivePage || !!openNavGroups[group.key];
         return (
           <React.Fragment key={group.key}>
-            <ListItem disablePadding>
-              <ListItemButton
-                aria-expanded={open}
-                onClick={() => setOpenNavGroups((prev) => ({ ...prev, [group.key]: !open }))}
-              >
-                <ListItemIcon><group.icon /></ListItemIcon>
-                <ListItemText primary={group.title} />
-                {open ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              </ListItemButton>
-            </ListItem>
-            <Collapse in={open} unmountOnExit>
-              <List disablePadding className="nav-sub">{visible.map(navItem)}</List>
-            </Collapse>
+            <ListSubheader
+              component="div"
+              disableSticky
+              sx={{ bgcolor: 'transparent', color: '#ffffff', fontSize: 12.5, fontWeight: 700, letterSpacing: '1.4px', textTransform: 'uppercase', lineHeight: '30px', mt: 1, px: 2.75 }}
+            >
+              {group.title}
+            </ListSubheader>
+            {visible.map(navItem)}
           </React.Fragment>
         );
       })}
@@ -2229,11 +2274,25 @@ const InnerPage = () => {
 
           {activePage === 'profile' && <ProfilePage />}
 
+          {/* Shopper Preview: Recommendations + Chat (shoppers: two menu items). */}
+          {!isAppUser && (activePage === 'recommendations' || activePage === 'chat') && (
+            <PageTabs tabs={[['recommendations', 'Recommendations'], ['chat', 'Chat']]} active={activePage} onChange={go} />
+          )}
           {activePage === 'recommendations' && (
             <RecommendationsPage company={company} isAdmin={isAdmin} isAppUser={isAppUser} />
           )}
 
           {activePage === 'chat' && <ChatPage company={company} isAppUser={isAppUser} />}
+
+          {/* Scans & Security: all scans, then suspected copies. */}
+          {(activePage === 'history' || activePage === 'security') && !isAppUser && (
+            <PageTabs tabs={[['history', 'All scans'], canSeeItemSearch && ['security', 'Suspected copies']]} active={activePage} onChange={go} />
+          )}
+
+          {/* Sustainability: Life cycle (LCA) + ESG. */}
+          {(activePage === 'lca' || activePage === 'esg') && (
+            <PageTabs tabs={[['lca', 'Life cycle'], ['esg', 'ESG']]} active={activePage} onChange={go} />
+          )}
 
           {/* Scan History and Ownership Transfers: super admin sees everything;
               company/user are scoped to owned products. */}
@@ -2283,8 +2342,12 @@ const InnerPage = () => {
               token={token}
               isAdmin={isAdmin}
               products={products}
-              target={brandPageTarget}
-              onTargetHandled={() => setBrandPageTarget(null)}
+              account={company}
+              companyId={brandPageTarget?.companyId || ''}
+              onCompanyChange={(id) => setBrandPageTarget({ companyId: id })}
+              onBack={isAdmin ? () => go('companies') : undefined}
+              onOpenProducts={isAdmin ? () => go('products') : undefined}
+              onOpenEmployees={canSeeStaffManagement ? () => go('employeeAuditLog') : undefined}
               onBrandsChanged={setBrands}
             />
           )}
@@ -2327,14 +2390,22 @@ const InnerPage = () => {
             </Box>
           )}
 
-          {activePage === 'companies' && isAdmin && <CompanyManagementSection />}
+          {activePage === 'companies' && isAdmin && (
+            <CompanyManagementSection
+              token={token}
+              onOpenBrand={(row) => {
+                setBrandPageTarget({ companyId: String(row._id) });
+                go('brand');
+              }}
+            />
+          )}
 
           {activePage === 'employeeAuditLog' && canSeeStaffManagement && (
             <EmployeeManagementPage token={token} isAdmin={isAdmin} companyId={company?._id} />
           )}
 
-          {activePage === 'processSteps' && !isAppUser && !isAdmin && (!isEmployeeActor || company?.employeeType === 'supervisor') && (
-            <ProcessStepsPage token={token} />
+          {activePage === 'processSteps' && !isAppUser && (isAdmin || !isEmployeeActor || company?.employeeType === 'supervisor') && (
+            <ProcessStepsPage token={token} isAdmin={isAdmin} companyId={isAdmin ? (brandPageTarget?.companyId || '') : ''} />
           )}
 
 
@@ -2685,7 +2756,7 @@ const InnerPage = () => {
                         startIcon={<PaletteIcon />}
                         sx={{ mb: 1.5 }}
                         onClick={async () => {
-                          const target = { companyId: formCompanyId, name: brandInfo.name };
+                          const target = { companyId: formCompanyId };
                           if (await closeProductDialog(null, 'closeButton')) {
                             setBrandPageTarget(target);
                             setActivePage('brand');
@@ -2820,33 +2891,56 @@ const InnerPage = () => {
                       )}
                     </Box>
 
-                    {quickAdd && brandComplete ? (
-                      // Quick add with a brand to reuse: one line instead of the four brand fields.
-                      <Box component="section" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                        <Box component="img" src={getFileUrl(brandInfo.logoUrl)} alt=""
-                          sx={{ width: 48, height: 48, objectFit: 'contain', border: '1px solid', borderColor: 'divider', borderRadius: 1.5, bgcolor: '#e6eaf0', p: '3px' }} />
-                        {ownBrands.length > 1 ? (
-                          <TextField
-                            select
-                            label="Brand"
-                            sx={{ flex: 1, minWidth: 200 }}
-                            value={ownBrands.some((b) => b.name === brandInfo.name) ? brandInfo.name : ''}
-                            onChange={(e) => {
-                              const picked = ownBrands.find((b) => b.name === e.target.value);
-                              if (picked) {
-                                setBrandInfo({ name: picked.name, detail: picked.detail, websiteUrl: picked.websiteUrl, logoUrl: picked.logoUrl, coverUrl: picked.coverUrl });
+                    {formBrand || (isAdmin && !isEditing) ? (
+                      <Box component="section" sx={{ display: 'flex', alignItems: 'center', gap: 1.75, p: 2, borderRadius: 3, bgcolor: '#f5f8fc', border: '1px solid', borderColor: 'divider', flexWrap: 'wrap' }}
+                        data-required-missing={showFieldErrors && !brandInfo.name.trim() ? 'true' : undefined}>
+                        {formBrand?.logoUrl ? (
+                          <Box component="img" src={getFileUrl(formBrand.logoUrl)} alt=""
+                            sx={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'contain', bgcolor: '#eef2f7', border: '1px solid #dfe5ec', flex: 'none' }} />
+                        ) : (
+                          <Box aria-hidden sx={{ width: 48, height: 48, borderRadius: '50%', bgcolor: '#16324a', color: '#f3e6c8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', fontWeight: 600, fontSize: 22, flex: 'none' }}>
+                            {String(formBrand?.name || '?').charAt(0).toUpperCase()}
+                          </Box>
+                        )}
+                        <Box sx={{ flex: 1, minWidth: 200 }}>
+                          {isAdmin && !isEditing ? (
+                            <TextField
+                              select
+                              fullWidth
+                              required
+                              label="Brand"
+                              value={productCompanyId}
+                              onChange={(e) => setProductCompanyId(e.target.value)}
+                              error={showFieldErrors && !productCompanyId}
+                              helperText={showFieldErrors && !productCompanyId ? 'Please choose the brand this product belongs to.' : 'Name, logo, website and page design come from the brand’s profile.'}
+                            >
+                              {brandCompanies.map((b) => <MenuItem key={b.company_id} value={String(b.company_id)}>{b.name}</MenuItem>)}
+                            </TextField>
+                          ) : (
+                            <>
+                              <Typography sx={{ fontWeight: 600, color: '#16324a' }}>
+                                {formBrand?.name || brandInfo.name}
+                                {formBrand?.tagline ? <Typography component="span" color="text.secondary">{` · ${formBrand.tagline}`}</Typography> : null}
+                              </Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                Brand name, logo, website and page design come from {isAdmin ? 'the brand’s' : 'your'} brand profile.
+                              </Typography>
+                            </>
+                          )}
+                        </Box>
+                        {canSeeItemSearch && formBrand && (
+                          <Button
+                            onClick={async () => {
+                              const target = { companyId: formCompanyId };
+                              if (await closeProductDialog(null, 'closeButton')) {
+                                setBrandPageTarget(target);
+                                setActivePage('brand');
                               }
                             }}
                           >
-                            {ownBrands.map((b) => <MenuItem key={b._id} value={b.name}>{b.name}</MenuItem>)}
-                          </TextField>
-                        ) : (
-                          <Box sx={{ flex: 1, minWidth: 160 }}>
-                            <Typography variant="subtitle1">Brand: {brandInfo.name}</Typography>
-                            <Typography variant="body2" color="text.secondary">From your Brand page. “Change” lets this product differ.</Typography>
-                          </Box>
+                            Brand profile ›
+                          </Button>
                         )}
-                        <Button onClick={() => setQuickAdd(false)}>Change</Button>
                       </Box>
                     ) : (
                     <Box component="section">
@@ -3593,7 +3687,10 @@ const InnerPage = () => {
       )}
       {openOwnerDialog && ownerInfo && (
         <Dialog open={openOwnerDialog} onClose={() => setOpenOwnerDialog(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>Owner Information</DialogTitle>
+          <DialogTitle>
+            Owner
+            <IconButton onClick={() => setOpenOwnerDialog(false)} color="inherit" aria-label="Close"><CloseIcon /></IconButton>
+          </DialogTitle>
           <DialogContent dividers>
             <Typography><span>Name:</span> {ownerInfo.name}</Typography>
             {ownerInfo.email && <Typography><span>Email:</span> {ownerInfo.email}</Typography>}

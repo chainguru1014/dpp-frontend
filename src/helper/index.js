@@ -115,8 +115,8 @@ export const registerCompany = async (data) => {
     try {
         const res = await axios.post(`${Backend_URL}company`, data);
         if (res.data.status === 'success') {
-            if (res.data.warning) notify(`Company created. ${res.data.warning}`, 'warning');
-            else notifySuccess('Company created.');
+            if (res.data.warning) notify(`Brand added. ${res.data.warning}`, 'warning');
+            else notifySuccess('Brand added. Its Supervisor gets an email to sign in.');
             // Return the company document from response
             return res.data.data.doc || res.data.data;
         } else {
@@ -823,9 +823,10 @@ export const deleteEmployee = async (token, id) => {
 };
 
 // ----- Process Step Labels (Worker Operations grid config) -----
-export const getProcessSteps = async (token) => {
+// companyId: the super admin choosing which brand company's workflows.
+export const getProcessSteps = async (token, companyId) => {
     try {
-        const res = await axios.get(`${Backend_URL}company/process-steps`, {
+        const res = await axios.get(`${Backend_URL}company/process-steps${companyId ? `?companyId=${encodeURIComponent(companyId)}` : ''}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return res.data?.data?.processSteps || [];
@@ -835,9 +836,9 @@ export const getProcessSteps = async (token) => {
     }
 };
 
-export const updateProcessSteps = async (token, processSteps) => {
+export const updateProcessSteps = async (token, processSteps, companyId) => {
     try {
-        const res = await axios.put(`${Backend_URL}company/process-steps`, { processSteps }, {
+        const res = await axios.put(`${Backend_URL}company/process-steps`, { processSteps, companyId: companyId || undefined }, {
             headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         return { ok: true, data: res.data?.data?.processSteps || [] };
@@ -1318,8 +1319,9 @@ const brandCall = async (token, method, path, data) => {
 };
 
 // Returns { brands, canWrite } — or null when the list could not be loaded.
-export const listBrands = async (token) => {
-    const res = await brandCall(token, 'get', '');
+// The super admin may pass a companyId for that one brand company.
+export const listBrands = async (token, companyId) => {
+    const res = await brandCall(token, 'get', companyId ? `?companyId=${encodeURIComponent(companyId)}` : '');
     return res.ok ? res.data : null;
 };
 export const createBrand = (token, data) => brandCall(token, 'post', '', data);

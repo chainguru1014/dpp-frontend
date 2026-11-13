@@ -5,20 +5,23 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SaveIcon from '@mui/icons-material/Save';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import { getProcessSteps, updateProcessSteps } from '../../helper';
-import { PROCESS_STEP_TYPES as TYPE_OPTIONS } from '../../utils/processStepTypes';
+import { getAdminUserData, getProcessSteps, listBrands, updateProcessSteps } from '../../helper';
+import { PROCESS_STEP_TYPES as TYPE_OPTIONS, processStepTypeLabel } from '../../utils/processStepTypes';
+import { BrandMark } from '../admin/CompanyManagementSection';
 import PageHeader from '../../components/PageHeader';
-import { notifySuccess } from '../../utils/feedbackBus';
+import { confirmAction, notifySuccess } from '../../utils/feedbackBus';
 
 const MIN_STEPS = 1;
 const MAX_STEPS = 18;
 
 const emptyStep = () => ({ entity: '', type: 'general' });
 
-// Manages the numbered "Worker Operations" step buttons shown on the mobile
-// app's employee home screen (each button = place on top, step type below).
-// Reachable by a Supervisor or a plain Company admin — see pages/index.js.
-const ProcessStepsPage = ({ token }) => {
+// Workflows: the steps a brand's staff choose from in the app (Select
+// workflow, "Receiving: Tokyo DC"). A Supervisor or the brand account edits
+// its own; the super admin picks a brand first (companyId).
+const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId = '' }) => {
+  const [companyId, setCompanyId] = useState(initialCompanyId);
+  const [brandOptions, setBrandOptions] = useState([]);
   const [steps, setSteps] = useState([emptyStep()]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -26,9 +29,26 @@ const ProcessStepsPage = ({ token }) => {
   const savedRef = useRef(JSON.stringify([emptyStep()]));
   const dirty = !loading && JSON.stringify(steps) !== savedRef.current;
 
+  // Super admin: the brand companies to choose from.
+  useEffect(() => {
+    if (!isAdmin) return;
+    Promise.all([getAdminUserData(), listBrands(token)]).then(([data, res]) => {
+      const brandByCompany = new Map();
+      (res?.brands || []).forEach((b) => { if (!brandByCompany.has(String(b.company_id))) brandByCompany.set(String(b.company_id), b); });
+      const options = (data.companies || [])
+        .filter((c) => c.role !== 'super' && c.name !== 'admin')
+        .map((c) => ({ id: String(c._id), name: brandByCompany.get(String(c._id))?.name || c.name, brand: brandByCompany.get(String(c._id)) || null }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      setBrandOptions(options);
+      setCompanyId((current) => current || options[0]?.id || '');
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, token]);
+
   const reload = () => {
+    if (isAdmin && !companyId) return;
     setLoading(true);
-    getProcessSteps(token)
+    getProcessSteps(token, isAdmin ? companyId : undefined)
       .then((data) => {
         const next = data && data.length
           ? data.map((s) => ({
@@ -48,7 +68,7 @@ const ProcessStepsPage = ({ token }) => {
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, companyId]);
 
   // Warn before leaving the website with unsaved changes.
   useEffect(() => {
@@ -92,7 +112,7 @@ const ProcessStepsPage = ({ token }) => {
 
     setSaving(true);
     const cleaned = steps.map((step) => ({ entity: step.entity.trim(), type: step.type }));
-    const res = await updateProcessSteps(token, cleaned);
+    const res = await updateProcessSteps(token, cleaned, isAdmin ? companyId : undefined);
     setSaving(false);
 
     if (!res.ok) {
@@ -101,14 +121,16 @@ const ProcessStepsPage = ({ token }) => {
     }
     savedRef.current = JSON.stringify(cleaned);
     setSteps(cleaned);
-    notifySuccess('Worker app steps saved. Employees see them the next time they open the app.');
+    notifySuccess('Workflows saved. Staff see them the next time they choose a workflow in the app.');
   };
 
   return (
     <Box sx={{ pb: 10 }}>
       <PageHeader
-        title="Worker App Steps"
-        description="The numbered buttons your employees see in the mobile app."
+        title="Workflows"
+        description={isAdmin
+          ? 'The steps a brand’s staff choose from when they open the app. Pick a brand, then add, order and name its steps.'
+          : 'The steps your staff choose from when they open the app (Select workflow).'}
         actions={(
           <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAdd} disabled={steps.length >= MAX_STEPS}>
             Add step
@@ -116,9 +138,29 @@ const ProcessStepsPage = ({ token }) => {
         )}
       />
 
+      {isAdmin && (
+        <Paper variant="outlined" sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <BrandMark brand={brandOptions.find((o) => o.id === companyId)?.brand} name={brandOptions.find((o) => o.id === companyId)?.name} size={44} />
+          <TextField
+            select
+            label="Brand"
+            value={companyId}
+            onChange={async (e) => {
+              const next = e.target.value;
+              if (dirty && !(await confirmAction({ title: 'Discard your changes?', message: 'This brand’s workflows have changes that are not saved yet.', confirmText: 'Discard changes', cancelText: 'Keep editing', danger: true }))) return;
+              setCompanyId(next);
+            }}
+            sx={{ width: { xs: '100%', sm: 320 } }}
+          >
+            {brandOptions.map((o) => <MenuItem key={o.id} value={o.id}>{o.name}</MenuItem>)}
+          </TextField>
+        </Paper>
+      )}
+
       {!!error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Paper variant="outlined" sx={{ p: 2 }}>
+      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <Paper variant="outlined" sx={{ p: 2, flex: '999 1 560px', minWidth: 0 }}>
         {steps.map((step, index) => (
           <Box
             key={index}
@@ -172,6 +214,23 @@ const ProcessStepsPage = ({ token }) => {
           Add step
         </Button>
       </Paper>
+
+      {/* What staff see in the app's Select workflow page. */}
+      <Box sx={{ flex: '0 0 300px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+        <Typography sx={{ fontWeight: 600, color: '#16324a' }}>What staff see in the app</Typography>
+        <Box sx={{ width: 280, minHeight: 420, boxSizing: 'border-box', border: '10px solid #1f2430', borderRadius: '34px', bgcolor: '#f4f7fc', p: '24px 14px', display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+          <Typography sx={{ textAlign: 'center', fontWeight: 800, color: '#1b4f72', fontSize: 18, mb: 0.5 }}>Select workflow</Typography>
+          {steps.filter((s) => s.entity.trim()).map((s, i) => (
+            <Box key={i} sx={{ minHeight: 52, px: 1.75, borderRadius: '14px', bgcolor: '#fff', boxShadow: '0 3px 8px rgba(27,79,114,0.10)', display: 'flex', alignItems: 'center', color: '#1b4f72', fontSize: 15 }}>
+              <span><b>{processStepTypeLabel(s.type)}:</b> {s.entity.trim()}</span>
+            </Box>
+          ))}
+          {!steps.some((s) => s.entity.trim()) && (
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>Name a place to see the step here.</Typography>
+          )}
+        </Box>
+      </Box>
+      </Box>
 
       {/* Save bar stays in view while scrolling a long list. */}
       <Paper
