@@ -141,11 +141,9 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
             <TextField select size="small" value={days} onChange={(e) => setDays(Number(e.target.value))} inputProps={{ 'aria-label': 'Period' }} sx={{ minWidth: 170, bgcolor: 'background.paper' }}>
               {PERIODS.map((p) => <MenuItem key={p.value} value={p.value}>{p.label}</MenuItem>)}
             </TextField>
-            <Tooltip title="Reload">
-              <IconButton color="primary" onClick={() => load(days)} aria-label="Reload security overview"><RefreshIcon /></IconButton>
-            </Tooltip>
           </>
         )}
+        moreActions={[{ label: 'Reload', icon: RefreshIcon, onClick: () => load(days) }]}
       />
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

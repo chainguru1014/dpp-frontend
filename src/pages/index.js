@@ -65,6 +65,7 @@ import HandymanIcon from '@mui/icons-material/Handyman';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
@@ -120,7 +121,7 @@ import ProfilePage from '../features/profile/ProfilePage';
 import EmployeeManagementPage from '../features/employee-audit/EmployeeManagementPage';
 import ProcessStepsPage from '../features/process-steps/ProcessStepsPage';
 import CaptureHistoryPage from '../features/capture-history/CaptureHistoryPage';
-import ProductsTable, { ProductRow } from '../features/products/ProductsTable';
+import ProductsTable from '../features/products/ProductsTable';
 import ProductSidePanel from '../features/products/ProductSidePanel';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
@@ -143,7 +144,8 @@ import ShipmentInspectionPage from '../features/shipment/ShipmentInspectionPage'
 import RfidScanPage from '../features/rfid/RfidScanPage';
 import { isDesktopApp } from '../features/rfid/rfidReader';
 import BrandPage from '../features/brand/BrandPage';
-import PageTabs from '../components/PageTabs';
+import PageHeaderContext from '../components/PageHeader/PageHeaderContext';
+import ProductBar from '../components/ProductBar';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ChatPage from '../features/chat/ChatPage';
 import NotificationBell from '../features/notifications/NotificationBell';
@@ -686,6 +688,21 @@ const InnerPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   // The product editor shows its step list and live preview beside the form.
   const wideEditor = useMediaQuery('(min-width:1280px)');
+  // The product editor as a page (wide screens, the full form).
+  const editorAsPage = wideEditor && productPanelMode === 'edit' && !quickAdd && canEditProducts && activePage === 'newProduct';
+  // Two pages under one menu item share a title, with tabs under the header.
+  const sharedHeader = (() => {
+    if ((activePage === 'history' || activePage === 'security') && !isAppUser) {
+      return { title: 'Scans & Security', tabs: [['history', 'All scans'], canSeeItemSearch && ['security', 'Suspected copies']], active: activePage, onChange: (p) => go(p) };
+    }
+    if (activePage === 'lca' || activePage === 'esg') {
+      return { title: 'Sustainability', tabs: [['lca', 'Life cycle'], ['esg', 'ESG']], active: activePage, onChange: (p) => go(p) };
+    }
+    if ((activePage === 'recommendations' || activePage === 'chat') && !isAppUser) {
+      return { title: 'Shopper Preview', tabs: [['recommendations', 'Recommendations'], ['chat', 'Chat']], active: activePage, onChange: (p) => go(p) };
+    }
+    return null;
+  })();
 
   // Save state to localStorage whenever it changes
   useEffect(() => {
@@ -2281,25 +2298,13 @@ const InnerPage = () => {
 
           {activePage === 'profile' && <ProfilePage />}
 
-          {/* Shopper Preview: Recommendations + Chat (shoppers: two menu items). */}
-          {!isAppUser && (activePage === 'recommendations' || activePage === 'chat') && (
-            <PageTabs tabs={[['recommendations', 'Recommendations'], ['chat', 'Chat']]} active={activePage} onChange={go} />
-          )}
+          <PageHeaderContext.Provider value={sharedHeader}>
           {activePage === 'recommendations' && (
             <RecommendationsPage company={company} isAdmin={isAdmin} isAppUser={isAppUser} />
           )}
 
           {activePage === 'chat' && <ChatPage company={company} isAppUser={isAppUser} />}
 
-          {/* Scans & Security: all scans, then suspected copies. */}
-          {(activePage === 'history' || activePage === 'security') && !isAppUser && (
-            <PageTabs tabs={[['history', 'All scans'], canSeeItemSearch && ['security', 'Suspected copies']]} active={activePage} onChange={go} />
-          )}
-
-          {/* Sustainability: Life cycle (LCA) + ESG. */}
-          {(activePage === 'lca' || activePage === 'esg') && (
-            <PageTabs tabs={[['lca', 'Life cycle'], ['esg', 'ESG']]} active={activePage} onChange={go} />
-          )}
 
           {/* Scan History and Ownership Transfers: super admin sees everything;
               company/user are scoped to owned products. */}
@@ -2371,6 +2376,8 @@ const InnerPage = () => {
             />
           )}
 
+          </PageHeaderContext.Provider>
+
           {activePage === 'serviceRequests' && canSeeItemSearch && (
             <ServiceRequestsPage token={token} showCompany={isAdmin} onOpenProducts={() => go('products')} />
           )}
@@ -2391,7 +2398,7 @@ const InnerPage = () => {
                 title="App Users"
                 description="People who use the Yometel DPP shopper app."
               />
-              <Box sx={{ bgcolor: '#fff', p: 2, borderRadius: 2, boxShadow: 1 }}>
+              <Box>
                 <Admin />
               </Box>
             </Box>
@@ -2434,16 +2441,17 @@ const InnerPage = () => {
                 title="Generate Code"
                 description="Create codes for a product and download them to print."
               />
-              <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>1. Choose a product</Typography>
+              {/* The product in one bar with "Change product" (design); the
+                  list only while choosing. */}
               {generateCodeProduct && !pickingCodeProduct ? (
-                <Box sx={{ mb: 3.5 }}>
-                  <ProductRow product={generateCodeProduct} selected />
-                  {products.length > 1 && (
-                    <Button sx={{ mt: 1 }} onClick={() => setPickingCodeProduct(true)}>Choose another product</Button>
-                  )}
-                </Box>
+                <ProductBar
+                  product={generateCodeProduct}
+                  onChange={products.length > 1 ? () => setPickingCodeProduct(true) : undefined}
+                  right={<Typography color="text.secondary">{(Number(generateCodeProduct.total_minted_amount) || 0).toLocaleString()} codes</Typography>}
+                />
               ) : (
                 <Box sx={{ mb: 3.5 }}>
+                  <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>Choose a product</Typography>
                   <ProductsTable
                     products={products}
                     loading={productsLoading}
@@ -2460,8 +2468,7 @@ const InnerPage = () => {
                 </Box>
               )}
               {generateCodeProduct && !pickingCodeProduct && (
-                <Box sx={{ mb: 2, p: 2.5, borderRadius: 3, bgcolor: 'background.paper', boxShadow: 1, border: '1px solid', borderColor: 'divider' }}>
-                  <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>2. Choose a code type and create codes</Typography>
+                <Box sx={{ mb: 2 }}>
                   <ProductOwnerSection
                     company={company}
                     ownerInfo={ownerInfo}
@@ -2662,16 +2669,40 @@ const InnerPage = () => {
             scroll="paper"
             PaperProps={{ sx: { height: productPanelMode !== 'print' && !quickAdd && !isMobile ? 'calc(100% - 48px)' : undefined } }}
             aria-labelledby="product-dialog-title"
+            // Wide screens: the editor is a page in the main area (design),
+            // not a window over it — the menu and top bar stay visible.
+            {...(editorAsPage ? {
+              disablePortal: true,
+              hideBackdrop: true,
+              disableScrollLock: true,
+              disableEnforceFocus: true,
+              sx: { position: 'static', '& .MuiDialog-container': { display: 'block', height: 'auto' } },
+              PaperProps: { sx: { m: 0, width: '100%', maxWidth: 'none', maxHeight: 'none', height: 'calc(100vh - 120px)', borderRadius: 4, border: '1px solid #dfe5ec', boxShadow: '0 8px 24px rgba(31,51,97,0.08)' } },
+            } : {})}
           >
-            <DialogTitle id="product-dialog-title" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}>
+            <DialogTitle
+              id="product-dialog-title"
+              sx={editorAsPage
+                ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, backgroundImage: 'none', bgcolor: '#fff', color: '#16324a', fontSize: 26, fontWeight: 700, px: 3, pt: 2, pb: 1.5, borderBottom: '1px solid #e8edf3' }
+                : { display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}
+            >
+              {editorAsPage && (
+                <Button startIcon={<ArrowBackIcon />} onClick={() => closeProductDialog(null, 'closeButton')} sx={{ mr: 1, flex: 'none' }}>
+                  {previousPage === 'dashboard' ? 'Dashboard' : 'Products'}
+                </Button>
+              )}
+              <Box component="span" sx={{ flex: 1, minWidth: 0 }}>
               {productPanelMode === 'print'
                 ? `Codes for ${selectedProduct?.name || 'this product'}`
                 : isEditing
                 ? `Edit product${productName ? `: ${productName}` : ''}`
                 : 'New product'}
-              <IconButton onClick={() => closeProductDialog(null, 'closeButton')} color="inherit" aria-label="Close">
-                <CloseIcon />
-              </IconButton>
+              </Box>
+              {!editorAsPage && (
+                <IconButton onClick={() => closeProductDialog(null, 'closeButton')} color="inherit" aria-label="Close">
+                  <CloseIcon />
+                </IconButton>
+              )}
             </DialogTitle>
 
             {/* Studio rail: Data > Experience > Codes. Read-only roles only

@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, ButtonBase, Link, Pagination, Typography } from '@mui/material';
+import Inventory2Icon from '@mui/icons-material/Inventory2';
+import EmptyState from '../../components/EmptyState';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { getFileUrl } from '../../helper';
 import Loader from '../../components/Loader';
@@ -189,6 +191,11 @@ export default function ProductsTable({
   emptyText = 'No products yet.',
   columns = 4,
   dense = false,
+  // 'table' (design: one row per product with Category, Passport, Codes,
+  // Updated) or the photo cards.
+  layout = 'cards',
+  emptyAction,
+  emptyNote,
 }) {
   const rows = products || [];
   const [page, setPage] = useState(1);
@@ -202,9 +209,69 @@ export default function ProductsTable({
 
   if (loading && !rows.length) return <Loader label="Loading products…" />;
   if (!rows.length) {
+    if (emptyAction || emptyNote) {
+      return <EmptyState icon={Inventory2Icon} title="No products here" text={emptyText} action={emptyAction} note={emptyNote} compact />;
+    }
     return (
       <Box sx={{ bgcolor: '#fff', borderRadius: 3, border: '1px dashed', borderColor: 'divider', p: 5, textAlign: 'center' }}>
         <Typography color="text.secondary" sx={{ maxWidth: 520, mx: 'auto' }}>{emptyText}</Typography>
+      </Box>
+    );
+  }
+
+  const pager = pages > 1 && (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+      <Typography variant="body2" color="text.secondary">
+        {(current - 1) * PAGE_SIZE + 1}–{Math.min(current * PAGE_SIZE, rows.length)} of {rows.length} products
+      </Typography>
+      <Pagination count={pages} page={current} onChange={(e, p) => setPage(p)} color="primary" shape="rounded" size="large" />
+    </Box>
+  );
+
+  if (layout === 'table') {
+    const updated = (p) => {
+      const iso = p.updatedAt || p.createdAt;
+      const d = iso ? new Date(iso) : (p._id && /^[0-9a-f]{24}$/i.test(p._id) ? new Date(parseInt(p._id.slice(0, 8), 16) * 1000) : null);
+      return d && !Number.isNaN(d.getTime()) ? d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '—';
+    };
+    const category = (p) => (p.itemCategory ? String(p.itemCategory).replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase()) : '—');
+    const cols = showOwner ? 'minmax(0, 2.6fr) minmax(0, 1.2fr) minmax(0, 1fr) 170px 90px 90px' : 'minmax(0, 2.6fr) minmax(0, 1fr) 170px 90px 90px';
+    return (
+      <Box>
+        <Box sx={{ bgcolor: '#fff', border: '1px solid #dfe5ec', borderRadius: 4, overflow: 'hidden', boxShadow: '0 8px 24px rgba(31,51,97,0.08)' }}>
+          <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: cols, gap: 2, px: 2, py: 1.5, bgcolor: '#f2f5f9', fontWeight: 600, color: '#16324a' }}>
+            <span>Product</span>{showOwner && <span>Brand</span>}<span>Category</span><span>Passport</span><span>Codes</span><span>Updated</span>
+          </Box>
+          {shown.map((p) => {
+            const thumb = Array.isArray(p.images) ? p.images[0] : null;
+            const on = p._id === selectedId;
+            return (
+              <ButtonBase
+                key={p._id}
+                onClick={onSelectProduct ? () => onSelectProduct(p) : undefined}
+                aria-pressed={on}
+                sx={{ display: 'grid', width: '100%', textAlign: 'left', gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: cols }, gap: 2, alignItems: 'center', px: 2, py: 1.25, borderTop: '1px solid #e8edf3', bgcolor: on ? '#eaf2fc' : 'transparent', '&:hover': { bgcolor: on ? '#eaf2fc' : '#f8fafc' } }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+                  <Box sx={{ width: 48, height: 48, flex: 'none', borderRadius: 2, bgcolor: '#f2f5f9', border: '1px solid #e3e8ef', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {thumb && <Box component="img" src={getFileUrl(thumb)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+                  </Box>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography noWrap sx={{ fontWeight: 600, color: '#16324a' }}>{p.name || 'Untitled product'}</Typography>
+                    <Typography noWrap variant="body2" color="text.secondary">{p.model || p.brandInfo?.name || ''}</Typography>
+                  </Box>
+                </Box>
+                {showOwner && <Typography noWrap sx={{ display: { xs: 'none', md: 'block' } }}>{p.brandInfo?.name || p.company_id?.name || '—'}</Typography>}
+                <Typography noWrap sx={{ display: { xs: 'none', md: 'block' } }}>{category(p)}</Typography>
+                <Box sx={{ display: { xs: 'none', md: 'block' } }}><PassportScore product={p} width={90} /></Box>
+                <Typography sx={{ display: { xs: 'none', md: 'block' } }}>{(Number(p.total_minted_amount) || 0).toLocaleString()}</Typography>
+                <Typography color="text.secondary" sx={{ display: { xs: 'none', md: 'block' } }}>{updated(p)}</Typography>
+                <ChevronRightIcon sx={{ display: { xs: 'block', md: 'none' }, color: 'text.secondary' }} />
+              </ButtonBase>
+            );
+          })}
+        </Box>
+        {pager}
       </Box>
     );
   }

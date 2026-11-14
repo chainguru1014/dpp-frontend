@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DialogClose from '../../components/DialogClose';
 import {
   Dialog,
   DialogTitle,
@@ -77,7 +78,7 @@ export default function ProductHistoryDialog({ open, onClose, product }) {
             <CloseIcon />
           </IconButton>
         </Box>
-      </DialogTitle>
+      <DialogClose onClick={onClose} /></DialogTitle>
       <DialogContent dividers>
         <Box sx={{ height: 460 }}>
           <DataGrid

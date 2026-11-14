@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import DialogClose from '../../components/DialogClose';
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { pairTagsWithItems } from '../../helper';
@@ -69,7 +70,7 @@ export default function PairTagsDialog({ open, onClose, product, totalItems }) {
 
   return (
     <Dialog open={open} onClose={(e, reason) => { if (reason !== 'backdropClick') close(); }} fullWidth maxWidth="sm">
-      <DialogTitle>Pair tags with items</DialogTitle>
+      <DialogTitle>Pair tags with items<DialogClose onClick={close} /></DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Ties each tag to one item of "{product?.name}". After pairing, reading the tag and scanning the item's QR code open the same

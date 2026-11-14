@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DialogClose from '../../components/DialogClose';
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
@@ -64,7 +65,7 @@ export default function ProductImportDialog({ open, onClose, token, categoryOpti
 
   return (
     <Dialog open={open} onClose={(e, reason) => { if (reason !== 'backdropClick') close(); }} fullWidth maxWidth="md">
-      <DialogTitle>Import products from a spreadsheet</DialogTitle>
+      <DialogTitle>Import products from a spreadsheet<DialogClose onClick={close} /></DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
           <Box>

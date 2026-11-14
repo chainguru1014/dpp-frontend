@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Box, IconButton, ListItemIcon, Menu, MenuItem, Tooltip, Typography } from '@mui/material';
+import React, { useContext, useState } from 'react';
+import { Box, IconButton, ListItemIcon, Menu, MenuItem, Tab, Tabs, Tooltip, Typography } from '@mui/material';
+import PageHeaderContext from './PageHeaderContext';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
 // The top of every admin page, always the same: a large title, one short
@@ -7,11 +8,16 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 // and, behind a "⋯" button, everything else you can do here (`moreActions`:
 // [{ label, icon, onClick, disabled }]). Longer explanations belong in the
 // page help (the ? button, see components/PageHelp).
-const PageHeader = ({ title, description, actions, moreActions, icon: Icon }) => {
+// eslint-disable-next-line no-unused-vars
+const PageHeader = ({ title: ownTitle, description, actions, moreActions, icon }) => {
   const [anchor, setAnchor] = useState(null);
+  const shared = useContext(PageHeaderContext);
+  const title = shared?.title || ownTitle;
+  const tabs = (shared?.tabs || []).filter(Boolean);
   const more = (moreActions || []).filter(Boolean);
 
   return (
+    <>
     <Box
       sx={{
         display: 'flex',
@@ -24,7 +30,6 @@ const PageHeader = ({ title, description, actions, moreActions, icon: Icon }) =>
     >
       <Box sx={{ minWidth: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {Icon && <Icon sx={{ color: 'primary.main', fontSize: 34 }} />}
           <Typography variant="h5" component="h1">
             {title}
           </Typography>
@@ -76,6 +81,16 @@ const PageHeader = ({ title, description, actions, moreActions, icon: Icon }) =>
         </Box>
       )}
     </Box>
+    {tabs.length > 1 && (
+      <Tabs
+        value={shared.active}
+        onChange={(e, v) => shared.onChange(v)}
+        sx={{ mt: -1.5, mb: 3, borderBottom: 1, borderColor: 'divider' }}
+      >
+        {tabs.map(([page, label]) => <Tab key={page} value={page} label={label} />)}
+      </Tabs>
+    )}
+    </>
   );
 };
 

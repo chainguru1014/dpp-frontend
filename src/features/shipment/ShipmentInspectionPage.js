@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import EmptyState from '../../components/EmptyState';
+import DialogClose from '../../components/DialogClose';
 import {
   Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
   MenuItem, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -67,7 +69,7 @@ export default function ShipmentInspectionPage({ token, products }) {
     <Box>
       <PageHeader
         icon={LocalShippingIcon}
-        title="Shipment Inspection"
+        title="Shipments"
         description="Create a shipment's expected-item list, print its QR code for the box, and review RFID gate-scan results against it."
         actions={
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
@@ -79,7 +81,7 @@ export default function ShipmentInspectionPage({ token, products }) {
       {loading ? (
         <Loader />
       ) : manifests.length === 0 ? (
-        <Alert severity="info">No shipment manifests yet. Create one to get started.</Alert>
+        <EmptyState icon={LocalShippingIcon} title="No shipments yet" text="Make a list of the items a shipment should hold, then check the tags read at the gate against it." compact />
       ) : (
         <TableContainer component={Paper} sx={{ boxShadow: 1 }}>
           <Table size="small">
@@ -174,7 +176,7 @@ function CreateManifestDialog({ open, onClose, products, token, onCreated }) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Create Shipment Manifest</DialogTitle>
+      <DialogTitle>Create Shipment Manifest<DialogClose onClick={onClose} /></DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ mt: 1 }}>
           <TextField select label="Product" value={productId} onChange={(e) => setProductId(e.target.value)} fullWidth>
@@ -263,7 +265,7 @@ function ManifestDetailDialog({ manifest, token, onClose }) {
 
   return (
     <Dialog open={!!manifest} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{manifest.label || manifest.manifest_code}</DialogTitle>
+      <DialogTitle>{manifest.label || manifest.manifest_code}<DialogClose onClick={onClose} /></DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ mt: 1 }}>
           <Stack direction="row" spacing={3} alignItems="flex-start">

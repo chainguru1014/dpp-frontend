@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Box, Button, TextField, Typography, Pagination, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Box, Button, Chip, TextField, Typography, Pagination, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import LanguageIcon from '@mui/icons-material/Language';
@@ -68,6 +68,7 @@ const GenerateAndPrintPanel = ({
   const [pairOpen, setPairOpen] = useState(false);
   // QR codes as a list (default) or as pictures.
   const [qrView, setQrView] = useState('list');
+  const [printFilter, setPrintFilter] = useState('all');
 
   // Same 10-per-display-page / 100-per-backend-batch split ProductMintSection
   // used — the backend serves codes in batches of 100 (parent's page/setPage).
@@ -100,7 +101,14 @@ const GenerateAndPrintPanel = ({
   }, [backendPageFor, page, setPage]);
 
   const offsetInBackend = ((displayPage - 1) * PAGE_SIZE) % BACKEND_SIZE;
-  const pageCodes = (qrcodes || []).slice(offsetInBackend, offsetInBackend + PAGE_SIZE);
+  const printedCount = Number(selectedProduct?.printed_amount) || 0;
+  const pageCodes = (qrcodes || []).slice(offsetInBackend, offsetInBackend + PAGE_SIZE)
+    .filter((item) => printFilter === 'all' || (printFilter === 'printed') === (Number(item.qrcode_id) <= printedCount));
+  const choosePrintFilter = (next) => {
+    setPrintFilter(next);
+    if (next === 'notPrinted') setDisplayPage(Math.min(totalPages, Math.floor(printedCount / PAGE_SIZE) + 1));
+    else setDisplayPage(1);
+  };
   const startItem = total === 0 ? 0 : (displayPage - 1) * PAGE_SIZE + 1;
   const endItem = Math.min(displayPage * PAGE_SIZE, total);
 
@@ -216,6 +224,21 @@ const GenerateAndPrintPanel = ({
                 ? `Showing ${startItem}–${endItem} of ${total} QR codes · ${Math.min(total, Number(selectedProduct?.printed_amount) || 0)} printed`
                 : 'No QR codes yet. Enter how many you need and press Create.'}
             </Typography>
+            {total > 0 && (
+              <Box sx={{ display: 'flex', gap: 1 }} role="group" aria-label="Show">
+                {[['all', 'All'], ['notPrinted', 'Not printed'], ['printed', 'Printed']].map(([key, label]) => (
+                  <Chip
+                    key={key}
+                    label={label}
+                    clickable
+                    onClick={() => choosePrintFilter(key)}
+                    color={printFilter === key ? 'primary' : 'default'}
+                    variant={printFilter === key ? 'filled' : 'outlined'}
+                    aria-pressed={printFilter === key}
+                  />
+                ))}
+              </Box>
+            )}
             {total > 0 && (
               <ToggleButtonGroup size="small" exclusive value={qrView} onChange={(e, v) => v && setQrView(v)} aria-label="Show codes as">
                 <ToggleButton value="list">List</ToggleButton>

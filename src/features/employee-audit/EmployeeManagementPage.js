@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Box, Tabs, Tab } from '@mui/material';
+import { Box, Button, Tabs, Tab } from '@mui/material';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EmployeeRosterPage from './EmployeeRosterPage';
 import EmployeeAuditLogPage from './EmployeeAuditLogPage';
 import PageHeader from '../../components/PageHeader';
@@ -12,6 +13,9 @@ import PageHeader from '../../components/PageHeader';
 // Company accounts themselves are managed on the separate Companies page.
 const EmployeeManagementPage = ({ token, isAdmin, companyId }) => {
   const [tab, setTab] = useState('roster');
+  // "Add an employee" is the page's main button (design); it opens the
+  // dialog on the Employee list.
+  const [inviteSignal, setInviteSignal] = useState(0);
 
   return (
     <Box>
@@ -19,14 +23,19 @@ const EmployeeManagementPage = ({ token, isAdmin, companyId }) => {
         title="Employees"
         description={isAdmin
           ? 'Employee accounts for every company.'
-          : 'The people who can sign in for your company.'}
+          : 'The people who can sign in for your brand.'}
+        actions={(
+          <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => { setTab('roster'); setInviteSignal((n) => n + 1); }}>
+            Add an employee
+          </Button>
+        )}
       />
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Tab value="roster" label="Employee list" />
         <Tab value="auditLog" label="Sign-in history" />
       </Tabs>
       {tab === 'roster' && (
-        <EmployeeRosterPage token={token} showCompanyColumn={isAdmin} restrictToWorkingEmployee={!isAdmin} companyId={companyId} />
+        <EmployeeRosterPage token={token} showCompanyColumn={isAdmin} restrictToWorkingEmployee={!isAdmin} companyId={companyId} inviteSignal={inviteSignal} />
       )}
       {tab === 'auditLog' && <EmployeeAuditLogPage token={token} showCompanyColumn={isAdmin} />}
     </Box>

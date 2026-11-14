@@ -1,4 +1,5 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import ProductBar from '../../components/ProductBar';
 import { Alert, Box, Button, Chip, IconButton, InputAdornment, Link, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -231,7 +232,9 @@ export default function ItemTracePage({
       color: (EVENT_KINDS[e.kind] || EVENT_KINDS.scan).color,
       label: `${(EVENT_KINDS[e.kind] || EVENT_KINDS.scan).title(e)} — ${formatWhen(e.at)}`,
     }));
-  const selectedId = result && result.type !== 'list' ? result.product._id : undefined;
+  const selectedId = result && result.type !== 'list' ? result.product?._id : undefined;
+  // The product list shows while choosing; afterwards the product bar.
+  const [pickingProduct, setPickingProduct] = useState(false);
   // The lifecycle the brand entered for the product, in order.
   const lifecycle = (result && result.type !== 'list' && result.lifecycle) || [];
   const lifecyclePoints = lifecycle
@@ -270,13 +273,14 @@ export default function ItemTracePage({
             <Button type="submit" variant="outlined" disabled={loading || input.trim().length < 2}>Find code</Button>
           </span>
         </Tooltip>
-        {onReloadProducts && (
-          <Tooltip title="Reload the list">
-            <IconButton onClick={onReloadProducts} color="primary" aria-label="Reload products"><RefreshIcon /></IconButton>
-          </Tooltip>
-        )}
       </Stack>
 
+      {selectedId && !pickingProduct ? (
+        <ProductBar
+          product={(products || []).find((p) => p._id === selectedId) || result.product}
+          onChange={() => setPickingProduct(true)}
+        />
+      ) : (
       <ProductsTable
         products={filteredProducts}
         loading={productsLoading}
@@ -287,8 +291,9 @@ export default function ItemTracePage({
         emptyText={input.trim()
           ? 'No product matches. If this is a code from a code or tag, press "Find code".'
           : 'No products yet.'}
-        onSelectProduct={(row) => openProduct(row._id)}
+        onSelectProduct={(row) => { setPickingProduct(false); openProduct(row._id); }}
       />
+      )}
 
       <Box ref={resultRef} sx={{ mt: 2.5, scrollMarginTop: 16 }}>
         {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}

@@ -198,10 +198,11 @@ const theme = createTheme({
     },
     MuiDataGrid: {
       styleOverrides: {
-        root: { fontSize: '1rem' },
-        columnHeaderTitle: { fontWeight: 600 },
+        root: { fontSize: '1rem', '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f2f5f9' } },
+        columnHeaderTitle: { fontWeight: 600, color: '#16324a' },
       },
     },
+    MuiTableHead: { styleOverrides: { root: { backgroundColor: '#f2f5f9' } } },
     MuiAlert: { styleOverrides: { root: { fontSize: '1rem' } } },
     // Unified dialog look across the admin panel: rounded card + gradient header bar.
     MuiDialog: {
@@ -221,6 +222,17 @@ const theme = createTheme({
           alignItems: 'center',
           justifyContent: 'space-between',
           [compactMediaQuery]: { fontSize: 18, padding: '12px 20px' },
+        },
+      },
+    },
+    MuiDialogActions: {
+      styleOverrides: {
+        root: {
+          padding: '14px 24px 20px',
+          gap: 12,
+          borderTop: `1px solid ${border}`,
+          '& > :not(:first-of-type)': { marginLeft: 0 },
+          [compactMediaQuery]: { padding: '10px 20px 14px' },
         },
       },
     },

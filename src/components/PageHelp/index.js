@@ -18,8 +18,8 @@ const PAGE_HELP = {
     appUser: 'The products you own. Click one to see its details and its ownership history.',
   },
   brand: {
-    title: 'Brand',
-    text: 'What you set once per brand. Choose the brand at the top (add another with “New brand”). “Brand details” is the name, description, website and logo every new product of that brand starts with. “Product page design” is how that brand’s product page looks in the app, with a live preview.',
+    title: 'Brand profile',
+    text: 'Your brand, set once for all your products. “Profile” is the name, tagline, description, website, logo and cover photo; every product page shows them, and a change reaches all of them when you save. “Product page design” is how your product pages look in the app, with a live preview. “Team and sign-in” shows the Supervisor email and staff email domain (Yometel sets those).',
   },
   newProduct: {
     title: 'Product window',
@@ -34,7 +34,7 @@ const PAGE_HELP = {
     text: 'Click a product to see everything recorded for it: scans, work steps your employees recorded and changes of owner, with a map of where they happened. It also shows the lifecycle you entered for the product (materials, where it was made, shipping) on the same map. To look up one item, type the code from its code or tag and press "Find code".',
   },
   security: {
-    title: 'Security',
+    title: 'Scans & Security: suspected copies',
     text: 'Shows codes that behave like copies, for example one scanned in two distant places minutes apart. Location can be wrong (a VPN, for instance), so look at the code’s history first. "Mark as suspected copy" warns everyone who scans that code.',
   },
   serviceRequests: {
@@ -42,33 +42,41 @@ const PAGE_HELP = {
     text: 'Requests your shoppers sent from the app for repair, resale, rental or recycling. Press “Answer” to accept, decline or complete one and to write the shopper a message; they are notified each time. Shoppers can only send a request for a service you switched on in the product (step 4, “Repair & disposal”).',
   },
   history: {
-    title: 'Scan History',
-    text: 'Every scan of your product codes, newest first. Use the filters to narrow it down by date, product or place.',
+    title: 'Scans & Security',
+    text: '“All scans” lists every scan of your product codes, newest first; narrow it with the filter row (person, product, dates) or “More filters”. “Suspected copies” shows codes that behave like copies.',
     appUser: 'Every product code you have scanned, newest first.',
   },
   captureHistory: {
-    title: 'Capture History',
+    title: 'Captures',
     text: 'The work steps your employees recorded in the mobile app (receiving, packing and so on), per person. Narrow the list by date or person; a flagged entry is one the app marked for review.',
   },
   lca: {
-    title: 'LCA',
+    title: 'Sustainability: life cycle',
     text: 'Life Cycle Assessment: each product along its five stages — materials, manufacturing, transport, use and end of life. Click a product in the list to see its stages; “Add missing information” opens the product to fill the gaps.',
   },
   esg: {
-    title: 'ESG',
+    title: 'Sustainability: ESG',
     text: 'Each product’s Environmental (carbon footprint, impact figures), Social (certifications, known suppliers) and Governance (traceable codes, passport completeness) information. Click a product in the list to see it.',
   },
   companies: {
-    title: 'Companies',
-    text: 'The brands that use the platform. Adding a company also creates its Supervisor account for the admin email you enter.',
+    title: 'Brands',
+    text: 'Every company on Yometel is a brand, with one brand profile. “Add brand” creates the brand and its Supervisor account for the email you enter; the Supervisor then finishes the profile. Open a brand to see or change its profile, product page design and sign-in details.',
   },
   employeeAuditLog: {
     title: 'Employees',
     text: 'The people who can sign in for your company. Add someone with their work email; they sign in to the mobile app with a code sent to that address. "Sign-in history" shows who signed in and when.',
   },
   processSteps: {
-    title: 'Worker App Steps',
-    text: 'The numbered buttons your employees see in the mobile app. Each has a place (for example "Tokyo DC") and a step type. You can have 1 to 18; the app shows the step type in each worker’s own language.',
+    title: 'Workflows',
+    text: 'The steps staff choose from when they open the app (Select workflow), for example “Receiving: Tokyo DC”. Each has a place and a step type; you can have 1 to 18, in the order shown. The Yometel admin first picks the brand.',
+  },
+  shipmentInspection: {
+    title: 'Shipments',
+    text: 'Make a list of the items a shipment should hold, then check the RFID tags read at the gate against it: what arrived, what is missing and what was not expected.',
+  },
+  rfidScan: {
+    title: 'RFID Scan',
+    text: 'Read RFID tags with a reader connected to this computer. Each tag read shows the product it belongs to. Only in the desktop app.',
   },
   users: {
     title: 'App Users',
@@ -83,12 +91,12 @@ const PAGE_HELP = {
     text: 'Messages for you, such as ownership transfer requests. New ones are marked NEW; click one to open it.',
   },
   recommendations: {
-    title: 'Recommendations',
+    title: 'Shopper Preview: recommendations',
     text: 'How your products are suggested to shoppers, based on what they scan and like.',
     appUser: 'Products picked for you, based on what you scan and like.',
   },
   chat: {
-    title: 'Chat',
+    title: 'Shopper Preview: chat',
     text: 'The product assistant your shoppers use. Ask it about a product’s materials, care or origin to see what they would be told. Answers come from an AI assistant.',
     appUser: 'Ask about a product: materials, care, where it was made, or where to buy. Answers come from an AI assistant.',
   },

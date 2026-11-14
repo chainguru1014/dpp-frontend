@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DialogClose from '../../components/DialogClose';
 import {
   Alert,
   Box,
@@ -109,7 +110,7 @@ const ManageCategoriesDialog = ({ open, onClose, token, onSaved, canManageAll = 
 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Manage Categories</DialogTitle>
+      <DialogTitle>Manage Categories<DialogClose onClick={saving ? undefined : onClose} /></DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {canManageAll

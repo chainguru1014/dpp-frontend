@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DialogClose from '../../components/DialogClose';
 import {
   Dialog,
   DialogTitle,
@@ -128,7 +129,7 @@ export default function ProductTransferDialog({ open, onClose, product, actor, o
   return (
     <>
       <Dialog open={open && !confirmNew} onClose={loading ? undefined : onClose} maxWidth="sm" fullWidth>
-        <DialogTitle>Transfer ownership — {product?.name || ''}</DialogTitle>
+        <DialogTitle>Transfer ownership — {product?.name || ''}<DialogClose onClick={loading ? undefined : onClose} /></DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Minted units: <span>{minted}</span>
@@ -180,7 +181,7 @@ export default function ProductTransferDialog({ open, onClose, product, actor, o
 
       {/* Confirm an unregistered recipient before sending the invite. */}
       <Dialog open={open && confirmNew} onClose={loading ? undefined : () => setConfirmNew(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>Confirm recipient email</DialogTitle>
+        <DialogTitle>Confirm recipient email<DialogClose onClick={() => setConfirmNew(false)} /></DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2">
             <span>{email}</span> is not registered yet. Please confirm this email is correct.

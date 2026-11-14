@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import ProductBar from '../../components/ProductBar';
 import {
   Box,
   Button,
@@ -251,30 +252,34 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
 
           {current && (
             <Paper sx={{ p: 2, mb: 2 }}>
-              <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }} justifyContent="space-between" sx={{ mb: 2 }}>
-                <TextField
-                  select
-                  label="Product"
-                  value={selectedId}
-                  onChange={(e) => setSelectedId(e.target.value)}
-                  sx={{ minWidth: { md: 380 } }}
-                >
-                  {rows.map((r) => (
-                    <MenuItem key={r.p._id} value={r.p._id}>
-                      {r.p.name}{r.p.model ? ` — ${r.p.model}` : ''}
-                    </MenuItem>
-                  ))}
-                </TextField>
-                <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
-                  <Typography color="text.secondary">Passport complete:</Typography>
-                  <Completeness value={current.completeness} />
-                  {canEdit && onEditProduct && current.missing.length > 0 && (
-                    <Button variant="outlined" startIcon={<EditIcon />} onClick={() => onEditProduct(current.p)}>
-                      Add missing information
-                    </Button>
-                  )}
-                </Stack>
-              </Stack>
+              <ProductBar
+                product={current.p}
+                right={(
+                  <>
+                    {canEdit && onEditProduct && current.missing.length > 0 && (
+                      <Button variant="outlined" startIcon={<EditIcon />} onClick={() => onEditProduct(current.p)}>
+                        Add missing information
+                      </Button>
+                    )}
+                    {rows.length > 1 && (
+                      <TextField
+                        select
+                        size="small"
+                        label="Change product"
+                        value={selectedId}
+                        onChange={(e) => setSelectedId(e.target.value)}
+                        sx={{ minWidth: 220 }}
+                      >
+                        {rows.map((r) => (
+                          <MenuItem key={r.p._id} value={r.p._id}>
+                            {r.p.name}{r.p.model ? ` — ${r.p.model}` : ''}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )}
+                  </>
+                )}
+              />
               {current.missing.length > 0 && (
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Not added yet: {current.missing.join(', ')}.

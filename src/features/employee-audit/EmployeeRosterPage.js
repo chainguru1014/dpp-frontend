@@ -140,7 +140,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField
           select
-          label="Company"
+          label="Brand"
           required
           value={selectedCompanyId}
           onChange={(e) => setSelectedCompanyId(e.target.value)}
@@ -181,18 +181,31 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
           helperText="Shown on the work steps they record in the mobile app."
           fullWidth
         />
-        <FormControl fullWidth disabled={restrictToWorkingEmployee}>
-          <InputLabel>Role</InputLabel>
-          <Select label="Role" value={employeeType} onChange={(e) => setEmployeeType(e.target.value)}>
-            <MenuItem value="working_employee">Working Employee</MenuItem>
-            {!restrictToWorkingEmployee && <MenuItem value="supervisor">Supervisor</MenuItem>}
-          </Select>
-          <FormHelperText>
-            {restrictToWorkingEmployee
-              ? 'Working Employees use the mobile app to record work steps.'
-              : 'Working Employees use the mobile app. Supervisors also manage products and employees on this website.'}
-          </FormHelperText>
-        </FormControl>
+        <Box role="radiogroup" aria-label="Role">
+          <Typography sx={{ fontWeight: 600, color: '#16324a', mb: 1 }}>Role</Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
+            {[
+              ['working_employee', 'Working employee', 'Uses the mobile app to capture, inspect and ship.'],
+              ['supervisor', 'Supervisor', 'Also manages products and staff on this website.'],
+            ].filter(([key]) => key === 'working_employee' || !restrictToWorkingEmployee).map(([key, label, sub]) => {
+              const on = employeeType === key;
+              return (
+                <Box
+                  key={key}
+                  component="button"
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setEmployeeType(key)}
+                  sx={{ textAlign: 'left', p: 1.75, borderRadius: 3, cursor: 'pointer', font: 'inherit', border: '1.5px solid', borderColor: on ? '#1b4f72' : '#dfe5ec', bgcolor: on ? '#eef5fd' : '#fff', color: '#16324a' }}
+                >
+                  <Typography sx={{ fontWeight: 700 }}>{label}</Typography>
+                  <Typography variant="body2" color="text.secondary">{sub}</Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        </Box>
         <Accordion disableGutters variant="outlined" sx={{ borderRadius: 2, '&:before': { display: 'none' } }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <Typography>More options: employee code and RFID readers</Typography>
@@ -218,10 +231,12 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
   );
 };
 
-const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmployee, companyId }) => {
+const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restrictToWorkingEmployee, companyId }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  // The page header's "Add an employee" button.
+  useEffect(() => { if (inviteSignal > 0) setInviteOpen(true); }, [inviteSignal]);
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({
     email: '',
@@ -316,7 +331,7 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
   const columns = [
     {
       field: 'email',
-      headerName: 'Corporate Email',
+      headerName: 'Work email',
       width: 240,
       renderCell: (p) =>
         editingId === p.row._id ? (
@@ -347,12 +362,12 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
         ),
     },
     ...(showCompanyColumn
-      ? [{ field: 'companyName', headerName: 'Company', width: 160, valueGetter: (p) => p.row.companyName || '—' }]
+      ? [{ field: 'companyName', headerName: 'Brand', width: 160, valueGetter: (p) => p.row.companyName || '—' }]
       : []),
     { field: 'emailDomain', headerName: 'Domain', width: 140 },
     {
       field: 'employeeType',
-      headerName: 'Employee Type',
+      headerName: 'Role',
       width: 200,
       renderCell: (p) =>
         editingId === p.row._id ? (
@@ -402,12 +417,6 @@ const EmployeeRosterPage = ({ token, showCompanyColumn, restrictToWorkingEmploye
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" component="h2">Employee list</Typography>
-        <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => setInviteOpen(true)}>
-          Add an employee
-        </Button>
-      </Box>
       {!!rowError && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setRowError('')}>
           {rowError}

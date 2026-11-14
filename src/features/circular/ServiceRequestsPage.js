@@ -170,11 +170,9 @@ export default function ServiceRequestsPage({ token, showCompany = false, onOpen
               <MenuItem value="">All services</MenuItem>
               {SERVICE_KINDS.map((k) => <MenuItem key={k} value={k}>{SERVICE_META[k].title}</MenuItem>)}
             </TextField>
-            <Tooltip title="Reload">
-              <IconButton color="primary" onClick={load} aria-label="Reload requests"><RefreshIcon /></IconButton>
-            </Tooltip>
           </>
         )}
+        moreActions={[{ label: 'Reload', icon: RefreshIcon, onClick: load }]}
       />
 
       <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }} variant="scrollable" allowScrollButtonsMobile>

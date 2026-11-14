@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import DialogClose from '../DialogClose';
 import {
   Alert,
   Button,
@@ -58,7 +59,7 @@ const GlobalFeedback = () => {
       </Snackbar>
 
       <Dialog open={!!confirm} onClose={() => answer(false)} maxWidth="xs" fullWidth>
-        <DialogTitle>{opts.title || 'Please confirm'}</DialogTitle>
+        <DialogTitle>{opts.title || 'Please confirm'}<DialogClose onClick={() => answer(false)} /></DialogTitle>
         <DialogContent>
           <Typography sx={{ whiteSpace: 'pre-line' }}>{opts.message}</Typography>
         </DialogContent>

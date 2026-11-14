@@ -109,7 +109,6 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
   const ACCOUNT_TYPE_LABEL = { client: 'Shopper', agent: 'Business', user: 'Shopper', guest: 'Guest' };
   const moreFilterCount = ['source', 'security', 'reaction', 'location'].filter((k) => filters[k] || (k === 'location' && locationInput)).length;
   const [showMore, setShowMore] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const columns = useMemo(
     () => [
@@ -216,22 +215,12 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
         description={isAppUser
           ? 'Every product code you have scanned, newest first.'
           : 'Every time someone scanned one of your product codes, newest first.'}
-        actions={(
-          <Button
-            variant={filtersOpen || activeFilterCount ? 'contained' : 'outlined'}
-            startIcon={<FilterListIcon />}
-            onClick={() => setFiltersOpen((open) => !open)}
-            aria-expanded={filtersOpen}
-          >
-            {filtersOpen ? 'Hide filters' : `Filters${activeFilterCount ? ` (${activeFilterCount})` : ''}`}
-          </Button>
-        )}
         moreActions={[{ label: 'Reload', icon: RefreshIcon, onClick: fetchData }]}
       />
-      {/* The table comes first; filters open on request (and stay visible
-          while any is on, so it is never unclear why rows are missing). */}
-      <Collapse in={filtersOpen}>
-      <Paper sx={{ p: 2, mb: 2 }}>
+      {/* One filter row above the list (design); the rarer filters under
+          "More filters". */}
+      <Collapse in>
+      <Paper elevation={0} sx={{ p: 0, mb: 2, bgcolor: 'transparent' }} aria-label={`Filters${activeFilterCount ? ` (${activeFilterCount} on)` : ''}`}>
         <Grid container spacing={2} alignItems="center">
           <Grid item xs={12} sm={6} md={3} xl={2}>
             <TextField label="From date" type="date" fullWidth InputLabelProps={{ shrink: true }} value={filters.from} onChange={setF('from')} />

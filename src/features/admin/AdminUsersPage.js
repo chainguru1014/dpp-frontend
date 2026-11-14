@@ -110,7 +110,12 @@ const AdminUsersPage = () => {
   }, []);
 
   const filteredUsers = useMemo(() => {
-    const username = usernameFilter.trim().toLowerCase();
+    const q = usernameFilter.trim().toLowerCase();
+    if (q) {
+      return users.filter((u) => [u.name, u.email, u.firstName, u.lastName, u.country, u.phoneNumber]
+        .some((v) => String(v || '').toLowerCase().includes(q)));
+    }
+    const username = '';
     const email = emailFilter.trim().toLowerCase();
     const firstName = firstNameFilter.trim().toLowerCase();
     const lastName = lastNameFilter.trim().toLowerCase();
@@ -137,60 +142,15 @@ const AdminUsersPage = () => {
 
   return (
     <>
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        spacing={2}
-        flexWrap="nowrap"
-        alignItems={{ md: 'center' }}
-        sx={{ mb: 2, overflowX: { md: 'auto' }, pb: { md: 0.5 } }}
-      >
+      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
         <TextField
-          label="Username"
-          size="small"
+          placeholder="Search by name, email, country or phone"
+          inputProps={{ 'aria-label': 'Search app users' }}
           value={usernameFilter}
           onChange={(e) => setUsernameFilter(e.target.value)}
-          sx={{ width: 140, flexShrink: 0 }}
+          sx={{ flex: '1 1 300px', maxWidth: 460, bgcolor: 'background.paper', borderRadius: 2 }}
         />
-        <TextField
-          label="Email"
-          size="small"
-          value={emailFilter}
-          onChange={(e) => setEmailFilter(e.target.value)}
-          sx={{ width: 140, flexShrink: 0 }}
-        />
-        <TextField
-          label="First Name"
-          size="small"
-          value={firstNameFilter}
-          onChange={(e) => setFirstNameFilter(e.target.value)}
-          sx={{ width: 140, flexShrink: 0 }}
-        />
-        <TextField
-          label="Last Name"
-          size="small"
-          value={lastNameFilter}
-          onChange={(e) => setLastNameFilter(e.target.value)}
-          sx={{ width: 140, flexShrink: 0 }}
-        />
-        <TextField
-          label="Country"
-          size="small"
-          value={countryFilter}
-          onChange={(e) => setCountryFilter(e.target.value)}
-          sx={{ width: 140, flexShrink: 0 }}
-        />
-        <TextField
-          label="Phone Number"
-          size="small"
-          value={phoneNumberFilter}
-          onChange={(e) => setPhoneNumberFilter(e.target.value)}
-          sx={{ width: 140, flexShrink: 0 }}
-        />
-        <Tooltip title="Reload the list">
-          <IconButton aria-label="Reload users" onClick={reloadUsers} color="primary" sx={{ flexShrink: 0 }}>
-            <Refresh />
-          </IconButton>
-        </Tooltip>
+        <Typography color="text.secondary" sx={{ ml: 'auto !important' }}>{filteredUsers.length} {filteredUsers.length === 1 ? 'person' : 'people'}</Typography>
       </Stack>
       <NormalUsersTable
         users={filteredUsers}

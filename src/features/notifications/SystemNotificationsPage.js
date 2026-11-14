@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import DialogClose from '../../components/DialogClose';
 import {
   Box,
   Paper,
@@ -285,7 +286,7 @@ const SystemNotificationsPage = () => {
       </Paper>
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>{isEditing ? 'Edit announcement' : 'New announcement'}</DialogTitle>
+        <DialogTitle>{isEditing ? 'Edit announcement' : 'New announcement'}<DialogClose onClick={() => setDialogOpen(false)} /></DialogTitle>
         <DialogContent>
           <TextField
             label="Title"

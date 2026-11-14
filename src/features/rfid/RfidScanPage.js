@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import DialogClose from '../../components/DialogClose';
 import {
   Alert, Box, Button, Checkbox, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControlLabel, IconButton, MenuItem, Paper, Stack, Switch, TextField, Tooltip, Typography,
@@ -238,7 +239,7 @@ export default function RfidScanPage() {
       />
       <ReaderSettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <Dialog open={!!noticeReader} onClose={() => setNoticeReader(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>{noticeReader?.label}</DialogTitle>
+        <DialogTitle>{noticeReader?.label}<DialogClose onClick={() => setNoticeReader(null)} /></DialogTitle>
         <DialogContent>
           <Typography sx={TEXT}>The {noticeReader?.label} is under construction. Please use the Impinj Fixed Reader for now.</Typography>
         </DialogContent>
@@ -340,7 +341,7 @@ function ReaderSettingsDialog({ open, onClose }) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Reader settings</DialogTitle>
+      <DialogTitle>Reader settings<DialogClose onClick={onClose} /></DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {IMPINJ_READER_DISPLAY_NAME}. These are the connection settings the reader service uses.
