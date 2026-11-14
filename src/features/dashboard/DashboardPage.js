@@ -97,9 +97,23 @@ const DashboardPage = ({
         />
       )}
 
-      {/* Brands, Supervisors and the super admin: the work waiting, each
-          with the button that deals with it (instead of cards that repeat
-          the menu). Working employees keep their quick-start cards. */}
+      {/* The four big cards: the jobs people come here to do. */}
+      {!isAppUser && (
+        <QuickStartCards
+          products={products}
+          platform={isAdmin}
+          onManageCompanies={isAdmin ? () => onNavigate('companies') : undefined}
+          onAddProduct={canEditProducts ? onNavigateToNewProduct : undefined}
+          onManageProducts={onNavigateToProducts}
+          onGenerateCodes={onNavigateToGenerateCode}
+          onManageStaff={canSeeStaffManagement ? () => onNavigate('employeeAuditLog') : undefined}
+          onManageWorkerSteps={canEditProcessSteps ? () => onNavigate('processSteps') : undefined}
+          onAnalyzeProduct={onAnalyzeProduct}
+        />
+      )}
+
+      {/* Brands, Supervisors and the super admin: then the work waiting,
+          each with the button that deals with it. */}
       {!isAppUser && !isWorkingEmployee && (
         <NeedsAttention
           token={token}
@@ -113,19 +127,6 @@ const DashboardPage = ({
         />
       )}
 
-      {isWorkingEmployee && (
-        <QuickStartCards
-          products={products}
-          platform={isAdmin}
-          onManageCompanies={isAdmin ? () => onNavigate('companies') : undefined}
-          onAddProduct={canEditProducts ? onNavigateToNewProduct : undefined}
-          onManageProducts={onNavigateToProducts}
-          onGenerateCodes={onNavigateToGenerateCode}
-          onManageStaff={canSeeStaffManagement ? () => onNavigate('employeeAuditLog') : undefined}
-          onManageWorkerSteps={canEditProcessSteps ? () => onNavigate('processSteps') : undefined}
-          onAnalyzeProduct={onAnalyzeProduct}
-        />
-      )}
 
       <DashboardAnalytics
         ownerKind={isAdmin ? null : ownerKind}

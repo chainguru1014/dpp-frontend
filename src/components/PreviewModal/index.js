@@ -6,6 +6,8 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Modal from '@mui/material/Modal';
 import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackPreviewIcon from '@mui/icons-material/ArrowBack';
+import LanguageIcon from '@mui/icons-material/Language';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -211,7 +213,7 @@ function DeviceShell({ device, gradient, C, children }) {
   );
 }
 
-export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
+export function DppOverviewView({ productInfo, theme, onClose, onBack, device = false }) {
   const look = useMemo(() => normalizeDppTheme(theme), [theme]);
   const C = useMemo(() => dppPalette(theme), [theme]);
   // Same diagonal direction as the app's top bar / buttons (see GradientButton /
@@ -989,7 +991,11 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
                 `gap` + the title's own `noWrap`/`flex` keep a minimum
                 breathing room from the close button even when the title text
                 is long enough to otherwise crowd it. */}
-            <Box sx={{ width: 40, flexShrink: 0 }} />
+            {onBack ? (
+              <Button onClick={onBack} aria-label="Back to the product summary" sx={{ minWidth: 40, flexShrink: 0, color: C.onHeader }}>
+                <ArrowBackPreviewIcon fontSize="small" />
+              </Button>
+            ) : <Box sx={{ width: 40, flexShrink: 0 }} />}
             <Typography id="preview-modal-title" noWrap sx={{ color: C.onHeader, fontSize: 16, fontWeight: 600, flex: 1, textAlign: 'center' }}>
               {view === 'lifecycle' ? 'Product Lifecycle' : 'Product Overview'}
             </Typography>
@@ -1127,4 +1133,101 @@ export default function PreviewModal({ open, setOpen, productInfo, theme }) {
       </Box>
     </Modal>
   );
+}
+
+
+// The shopper's product as the app shows it now (13 Nov 2026): first the
+// Product summary (3 x 3 framed photos, Brands, Product Information), then
+// the Brand page (Brands) or the Product Overview (Product Information),
+// each with a back arrow to the summary. Used by every preview on the admin
+// site (preview dialog, product editor, Brand profile design tab).
+export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
+  const [page, setPage] = useState('summary');
+  const C = useMemo(() => dppPalette(theme), [theme]);
+  const GRADIENT = `linear-gradient(135deg, ${C.headerLight} 0%, ${C.header} 100%)`;
+  const p = productInfo || {};
+  const brand = p.brandInfo || {};
+  const images = (normalizeProductImages ? normalizeProductImages(p.images) : (p.images || [])).filter(Boolean).slice(0, 9);
+  const src = (img) => getFileUrl(typeof img === 'string' ? img : img?.src || img?.url || '');
+
+  if (page === 'overview') {
+    return <DppOverviewView productInfo={productInfo} theme={theme} onClose={onClose} onBack={() => setPage('summary')} device={device} />;
+  }
+
+  const bar = (title, back) => (
+    <Box sx={{ height: 50, pl: 0.5, pr: 0.5, display: 'flex', alignItems: 'center', gap: 1, background: GRADIENT, flexShrink: 0 }}>
+      {back ? (
+        <Button onClick={back} aria-label="Back" sx={{ minWidth: 40, color: C.onHeader }}><ArrowBackPreviewIcon fontSize="small" /></Button>
+      ) : <Box sx={{ width: 40 }} />}
+      <Typography noWrap sx={{ flex: 1, textAlign: 'center', color: C.onHeader, fontSize: 16, fontWeight: 600 }}>{title}</Typography>
+      {onClose ? (
+        <Button onClick={onClose} aria-label="Close preview" sx={{ minWidth: 40, color: C.onHeader }}><CloseIcon fontSize="small" /></Button>
+      ) : <Box sx={{ width: 40 }} />}
+    </Box>
+  );
+  const pill = (label, onClick) => (
+    <Box component="button" type="button" onClick={onClick}
+      sx={{ width: '100%', minHeight: 46, border: 0, borderRadius: '14px', background: GRADIENT, color: C.onHeader, font: 'inherit', fontSize: 16, fontWeight: 600, cursor: 'pointer', boxShadow: '0 6px 14px rgba(27,79,114,0.22)' }}>
+      {label}
+    </Box>
+  );
+  const shell = (title, back, body) => (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: C.bg, fontFamily: '-apple-system, "Segoe UI", Roboto, sans-serif' }}>
+      {bar(title, back)}
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 1.75, display: 'flex', flexDirection: 'column', gap: 1.75 }}>{body}</Box>
+    </Box>
+  );
+
+  if (page === 'brand') {
+    const website = String(brand.websiteUrl || '').replace(/^https?:\/\//, '');
+    return shell(brand.name || 'Brand', () => setPage('summary'), (
+      <>
+        {!!brand.coverUrl && <Box component="img" src={getFileUrl(brand.coverUrl)} alt="" sx={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: '14px' }} />}
+        <Box sx={{ bgcolor: '#fff', borderRadius: '16px', p: 1.5, boxShadow: '0 4px 10px rgba(27,79,114,0.10)' }}>
+          <Box sx={{ display: 'flex', gap: 1.25, alignItems: 'center' }}>
+            {brand.logoUrl
+              ? <Box component="img" src={getFileUrl(brand.logoUrl)} alt="" sx={{ width: 48, height: 48, objectFit: 'contain', borderRadius: '12px', bgcolor: '#f2f5f9' }} />
+              : <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: '#f2f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a97aa' }}><StorefrontIcon /></Box>}
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontWeight: 800, color: C.primary, fontSize: 17 }} noWrap>{brand.name || '—'}</Typography>
+              {!!brand.detail && <Typography sx={{ fontSize: 13, color: '#5c6b84', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{brand.detail}</Typography>}
+            </Box>
+          </Box>
+          {!!website && (
+            <Box sx={{ mt: 1.25, display: 'flex', alignItems: 'center', gap: 0.75, height: 38, px: 1.5, borderRadius: '19px', border: `1.5px solid ${C.primary}`, color: C.primary, fontSize: 14, fontWeight: 600 }}>
+              <LanguageIcon sx={{ fontSize: 18 }} /><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{website}</Box>
+            </Box>
+          )}
+        </Box>
+        <Typography sx={{ fontWeight: 800, color: C.primary, fontSize: 15 }}>Featured products</Typography>
+        <Box sx={{ bgcolor: '#fff', borderRadius: '14px', p: 1, display: 'flex', gap: 1.25, alignItems: 'center', boxShadow: '0 3px 8px rgba(27,79,114,0.08)' }}>
+          {images[0] ? <Box component="img" src={src(images[0])} alt="" sx={{ width: 52, height: 52, objectFit: 'cover', borderRadius: '10px' }} /> : <Box sx={{ width: 52, height: 52, borderRadius: '10px', bgcolor: '#f2f5f9' }} />}
+          <Box sx={{ minWidth: 0 }}>
+            <Typography noWrap sx={{ fontWeight: 700, color: C.primary, fontSize: 14 }}>{p.name || '—'}</Typography>
+            <Typography noWrap sx={{ fontSize: 12.5, color: '#5c6b84' }}>{p.model || brand.name || ''}</Typography>
+          </Box>
+        </Box>
+      </>
+    ));
+  }
+
+  // Product summary.
+  return shell(p.name || 'Product', null, (
+    <>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1 }}>
+        {(images.length ? images : [null]).map((img, i) => (
+          <Box key={i} sx={{ aspectRatio: '1 / 1', borderRadius: '14px', border: `2px solid ${C.primary}`, bgcolor: '#fff', p: '6px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {img ? <Box component="img" src={src(img)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <Typography sx={{ fontSize: 11, color: '#8a97aa' }}>Photo</Typography>}
+          </Box>
+        ))}
+      </Box>
+      {!!brand.name && pill('Brands', () => setPage('brand'))}
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        {['Like', 'Cart', 'Not for me'].map((l) => (
+          <Box key={l} sx={{ flex: 1, height: 38, borderRadius: '19px', border: `1.5px solid ${C.primary}`, color: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, bgcolor: '#fff' }}>{l}</Box>
+        ))}
+      </Box>
+      {pill('Product Information', () => setPage('overview'))}
+    </>
+  ));
 }
