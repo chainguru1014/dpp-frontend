@@ -112,9 +112,10 @@ const DashboardPage = ({
         />
       )}
 
-      {/* Brands, Supervisors and the super admin: then the work waiting,
-          each with the button that deals with it. */}
-      {!isAppUser && !isWorkingEmployee && (
+      <DashboardAnalytics
+        // Brands, Supervisors and the super admin: the work waiting, each
+        // with the button that deals with it, beside the six figures.
+        attention={!isAppUser && !isWorkingEmployee ? (
         <NeedsAttention
           token={token}
           products={products}
@@ -125,10 +126,9 @@ const DashboardPage = ({
           onCompletePassport={onCompletePassport}
           onGenerateCodesFor={(product) => (product && onGenerateCodesFor ? onGenerateCodesFor(product) : onNavigateToGenerateCode())}
         />
-      )}
+        ) : null}
 
 
-      <DashboardAnalytics
         ownerKind={isAdmin ? null : ownerKind}
         ownerId={isAdmin ? null : ownerId}
         onNavigateToScanHistory={onNavigateToScanHistory}

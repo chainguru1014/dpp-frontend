@@ -269,6 +269,10 @@ export default function DashboardAnalytics({
   moreOpen = false, onToggleMore,
   // Told the unfiltered totals once loaded (the setup strip ticks "scanned" from it).
   onTotalsLoaded,
+  // "Needs your attention" (brands, Supervisors, super admin): the left half
+  // of the first row, the six figures on the right in two columns (scans,
+  // captures), the two charts below.
+  attention = null,
 }) {
   const [a, setA] = useState(null);
   const [filters, setFilters] = useState(EMPTY_FILTERS);
@@ -426,10 +430,47 @@ export default function DashboardAnalytics({
     </Collapse>
   );
 
+  const kpiColumn = (items) => (
+    <Stack spacing={2} sx={{ height: '100%' }}>
+      {items.map((c) => (
+        <Box key={c.key} sx={{ flex: 1, display: 'flex', '& > *': { flex: 1 } }}>
+          <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} onClick={c.onClick} />
+        </Box>
+      ))}
+    </Stack>
+  );
+
   return (
     <Box>
       {filterPanel}
 
+      {attention && showCaptures ? (
+        <>
+          <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
+            <Grid item xs={12} md={6} sx={{ '& > *': { height: '100%', mb: '0 !important' } }}>{attention}</Grid>
+            <Grid item xs={12} md={6}>
+              <Grid container spacing={2} sx={{ height: { md: 'calc(100% + 16px)' } }}>
+                <Grid item xs={12} sm={6}>{kpiColumn(scanCards)}</Grid>
+                <Grid item xs={12} sm={6}>{kpiColumn(captureCards)}</Grid>
+              </Grid>
+            </Grid>
+          </Grid>
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid item xs={12} md={6}>
+              <Section title="Scans per day (last 30 days)" sx={{ height: 'auto' }}>
+                <LineChart data={a.scansByDay || []} />
+              </Section>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Section title="Captures per day (last 30 days)" sx={{ height: 'auto' }}>
+                <LineChart data={captureStats?.capturesByDay || []} noun="captures" />
+              </Section>
+            </Grid>
+          </Grid>
+        </>
+      ) : (
+      <>
+      {attention}
       {/* First layer: scan figures and chart beside capture figures and chart. */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12} md={6}>
@@ -449,6 +490,9 @@ export default function DashboardAnalytics({
           ) : scanCountries}
         </Grid>
       </Grid>
+
+      </>
+      )}
 
       {onToggleMore && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
