@@ -174,30 +174,21 @@ const AuthPage = ({
       setOtpNotice('Please enter a valid email address, for example name@example.com.');
       return;
     }
-    // Show the code field at once and send the request in the background —
-    // waiting for the server's answer first made every sign-in feel slow.
-    // If the server refuses (email not registered, no connection), come back
-    // to the email step with the reason.
-    setOtpNotice('');
+    // Wait for the server's answer ("Sending code…" on the button): only a
+    // code that was really sent opens the code step; a refusal stays on the
+    // email step with the reason. "Please wait…" means a code was sent less
+    // than a minute ago — still valid, so the code step opens.
+    if (otpBusy) return;
     setOtpCode('');
-    setEmailStep('code');
-    setResendCooldown(RESEND_COOLDOWN_SECONDS);
-    const request = onRequestOtp(email, authMode);
-    pendingRequest.current = request;
-    request.then((res) => {
-      if (pendingRequest.current === request) pendingRequest.current = null;
-      if (res?.ok) return;
-      const message = friendlyError(res?.message) || 'We could not send the code. Please check the email address and try again.';
-      // "Please wait…" means a code was sent less than a minute ago — it is
-      // still valid, so the code step stays.
-      if (/please wait/i.test(message)) {
-        setOtpNotice('A code was sent to this address less than a minute ago. Please use that one.');
-        return;
-      }
-      setResendCooldown(0);
-      setEmailStep('email');
-      setOtpNotice(message);
-    });
+    const res = await sendOtp(email);
+    if (res?.ok) {
+      setEmailStep('code');
+      return;
+    }
+    if (/please wait/i.test(String(res?.message || ''))) {
+      setOtpNotice('A code was sent to this address less than a minute ago. Please use that one.');
+      setEmailStep('code');
+    }
   };
 
   const handleResendCode = async () => {
