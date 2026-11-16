@@ -45,6 +45,44 @@ function Kpi({ icon: Icon, label, value, sub, color = 'primary.main' }) {
   );
 }
 
+// The page's four figures (codes scanned, scanned more than once, warning
+// signs, Security QR checks). Shown above the Scans & Security tabs, so
+// both All scans and Suspected copies have them.
+export function SecurityFigures({ totals }) {
+  if (!totals) return null;
+  return (
+    <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' } }}>
+      <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Codes scanned" sub={`${totals.scans.toLocaleString()} ${totals.scans === 1 ? 'scan' : 'scans'} in total`} />
+      <Kpi icon={ReplayIcon} value={totals.repeatItems.toLocaleString()} label="Scanned more than once" />
+      <Kpi
+        icon={GppMaybeIcon}
+        value={(totals.highRisk + totals.mediumRisk).toLocaleString()}
+        label="Codes with warning signs"
+        sub={`${totals.highRisk} likely ${totals.highRisk === 1 ? 'copy' : 'copies'}, ${totals.mediumRisk} worth a look`}
+        color={totals.highRisk ? 'error.main' : totals.mediumRisk ? 'warning.main' : 'success.main'}
+      />
+      <Kpi
+        icon={VerifiedUserIcon}
+        value={totals.securityVerified.toLocaleString()}
+        label="Security QR checks passed"
+        sub={`${totals.securityFailed} failed · ${totals.blocked} marked as ${totals.blocked === 1 ? 'a copy' : 'copies'}`}
+        color={totals.securityFailed ? 'error.main' : 'success.main'}
+      />
+    </Box>
+  );
+}
+
+// The same figures, loaded on their own (All scans tab: last 90 days).
+export function SecurityFiguresLive({ token, days = 90 }) {
+  const [totals, setTotals] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    getSecurityInsights(token, days).then((res) => { if (alive && res.ok) setTotals(res.data?.totals || null); });
+    return () => { alive = false; };
+  }, [token, days]);
+  return <SecurityFigures totals={totals} />;
+}
+
 // Horizontal bars: [{ label, value }]. The longest bar fills the row.
 function Bars({ rows, unit, unitOne = unit, color = '#2f80c8', emptyText }) {
   const max = Math.max(1, ...rows.map((r) => r.value));
@@ -145,26 +183,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
         )}
         moreActions={[{ label: 'Reload', icon: RefreshIcon, onClick: () => load(days) }]}
         // The four figures sit above the tabs (they sum up the page).
-        aboveTabs={!loading && totals ? (
-              <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' } }}>
-                <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Codes scanned" sub={`${totals.scans.toLocaleString()} ${totals.scans === 1 ? 'scan' : 'scans'} in total`} />
-                <Kpi icon={ReplayIcon} value={totals.repeatItems.toLocaleString()} label="Scanned more than once" />
-                <Kpi
-                  icon={GppMaybeIcon}
-                  value={(totals.highRisk + totals.mediumRisk).toLocaleString()}
-                  label="Codes with warning signs"
-                  sub={`${totals.highRisk} likely ${totals.highRisk === 1 ? 'copy' : 'copies'}, ${totals.mediumRisk} worth a look`}
-                  color={totals.highRisk ? 'error.main' : totals.mediumRisk ? 'warning.main' : 'success.main'}
-                />
-                <Kpi
-                  icon={VerifiedUserIcon}
-                  value={totals.securityVerified.toLocaleString()}
-                  label="Security QR checks passed"
-                  sub={`${totals.securityFailed} failed · ${totals.blocked} marked as ${totals.blocked === 1 ? 'a copy' : 'copies'}`}
-                  color={totals.securityFailed ? 'error.main' : 'success.main'}
-                />
-              </Box>
-        ) : null}
+        aboveTabs={!loading && totals ? <SecurityFigures totals={totals} /> : null}
       />
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

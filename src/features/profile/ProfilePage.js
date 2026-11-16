@@ -21,6 +21,7 @@ import DownloadIcon from '@mui/icons-material/Download';
 import { uploadFile, updateCompany, updateUserProfile, getFileUrl } from '../../helper';
 import { useAuth } from '../auth/AuthContext';
 import PageHeader from '../../components/PageHeader';
+import CoverCropDialog from '../../components/CoverCropDialog';
 import { notify, notifyError, notifySuccess } from '../../utils/feedbackBus';
 
 const isValidEmail = (e) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e).trim());
@@ -82,6 +83,7 @@ const ProfilePage = () => {
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(null); // 'avatar' | 'cover' | null
+  const [coverFile, setCoverFile] = useState(null);
 
   if (!company) return null;
   if (company.actorKind === 'Employee') return <StaffProfile company={company} />;
@@ -93,10 +95,18 @@ const ProfilePage = () => {
 
   const setField = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  // A cover is cut to the cover shape first (CoverCropDialog), then uploaded.
   const handleImage = async (kind, e) => {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
+    if (kind === 'cover') {
+      setCoverFile(file);
+      return;
+    }
+    await uploadImage(kind, file);
+  };
+  const uploadImage = async (kind, file) => {
     setUploading(kind);
     try {
       const body = new FormData();
@@ -179,18 +189,22 @@ const ProfilePage = () => {
           : 'Your company details, shown on your products and to your employees. You sign in with a code sent to this email.'}
       />
 
-      {/* Header card with cover (companies) + picture */}
-      <Card sx={{ borderRadius: 2, overflow: 'hidden', mb: 2 }}>
+      {/* Header card. Companies: the cover photo is the background of the
+          whole card (cut to the cover shape when uploaded), with the
+          picture, name and Change cover on it. App users: picture and name. */}
+      <Card
+        sx={{
+          borderRadius: 3, overflow: 'hidden', mb: 2, position: 'relative',
+          ...(!isAppUser ? {
+            aspectRatio: { md: '3 / 1' }, minHeight: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+            background: coverUrl
+              ? `linear-gradient(180deg, rgba(10,25,40,0) 30%, rgba(10,25,40,0.78) 100%), url(${coverUrl}) center/cover no-repeat`
+              : 'linear-gradient(135deg,#4a96dd,#1b4f72)',
+          } : {}),
+        }}
+      >
         {!isAppUser && (
-          <Box
-            sx={{
-              height: { xs: 110, sm: 150 },
-              position: 'relative',
-              background: coverUrl
-                ? `url(${coverUrl}) center/cover no-repeat`
-                : 'linear-gradient(135deg,#4a96dd,#1b4f72)',
-            }}
-          >
+          <>
             <Button
               onClick={() => coverInputRef.current?.click()}
               startIcon={uploading === 'cover' ? <CircularProgress size={18} sx={{ color: '#fff' }} /> : <PhotoCameraIcon />}
@@ -199,12 +213,12 @@ const ProfilePage = () => {
               Change cover
             </Button>
             <input ref={coverInputRef} type="file" accept="image/*" hidden onChange={(e) => handleImage('cover', e)} />
-          </Box>
+          </>
         )}
 
-        <CardContent sx={{ pt: 2 }}>
+        <CardContent sx={{ pt: 2, color: isAppUser ? undefined : '#fff' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-            <Box sx={{ position: 'relative', mt: isAppUser ? 0 : -6 }}>
+            <Box sx={{ position: 'relative' }}>
               <Avatar
                 src={getFileUrl(form.avatar)}
                 alt=""
@@ -225,16 +239,25 @@ const ProfilePage = () => {
             </Box>
             <Box sx={{ minWidth: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Typography variant="h6">{form.name || (isAppUser ? 'Your name' : 'Company')}</Typography>
+                <Typography variant="h6" sx={isAppUser ? undefined : { color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+                  {form.name || (isAppUser ? 'Your name' : 'Company')}
+                </Typography>
                 {!isAppUser && company.isVerified && (
                   <Chip size="small" color="success" icon={<VerifiedIcon />} label="Verified" />
                 )}
               </Box>
-              <Typography color="text.secondary">{isAppUser ? form.email : (form.title || form.email)}</Typography>
+              <Typography sx={isAppUser ? { color: 'text.secondary' } : { color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+                {isAppUser ? form.email : (form.title || form.email)}
+              </Typography>
             </Box>
           </Box>
         </CardContent>
       </Card>
+      <CoverCropDialog
+        file={coverFile}
+        onCancel={() => setCoverFile(null)}
+        onDone={(cut) => { setCoverFile(null); uploadImage('cover', cut); }}
+      />
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={company.qrcode && !isAppUser ? 8 : 12} lg={company.qrcode && !isAppUser ? 8 : 9}>

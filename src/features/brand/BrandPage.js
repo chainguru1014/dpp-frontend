@@ -8,6 +8,7 @@ import Inventory2Icon from '@mui/icons-material/Inventory2';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import { BrandPickerGrid } from '../../components/BrandPicker';
+import CoverCropDialog from '../../components/CoverCropDialog';
 import PageHeader from '../../components/PageHeader';
 import Loader from '../../components/Loader';
 import DppThemeEditor from '../products/DppThemeEditor';
@@ -124,10 +125,19 @@ export default function BrandPage({
   };
 
   const setField = (key) => (e) => setDetails((d) => ({ ...d, [key]: e.target.value }));
+  // A cover is cut to the cover shape first (CoverCropDialog), then uploaded.
+  const [coverFile, setCoverFile] = useState(null);
   const uploadImage = async (key, event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+    if (key === 'coverUrl') {
+      setCoverFile(file);
+      return;
+    }
+    await uploadPicked(key, file);
+  };
+  const uploadPicked = async (key, file) => {
     setUploading(key);
     try {
       const body = new FormData();
@@ -266,27 +276,29 @@ export default function BrandPage({
             <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 } }}>
               {/* The brand: its whole cover photo, logo, name, tagline, how
                   complete the profile is, Its products and Change brand. */}
-              <Box sx={{ border: '1px solid #e3e8ef', borderRadius: 3, overflow: 'hidden', mb: 3 }}>
-                {details.coverUrl ? (
-                  <Box sx={{ position: 'relative', height: { xs: 180, md: 260 }, overflow: 'hidden', bgcolor: '#1f2b38' }}>
-                    <Box aria-hidden sx={{ position: 'absolute', inset: -20, background: `url(${getFileUrl(details.coverUrl)}) center/cover`, filter: 'blur(18px) brightness(0.75)' }} />
-                    <Box component="img" src={getFileUrl(details.coverUrl)} alt="Brand cover"
-                      sx={{ position: 'relative', display: 'block', width: '100%', height: '100%', objectFit: 'contain' }} />
-                  </Box>
-                ) : (
-                  <Box sx={{ height: 92, background: 'linear-gradient(120deg, #2b3a4d 0%, #4a6a8a 60%, #9fb8d6 100%)' }} />
-                )}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2.5, py: 1.75, flexWrap: 'wrap' }}>
-                  <Box sx={{ border: '3px solid #fff', borderRadius: '50%', bgcolor: '#fff', boxShadow: 1, mt: '-34px' }}>
+              <Box sx={{
+                position: 'relative', borderRadius: 3, overflow: 'hidden', mb: 3,
+                // The cover photo is the background of the whole card (it is
+                // cut to this shape when uploaded), with a shade at the bottom
+                // so the white text reads.
+                aspectRatio: { md: '3 / 1' }, minHeight: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+                background: details.coverUrl
+                  ? `linear-gradient(180deg, rgba(10,25,40,0) 30%, rgba(10,25,40,0.78) 100%), url(${getFileUrl(details.coverUrl)}) center/cover no-repeat`
+                  : 'linear-gradient(120deg, #2b3a4d 0%, #4a6a8a 60%, #9fb8d6 100%)',
+              }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2.5, py: 2, flexWrap: 'wrap', color: '#fff' }}>
+                  <Box sx={{ border: '3px solid #fff', borderRadius: '50%', bgcolor: '#fff', boxShadow: 2 }}>
                     <BrandMark brand={details} name={brand.name} size={68} />
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 200 }}>
-                    <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#16324a' }}>{details.name || brand.name}</Typography>
-                    <Typography color="text.secondary">
+                    <Typography sx={{ fontSize: 24, fontWeight: 700, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{details.name || brand.name}</Typography>
+                    <Typography sx={{ color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
                       {[details.tagline, companyRecord?.companyType ? companyTypeLabel(companyRecord.companyType) : '', `${brandProducts.length} ${brandProducts.length === 1 ? 'product' : 'products'}`].filter((v) => v && v !== '—').join(' · ')}
                     </Typography>
                   </Box>
-                  <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
+                  <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap
+                    sx={{ bgcolor: 'rgba(255,255,255,0.94)', borderRadius: 3, px: 1.5, py: 1, color: '#16324a' }}>
                     <Typography variant="body2" color="text.secondary">Profile</Typography>
                     <LinearProgress variant="determinate" value={percent} sx={{ width: 110, height: 8, borderRadius: 4 }} color={percent >= 100 ? 'success' : 'warning'} aria-label={`Profile ${percent}% complete`} />
                     <Typography sx={{ fontWeight: 700 }}>{percent}%</Typography>
@@ -295,6 +307,12 @@ export default function BrandPage({
                     )}
                     {isAdmin && (
                       <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={() => setPicking(true)}>Change brand</Button>
+                    )}
+                    {canEdit && (
+                      <Button variant="contained" component="label" disabled={uploading === 'coverUrl'}>
+                        {uploading === 'coverUrl' ? 'Uploading…' : details.coverUrl ? 'Change cover' : 'Add a cover photo'}
+                        <input type="file" accept="image/*" hidden onChange={(e) => uploadImage('coverUrl', e)} />
+                      </Button>
                     )}
                   </Stack>
                 </Box>
@@ -433,6 +451,11 @@ export default function BrandPage({
 
         </>
       )}
+      <CoverCropDialog
+        file={coverFile}
+        onCancel={() => setCoverFile(null)}
+        onDone={(cut) => { setCoverFile(null); uploadPicked('coverUrl', cut); }}
+      />
     </Box>
   );
 }

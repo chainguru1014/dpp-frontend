@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PageHeader from '../../components/PageHeader';
+import { SecurityFiguresLive } from '../security/SecurityPage';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { DataGrid } from '@mui/x-data-grid';
@@ -216,6 +217,8 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
           ? 'Every product code you have scanned, newest first.'
           : 'Every time someone scanned one of your product codes, newest first.'}
         moreActions={[{ label: 'Reload', icon: RefreshIcon, onClick: fetchData }]}
+        // Scans & Security: the same four figures as on Suspected copies.
+        aboveTabs={!isAppUser ? <SecurityFiguresLive /> : null}
       />
       {/* One filter row above the list (design); the rarer filters under
           "More filters". */}

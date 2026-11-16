@@ -321,7 +321,11 @@ export default function ItemTracePage({
                     <Typography variant="body2" color="text.secondary">Passport</Typography>
                     <PassportScore product={(products || []).find((p) => p._id === selectedId) || result.product} width={110} />
                   </Box>
-                  <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={() => setPickingProduct(true)}>Change product</Button>
+                  <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={() => {
+                    setPickingProduct(true);
+                    // Up to the search box and the products to choose from.
+                    setTimeout(() => document.getElementById('activity-search')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+                  }}>Change product</Button>
                 </>
               ) : null}
             >

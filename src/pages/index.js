@@ -693,7 +693,7 @@ const InnerPage = () => {
   // close as the same in-page element. Switching it to a portal with a
   // backdrop while closing left an invisible layer over the next page
   // (nothing could be clicked).
-  const editorAsPage = wideEditor && productPanelMode === 'edit' && !quickAdd && canEditProducts;
+  const editorAsPage = wideEditor && !quickAdd && canEditProducts;
   // Two pages under one menu item share a title, with tabs under the header.
   const sharedHeader = (() => {
     if ((activePage === 'history' || activePage === 'security') && !isAppUser) {
@@ -2765,6 +2765,10 @@ const InnerPage = () => {
             )}
 
             <Box sx={{ display: 'flex', flex: '1 1 auto', minHeight: 0 }}>
+            {/* Left: steps, form and the footer (Back / Next / Preview / Save);
+                right: the shopper preview from top to bottom. */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', flex: '1 1 auto', minWidth: 0, minHeight: 0 }}>
+            <Box sx={{ display: 'flex', flex: '1 1 auto', minHeight: 0 }}>
             {productPanelMode === 'edit' && !quickAdd && wideEditor && (() => {
               // One step list with a tick for each step whose passport
               // fields are all filled in (step 1 also needs its required ones).
@@ -3648,17 +3652,6 @@ const InnerPage = () => {
                 )}
               </Box>
             </DialogContent>
-            {productPanelMode === 'edit' && !quickAdd && wideEditor && (
-              <Box component="aside" aria-label="What shoppers see" sx={{ flex: '0 0 340px', borderLeft: 1, borderColor: 'divider', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, overflowY: 'auto', bgcolor: '#f8fafc' }}>
-                <Typography sx={{ fontWeight: 600, color: '#16324a' }}>What shoppers see</Typography>
-                <Box sx={{ width: 300, height: 600, flex: 'none', border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 3, bgcolor: '#fff' }}>
-                  <Suspense fallback={<Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={28} /></Box>}>
-                    <DppPhoneView productInfo={formProduct} theme={formTheme} />
-                  </Suspense>
-                </Box>
-                <Typography variant="body2" color="text.secondary">Changes show here as you type.</Typography>
-              </Box>
-            )}
             </Box>
             {/* Pinned footer: what's still needed, step navigation, save. */}
             {productPanelMode !== 'print' && (() => {
@@ -3717,6 +3710,19 @@ const InnerPage = () => {
                 </DialogActions>
               );
             })()}
+            </Box>
+            {productPanelMode === 'edit' && !quickAdd && wideEditor && (
+              <Box component="aside" aria-label="What shoppers see" sx={{ flex: '0 0 360px', borderLeft: 1, borderColor: 'divider', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, overflowY: 'auto', bgcolor: '#f8fafc' }}>
+                <Typography sx={{ fontWeight: 600, color: '#16324a' }}>What shoppers see</Typography>
+                <Box sx={{ width: 320, flex: '1 1 auto', minHeight: 560, maxHeight: 820, border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 3, bgcolor: '#fff' }}>
+                  <Suspense fallback={<Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={28} /></Box>}>
+                    <DppPhoneView productInfo={formProduct} theme={formTheme} />
+                  </Suspense>
+                </Box>
+                <Typography variant="body2" color="text.secondary">Changes show here as you type.</Typography>
+              </Box>
+            )}
+            </Box>
           </Dialog>
         </Box>
       </Box>
