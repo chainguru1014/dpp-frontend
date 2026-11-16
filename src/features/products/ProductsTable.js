@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Box, ButtonBase, Link, Pagination, Typography } from '@mui/material';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import EmptyState from '../../components/EmptyState';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { getFileUrl } from '../../helper';
 import Loader from '../../components/Loader';
 import { PassportScore } from './PassportReadinessPanel';
 
+// Per page; with brand groups more fit, since the headings split the grid.
 const PAGE_SIZE = 8;
 
 // One product as a card. Two layouts share the same content:
@@ -178,6 +180,20 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
   );
 }
 
+// The brand a product belongs to (its brand company), for grouping.
+export const brandOf = (p) => String(p?.brandInfo?.name || p?.company_id?.name || 'Other').trim() || 'Other';
+const groupsOf = (list) => {
+  const groups = [];
+  list.forEach((p) => {
+    const brand = brandOf(p);
+    let g = groups.find((x) => x.brand === brand);
+    if (!g) { g = { brand, logo: '', items: [] }; groups.push(g); }
+    if (!g.logo && p?.brandInfo?.logoUrl) g.logo = p.brandInfo.logoUrl;
+    g.items.push(p);
+  });
+  return groups;
+};
+
 // The product list, as large photo rows (it used to be a dense grid table).
 // Click a row to select it; long lists are split into pages.
 export default function ProductsTable({
@@ -196,8 +212,18 @@ export default function ProductsTable({
   layout = 'cards',
   emptyAction,
   emptyNote,
+  // Cards under a heading per brand company (brands A–Z, the list's own
+  // order inside each brand).
+  groupByBrand = false,
 }) {
-  const rows = products || [];
+  const rows = useMemo(() => {
+    const list = products || [];
+    if (!groupByBrand) return list;
+    return list
+      .map((p, i) => ({ p, i, b: brandOf(p) }))
+      .sort((x, y) => x.b.localeCompare(y.b, undefined, { sensitivity: 'base' }) || x.i - y.i)
+      .map((x) => x.p);
+  }, [products, groupByBrand]);
   const [page, setPage] = useState(1);
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   // Back to the first page whenever the list itself changes (a search, a reload).
@@ -283,21 +309,39 @@ export default function ProductsTable({
           Typography noWrap can't shrink below that) would end up wider than
           its neighbors. minmax(0, 1fr) forces every column to the same
           strict 1/N width regardless of content. */}
-      <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${Math.min(columns, 2)}, minmax(0, 1fr))`, md: `repeat(${columns}, minmax(0, 1fr))` } }}>
-        {shown.map((product) => (
-          <ProductRow
-            key={product._id}
-            product={product}
-            selected={product._id === selectedId}
-            onClick={onSelectProduct ? () => onSelectProduct(product) : undefined}
-            onOwnerClick={onOwnerClick}
-            isAppUser={isAppUser}
-            showOwner={showOwner}
-            compact
-            dense={dense}
-          />
-        ))}
-      </Box>
+      {(groupByBrand ? groupsOf(shown) : [{ brand: '', items: shown }]).map((g) => (
+        <Box key={g.brand || 'all'} sx={{ mb: groupByBrand ? 2.5 : 0 }}>
+          {groupByBrand && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.25 }}>
+              <Box sx={{ width: 36, height: 36, flex: 'none', borderRadius: '50%', bgcolor: '#fff', border: '1px solid #dfe5ec', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {g.logo
+                  ? <Box component="img" src={getFileUrl(g.logo)} alt="" sx={{ width: '82%', height: '82%', objectFit: 'contain' }} />
+                  : <StorefrontIcon sx={{ fontSize: 20, color: 'primary.main' }} />}
+              </Box>
+              <Typography sx={{ fontSize: 18, fontWeight: 700, color: '#16324a' }}>{g.brand}</Typography>
+              <Box sx={{ px: 1, py: 0.25, borderRadius: 999, bgcolor: '#e8f1fb', color: '#1b4f72', fontSize: 13, fontWeight: 700 }}>
+                {g.items.length} {g.items.length === 1 ? 'product' : 'products'}
+              </Box>
+              <Box sx={{ flex: 1, height: '1px', bgcolor: '#e3e8ef', ml: 1 }} />
+            </Box>
+          )}
+          <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${Math.min(columns, 2)}, minmax(0, 1fr))`, md: `repeat(${columns}, minmax(0, 1fr))` } }}>
+            {g.items.map((product) => (
+              <ProductRow
+                key={product._id}
+                product={product}
+                selected={product._id === selectedId}
+                onClick={onSelectProduct ? () => onSelectProduct(product) : undefined}
+                onOwnerClick={onOwnerClick}
+                isAppUser={isAppUser}
+                showOwner={showOwner}
+                compact
+                dense={dense}
+              />
+            ))}
+          </Box>
+        </Box>
+      ))}
       {pages > 1 && (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mt: 2 }}>
           <Typography variant="body2" color="text.secondary">

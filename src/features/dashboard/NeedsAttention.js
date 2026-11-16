@@ -17,15 +17,15 @@ const TONES = {
 };
 
 const Row = ({ icon: Icon, tone, title, sub, action, onClick }) => (
-  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75, py: 1.5, borderTop: '1px solid #e8edf3', '&:first-of-type': { borderTop: 0 } }}>
-    <Box sx={{ width: 44, height: 44, borderRadius: '50%', bgcolor: TONES[tone].bg, color: TONES[tone].color, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 0.9, borderTop: '1px solid #e8edf3', '&:first-of-type': { borderTop: 0 } }}>
+    <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: TONES[tone].bg, color: TONES[tone].color, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
       <Icon />
     </Box>
     <Box sx={{ flex: 1, minWidth: 0 }}>
-      <Typography sx={{ fontWeight: 600, color: '#16324a' }}>{title}</Typography>
-      {sub && <Typography variant="body2" color="text.secondary">{sub}</Typography>}
+      <Typography noWrap sx={{ fontWeight: 600, color: '#16324a' }} title={typeof title === 'string' ? title : undefined}>{title}</Typography>
+      {sub && <Typography noWrap variant="body2" color="text.secondary" title={typeof sub === 'string' ? sub : undefined}>{sub}</Typography>}
     </Box>
-    <Button variant="outlined" onClick={onClick} sx={{ flex: 'none' }}>{action}</Button>
+    <Button variant="outlined" size="small" onClick={onClick} sx={{ flex: 'none', minWidth: 96 }}>{action}</Button>
   </Box>
 );
 
@@ -101,8 +101,8 @@ export default function NeedsAttention({
   }
 
   return (
-    <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.5 }, mb: 2.5, borderRadius: 4 }}>
-      <Typography variant="h6" component="h2" sx={{ mb: 0.5 }}>Needs your attention</Typography>
+    <Paper variant="outlined" sx={{ px: { xs: 2, md: 2.5 }, py: { xs: 1.5, md: 1.75 }, mb: 2.5, borderRadius: 4 }}>
+      <Typography variant="h6" component="h2" sx={{ mb: 0.25, fontSize: 18 }}>Needs your attention</Typography>
       {loading && rows.length === 0 ? (
         <Box sx={{ pt: 1 }}><Skeleton height={44} /><Skeleton height={44} /></Box>
       ) : rows.length ? rows : (

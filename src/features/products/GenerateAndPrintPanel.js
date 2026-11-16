@@ -152,7 +152,7 @@ const GenerateAndPrintPanel = ({
   return (
     <Box>
       {/* Code types as cards, each with one line on what it is for. */}
-      <Box role="radiogroup" aria-label="Type of code" sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 1.25, mb: 1.5 }}>
+      <Box role="radiogroup" aria-label="Type of code" sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(165px, 1fr))', gap: 1, mb: 1.5 }}>
         {TABS.map((t) => {
           const on = tab === t.key;
           const Icon = t.icon;
@@ -165,17 +165,18 @@ const GenerateAndPrintPanel = ({
               aria-checked={on}
               onClick={() => setTab(t.key)}
               sx={{
-                display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, textAlign: 'left', cursor: 'pointer', font: 'inherit',
+                display: 'flex', alignItems: 'center', gap: 1.25, px: 1.25, py: 1, textAlign: 'left', cursor: 'pointer', font: 'inherit',
                 borderRadius: 3, border: '1.5px solid', borderColor: on ? '#1b4f72' : '#dfe5ec', bgcolor: on ? '#eef5fd' : '#fff', color: '#16324a',
                 '&:hover': { borderColor: '#1b4f72' },
               }}
             >
-              <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: on ? '#1b4f72' : '#e8f1fb', color: on ? '#fff' : '#1b4f72', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+              <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: on ? '#1b4f72' : '#e8f1fb', color: on ? '#fff' : '#1b4f72', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
                 <Icon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, fontSize: 15.5 }}>{t.label}</Typography>
-                <Typography variant="body2" color="text.secondary">{t.short}</Typography>
+                <Typography noWrap sx={{ fontWeight: 700, fontSize: 15, lineHeight: 1.3 }}>{t.label}</Typography>
+                {/* At most two short lines, so every card stays low. */}
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.short}</Typography>
               </Box>
             </Box>
           );

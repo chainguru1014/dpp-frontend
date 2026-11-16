@@ -20,11 +20,10 @@ import {
   printProductIdentifiers,
 } from '../../helper';
 import CopyIconButton from '../CopyIconButton';
-import { renderEan13ToDataUrl, toValidEan13 } from '../../utils/barcodeRenderer';
+import { renderEan13ToDataUrl } from '../../utils/barcodeRenderer';
 import { truncateCode } from '../../utils/truncateCode';
 import { parseIdentifierCsv } from '../../utils/parseIdentifierCsv';
 import PrintDialog from '../printModal/PrintDialog';
-import { useAuth } from '../../features/auth/AuthContext';
 import { confirmAction } from '../../utils/feedbackBus';
 
 const SOURCE_TYPES = [
@@ -35,7 +34,6 @@ const SOURCE_TYPES = [
 ];
 
 const PAGE_SIZE = 10;
-const MAX_BULK = 50;
 
 // Just enough width for each type's actual value shape (short numeric
 // barcode vs. a full GS1 Digital Link URL) instead of one wide field sized
@@ -47,38 +45,6 @@ const VALUE_WIDTH = {
   gs1dl: 340,
 };
 const DEFAULT_VALUE_WIDTH = 240;
-
-const randomDigits = (count) => Array.from({ length: count }, () => Math.floor(Math.random() * 10)).join('');
-const randomHex = (bytes) => Array.from({ length: bytes }, () => Math.floor(Math.random() * 256).toString(16).padStart(2, '0')).join('').toUpperCase();
-
-// Random-value stubs for the four identifier types that have no real
-// scanning/reading engine wired into this app yet (RFID has no reader at
-// all; NFC/barcode/GS1-DL have no in-browser writer/generator hardware
-// either) — good enough to exercise registration + PMC resolution + display
-// end to end today. Swap for a real generator per type when that engine
-// exists (e.g. an actual EPC allocation scheme for RFID, a real NFC tag
-// writer flow, a company's actual GTIN range for barcodes).
-const generateRandomValue = (sourceType) => {
-  switch (sourceType) {
-    case 'barcode':
-      // Register the full 13-digit EAN-13 (12 random digits + the same check
-      // digit renderEan13ToDataUrl/CodeImage computes for display) — a scan
-      // of the rendered barcode returns all 13 digits, so the registered
-      // raw_value must include the check digit too or lookup never matches.
-      return toValidEan13(randomDigits(12));
-    case 'gs1dl':
-      return `https://id.gs1.org/01/${randomDigits(14)}/21/SN${randomDigits(6)}`;
-    case 'nfc':
-      return `NFC-${randomHex(7)}`;
-    case 'rfid':
-      // Plain hex, no prefix — matches a real EPC's shape (a 96-bit EPC is
-      // 12 bytes / 24 hex chars), so a generated tag looks like one a real
-      // reader would actually report, not an internal placeholder string.
-      return randomHex(12);
-    default:
-      return '';
-  }
-};
 
 // Renders the barcode/QR image for one identifier's value — sync for
 // barcode (canvas), async for gs1dl (qrcode.toDataURL). Reports the finished
@@ -124,15 +90,11 @@ const CodeImage = ({ sourceType, value, onReady }) => {
 // and the list below only shows identifiers of that type, instead of a
 // mixed list with a type dropdown.
 const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, product, onProductChange, enableCsvImport = false }) => {
-  // "Test values" (random stand-in codes) are a tool for the platform team, not for brands.
-  const { isAdmin } = useAuth();
   const [identifiers, setIdentifiers] = useState([]);
   const [sourceType, setSourceType] = useState(lockedSourceType || 'barcode');
   const [rawValue, setRawValue] = useState('');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [bulkAmount, setBulkAmount] = useState(5);
-  const [bulkGenerating, setBulkGenerating] = useState(false);
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvSummary, setCsvSummary] = useState(null);
   const [page, setPage] = useState(1);
@@ -184,25 +146,6 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
       }
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  // Bulk random generation — a stand-in for a real per-type generation/
-  // reading engine (see generateRandomValue above), registering `amount`
-  // random values of the locked type in one go.
-  const handleBulkGenerate = async () => {
-    const amount = Math.max(1, Math.min(MAX_BULK, Number(bulkAmount) || 0));
-    if (!productId || !companyId || !amount) return;
-    setBulkGenerating(true);
-    try {
-      for (let i = 0; i < amount; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        await registerProductIdentifier(productId, companyId, sourceType, generateRandomValue(sourceType), '');
-      }
-      setPage(1);
-      await refresh();
-    } finally {
-      setBulkGenerating(false);
     }
   };
 
@@ -290,12 +233,13 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
         Add a {lockedSourceType ? activeLabel : 'label'} you already have
       </Typography>
 
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+      {/* One line: the tag's number, a note, Add, then Download codes to
+          print and Import CSV at the right. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
         {!lockedSourceType && (
           <TextField
             select
             label="Type"
-            size="small"
             value={sourceType}
             onChange={(e) => setSourceType(e.target.value)}
             sx={{ minWidth: 160 }}
@@ -309,73 +253,48 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           label={lockedSourceType ? `${activeLabel} number` : 'Barcode / GTIN / tag number'}
           value={rawValue}
           onChange={(e) => setRawValue(e.target.value)}
-          sx={{ width: lockedSourceType ? VALUE_WIDTH[lockedSourceType] || DEFAULT_VALUE_WIDTH : DEFAULT_VALUE_WIDTH }}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleRegister(); }}
+          sx={{ flex: '1 1 220px', maxWidth: lockedSourceType ? VALUE_WIDTH[lockedSourceType] || DEFAULT_VALUE_WIDTH : DEFAULT_VALUE_WIDTH }}
         />
         <TextField
           label="Note (optional)"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          sx={{ minWidth: 180 }}
+          sx={{ flex: '1 1 160px', maxWidth: 240 }}
         />
         <Button
           variant="contained"
           onClick={handleRegister}
           disabled={submitting || !rawValue.trim() || !companyId}
-          sx={{ mt: 0.5 }}
+          sx={{ height: 48, px: 3 }}
         >
           Add
         </Button>
-      </Box>
-
-      {/* Bulk generation — a stand-in for a real generation/reading engine
-          per type (see generateRandomValue above). Intentionally a separate
-          control from manual Register above: this creates and registers
-          `amount` values immediately. */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
+        <Box sx={{ flexGrow: 1 }} />
         <Button
           variant="outlined"
           onClick={() => setPrintOpen(true)}
           disabled={visibleIdentifiers.length === 0}
+          sx={{ height: 48 }}
         >
           Download codes to print
         </Button>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'wrap', gap: 1.5 }}>
-          {isAdmin && (
-          <>
-          <TextField
-            type="number"
-            label="Test values"
-            helperText="For testing only. These are random numbers, not real tags."
-            value={bulkAmount}
-            onChange={(e) => setBulkAmount(e.target.value)}
-            inputProps={{ min: 1, max: MAX_BULK }}
-            sx={{ width: 260 }}
-          />
+        {enableCsvImport && (
           <Button
             variant="outlined"
-            onClick={handleBulkGenerate}
-            disabled={bulkGenerating || !companyId || !bulkAmount || Number(bulkAmount) < 1}
+            component="label"
+            disabled={csvImporting || !companyId}
+            sx={{ height: 48 }}
           >
-            {bulkGenerating ? 'Creating…' : 'Create test values'}
+            {csvImporting ? 'Importing…' : 'Import CSV'}
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              hidden
+              onChange={handleCsvFile}
+            />
           </Button>
-          </>
-          )}
-          {enableCsvImport && (
-            <Button
-              variant="outlined"
-              component="label"
-              disabled={csvImporting || !companyId}
-            >
-              {csvImporting ? 'Importing…' : 'Import CSV'}
-              <input
-                type="file"
-                accept=".csv,text/csv"
-                hidden
-                onChange={handleCsvFile}
-              />
-            </Button>
-          )}
-        </Box>
+        )}
       </Box>
       {enableCsvImport && csvSummary && (
         <Typography

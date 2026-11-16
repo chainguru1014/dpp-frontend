@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import ProductBar from '../../components/ProductBar';
+import { PassportScore } from '../products/PassportReadinessPanel';
 import { Alert, Box, Button, Chip, IconButton, InputAdornment, Link, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -70,9 +70,9 @@ const eventDetail = (e) => {
   return '';
 };
 
-function ProductCard({ product, children }) {
+function ProductCard({ product, children, right }) {
   return (
-    <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2, mb: 2 }}>
+    <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: { xs: 'wrap', md: 'nowrap' }, bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2, mb: 2 }}>
       <Box
         component="img"
         alt=""
@@ -89,6 +89,7 @@ function ProductCard({ product, children }) {
         </Typography>
         {children}
       </Box>
+      {right && <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', alignSelf: 'center' }}>{right}</Box>}
     </Box>
   );
 }
@@ -275,12 +276,9 @@ export default function ItemTracePage({
         </Tooltip>
       </Stack>
 
-      {selectedId && !pickingProduct ? (
-        <ProductBar
-          product={(products || []).find((p) => p._id === selectedId) || result.product}
-          onChange={() => setPickingProduct(true)}
-        />
-      ) : (
+      {/* A product chosen: the list hides; its card below has Passport and
+          Change product. */}
+      {selectedId && !pickingProduct ? null : (
       <ProductsTable
         products={filteredProducts}
         loading={productsLoading}
@@ -288,6 +286,7 @@ export default function ItemTracePage({
         showOwner={showOwner}
         columns={6}
         dense
+        groupByBrand
         emptyText={input.trim()
           ? 'No product matches. If this is a code from a code or tag, press "Find code".'
           : 'No products yet.'}
@@ -314,7 +313,18 @@ export default function ItemTracePage({
                 Back to all items of {parent.product.name || 'the product'}
               </Button>
             )}
-            <ProductCard product={result.product}>
+            <ProductCard
+              product={result.product}
+              right={selectedId && !pickingProduct ? (
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" color="text.secondary">Passport</Typography>
+                    <PassportScore product={(products || []).find((p) => p._id === selectedId) || result.product} width={110} />
+                  </Box>
+                  <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={() => setPickingProduct(true)}>Change product</Button>
+                </>
+              ) : null}
+            >
               <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 0.75 }}>
                 <Chip size="small" color="primary" label={result.type === 'item' ? `Item #${result.item.qrcodeId}` : `All items (${result.product.totalCodes} codes)`} />
                 {result.type === 'item' && <Chip size="small" variant="outlined" label={`Found by: ${result.matchedBy}`} />}

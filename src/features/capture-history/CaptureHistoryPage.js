@@ -151,7 +151,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
   const pageDocs = rangedDocs.slice(tablePage * rowsPerPage, tablePage * rowsPerPage + rowsPerPage);
 
   const Stat = ({ label, value }) => (
-    <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', height: '100%' }}>
+    <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       <Typography sx={{ fontSize: '1.8rem', fontWeight: 700, color: 'primary.main', lineHeight: 1.2 }}>{value}</Typography>
       <Typography color="text.secondary">{label}</Typography>
     </Paper>
@@ -179,43 +179,51 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
         ) : null}
       />
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={selfOnly ? 4 : 6} md={selfOnly ? 4 : 3}><Stat label="All captures" value={companyDocs.length} /></Grid>
-        <Grid item xs={12} sm={selfOnly ? 4 : 6} md={selfOnly ? 4 : 3}><Stat label="Today" value={todayCount} /></Grid>
-        {!selfOnly && (
-          <Grid item xs={12} sm={6} md={3}>
-            <Stat
-              label="Employees with captures"
-              value={`${byWorker.filter((w) => !w.removed && w.total > 0).length} of ${byWorker.filter((w) => !w.removed).length}`}
-            />
+      {/* The four figures as a 2 × 2 block on the left, Captures per person
+          beside them on the right (one row, like the Dashboard). */}
+      <Grid container spacing={2} sx={{ mb: 3 }} alignItems="stretch">
+        <Grid item xs={12} md={selfOnly ? 12 : 6}>
+          <Grid container spacing={2} sx={{ height: { md: 'calc(100% + 16px)' } }}>
+            <Grid item xs={6} md={selfOnly ? 4 : 6}><Stat label="All captures" value={companyDocs.length} /></Grid>
+            <Grid item xs={6} md={selfOnly ? 4 : 6}><Stat label="Today" value={todayCount} /></Grid>
+            {!selfOnly && (
+              <Grid item xs={6} md={6}>
+                <Stat
+                  label="Employees with captures"
+                  value={`${byWorker.filter((w) => !w.removed && w.total > 0).length} of ${byWorker.filter((w) => !w.removed).length}`}
+                />
+              </Grid>
+            )}
+            <Grid item xs={6} md={selfOnly ? 4 : 6}><Stat label="Flagged for review" value={companyDocs.filter((d) => d.flagged).length} /></Grid>
           </Grid>
-        )}
-        <Grid item xs={12} sm={selfOnly ? 4 : 6} md={selfOnly ? 4 : 3}><Stat label="Flagged for review" value={companyDocs.filter((d) => d.flagged).length} /></Grid>
-      </Grid>
+        </Grid>
 
-      {!selfOnly && (
-      <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>Captures per person</Typography>
-        {byWorker.length === 0 ? (
-          <Typography color="text.secondary">No employees yet. Add them on the Employee page.</Typography>
-        ) : (
-          byWorker.map((w) => (
-            <Box key={w.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.25 }}>
-              <Box sx={{ width: { xs: 120, sm: isAdmin ? 220 : 180 }, flexShrink: 0, minWidth: 0 }}>
-                <Typography noWrap title={w.label}>{w.label}</Typography>
-                {isAdmin && w.companyName && (
-                  <Typography variant="body2" color="text.secondary" noWrap component="div">{w.companyName}</Typography>
-                )}
-              </Box>
-              <Box sx={{ flex: 1, bgcolor: '#eef2f8', borderRadius: 1, height: 12, overflow: 'hidden' }}>
-                <Box sx={{ width: `${(w.total / maxTotal) * 100}%`, bgcolor: '#2f80c8', height: '100%' }} />
-              </Box>
-              <Typography sx={{ width: 44, textAlign: 'right', fontWeight: 600 }}>{w.total}</Typography>
-            </Box>
-          ))
+        {!selfOnly && (
+        <Grid item xs={12} md={6}>
+          <Paper variant="outlined" sx={{ p: 2, height: '100%', maxHeight: { md: 260 }, overflowY: 'auto' }}>
+            <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>Captures per person</Typography>
+            {byWorker.length === 0 ? (
+              <Typography color="text.secondary">No employees yet. Add them on the Employee page.</Typography>
+            ) : (
+              byWorker.map((w) => (
+                <Box key={w.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.25 }}>
+                  <Box sx={{ width: { xs: 120, sm: 150 }, flexShrink: 0, minWidth: 0 }}>
+                    <Typography noWrap title={w.label}>{w.label}</Typography>
+                    {isAdmin && w.companyName && (
+                      <Typography variant="body2" color="text.secondary" noWrap component="div">{w.companyName}</Typography>
+                    )}
+                  </Box>
+                  <Box sx={{ flex: 1, bgcolor: '#eef2f8', borderRadius: 1, height: 12, overflow: 'hidden' }}>
+                    <Box sx={{ width: `${(w.total / maxTotal) * 100}%`, bgcolor: '#2f80c8', height: '100%' }} />
+                  </Box>
+                  <Typography sx={{ width: 36, textAlign: 'right', fontWeight: 600 }}>{w.total}</Typography>
+                </Box>
+              ))
+            )}
+          </Paper>
+        </Grid>
         )}
-      </Paper>
-      )}
+      </Grid>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, gap: 2, flexWrap: 'wrap' }}>
         <Typography variant="h6" component="h2">All recorded steps</Typography>

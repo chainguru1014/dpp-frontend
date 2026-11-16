@@ -25,9 +25,10 @@ function BigCard({ icon: Icon, title, text, onClick }) {
         alignItems: 'flex-start',
         justifyContent: 'flex-start',
         textAlign: 'left',
-        gap: 1.25,
-        p: 2.5,
-        minHeight: 168,
+        gap: 0.75,
+        px: 2,
+        py: 1.75,
+        minHeight: 0,
         width: '100%',
         bgcolor: '#fff',
         border: '1px solid',
@@ -39,11 +40,14 @@ function BigCard({ icon: Icon, title, text, onClick }) {
         '&:focus-visible': { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 2 },
       }}
     >
-      <Box sx={{ width: 56, height: 56, borderRadius: 2, bgcolor: 'rgba(47,128,200,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Icon sx={{ fontSize: 32, color: 'primary.main' }} />
+      {/* The icon with the title on its right, the help line under both. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box sx={{ width: 44, height: 44, flexShrink: 0, borderRadius: 2, bgcolor: 'rgba(47,128,200,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon sx={{ fontSize: 26, color: 'primary.main' }} />
+        </Box>
+        <Typography variant="h6" component="span" sx={{ lineHeight: 1.25, fontSize: 18 }}>{title}</Typography>
       </Box>
-      <Typography variant="h6" component="span" sx={{ lineHeight: 1.25 }}>{title}</Typography>
-      <Typography variant="body1" color="text.secondary" component="span">{text}</Typography>
+      <Typography variant="body2" color="text.secondary" component="span" sx={{ fontSize: 14.5 }}>{text}</Typography>
     </ButtonBase>
   );
 }
@@ -190,7 +194,7 @@ export default function QuickStartCards({
   if (!cards.length) return null;
 
   return (
-    <Box sx={{ mb: 3 }}>
+    <Box sx={{ mb: 2 }}>
       <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: `repeat(${cards.length}, 1fr)` } }}>
         {cards.map((c) => <BigCard key={c.title} {...c} />)}
       </Box>

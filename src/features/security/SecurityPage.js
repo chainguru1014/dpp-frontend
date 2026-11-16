@@ -144,6 +144,27 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
           </>
         )}
         moreActions={[{ label: 'Reload', icon: RefreshIcon, onClick: () => load(days) }]}
+        // The four figures sit above the tabs (they sum up the page).
+        aboveTabs={!loading && totals ? (
+              <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' } }}>
+                <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Codes scanned" sub={`${totals.scans.toLocaleString()} ${totals.scans === 1 ? 'scan' : 'scans'} in total`} />
+                <Kpi icon={ReplayIcon} value={totals.repeatItems.toLocaleString()} label="Scanned more than once" />
+                <Kpi
+                  icon={GppMaybeIcon}
+                  value={(totals.highRisk + totals.mediumRisk).toLocaleString()}
+                  label="Codes with warning signs"
+                  sub={`${totals.highRisk} likely ${totals.highRisk === 1 ? 'copy' : 'copies'}, ${totals.mediumRisk} worth a look`}
+                  color={totals.highRisk ? 'error.main' : totals.mediumRisk ? 'warning.main' : 'success.main'}
+                />
+                <Kpi
+                  icon={VerifiedUserIcon}
+                  value={totals.securityVerified.toLocaleString()}
+                  label="Security QR checks passed"
+                  sub={`${totals.securityFailed} failed · ${totals.blocked} marked as ${totals.blocked === 1 ? 'a copy' : 'copies'}`}
+                  color={totals.securityFailed ? 'error.main' : 'success.main'}
+                />
+              </Box>
+        ) : null}
       />
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -151,25 +172,25 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
 
       {!loading && data && (
         <Stack spacing={2}>
-          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' } }}>
-            <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Codes scanned" sub={`${totals.scans.toLocaleString()} ${totals.scans === 1 ? 'scan' : 'scans'} in total`} />
-            <Kpi icon={ReplayIcon} value={totals.repeatItems.toLocaleString()} label="Scanned more than once" />
-            <Kpi
-              icon={GppMaybeIcon}
-              value={(totals.highRisk + totals.mediumRisk).toLocaleString()}
-              label="Codes with warning signs"
-              sub={`${totals.highRisk} likely ${totals.highRisk === 1 ? 'copy' : 'copies'}, ${totals.mediumRisk} worth a look`}
-              color={totals.highRisk ? 'error.main' : totals.mediumRisk ? 'warning.main' : 'success.main'}
-            />
-            <Kpi
-              icon={VerifiedUserIcon}
-              value={totals.securityVerified.toLocaleString()}
-              label="Security QR checks passed"
-              sub={`${totals.securityFailed} failed · ${totals.blocked} marked as ${totals.blocked === 1 ? 'a copy' : 'copies'}`}
-              color={totals.securityFailed ? 'error.main' : 'success.main'}
-            />
+          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
+            <Section title="How many times each code was scanned" description="Most codes are scanned once or a few times. A long tail on the right is worth a look.">
+              <Bars
+                rows={data.repeatHistogram.map((b) => ({ label: `${b.label} ${b.label === '1' ? 'scan' : 'scans'}`, value: b.items }))}
+                unit="codes"
+                unitOne="code"
+                emptyText="No scans in this period."
+              />
+            </Section>
+            <Section title="Scans by country">
+              <Bars
+                rows={data.countries.map((c) => ({ label: c.country, value: c.count }))}
+                unit="scans"
+                unitOne="scan"
+                color="#3a9d6a"
+                emptyText="No located scans in this period."
+              />
+            </Section>
           </Box>
-
           <Section
             title="Codes to check"
             description="Location comes from the scanner's GPS or internet address, which can be wrong (for example with a VPN). Treat these as reasons to look, then decide."
@@ -224,25 +245,6 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
             )}
           </Section>
 
-          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
-            <Section title="How many times each code was scanned" description="Most codes are scanned once or a few times. A long tail on the right is worth a look.">
-              <Bars
-                rows={data.repeatHistogram.map((b) => ({ label: `${b.label} ${b.label === '1' ? 'scan' : 'scans'}`, value: b.items }))}
-                unit="codes"
-                unitOne="code"
-                emptyText="No scans in this period."
-              />
-            </Section>
-            <Section title="Scans by country">
-              <Bars
-                rows={data.countries.map((c) => ({ label: c.country, value: c.count }))}
-                unit="scans"
-                unitOne="scan"
-                color="#3a9d6a"
-                emptyText="No located scans in this period."
-              />
-            </Section>
-          </Box>
         </Stack>
       )}
     </Box>

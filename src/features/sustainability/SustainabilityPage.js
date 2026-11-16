@@ -208,20 +208,6 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
         description={isAppUser ? v.appUserDescription : v.description}
       />
 
-      {/* What this page is about, in one picture and one sentence. */}
-      <Card sx={{ mb: 2, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'stretch' }}>
-        <Box
-          component="img"
-          src={v.image}
-          alt={v.heading}
-          sx={{ display: 'block', width: { xs: '100%', md: 360 }, height: { xs: 160, md: 170 }, objectFit: 'contain', bgcolor: v.imageBg, flexShrink: 0 }}
-        />
-        <CardContent sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-          <Typography variant="h6" component="h2">{v.heading}</Typography>
-          <Typography color="text.secondary">{v.text}</Typography>
-        </CardContent>
-      </Card>
-
       {loading && !rows.length ? (
         <Loader label="Loading products…" />
       ) : !rows.length ? (

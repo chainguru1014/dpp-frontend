@@ -9,7 +9,9 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 // [{ label, icon, onClick, disabled }]). Longer explanations belong in the
 // page help (the ? button, see components/PageHelp).
 // eslint-disable-next-line no-unused-vars
-const PageHeader = ({ title: ownTitle, description, actions, moreActions, icon }) => {
+// `aboveTabs`: shown between the title and the tabs of a shared header
+// (e.g. Security's figures, which belong to the page, not to one tab).
+const PageHeader = ({ title: ownTitle, description, actions, moreActions, icon, aboveTabs }) => {
   const [anchor, setAnchor] = useState(null);
   const shared = useContext(PageHeaderContext);
   const title = shared?.title || ownTitle;
@@ -81,6 +83,7 @@ const PageHeader = ({ title: ownTitle, description, actions, moreActions, icon }
         </Box>
       )}
     </Box>
+    {aboveTabs && <Box sx={{ mt: -1.5, mb: 3 }}>{aboveTabs}</Box>}
     {tabs.length > 1 && (
       <Tabs
         value={shared.active}

@@ -689,7 +689,11 @@ const InnerPage = () => {
   // The product editor shows its step list and live preview beside the form.
   const wideEditor = useMediaQuery('(min-width:1280px)');
   // The product editor as a page (wide screens, the full form).
-  const editorAsPage = wideEditor && productPanelMode === 'edit' && !quickAdd && canEditProducts && activePage === 'newProduct';
+  // Not tied to activePage: when the menu leaves the editor, the dialog must
+  // close as the same in-page element. Switching it to a portal with a
+  // backdrop while closing left an invisible layer over the next page
+  // (nothing could be clicked).
+  const editorAsPage = wideEditor && productPanelMode === 'edit' && !quickAdd && canEditProducts;
   // Two pages under one menu item share a title, with tabs under the header.
   const sharedHeader = (() => {
     if ((activePage === 'history' || activePage === 'security') && !isAppUser) {
@@ -938,7 +942,8 @@ const InnerPage = () => {
       logoUrl: ownBrand?.logoUrl || '',
       coverUrl: ownBrand?.coverUrl || '',
     });
-    setQuickAdd(true);
+    // New product opens the full editor straight away (no quick-add step).
+    setQuickAdd(false);
     setProductCompanyId(isAdmin ? (brandPageTarget?.companyId || '') : '');
     setIsUploadingBrandLogo(false);
     setIsUploadingBrandCover(false);
@@ -2588,6 +2593,7 @@ const InnerPage = () => {
                 showOwner={isAdmin}
                 columns={selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) ? 3 : 6}
                 dense
+                groupByBrand
                 emptyText={productNameFilter.trim()
                   ? 'No products match your search.'
                   : isAppUser
@@ -2672,6 +2678,7 @@ const InnerPage = () => {
             // Wide screens: the editor is a page in the main area (design),
             // not a window over it — the menu and top bar stay visible.
             {...(editorAsPage ? {
+              transitionDuration: 0,
               disablePortal: true,
               hideBackdrop: true,
               disableScrollLock: true,

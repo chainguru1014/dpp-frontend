@@ -6,6 +6,8 @@ import SaveIcon from '@mui/icons-material/Save';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import GroupsIcon from '@mui/icons-material/Groups';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import { BrandPickerGrid } from '../../components/BrandPicker';
 import PageHeader from '../../components/PageHeader';
 import Loader from '../../components/Loader';
 import DppThemeEditor from '../products/DppThemeEditor';
@@ -64,7 +66,7 @@ export default function BrandPage({
 
   // The brand shown: the chosen company's (super admin) or the account's own.
   const brand = useMemo(() => {
-    if (isAdmin && companyId) return brands.find((b) => String(b.company_id) === String(companyId)) || null;
+    if (isAdmin) return companyId ? brands.find((b) => String(b.company_id) === String(companyId)) || null : null;
     return brands[0] || null;
   }, [brands, isAdmin, companyId]);
   const companyRecord = useMemo(() => {
@@ -89,13 +91,8 @@ export default function BrandPage({
   }, [token, isAdmin]);
 
   // Super admin without a chosen brand: the first brand company.
-  useEffect(() => {
-    if (isAdmin && !companyId && brands.length && onCompanyChange) {
-      const firstCompany = brands.find((b) => companies.length === 0 || companies.some((c) => String(c._id) === String(b.company_id)));
-      if (firstCompany) onCompanyChange(String(firstCompany.company_id));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, companyId, brands, companies]);
+  // Super admin: choose a brand from the cards (Change brand reopens them).
+  const [picking, setPicking] = useState(false);
 
   useEffect(() => {
     setDetails(detailsOf(brand));
@@ -215,29 +212,30 @@ export default function BrandPage({
     }
   };
 
-  const brandProducts = useMemo(
-    () => (brand ? products.filter((p) => String(p.company_id?._id || p.company_id || '') === String(brand.company_id)) : []),
-    [products, brand],
-  );
+  // The brand's products: its company's, and products saved under its name
+  // by the platform account (demo products).
+  const brandProducts = useMemo(() => {
+    if (!brand) return [];
+    const key = String(brand.name || '').trim().toLowerCase();
+    return products.filter((p) => String(p.company_id?._id || p.company_id || '') === String(brand.company_id)
+      || (key && String(p.brandInfo?.name || '').trim().toLowerCase() === key));
+  }, [products, brand]);
   const previewProduct = brandProducts.find((p) => p._id === previewId) || brandProducts[0] || { ...SAMPLE_PRODUCT, brandInfo: details };
   const percent = profilePercent(details);
 
   if (loading) return <Loader label="Loading the brand profile…" />;
 
-  const brandPicker = isAdmin && (
-    <TextField
-      select
-      label="Brand"
-      value={brand ? String(brand.company_id) : ''}
-      onChange={(e) => onCompanyChange && onCompanyChange(e.target.value)}
-      sx={{ width: { xs: '100%', sm: 320 }, bgcolor: 'background.paper', borderRadius: 2 }}
-    >
-      {brands
-        .filter((b, i, all) => all.findIndex((x) => String(x.company_id) === String(b.company_id)) === i)
-        .filter((b) => companies.length === 0 || companies.some((c) => String(c._id) === String(b.company_id)))
-        .map((b) => <MenuItem key={b.company_id} value={String(b.company_id)}>{b.name}</MenuItem>)}
-    </TextField>
-  );
+  // Super admin: brands to choose from (one per brand company).
+  const brandOptions = brands
+    .filter((b, i, all) => all.findIndex((x) => String(x.company_id) === String(b.company_id)) === i)
+    .filter((b) => companies.length === 0 || companies.some((c) => String(c._id) === String(b.company_id)))
+    .map((b) => ({
+      id: String(b.company_id),
+      name: b.name,
+      brand: b,
+      companyType: companies.find((c) => String(c._id) === String(b.company_id))?.companyType,
+    }));
+  const showPicker = isAdmin && (!brand || picking);
 
   return (
     <Box>
@@ -247,53 +245,65 @@ export default function BrandPage({
       <PageHeader
         title="Brand profile"
         description={isAdmin ? 'A brand’s name, look and team. Every product of the brand uses them.' : 'Your brand’s name, look and team. Every product you add uses them.'}
-        actions={brandPicker || undefined}
       />
 
-      {!brand ? (
-        <Alert severity="info">
-          {isAdmin ? 'Choose a brand on the Brands page.' : 'Your brand profile is being set up. Please reload this page in a moment.'}
-        </Alert>
+      {showPicker ? (
+        <BrandPickerGrid
+          options={brandOptions}
+          selectedId={brand ? String(brand.company_id) : ''}
+          onPick={(id) => { setPicking(false); if (onCompanyChange) onCompanyChange(id); }}
+        />
+      ) : !brand ? (
+        <Alert severity="info">Your brand profile is being set up. Please reload this page in a moment.</Alert>
       ) : (
         <>
-          {/* Header: cover, logo, name, tagline, how complete the profile is. */}
-          <Box sx={{ bgcolor: '#fff', borderRadius: 4, boxShadow: 1, overflow: 'hidden', mb: 2.5 }}>
-            <Box sx={{
-              height: 92,
-              background: details.coverUrl ? `url(${getFileUrl(details.coverUrl)}) center/cover` : 'linear-gradient(120deg, #2b3a4d 0%, #4a6a8a 60%, #9fb8d6 100%)',
-            }}
-            />
-            <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 2, px: 2.5, pb: 2, mt: '-36px', flexWrap: 'wrap' }}>
-              <Box sx={{ border: '4px solid #fff', borderRadius: '50%', bgcolor: '#fff' }}>
-                <BrandMark brand={details} name={brand.name} size={72} />
-              </Box>
-              <Box sx={{ flex: 1, minWidth: 200, pb: 0.5 }}>
-                <Typography sx={{ fontSize: 24, fontWeight: 700, color: '#16324a' }}>{details.name || brand.name}</Typography>
-                <Typography color="text.secondary">
-                  {[details.tagline, companyRecord?.companyType ? companyTypeLabel(companyRecord.companyType) : '', `${brandProducts.length} ${brandProducts.length === 1 ? 'product' : 'products'}`].filter(Boolean).join(' · ')}
-                </Typography>
-              </Box>
-              <Stack direction="row" spacing={1.5} alignItems="center" sx={{ pb: 0.5 }}>
-                <Typography variant="body2" color="text.secondary">Profile</Typography>
-                <LinearProgress variant="determinate" value={percent} sx={{ width: 120, height: 8, borderRadius: 4 }} color={percent >= 100 ? 'success' : 'warning'} aria-label={`Profile ${percent}% complete`} />
-                <Typography sx={{ fontWeight: 700 }}>{percent}%</Typography>
-                {isAdmin && onOpenProducts && (
-                  <Button variant="outlined" startIcon={<Inventory2Icon />} onClick={() => onOpenProducts(brand.company_id)}>Its products</Button>
-                )}
-              </Stack>
-            </Box>
-          </Box>
-
           <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
             <Tab value="profile" label="Profile" />
             <Tab value="design" label="Product page design" />
           </Tabs>
 
           {tab === 'profile' && (
-            <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 }, maxWidth: 860 }}>
+            <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 } }}>
+              {/* The brand: its whole cover photo, logo, name, tagline, how
+                  complete the profile is, Its products and Change brand. */}
+              <Box sx={{ border: '1px solid #e3e8ef', borderRadius: 3, overflow: 'hidden', mb: 3 }}>
+                {details.coverUrl ? (
+                  <Box sx={{ position: 'relative', height: { xs: 180, md: 260 }, overflow: 'hidden', bgcolor: '#1f2b38' }}>
+                    <Box aria-hidden sx={{ position: 'absolute', inset: -20, background: `url(${getFileUrl(details.coverUrl)}) center/cover`, filter: 'blur(18px) brightness(0.75)' }} />
+                    <Box component="img" src={getFileUrl(details.coverUrl)} alt="Brand cover"
+                      sx={{ position: 'relative', display: 'block', width: '100%', height: '100%', objectFit: 'contain' }} />
+                  </Box>
+                ) : (
+                  <Box sx={{ height: 92, background: 'linear-gradient(120deg, #2b3a4d 0%, #4a6a8a 60%, #9fb8d6 100%)' }} />
+                )}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2.5, py: 1.75, flexWrap: 'wrap' }}>
+                  <Box sx={{ border: '3px solid #fff', borderRadius: '50%', bgcolor: '#fff', boxShadow: 1, mt: '-34px' }}>
+                    <BrandMark brand={details} name={brand.name} size={68} />
+                  </Box>
+                  <Box sx={{ flex: 1, minWidth: 200 }}>
+                    <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#16324a' }}>{details.name || brand.name}</Typography>
+                    <Typography color="text.secondary">
+                      {[details.tagline, companyRecord?.companyType ? companyTypeLabel(companyRecord.companyType) : '', `${brandProducts.length} ${brandProducts.length === 1 ? 'product' : 'products'}`].filter((v) => v && v !== '—').join(' · ')}
+                    </Typography>
+                  </Box>
+                  <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap>
+                    <Typography variant="body2" color="text.secondary">Profile</Typography>
+                    <LinearProgress variant="determinate" value={percent} sx={{ width: 110, height: 8, borderRadius: 4 }} color={percent >= 100 ? 'success' : 'warning'} aria-label={`Profile ${percent}% complete`} />
+                    <Typography sx={{ fontWeight: 700 }}>{percent}%</Typography>
+                    {isAdmin && onOpenProducts && (
+                      <Button variant="outlined" startIcon={<Inventory2Icon />} onClick={() => onOpenProducts(brand.company_id)}>Its products</Button>
+                    )}
+                    {isAdmin && (
+                      <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={() => setPicking(true)}>Change brand</Button>
+                    )}
+                  </Stack>
+                </Box>
+              </Box>
               {!canEdit && (
                 <Alert severity="info" sx={{ mb: 2.5 }}>Only a Supervisor or the brand account can change these.</Alert>
               )}
+              <Grid container spacing={3}>
+              <Grid item xs={12} lg={6}>
               <Stack spacing={2.5}>
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                   <TextField label="Brand name" required fullWidth value={details.name} disabled={!canEdit} onChange={setField('name')}
@@ -314,6 +324,9 @@ export default function BrandPage({
                 <TextField label="About the brand" fullWidth multiline minRows={3} value={details.detail} disabled={!canEdit} onChange={setField('detail')}
                   helperText="A sentence or two. Shoppers see it on your products." />
                 <TextField label="Website" fullWidth placeholder="https://www.example.com" value={details.websiteUrl} disabled={!canEdit} onChange={setField('websiteUrl')} />
+              </Stack>
+              </Grid>
+              <Grid item xs={12} lg={6}>
                 <Grid container spacing={2}>
                   <Grid item xs={12} sm={6}>
                     <Typography variant="subtitle2" sx={{ mb: 1 }}>Logo</Typography>
@@ -332,7 +345,7 @@ export default function BrandPage({
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       {details.coverUrl && (
                         <Box component="img" src={getFileUrl(details.coverUrl)} alt="Brand cover"
-                          sx={{ width: 150, height: 64, objectFit: 'cover', border: '1px solid', borderColor: 'divider', borderRadius: 2 }} />
+                          sx={{ width: 180, height: 72, objectFit: 'cover', border: '1px solid', borderColor: 'divider', borderRadius: 2 }} />
                       )}
                       {canEdit && (
                         <Button variant="outlined" component="label" disabled={uploading === 'coverUrl'}>
@@ -343,10 +356,9 @@ export default function BrandPage({
                     </Stack>
                   </Grid>
                 </Grid>
-              </Stack>
               {/* Team and sign-in (was its own tab): who signs in as the
                   brand's Supervisor and which email domain its staff use. */}
-              <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #e8edf3' }}>
+              <Box sx={{ mt: 3, pt: 2.5, borderTop: '1px solid #e8edf3' }}>
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
                   <Typography sx={{ fontSize: 18, fontWeight: 600, color: '#16324a', flex: 1 }}>Team and sign-in</Typography>
                   {onOpenEmployees && (
@@ -356,7 +368,7 @@ export default function BrandPage({
                 {!isAdmin && (
                   <Alert severity="info" sx={{ mb: 2.5 }}>Yometel sets these. Ask your Yometel contact to change them.</Alert>
                 )}
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <Stack spacing={2}>
                   <TextField label="Supervisor email" fullWidth value={signIn.email} disabled={!isAdmin}
                     onChange={(e) => setSignIn((s) => ({ ...s, email: e.target.value }))}
                     helperText="This person signs in as the brand’s Supervisor." />
@@ -365,6 +377,8 @@ export default function BrandPage({
                     helperText={`People with ${signIn.allowedEmailDomains ? `an @${signIn.allowedEmailDomains.split(',')[0].trim()}` : 'this'} email can sign in as staff. Separate several with commas.`} />
                 </Stack>
               </Box>
+              </Grid>
+              </Grid>
 
               {(canEdit || isAdmin) && (
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 3, borderTop: '1px solid #e8edf3', pt: 2 }}>
