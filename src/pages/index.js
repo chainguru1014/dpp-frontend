@@ -2851,7 +2851,8 @@ const InnerPage = () => {
 
                 {productPanelMode === 'experience' && (
                   <Grid container spacing={3}>
-                    <Grid item xs={12} md={5}>
+                    {/* Passport readiness on the left, What shoppers see on the right. */}
+                    <Grid item xs={12} md={5} sx={{ order: { md: 2 } }}>
                       <Box sx={{ position: { md: 'sticky' }, top: { md: 0 } }}>
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>What shoppers see</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -2881,7 +2882,7 @@ const InnerPage = () => {
                       </Box>
                       </Box>
                     </Grid>
-                    <Grid item xs={12} md={7}>
+                    <Grid item xs={12} md={7} sx={{ order: { md: 1 } }}>
                       <PassportReadinessPanel
                         product={formProduct}
                         onGoToStep={(step) => {
