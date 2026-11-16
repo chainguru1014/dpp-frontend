@@ -2851,7 +2851,9 @@ const InnerPage = () => {
 
                 {productPanelMode === 'experience' && (
                   <Grid container spacing={3}>
-                    {/* Passport readiness on the left, What shoppers see on the right. */}
+                    {/* Passport readiness; What shoppers see is the full-height column on
+                        the right (wide screens), or next to it here (narrow). */}
+                    {!wideEditor && (
                     <Grid item xs={12} md={5} sx={{ order: { md: 2 } }}>
                       <Box sx={{ position: { md: 'sticky' }, top: { md: 0 } }}>
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>What shoppers see</Typography>
@@ -2882,7 +2884,8 @@ const InnerPage = () => {
                       </Box>
                       </Box>
                     </Grid>
-                    <Grid item xs={12} md={7} sx={{ order: { md: 1 } }}>
+                    )}
+                    <Grid item xs={12} md={wideEditor ? 12 : 7} sx={{ order: { md: 1 } }}>
                       <PassportReadinessPanel
                         product={formProduct}
                         onGoToStep={(step) => {
@@ -3712,10 +3715,27 @@ const InnerPage = () => {
               );
             })()}
             </Box>
-            {productPanelMode === 'edit' && !quickAdd && wideEditor && (
+            {(productPanelMode === 'edit' || productPanelMode === 'experience') && !quickAdd && wideEditor && (
               <Box component="aside" aria-label="What shoppers see" sx={{ flex: '0 0 360px', borderLeft: 1, borderColor: 'divider', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, overflowY: 'auto', bgcolor: '#f8fafc' }}>
                 <Typography sx={{ fontWeight: 600, color: '#16324a' }}>What shoppers see</Typography>
-                <Box sx={{ width: 320, flex: '1 1 auto', minHeight: 560, maxHeight: 820, border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 3, bgcolor: '#fff' }}>
+                {/* The design belongs to the brand: changed on its Brand page. */}
+                {productPanelMode === 'experience' && (
+                <Button
+                  variant="outlined"
+                  startIcon={<PaletteIcon />}
+                  size="small"
+                  onClick={async () => {
+                    const target = { companyId: formCompanyId };
+                    if (await closeProductDialog(null, 'closeButton')) {
+                      setBrandPageTarget(target);
+                      setActivePage('brand');
+                    }
+                  }}
+                >
+                  Change the DPP design
+                </Button>
+                )}
+                <Box sx={{ width: 320, flex: '1 1 auto', minHeight: 420, maxHeight: 820, border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 3, bgcolor: '#fff' }}>
                   <Suspense fallback={<Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={28} /></Box>}>
                     <DppPhoneView productInfo={formProduct} theme={formTheme} />
                   </Suspense>
