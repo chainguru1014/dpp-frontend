@@ -196,7 +196,7 @@ const ProfilePage = () => {
         sx={{
           borderRadius: 3, overflow: 'hidden', mb: 2, position: 'relative',
           ...(!isAppUser ? {
-            aspectRatio: { md: '3 / 1' }, minHeight: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+            aspectRatio: { md: '4 / 1' }, minHeight: 170, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
             background: coverUrl
               ? `linear-gradient(180deg, rgba(10,25,40,0) 30%, rgba(10,25,40,0.78) 100%), url(${coverUrl}) center/cover no-repeat`
               : 'linear-gradient(135deg,#4a96dd,#1b4f72)',

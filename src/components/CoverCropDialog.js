@@ -7,7 +7,7 @@ import OpenWithIcon from '@mui/icons-material/OpenWith';
 
 // The shape every cover photo is cut to (wide banner). Brand and profile
 // pages show covers at this shape, so what is chosen here is what shows.
-export const COVER_ASPECT = 3;
+export const COVER_ASPECT = 4;
 const OUT_WIDTH = 1800; // pixels of the saved picture
 const MAX_ZOOM = 4;
 

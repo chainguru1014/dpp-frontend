@@ -281,7 +281,7 @@ export default function BrandPage({
                 // The cover photo is the background of the whole card (it is
                 // cut to this shape when uploaded), with a shade at the bottom
                 // so the white text reads.
-                aspectRatio: { md: '3 / 1' }, minHeight: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+                aspectRatio: { md: '4 / 1' }, minHeight: 170, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
                 background: details.coverUrl
                   ? `linear-gradient(180deg, rgba(10,25,40,0) 30%, rgba(10,25,40,0.78) 100%), url(${getFileUrl(details.coverUrl)}) center/cover no-repeat`
                   : 'linear-gradient(120deg, #2b3a4d 0%, #4a6a8a 60%, #9fb8d6 100%)',
