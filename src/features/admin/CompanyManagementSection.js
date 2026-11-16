@@ -361,7 +361,8 @@ const CompanyManagementSection = ({ token, onOpenBrand }) => {
         rows={rows}
         loading={loading}
         onOpen={(row) => onOpenBrand && onOpenBrand(row)}
-        onEdit={(row) => setEditingCompany(row)}
+        // The pencil opens the brand profile, the same as a click on the row.
+        onEdit={(row) => (onOpenBrand ? onOpenBrand(row) : setEditingCompany(row))}
         onRemove={async (row) => {
           const sure = await confirmAction({
             title: `Remove ${row.brand?.name || row.name}?`,

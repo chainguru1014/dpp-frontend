@@ -145,22 +145,6 @@ export default function BrandPage({
     }
   };
 
-  const saveDetails = async () => {
-    if (!details.name.trim()) {
-      setShowErrors(true);
-      return;
-    }
-    setSaving('details');
-    const res = await updateBrandById(token, brand._id, details);
-    setSaving('');
-    if (!res.ok) {
-      notifyError(res.message);
-      return;
-    }
-    setDetails(detailsOf(replaceBrand(res.data)));
-    notifySuccess('Brand profile saved. Every product page shows it now.');
-  };
-
   const saveTheme = async () => {
     setSaving('theme');
     const res = await updateBrandById(token, brand._id, { dppTheme: theme });
@@ -173,30 +157,62 @@ export default function BrandPage({
     notifySuccess('Design saved. It now applies to all your product pages.');
   };
 
-  const saveSignIn = async () => {
-    const domains = signIn.allowedEmailDomains.split(',').map((d) => d.trim().toLowerCase().replace(/^@/, '')).filter(Boolean);
-    const bad = domains.find((d) => !/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d));
-    if (bad) {
-      notifyError(`"${bad}" is not a domain. Enter only the part after the @, for example hm.com.`);
-      return;
-    }
-    if (signIn.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signIn.email.trim())) {
-      notifyError('Please enter a valid Supervisor email.');
-      return;
-    }
-    setSaving('signin');
-    const ok = await updateCompany(companyRecord._id, {
-      email: signIn.email.trim() || undefined,
-      allowedEmailDomains: domains,
-      companyType: signIn.companyType || undefined,
+  // Profile tab: the brand's details and (super admin) the sign-in details,
+  // saved together.
+  const profileDirty = (canEdit && detailsDirty) || (isAdmin && signInDirty);
+  const undoProfile = () => {
+    setDetails(detailsOf(brand));
+    setSignIn({
+      email: companyRecord?.email || '',
+      allowedEmailDomains: domainsText(companyRecord?.allowedEmailDomains),
+      companyType: companyRecord?.companyType || '',
     });
-    setSaving('');
-    if (!ok) {
-      notifyError('The sign-in details could not be saved.');
+    setShowErrors(false);
+  };
+  const saveProfile = async () => {
+    if (canEdit && detailsDirty && !details.name.trim()) {
+      setShowErrors(true);
       return;
     }
-    setCompanies((list) => list.map((c) => (c._id === companyRecord._id ? { ...c, email: signIn.email.trim(), allowedEmailDomains: domains, companyType: signIn.companyType } : c)));
-    notifySuccess('Sign-in details saved.');
+    let domains = [];
+    if (isAdmin && signInDirty) {
+      domains = signIn.allowedEmailDomains.split(',').map((d) => d.trim().toLowerCase().replace(/^@/, '')).filter(Boolean);
+      const bad = domains.find((d) => !/^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(d));
+      if (bad) {
+        notifyError(`"${bad}" is not a domain. Enter only the part after the @, for example hm.com.`);
+        return;
+      }
+      if (signIn.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signIn.email.trim())) {
+        notifyError('Please enter a valid Supervisor email.');
+        return;
+      }
+    }
+    setSaving('profile');
+    try {
+      if (canEdit && detailsDirty) {
+        const res = await updateBrandById(token, brand._id, details);
+        if (!res.ok) {
+          notifyError(res.message);
+          return;
+        }
+        setDetails(detailsOf(replaceBrand(res.data)));
+      }
+      if (isAdmin && signInDirty && companyRecord) {
+        const ok = await updateCompany(companyRecord._id, {
+          email: signIn.email.trim() || undefined,
+          allowedEmailDomains: domains,
+          companyType: signIn.companyType || undefined,
+        });
+        if (!ok) {
+          notifyError('The sign-in details could not be saved.');
+          return;
+        }
+        setCompanies((list) => list.map((c) => (c._id === companyRecord._id ? { ...c, email: signIn.email.trim(), allowedEmailDomains: domains, companyType: signIn.companyType } : c)));
+      }
+      notifySuccess('Brand profile saved. Every product page shows it now.');
+    } finally {
+      setSaving('');
+    }
   };
 
   const brandProducts = useMemo(
@@ -271,7 +287,6 @@ export default function BrandPage({
           <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
             <Tab value="profile" label="Profile" />
             <Tab value="design" label="Product page design" />
-            <Tab value="team" label="Team and sign-in" />
           </Tabs>
 
           {tab === 'profile' && (
@@ -284,8 +299,14 @@ export default function BrandPage({
                   <TextField label="Brand name" required fullWidth value={details.name} disabled={!canEdit} onChange={setField('name')}
                     error={showErrors && !details.name.trim()}
                     helperText={showErrors && !details.name.trim() ? 'Please enter the brand name.' : undefined} />
-                  <TextField label="Industry" fullWidth value={companyTypeLabel(companyRecord?.companyType)} disabled
-                    helperText={isAdmin ? 'Change it on Team and sign-in.' : 'Set by Yometel.'} />
+                  {isAdmin ? (
+                    <TextField select label="Industry" fullWidth value={signIn.companyType}
+                      onChange={(e) => setSignIn((s) => ({ ...s, companyType: e.target.value }))}>
+                      {COMPANY_TYPES.map((t) => <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>)}
+                    </TextField>
+                  ) : (
+                    <TextField label="Industry" fullWidth value={companyTypeLabel(companyRecord?.companyType)} disabled helperText="Set by Yometel." />
+                  )}
                 </Stack>
                 <TextField label="Short tagline" fullWidth placeholder="e.g. Maison Européenne" value={details.tagline} disabled={!canEdit} onChange={setField('tagline')}
                   inputProps={{ maxLength: 120 }}
@@ -323,12 +344,34 @@ export default function BrandPage({
                   </Grid>
                 </Grid>
               </Stack>
-              {canEdit && (
+              {/* Team and sign-in (was its own tab): who signs in as the
+                  brand's Supervisor and which email domain its staff use. */}
+              <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid #e8edf3' }}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                  <Typography sx={{ fontSize: 18, fontWeight: 600, color: '#16324a', flex: 1 }}>Team and sign-in</Typography>
+                  {onOpenEmployees && (
+                    <Button startIcon={<GroupsIcon />} onClick={() => onOpenEmployees(brand.company_id)}>Open Employees</Button>
+                  )}
+                </Stack>
+                {!isAdmin && (
+                  <Alert severity="info" sx={{ mb: 2.5 }}>Yometel sets these. Ask your Yometel contact to change them.</Alert>
+                )}
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <TextField label="Supervisor email" fullWidth value={signIn.email} disabled={!isAdmin}
+                    onChange={(e) => setSignIn((s) => ({ ...s, email: e.target.value }))}
+                    helperText="This person signs in as the brand’s Supervisor." />
+                  <TextField label="Staff email domain" fullWidth value={signIn.allowedEmailDomains} disabled={!isAdmin}
+                    onChange={(e) => setSignIn((s) => ({ ...s, allowedEmailDomains: e.target.value }))}
+                    helperText={`People with ${signIn.allowedEmailDomains ? `an @${signIn.allowedEmailDomains.split(',')[0].trim()}` : 'this'} email can sign in as staff. Separate several with commas.`} />
+                </Stack>
+              </Box>
+
+              {(canEdit || isAdmin) && (
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 3, borderTop: '1px solid #e8edf3', pt: 2 }}>
                   <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>Changes reach every product page as soon as you save.</Typography>
-                  {detailsDirty && <Button onClick={() => { setDetails(detailsOf(brand)); setShowErrors(false); }}>Undo changes</Button>}
-                  <Button variant="contained" startIcon={<SaveIcon />} onClick={saveDetails} disabled={saving === 'details' || !detailsDirty}>
-                    {saving === 'details' ? 'Saving…' : detailsDirty ? 'Save changes' : 'Saved'}
+                  {profileDirty && <Button onClick={undoProfile}>Undo changes</Button>}
+                  <Button variant="contained" startIcon={<SaveIcon />} onClick={saveProfile} disabled={saving === 'profile' || !profileDirty}>
+                    {saving === 'profile' ? 'Saving…' : profileDirty ? 'Save changes' : 'Saved'}
                   </Button>
                 </Stack>
               )}
@@ -374,37 +417,6 @@ export default function BrandPage({
             </Grid>
           )}
 
-          {tab === 'team' && (
-            <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 }, maxWidth: 760 }}>
-              <Typography sx={{ fontSize: 20, fontWeight: 600, color: '#16324a', mb: 2 }}>Sign-in</Typography>
-              {!isAdmin && (
-                <Alert severity="info" sx={{ mb: 2.5 }}>Yometel sets these. Ask your Yometel contact to change them.</Alert>
-              )}
-              <Stack spacing={2.5}>
-                <TextField label="Supervisor email" fullWidth value={signIn.email} disabled={!isAdmin}
-                  onChange={(e) => setSignIn((s) => ({ ...s, email: e.target.value }))}
-                  helperText="This person signs in as the brand’s Supervisor." />
-                <TextField label="Staff email domain" fullWidth value={signIn.allowedEmailDomains} disabled={!isAdmin}
-                  onChange={(e) => setSignIn((s) => ({ ...s, allowedEmailDomains: e.target.value }))}
-                  helperText={`People with ${signIn.allowedEmailDomains ? `an @${signIn.allowedEmailDomains.split(',')[0].trim()}` : 'this'} email can sign in as staff. Separate several with commas.`} />
-                <TextField select label="Industry" fullWidth value={signIn.companyType} disabled={!isAdmin}
-                  onChange={(e) => setSignIn((s) => ({ ...s, companyType: e.target.value }))}>
-                  {COMPANY_TYPES.map((t) => <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>)}
-                </TextField>
-              </Stack>
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 3, borderTop: '1px solid #e8edf3', pt: 2, flexWrap: 'wrap' }}>
-                {onOpenEmployees && (
-                  <Button startIcon={<GroupsIcon />} onClick={() => onOpenEmployees(brand.company_id)}>Open Employees</Button>
-                )}
-                <Box sx={{ flex: 1 }} />
-                {isAdmin && (
-                  <Button variant="contained" startIcon={<SaveIcon />} onClick={saveSignIn} disabled={saving === 'signin' || !signInDirty || !companyRecord}>
-                    {saving === 'signin' ? 'Saving…' : signInDirty ? 'Save changes' : 'Saved'}
-                  </Button>
-                )}
-              </Stack>
-            </Box>
-          )}
         </>
       )}
     </Box>
