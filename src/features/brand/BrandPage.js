@@ -267,10 +267,8 @@ export default function BrandPage({
         <Alert severity="info">Your brand profile is being set up. Please reload this page in a moment.</Alert>
       ) : (
         <>
-          <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
-            <Tab value="profile" label="Profile" />
-            <Tab value="design" label="Product page design" />
-          </Tabs>
+          {/* Only the profile (the product page design tab was removed
+              2026-11-17; the design is set elsewhere). */}
 
           {tab === 'profile' && (
             <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 } }}>

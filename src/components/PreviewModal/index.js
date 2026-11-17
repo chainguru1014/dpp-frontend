@@ -525,18 +525,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
   const overviewBlocks = {
     highlights: () => highlightRows.length > 0 && (
       <Box sx={card}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-          <Typography sx={{ ...cardTitle, mb: 0, flex: 1 }}>Key Highlights</Typography>
-          <Box
-            role="button"
-            onClick={goToLifecycle}
-            sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5, px: 1.25, py: 0.5, borderRadius: 999, ...mainButton, cursor: 'pointer' }}
-          >
-            <LeafIcon sx={{ fontSize: 15 }} />
-            <Typography sx={{ fontSize: 11.5, fontWeight: 700, color: 'inherit' }}>Lifecycle</Typography>
-            <ChevronRightIcon sx={{ fontSize: 16 }} />
-          </Box>
-        </Box>
+        <Typography sx={{ ...cardTitle, mb: 0.75 }}>Key Highlights</Typography>
         {highlightRows.map((row, i) => (
           <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.4 }}>
             <row.Icon sx={{ fontSize: 15, color: C.primary }} />
@@ -585,26 +574,48 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
       </Box>
     ),
     actions: () => (
-      <Box sx={{ display: 'flex', gap: 1, mx: 2, mt: 1 }}>
-        <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 600, color: C.primary, border: `1.5px solid ${C.primary}`, bgcolor: C.surface }}>
-          Brand Company
-        </Box>
-        <Box sx={{ flex: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 700, ...mainButton }}>
-          Scan Product
-        </Box>
+      <Box sx={{ mx: 2, mt: 1, py: 1.1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 700, ...mainButton }}>
+        Brand Company
       </Box>
     ),
   };
 
+  const shown = (key) => look.blocks.some((b) => b.key === key && b.visible);
   const renderOverview = () => (
     <>
-      <Box sx={{ ...card, mt: 2 }}>{renderMediaWithThumbs()}</Box>
+      <Box sx={{ height: 8 }} />
+      {shown('highlights') && overviewBlocks.highlights()}
       {look.blocks.filter((b) => b.visible && BUTTON_BLOCKS.includes(b.key)).map((b) => (
         <React.Fragment key={b.key}>{overviewBlocks[b.key]?.()}</React.Fragment>
       ))}
-      {look.blocks.filter((b) => b.visible && !BUTTON_BLOCKS.includes(b.key)).map((b) => (
+      {look.blocks.filter((b) => b.visible && !BUTTON_BLOCKS.includes(b.key) && b.key !== 'highlights').map((b) => (
         <React.Fragment key={b.key}>{overviewBlocks[b.key]?.()}</React.Fragment>
       ))}
+      {lifecycleItems.length > 0 && (
+        <Box sx={{ ...card, px: 0, pb: 0.5 }}>
+          <Typography sx={{ ...cardTitle, px: 2 }}>Lifecycle</Typography>
+          {lifecycleItems.map((it, i) => {
+            const isOpen = openItem === it.key;
+            return (
+              <React.Fragment key={it.key}>
+                <Box
+                  role="button"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpenItem(isOpen ? null : it.key)}
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1.25, px: 2, py: 0.75, cursor: 'pointer', borderTop: i ? `1px solid ${C.border}` : 'none' }}
+                >
+                  <Box sx={{ width: 30, height: 30, borderRadius: '50%', bgcolor: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <it.Icon sx={{ fontSize: 16, color: '#fff' }} />
+                  </Box>
+                  <Typography sx={{ flex: 1, fontSize: 13, fontWeight: 700, color: C.text }}>{it.label}</Typography>
+                  {isOpen ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
+                </Box>
+                {isOpen && <Box sx={{ pb: 1.5 }}>{it.tab ? renderSection(it.tab) : renderTransportDetail()}</Box>}
+              </React.Fragment>
+            );
+          })}
+        </Box>
+      )}
     </>
   );
 

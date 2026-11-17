@@ -5,12 +5,14 @@ import {
   TextField,
   MenuItem,
   Button,
-  IconButton,
-  Tooltip,
+  Divider,
   Pagination,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
+import AddIcon from '@mui/icons-material/Add';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import SensorsIcon from '@mui/icons-material/Sensors';
+import NfcIcon from '@mui/icons-material/Nfc';
 import qrcode from 'qrcode';
 import {
   registerProductIdentifier,
@@ -19,9 +21,8 @@ import {
   deleteProductIdentifier,
   printProductIdentifiers,
 } from '../../helper';
-import CopyIconButton from '../CopyIconButton';
-import { renderEan13ToDataUrl } from '../../utils/barcodeRenderer';
-import { truncateCode } from '../../utils/truncateCode';
+import { renderEan13ToDataUrl, toValidEan13 } from '../../utils/barcodeRenderer';
+import CodeTable, { ImageThumb, QrThumb } from '../../features/products/CodeTable';
 import { parseIdentifierCsv } from '../../utils/parseIdentifierCsv';
 import PrintDialog from '../printModal/PrintDialog';
 import { confirmAction } from '../../utils/feedbackBus';
@@ -34,6 +35,14 @@ const SOURCE_TYPES = [
 ];
 
 const PAGE_SIZE = 10;
+// The field for a code the brand already has, per type.
+const EXISTING_LABEL = {
+  barcode: 'Existing barcode',
+  gs1dl: 'Existing GS1 link',
+  rfid: 'Tag number (EPC)',
+  nfc: 'Tag ID',
+};
+const MAX_GENERATE = 500;
 
 // Just enough width for each type's actual value shape (short numeric
 // barcode vs. a full GS1 Digital Link URL) instead of one wide field sized
@@ -45,40 +54,6 @@ const VALUE_WIDTH = {
   gs1dl: 340,
 };
 const DEFAULT_VALUE_WIDTH = 240;
-
-// Renders the barcode/QR image for one identifier's value — sync for
-// barcode (canvas), async for gs1dl (qrcode.toDataURL). Reports the finished
-// data URL up via onReady so the parent card can put a download button for
-// it in its own bottom-right action row (rather than overlaying the image).
-const CodeImage = ({ sourceType, value, onReady }) => {
-  const [image, setImage] = useState(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (sourceType === 'barcode') {
-      const url = renderEan13ToDataUrl(value);
-      setImage(url);
-      onReady?.(url);
-    } else if (sourceType === 'gs1dl' && value) {
-      qrcode.toDataURL(value).then((url) => {
-        if (cancelled) return;
-        setImage(url);
-        onReady?.(url);
-      }).catch((err) => {
-        console.error('Failed to render GS1 Digital Link QR code:', err);
-        setImage(null);
-      });
-    } else {
-      setImage(null);
-    }
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourceType, value]);
-
-  if (!image) return null;
-
-  return <img src={image} alt={sourceType} style={{ width: '100%', display: 'block', background: '#fff', marginBottom: 6 }} />;
-};
 
 // Lets a company register a barcode/GTIN/NFC/RFID identifier against a
 // product ahead of time. Without this, scanning one of these in the app has
@@ -98,7 +73,6 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
   const [csvImporting, setCsvImporting] = useState(false);
   const [csvSummary, setCsvSummary] = useState(null);
   const [page, setPage] = useState(1);
-  const [imagesByItemId, setImagesByItemId] = useState({});
   const [printOpen, setPrintOpen] = useState(false);
 
   const activeLabel = SOURCE_TYPES.find((t) => t.value === sourceType)?.label || sourceType;
@@ -114,6 +88,9 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
     () => [...visibleIdentifiers].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
     [visibleIdentifiers]
   );
+  // Each code's place in the print order (1 = printed first).
+  const printPosition = useMemo(() => new Map(printOrderIdentifiers.map((item, i) => [item._id, i + 1])), [printOrderIdentifiers]);
+  const printedCount = Number(product?.identifier_printed_amounts?.[lockedSourceType] || 0);
   const totalPages = Math.max(1, Math.ceil(visibleIdentifiers.length / PAGE_SIZE));
   const pageItems = visibleIdentifiers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -146,6 +123,54 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
       }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Create new codes (GS1 Digital Link, Barcode), like Create on QR codes:
+  //  - Barcode: EAN-13 numbers in GS1's in-store range (prefix 2), which a
+  //    company may use for its own items without registering them;
+  //  - GS1 Digital Link: the product's GTIN with a serial number per item
+  //    (https://id.gs1.org/01/<GTIN-14>/21/<serial>).
+  const canGenerate = lockedSourceType === 'barcode' || lockedSourceType === 'gs1dl';
+  const gtinDigits = String(product?.gtin || '').replace(/\D/g, '');
+  const gtin14 = gtinDigits.length >= 8 && gtinDigits.length <= 14 ? gtinDigits.padStart(14, '0') : '';
+  const [genAmount, setGenAmount] = useState(10);
+  const [generating, setGenerating] = useState(false);
+  const handleGenerate = async () => {
+    const amount = Math.max(1, Math.min(MAX_GENERATE, Number(genAmount) || 0));
+    if (!productId || !companyId || !amount) return;
+    const taken = new Set(identifiers.map((i) => i.raw_value));
+    const values = [];
+    if (lockedSourceType === 'barcode') {
+      let guard = 0;
+      while (values.length < amount && guard < amount * 20) {
+        guard += 1;
+        const d12 = `2${Array.from({ length: 11 }, () => Math.floor(Math.random() * 10)).join('')}`;
+        const code = toValidEan13(d12);
+        if (!taken.has(code) && !values.includes(code)) values.push(code);
+      }
+    } else if (gtin14) {
+      // Next free serial numbers after the ones this product already has.
+      const used = identifiers
+        .filter((i) => i.source_type === 'gs1dl')
+        .map((i) => Number(String(i.raw_value).split('/21/')[1]) || 0);
+      let serial = Math.max(0, ...used);
+      while (values.length < amount) {
+        serial += 1;
+        const link = `https://id.gs1.org/01/${gtin14}/21/${String(serial).padStart(6, '0')}`;
+        if (!taken.has(link)) values.push(link);
+      }
+    }
+    if (!values.length) return;
+    setGenerating(true);
+    try {
+      const result = await bulkRegisterProductIdentifiers(productId, companyId, lockedSourceType, values.map((v) => ({ raw_value: v, note: '' })));
+      if (result) {
+        setPage(1);
+        await refresh();
+      }
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -229,13 +254,34 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           Register this product's own barcode, GTIN, NFC tag or RFID tag so scanning it in the app opens this product. Use this for codes printed outside this platform.
         </Typography>
       )}
-      <Typography variant="subtitle1" sx={{ mb: 1 }}>
-        Add a {lockedSourceType ? activeLabel : 'label'} you already have
-      </Typography>
-
-      {/* One line: the tag's number, a note, Add, then Download codes to
-          print and Import CSV at the right. */}
-      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.5, mb: 2 }}>
+      {/* One line above the table:
+          - GS1 Digital Link / Barcode: Create N new codes (like QR codes);
+          - a code you already have: its number, a note, Add;
+          - at the right: Download to print, Import CSV (RFID). */}
+      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1.25, mb: 2 }}>
+        {canGenerate && (
+          <>
+            <TextField
+              type="number"
+              label="How many?"
+              value={genAmount}
+              onChange={(e) => setGenAmount(e.target.value)}
+              inputProps={{ min: 1, max: MAX_GENERATE }}
+              sx={{ width: 110 }}
+            />
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleGenerate}
+              disabled={generating || !companyId || !(Number(genAmount) > 0) || (lockedSourceType === 'gs1dl' && !gtin14)}
+              title={lockedSourceType === 'gs1dl' && !gtin14 ? 'Add the product’s GTIN first (Edit product > Basics).' : undefined}
+              sx={{ height: 48, whiteSpace: 'nowrap' }}
+            >
+              {generating ? 'Creating…' : `Create ${Number(genAmount) > 0 ? Number(genAmount) : ''}`}
+            </Button>
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
+          </>
+        )}
         {!lockedSourceType && (
           <TextField
             select
@@ -250,41 +296,44 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           </TextField>
         )}
         <TextField
-          label={lockedSourceType ? `${activeLabel} number` : 'Barcode / GTIN / tag number'}
+          label={lockedSourceType ? (EXISTING_LABEL[lockedSourceType] || 'Code you have') : 'Barcode / GTIN / tag number'}
           value={rawValue}
           onChange={(e) => setRawValue(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') handleRegister(); }}
-          sx={{ flex: '1 1 220px', maxWidth: lockedSourceType ? VALUE_WIDTH[lockedSourceType] || DEFAULT_VALUE_WIDTH : DEFAULT_VALUE_WIDTH }}
+          sx={{ flex: '1 1 220px', minWidth: 190, maxWidth: 320 }}
         />
         <TextField
-          label="Note (optional)"
+          label="Note"
+          placeholder="Optional"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          sx={{ flex: '1 1 160px', maxWidth: 240 }}
+          sx={{ flex: '0 1 140px', minWidth: 110 }}
         />
         <Button
-          variant="contained"
+          variant="outlined"
           onClick={handleRegister}
           disabled={submitting || !rawValue.trim() || !companyId}
-          sx={{ height: 48, px: 3 }}
+          sx={{ height: 48, px: 2.5 }}
         >
           Add
         </Button>
         <Box sx={{ flexGrow: 1 }} />
         <Button
           variant="outlined"
+          startIcon={<DownloadIcon />}
           onClick={() => setPrintOpen(true)}
           disabled={visibleIdentifiers.length === 0}
-          sx={{ height: 48 }}
+          sx={{ height: 48, whiteSpace: 'nowrap' }}
         >
-          Download codes to print
+          Download to print
         </Button>
         {enableCsvImport && (
           <Button
             variant="outlined"
             component="label"
+            startIcon={<UploadFileIcon />}
             disabled={csvImporting || !companyId}
-            sx={{ height: 48 }}
+            sx={{ height: 48, whiteSpace: 'nowrap' }}
           >
             {csvImporting ? 'Importing…' : 'Import CSV'}
             <input
@@ -296,6 +345,11 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           </Button>
         )}
       </Box>
+      {canGenerate && lockedSourceType === 'gs1dl' && !gtin14 && (
+        <Typography variant="body2" color="text.secondary" sx={{ mt: -1, mb: 1.5 }}>
+          To create GS1 Digital Links, add the product’s GTIN first (Edit product &gt; Basics).
+        </Typography>
+      )}
       {enableCsvImport && csvSummary && (
         <Typography
           variant="body2"
@@ -341,67 +395,30 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
               />
             )}
           </Box>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 2 }}>
-            {pageItems.map((item) => (
-              <Box
-                key={item._id}
-                sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'background.default' }}
-              >
-                {!lockedSourceType && (
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
-                    {SOURCE_TYPES.find((t) => t.value === item.source_type)?.label || item.source_type}
-                  </Typography>
-                )}
-                {(item.source_type === 'barcode' || item.source_type === 'gs1dl') && (
-                  <CodeImage
-                    sourceType={item.source_type}
-                    value={item.raw_value}
-                    onReady={(url) => setImagesByItemId((prev) => (prev[item._id] === url ? prev : { ...prev, [item._id]: url }))}
-                  />
-                )}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Tooltip title={item.raw_value}>
-                    <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>
-                      {truncateCode(item.raw_value)}
-                    </Typography>
-                  </Tooltip>
-                  <CopyIconButton value={item.raw_value} />
-                </Box>
-                {item.pmc_code && (
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main', flex: 1 }}>
-                      {item.pmc_code}
-                    </Typography>
-                    <CopyIconButton value={item.pmc_code} />
-                  </Box>
-                )}
-                {item.note && item.note.trim().toLowerCase() !== 'test value' && (
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, fontStyle: 'italic' }}>
-                    {item.note}
-                  </Typography>
-                )}
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 0.5 }}>
-                  {imagesByItemId[item._id] && (
-                    <Tooltip title="Download image">
-                      <IconButton
-                        component="a"
-                        href={imagesByItemId[item._id]}
-                        download={`${item.source_type}-${item.raw_value}.png`}
-                        size="small"
-                      >
-                        <DownloadIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                  <Tooltip title="Remove">
-                    <IconButton size="small" aria-label="Remove" onClick={() => handleDelete(item._id)}>
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Box>
-              </Box>
-            ))}
-          </Box>
+          {/* The same table as QR codes: the code and its picture, its
+              position (printing goes in this order), printed or not. */}
+          <CodeTable
+            codeLabel={lockedSourceType ? activeLabel : 'Code'}
+            numberLabel="No. / Passport ID"
+            rows={pageItems.map((item) => {
+              const position = printPosition.get(item._id) || 0;
+              const type = item.source_type;
+              const barcodeImg = type === 'barcode' ? renderEan13ToDataUrl(item.raw_value) : '';
+              return {
+                key: item._id,
+                thumb: type === 'barcode' ? <ImageThumb src={barcodeImg} wide />
+                  : type === 'gs1dl' ? <QrThumb data={item.raw_value} />
+                    : <ImageThumb icon={type === 'nfc' ? NfcIcon : SensorsIcon} />,
+                code: item.raw_value,
+                sub: [item.note && item.note.trim().toLowerCase() !== 'test value' ? item.note : '', !lockedSourceType ? (SOURCE_TYPES.find((x) => x.value === type)?.label || type) : ''].filter(Boolean).join(' · '),
+                number: [position ? `#${position}` : '', item.pmc_code].filter(Boolean).join(' · '),
+                printed: lockedSourceType ? position > 0 && position <= printedCount : undefined,
+                downloadUrl: barcodeImg || undefined,
+                downloadName: `${type}-${item.raw_value}.png`,
+                onDelete: () => handleDelete(item._id),
+              };
+            })}
+          />
         </>
       ) : (
         <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>

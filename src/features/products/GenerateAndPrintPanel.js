@@ -7,13 +7,13 @@ import SensorsIcon from '@mui/icons-material/Sensors';
 import NfcIcon from '@mui/icons-material/Nfc';
 import ViewWeekIcon from '@mui/icons-material/ViewWeek';
 import CodeList from './CodeList';
+import CodeTable, { QrThumb } from './CodeTable';
 import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
 import LinkIcon from '@mui/icons-material/Link';
 import qrcode from 'qrcode';
 import CircularProgressWithLabel from '../../components/CircularProgressBar';
 import QRCode from '../../components/displayQRCode';
-import SecurityQRCode from '../../components/displaySecurityQRCode';
 import RegisterIdentifierPanel from '../../components/RegisterIdentifierPanel';
 import PrintDialog from '../../components/printModal/PrintDialog';
 import { printSecurityQRCodes } from '../../helper';
@@ -336,16 +336,23 @@ const GenerateAndPrintPanel = ({
                   />
                 )}
               </Box>
-              <Box sx={GRID_SX}>
-                {securityPageCodes.map((item) => (
-                  <SecurityQRCode
-                    key={item.security_qrcode_id}
-                    data={item.encrypted_key}
-                    identifer={item.pmc_code ? [{ type: 'PMC Code', serial: item.pmc_code }] : []}
-                    onDelete={onDeleteSecurityQrCode ? () => onDeleteSecurityQrCode(item.security_qrcode_id) : undefined}
-                  />
-                ))}
-              </Box>
+              {/* The same table as QR codes. */}
+              <CodeTable
+                codeLabel="Security QR code"
+                copyNoun="link"
+                rows={securityPageCodes.map((item) => {
+                  const url = `${SECURITY_BASE_URL}/product/${item.encrypted_key}`;
+                  return {
+                    key: item.security_qrcode_id,
+                    thumb: <QrThumb data={url} />,
+                    code: url,
+                    sub: item.pmc_code || '',
+                    number: `#${item.security_qrcode_id}`,
+                    printed: Number(item.security_qrcode_id) <= Number(selectedProduct?.security_printed_amount || 0),
+                    onDelete: onDeleteSecurityQrCode ? () => onDeleteSecurityQrCode(item.security_qrcode_id) : undefined,
+                  };
+                })}
+              />
             </Box>
           ) : (
             <Typography color="text.secondary" sx={{ fontStyle: 'italic' }}>

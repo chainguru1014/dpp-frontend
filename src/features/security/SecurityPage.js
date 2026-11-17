@@ -48,9 +48,10 @@ function Kpi({ icon: Icon, label, value, sub, color = 'primary.main' }) {
 // The page's four figures (codes scanned, scanned more than once, warning
 // signs, Security QR checks). Shown above the Scans & Security tabs, so
 // both All scans and Suspected copies have them.
-export function SecurityFigures({ totals }) {
+export function SecurityFigures({ totals, data }) {
   if (!totals) return null;
   return (
+    <Stack spacing={2}>
     <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' } }}>
       <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Codes scanned" sub={`${totals.scans.toLocaleString()} ${totals.scans === 1 ? 'scan' : 'scans'} in total`} />
       <Kpi icon={ReplayIcon} value={totals.repeatItems.toLocaleString()} label="Scanned more than once" />
@@ -69,18 +70,41 @@ export function SecurityFigures({ totals }) {
         color={totals.securityFailed ? 'error.main' : 'success.main'}
       />
     </Box>
+    {/* How often codes are scanned and where: above the tabs too. */}
+    {data && (
+    <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
+      <Section title="How many times each code was scanned" description="Most codes are scanned once or a few times. A long tail on the right is worth a look.">
+        <Bars
+          rows={data.repeatHistogram.map((b) => ({ label: `${b.label} ${b.label === '1' ? 'scan' : 'scans'}`, value: b.items }))}
+          unit="codes"
+          unitOne="code"
+          emptyText="No scans in this period."
+        />
+      </Section>
+      <Section title="Scans by country">
+        <Bars
+          rows={data.countries.map((c) => ({ label: c.country, value: c.count }))}
+          unit="scans"
+          unitOne="scan"
+          color="#3a9d6a"
+          emptyText="No located scans in this period."
+        />
+      </Section>
+    </Box>
+    )}
+    </Stack>
   );
 }
 
 // The same figures, loaded on their own (All scans tab: last 90 days).
 export function SecurityFiguresLive({ token, days = 90 }) {
-  const [totals, setTotals] = useState(null);
+  const [data, setData] = useState(null);
   useEffect(() => {
     let alive = true;
-    getSecurityInsights(token, days).then((res) => { if (alive && res.ok) setTotals(res.data?.totals || null); });
+    getSecurityInsights(token, days).then((res) => { if (alive && res.ok) setData(res.data || null); });
     return () => { alive = false; };
   }, [token, days]);
-  return <SecurityFigures totals={totals} />;
+  return <SecurityFigures totals={data?.totals} data={data} />;
 }
 
 // Horizontal bars: [{ label, value }]. The longest bar fills the row.
@@ -183,7 +207,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
         )}
         moreActions={[{ label: 'Reload', icon: RefreshIcon, onClick: () => load(days) }]}
         // The four figures sit above the tabs (they sum up the page).
-        aboveTabs={!loading && totals ? <SecurityFigures totals={totals} /> : null}
+        aboveTabs={!loading && totals ? <SecurityFigures totals={totals} data={data} /> : null}
       />
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -191,25 +215,6 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
 
       {!loading && data && (
         <Stack spacing={2}>
-          <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
-            <Section title="How many times each code was scanned" description="Most codes are scanned once or a few times. A long tail on the right is worth a look.">
-              <Bars
-                rows={data.repeatHistogram.map((b) => ({ label: `${b.label} ${b.label === '1' ? 'scan' : 'scans'}`, value: b.items }))}
-                unit="codes"
-                unitOne="code"
-                emptyText="No scans in this period."
-              />
-            </Section>
-            <Section title="Scans by country">
-              <Bars
-                rows={data.countries.map((c) => ({ label: c.country, value: c.count }))}
-                unit="scans"
-                unitOne="scan"
-                color="#3a9d6a"
-                emptyText="No located scans in this period."
-              />
-            </Section>
-          </Box>
           <Section
             title="Codes to check"
             description="Location comes from the scanner's GPS or internet address, which can be wrong (for example with a VPN). Treat these as reasons to look, then decide."

@@ -26,6 +26,8 @@ import {
   Menu,
   MenuItem,
   Stack,
+  ButtonGroup,
+  Tooltip,
   Step,
   StepButton,
   Stepper,
@@ -2514,36 +2516,56 @@ const InnerPage = () => {
                   : canEditProducts
                     ? 'Click a product to see it, edit it or create its codes.'
                     : 'Click a product to see it, preview its page or create its codes.'}
-                actions={canEditProducts && (
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => {
-                      resetFields();
-                      setProductPanelMode('edit');
-                      setPreviousPage(activePage);
-                      setActivePage('newProduct');
-                    }}
-                  >
-                    New Product
-                  </Button>
+                // New Product first, then the list tools in one row on its
+                // right: Import / Export (one spreadsheet group), Categories
+                // (super admin) and Reload.
+                actions={(
+                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
+                    {canEditProducts && (
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => {
+                          resetFields();
+                          setProductPanelMode('edit');
+                          setPreviousPage(activePage);
+                          setActivePage('newProduct');
+                        }}
+                        sx={{ height: 44 }}
+                      >
+                        New Product
+                      </Button>
+                    )}
+                    {canEditProducts && (
+                      <ButtonGroup variant="outlined" aria-label="Spreadsheet" sx={{ height: 44, bgcolor: 'background.paper', borderRadius: 2 }}>
+                        <Button startIcon={<UploadFileIcon />} title="Add or change many products from a spreadsheet" onClick={() => setOpenProductImport(true)}>Import</Button>
+                        <Button
+                          startIcon={<DownloadIcon />}
+                          title="Download the list as a spreadsheet"
+                          disabled={!filteredProducts.length}
+                          onClick={() => downloadCsv(
+                            `yometel-products-${new Date().toISOString().slice(0, 10)}.csv`,
+                            productsToCsvRows(filteredProducts, itemCategoryOptions),
+                          )}
+                        >
+                          Export
+                        </Button>
+                      </ButtonGroup>
+                    )}
+                    {isAdmin && (
+                      <Tooltip title="The item categories every brand chooses from">
+                        <Button variant="outlined" startIcon={<CategoryIcon />} onClick={() => setOpenManageCategories('page')} sx={{ height: 44, bgcolor: 'background.paper' }}>
+                          Categories
+                        </Button>
+                      </Tooltip>
+                    )}
+                    <Tooltip title="Reload the list">
+                      <IconButton aria-label="Reload the list" onClick={loadProductsForCurrentCompany} sx={{ border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper', width: 44, height: 44 }}>
+                        <RefreshIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </Stack>
                 )}
-                moreActions={[
-                  // Spreadsheet in / out: add or change many products at once.
-                  canEditProducts && { label: 'Import from a spreadsheet', icon: UploadFileIcon, onClick: () => setOpenProductImport(true) },
-                  canEditProducts && {
-                    label: 'Export to a spreadsheet',
-                    icon: DownloadIcon,
-                    disabled: !filteredProducts.length,
-                    onClick: () => downloadCsv(
-                      `yometel-products-${new Date().toISOString().slice(0, 10)}.csv`,
-                      productsToCsvRows(filteredProducts, itemCategoryOptions),
-                    ),
-                  },
-                  // Super admin only: platform-wide item categories.
-                  isAdmin && { label: 'Manage categories', icon: CategoryIcon, onClick: () => setOpenManageCategories('page') },
-                  { label: 'Reload the list', icon: RefreshIcon, onClick: loadProductsForCurrentCompany },
-                ]}
               />
 
               {/* Certificates that ran out or are about to — brands only. */}

@@ -15,6 +15,8 @@ import {
   CircularProgress,
   TablePagination,
   TextField,
+  Button,
+  ButtonBase,
 } from '@mui/material';
 import { getCaptures, listEmployees } from '../../helper';
 import PageHeader from '../../components/PageHeader';
@@ -37,6 +39,8 @@ const employeeLabel = (e) => e.name || e.employeeCode || (e.email ? e.email.spli
 const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => {
   const [docs, setDocs] = useState([]);
   const [employees, setEmployees] = useState([]);
+  // Supervisors' ids: their own captures are not listed per person.
+  const [supervisorIds, setSupervisorIds] = useState(() => new Set());
   const [loading, setLoading] = useState(true);
   const [workerFilter, setWorkerFilter] = useState('all');
   const [companyFilter, setCompanyFilter] = useState('all');
@@ -53,7 +57,9 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
     ])
       .then(([captureDocs, staff]) => {
         setDocs(captureDocs);
-        setEmployees((staff || []).filter((e) => e.employeeType !== 'supervisor'));
+        const isSupervisor = (e) => /supervisor/i.test(String(e?.employeeType || ''));
+        setEmployees((staff || []).filter((e) => !isSupervisor(e)));
+        setSupervisorIds(new Set((staff || []).filter(isSupervisor).map((e) => String(e._id))));
       })
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -97,7 +103,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
     const removed = new Map();
     companyDocs.forEach((doc) => {
       const key = String(doc.employee_id || '');
-      if (!key || currentIds.has(key) || removed.has(key)) return;
+      if (!key || currentIds.has(key) || removed.has(key) || supervisorIds.has(key)) return;
       removed.set(key, {
         id: key,
         label: `${doc.workerLabel || 'Unknown'} (removed)`,
@@ -110,7 +116,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
     return [...current, ...removed.values()]
       .sort((a, b) => b.total - a.total || a.label.localeCompare(b.label));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companyDocs, employees, companyFilter, todayKey]);
+  }, [companyDocs, employees, supervisorIds, companyFilter, todayKey]);
 
   const maxTotal = Math.max(1, ...byWorker.map((w) => w.total));
   const todayCount = companyDocs.filter((d) => d.dateKey === todayKey).length;
@@ -179,9 +185,54 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
         ) : null}
       />
 
-      {/* The four figures as a 2 × 2 block on the left, Captures per person
-          beside them on the right (one row, like the Dashboard). */}
+      {/* Captures per person on the left (click a person to see only their
+          recorded steps below; click again for everyone), the four figures
+          as a 2 × 2 block on the right. */}
       <Grid container spacing={2} sx={{ mb: 3 }} alignItems="stretch">
+        {!selfOnly && (
+        <Grid item xs={12} md={6}>
+          <Paper variant="outlined" sx={{ p: 2, height: '100%', maxHeight: { md: 260 }, overflowY: 'auto' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant="h6" component="h2">Captures per person</Typography>
+              {workerFilter !== 'all' && (
+                <Button size="small" onClick={() => { setWorkerFilter('all'); setTablePage(0); }}>Show everyone</Button>
+              )}
+            </Box>
+            {byWorker.length === 0 ? (
+              <Typography color="text.secondary">No employees yet. Add them on the Employee page.</Typography>
+            ) : (
+              byWorker.map((w) => {
+                const on = workerFilter === w.id;
+                return (
+                  <ButtonBase
+                    key={w.id}
+                    onClick={() => { setWorkerFilter(on ? 'all' : w.id); setTablePage(0); }}
+                    aria-pressed={on}
+                    sx={{
+                      display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', textAlign: 'left',
+                      px: 1, py: 0.75, mb: 0.5, borderRadius: 2,
+                      bgcolor: on ? '#eaf2fc' : 'transparent', outline: on ? '1.5px solid #2f80c8' : 'none',
+                      '&:hover': { bgcolor: on ? '#eaf2fc' : '#f5f8fc' },
+                    }}
+                  >
+                    <Box sx={{ width: { xs: 110, sm: 140 }, flexShrink: 0, minWidth: 0 }}>
+                      <Typography noWrap title={w.label} sx={{ fontWeight: on ? 700 : 500 }}>{w.label}</Typography>
+                      {isAdmin && w.companyName && (
+                        <Typography variant="body2" color="text.secondary" noWrap component="div">{w.companyName}</Typography>
+                      )}
+                    </Box>
+                    <Box sx={{ flex: 1, bgcolor: '#eef2f8', borderRadius: 1, height: 12, overflow: 'hidden' }}>
+                      <Box sx={{ width: `${(w.total / maxTotal) * 100}%`, bgcolor: '#2f80c8', height: '100%' }} />
+                    </Box>
+                    <Typography sx={{ width: 36, textAlign: 'right', fontWeight: 600 }}>{w.total}</Typography>
+                  </ButtonBase>
+                );
+              })
+            )}
+          </Paper>
+        </Grid>
+        )}
+
         <Grid item xs={12} md={selfOnly ? 12 : 6}>
           <Grid container spacing={2} sx={{ height: { md: 'calc(100% + 16px)' } }}>
             <Grid item xs={6} md={selfOnly ? 4 : 6}><Stat label="All captures" value={companyDocs.length} /></Grid>
@@ -197,32 +248,6 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
             <Grid item xs={6} md={selfOnly ? 4 : 6}><Stat label="Flagged for review" value={companyDocs.filter((d) => d.flagged).length} /></Grid>
           </Grid>
         </Grid>
-
-        {!selfOnly && (
-        <Grid item xs={12} md={6}>
-          <Paper variant="outlined" sx={{ p: 2, height: '100%', maxHeight: { md: 260 }, overflowY: 'auto' }}>
-            <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>Captures per person</Typography>
-            {byWorker.length === 0 ? (
-              <Typography color="text.secondary">No employees yet. Add them on the Employee page.</Typography>
-            ) : (
-              byWorker.map((w) => (
-                <Box key={w.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.25 }}>
-                  <Box sx={{ width: { xs: 120, sm: 150 }, flexShrink: 0, minWidth: 0 }}>
-                    <Typography noWrap title={w.label}>{w.label}</Typography>
-                    {isAdmin && w.companyName && (
-                      <Typography variant="body2" color="text.secondary" noWrap component="div">{w.companyName}</Typography>
-                    )}
-                  </Box>
-                  <Box sx={{ flex: 1, bgcolor: '#eef2f8', borderRadius: 1, height: 12, overflow: 'hidden' }}>
-                    <Box sx={{ width: `${(w.total / maxTotal) * 100}%`, bgcolor: '#2f80c8', height: '100%' }} />
-                  </Box>
-                  <Typography sx={{ width: 36, textAlign: 'right', fontWeight: 600 }}>{w.total}</Typography>
-                </Box>
-              ))
-            )}
-          </Paper>
-        </Grid>
-        )}
       </Grid>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, gap: 2, flexWrap: 'wrap' }}>
