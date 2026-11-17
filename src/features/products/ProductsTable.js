@@ -62,6 +62,62 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
         '&:focus-visible': { outline: '3px solid #2f80c8', outlineOffset: 2 },
       };
 
+  // Products / Product Journey lists: the photo on the left, the name,
+  // model, owner, passport and codes on the right — a low card.
+  if (compact && dense) {
+    return (
+      <Root
+        {...(onClick ? { onClick, focusRipple: true, 'aria-pressed': selected } : {})}
+        sx={{
+          display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', height: '100%', textAlign: 'left', p: 1.25,
+          bgcolor: selected ? 'rgba(47,128,200,0.10)' : '#fff',
+          border: '1px solid', borderColor: selected ? '#2f80c8' : 'divider',
+          boxShadow: selected ? 'inset 4px 0 0 #2f80c8' : 1,
+          borderRadius: 3,
+          transition: 'box-shadow 120ms, border-color 120ms',
+          ...(onClick ? { '&:hover': { borderColor: '#2f80c8', boxShadow: selected ? 'inset 4px 0 0 #2f80c8' : 3 } } : {}),
+          '&:focus-visible': { outline: '3px solid #2f80c8', outlineOffset: 2 },
+        }}
+      >
+        <Box sx={{ width: 76, height: 76, flexShrink: 0, borderRadius: 2, bgcolor: '#f2f5f9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {thumb && <Box component="img" alt="" src={getFileUrl(thumb)} sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+        </Box>
+        <Box sx={{ minWidth: 0, flex: 1 }}>
+          <Typography variant="subtitle2" component="span" sx={{ display: 'block', lineHeight: 1.3, fontSize: 15 }} noWrap>
+            {product.name || 'Untitled product'}
+          </Typography>
+          {subtitle && <Typography variant="caption" color="text.secondary" component="span" sx={{ display: 'block' }} noWrap>{subtitle}</Typography>}
+          {showOwner && owner && (
+            <Link
+              component="span"
+              role="button"
+              tabIndex={0}
+              underline="hover"
+              variant="caption"
+              sx={{ display: 'block' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onOwnerClick) onOwnerClick(product);
+              }}
+            >
+              <Typography variant="caption" noWrap sx={{ display: 'block' }}>Owner: {owner.name}</Typography>
+            </Link>
+          )}
+          {isAppUser ? (
+            <Typography variant="caption" color="text.secondary" component="span" sx={{ display: 'block' }}>{product.ownedQuantity || 0} I own</Typography>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+              <PassportScore product={product} width={44} />
+              <Typography variant="caption" color="text.secondary" component="span" noWrap>
+                · {(product.total_minted_amount || 0).toLocaleString()} codes
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Root>
+    );
+  }
+
   if (compact) {
     return (
       <Root

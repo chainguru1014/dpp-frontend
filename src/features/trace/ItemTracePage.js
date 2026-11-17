@@ -284,7 +284,7 @@ export default function ItemTracePage({
         loading={productsLoading}
         selectedId={selectedId}
         showOwner={showOwner}
-        columns={6}
+        columns={4}
         dense
         groupByBrand
         emptyText={input.trim()

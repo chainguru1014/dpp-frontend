@@ -33,22 +33,29 @@ export default function ProductSidePanel({ product, onClose, onEdit, onCodes, on
 
   return (
     <Box component="aside" aria-label={product.name}
-      sx={{ bgcolor: '#fff', borderRadius: 4, border: '1px solid #dfe5ec', boxShadow: '0 8px 24px rgba(31,51,97,0.08)', p: 2.5, display: 'flex', flexDirection: 'column', gap: 1.75, position: { lg: 'sticky' }, top: { lg: 8 } }}>
+      sx={{ bgcolor: '#fff', borderRadius: 4, border: '1px solid #dfe5ec', boxShadow: '0 8px 24px rgba(31,51,97,0.08)', p: 2, display: 'flex', flexDirection: 'column', gap: 1.25, position: { lg: 'sticky' }, top: { lg: 8 } }}>
       {images.length ? (
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1 }}>
-          {images.map((src, i) => (
-            <ButtonBase
-              key={`${src}-${i}`}
-              onClick={() => setOpenPhoto(src)}
-              aria-label={`Photo ${i + 1}: show it large`}
-              sx={{ aspectRatio: '1 / 1', borderRadius: 3, border: '2px solid #1b4f72', bgcolor: '#fff', p: 1, overflow: 'hidden' }}
-            >
-              <Box component="img" src={getFileUrl(src)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            </ButtonBase>
-          ))}
+        // One row of four framed squares (more photos: "+N" on the last).
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 0.75 }}>
+          {images.slice(0, 4).map((src, i) => {
+            const more = i === 3 && images.length > 4 ? images.length - 3 : 0;
+            return (
+              <ButtonBase
+                key={`${src}-${i}`}
+                onClick={() => setOpenPhoto(src)}
+                aria-label={`Photo ${i + 1}: show it large`}
+                sx={{ position: 'relative', aspectRatio: '1 / 1', borderRadius: 2.5, border: '2px solid #1b4f72', bgcolor: '#fff', p: 0.5, overflow: 'hidden' }}
+              >
+                <Box component="img" src={getFileUrl(src)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                {!!more && (
+                  <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(22,50,74,0.55)', color: '#fff', fontWeight: 700, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+{more}</Box>
+                )}
+              </ButtonBase>
+            );
+          })}
         </Box>
       ) : (
-        <Box sx={{ height: 120, borderRadius: 3, bgcolor: '#f2f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Box sx={{ height: 72, borderRadius: 3, bgcolor: '#f2f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Typography color="text.secondary">No photo yet</Typography>
         </Box>
       )}
@@ -62,22 +69,22 @@ export default function ProductSidePanel({ product, onClose, onEdit, onCodes, on
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           {brand.name && <Typography sx={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: '#2f68b3' }}>{brand.name}</Typography>}
-          <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#16324a', lineHeight: 1.25 }}>{product.name}</Typography>
-          {product.model && <Typography color="text.secondary">{product.model}</Typography>}
+          <Typography sx={{ fontSize: 19, fontWeight: 700, color: '#16324a', lineHeight: 1.25 }}>{product.name}</Typography>
+          {product.model && <Typography variant="body2" color="text.secondary">{product.model}</Typography>}
         </Box>
-        {onClose && <IconButton onClick={onClose} aria-label="Close the product details"><CloseIcon /></IconButton>}
+        {onClose && <IconButton size="small" onClick={onClose} aria-label="Close the product details"><CloseIcon /></IconButton>}
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Typography variant="body2" color="text.secondary" sx={{ width: 70 }}>Passport</Typography>
         <PassportScore product={product} width={160} />
       </Box>
       {missing > 0 && onCompletePassport && (
-        <Button size="small" onClick={onCompletePassport} sx={{ alignSelf: 'flex-start', mt: -1, px: 0 }}>
+        <Button size="small" onClick={onCompletePassport} sx={{ alignSelf: 'flex-start', mt: -0.75, px: 0, minHeight: 0, py: 0 }}>
           {missing} {missing === 1 ? 'thing' : 'things'} missing: add {missing === 1 ? 'it' : 'them'}
         </Button>
       )}
       {percent === 100 && <Typography variant="body2" sx={{ color: '#1e6b34', mt: -1 }}>The passport is complete.</Typography>}
-      <Box sx={{ display: 'grid', gridTemplateColumns: '96px minmax(0, 1fr)', rowGap: 0.75, columnGap: 1, fontSize: 15 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '84px minmax(0, 1fr)', rowGap: 0.25, columnGap: 1, fontSize: 14 }}>
         {facts.map(([k, v]) => (
           <React.Fragment key={k}>
             <Typography variant="body2" color="text.secondary">{k}</Typography>
@@ -85,15 +92,15 @@ export default function ProductSidePanel({ product, onClose, onEdit, onCodes, on
           </React.Fragment>
         ))}
       </Box>
-      {onEdit && <Button variant="contained" startIcon={<EditIcon />} onClick={onEdit} fullWidth>Edit product</Button>}
-      <Stack direction="row" spacing={1.25}>
-        {onCodes && <Button variant="outlined" startIcon={<QrCode2Icon />} onClick={onCodes} sx={{ flex: 1 }}>Codes</Button>}
-        <Button variant="outlined" startIcon={<PhoneIphoneIcon />} onClick={onPreview} sx={{ flex: 1 }}>Preview</Button>
+      {onEdit && <Button variant="contained" startIcon={<EditIcon />} onClick={onEdit} fullWidth sx={{ height: 42 }}>Edit product</Button>}
+      <Stack direction="row" spacing={1}>
+        {onCodes && <Button variant="outlined" startIcon={<QrCode2Icon />} onClick={onCodes} sx={{ flex: 1, height: 40 }}>Codes</Button>}
+        <Button variant="outlined" startIcon={<PhoneIphoneIcon />} onClick={onPreview} sx={{ flex: 1, height: 40 }}>Preview</Button>
       </Stack>
-      <Stack direction="row" spacing={1.25}>
-        <Button variant="text" startIcon={<HistoryIcon />} onClick={onHistory} sx={{ flex: 1.4, whiteSpace: 'nowrap', fontSize: 14, bgcolor: '#f2f5f9', '&:hover': { bgcolor: '#e8eef6' } }}>Ownership history</Button>
+      <Stack direction="row" spacing={1}>
+        <Button variant="text" startIcon={<HistoryIcon />} onClick={onHistory} sx={{ flex: 1.4, height: 38, whiteSpace: 'nowrap', fontSize: 14, bgcolor: '#f2f5f9', '&:hover': { bgcolor: '#e8eef6' } }}>Ownership history</Button>
         {onRemove && (
-          <Button variant="text" color="error" startIcon={<DeleteIcon />} onClick={onRemove} sx={{ flex: 1, bgcolor: '#fdecec', '&:hover': { bgcolor: '#fbdcdc' } }}>Remove</Button>
+          <Button variant="text" color="error" startIcon={<DeleteIcon />} onClick={onRemove} sx={{ flex: 1, height: 38, bgcolor: '#fdecec', '&:hover': { bgcolor: '#fbdcdc' } }}>Remove</Button>
         )}
       </Stack>
     </Box>

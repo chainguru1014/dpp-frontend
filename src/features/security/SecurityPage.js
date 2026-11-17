@@ -96,12 +96,22 @@ export function SecurityFigures({ totals, data }) {
   );
 }
 
+// The last answer per period, kept while the admin site is open: switching
+// between the All scans and Suspected copies tabs shows the figures at once
+// (only the tab's own content loads), then refreshes them quietly.
+const insightsCache = new Map();
+const loadInsights = async (token, days) => {
+  const res = await getSecurityInsights(token, days);
+  if (res.ok) insightsCache.set(days, res.data || null);
+  return res;
+};
+
 // The same figures, loaded on their own (All scans tab: last 90 days).
 export function SecurityFiguresLive({ token, days = 90 }) {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(() => insightsCache.get(days) || null);
   useEffect(() => {
     let alive = true;
-    getSecurityInsights(token, days).then((res) => { if (alive && res.ok) setData(res.data || null); });
+    loadInsights(token, days).then((res) => { if (alive && res.ok) setData(res.data || null); });
     return () => { alive = false; };
   }, [token, days]);
   return <SecurityFigures totals={data?.totals} data={data} />;
@@ -142,15 +152,17 @@ const Section = ({ title, description, children }) => (
 // do with a flagged label — blocking it warns every shopper who scans it.
 export default function SecurityPage({ token, canBlock, onOpenItem }) {
   const [days, setDays] = useState(90);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(() => insightsCache.get(90) || null);
+  // Loading only shows when there is nothing to show yet (first visit).
+  const [loading, setLoading] = useState(!insightsCache.get(90));
   const [error, setError] = useState('');
-  const [data, setData] = useState(null);
   const [busyKey, setBusyKey] = useState('');
 
   const load = async (period = days) => {
-    setLoading(true);
+    if (!insightsCache.get(period)) setLoading(true);
+    else setData(insightsCache.get(period));
     setError('');
-    const res = await getSecurityInsights(token, period);
+    const res = await loadInsights(token, period);
     setLoading(false);
     if (!res.ok) {
       setError(res.message);

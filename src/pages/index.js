@@ -2613,7 +2613,7 @@ const InnerPage = () => {
                 selectedId={selectedProduct?._id}
                 isAppUser={isAppUser}
                 showOwner={isAdmin}
-                columns={selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) ? 3 : 6}
+                columns={selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) ? 2 : 4}
                 dense
                 groupByBrand
                 emptyText={productNameFilter.trim()
