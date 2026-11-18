@@ -24,9 +24,9 @@ import PageHeader from '../../components/PageHeader';
 
 const LEVEL_COLOR = {
   info: '#4a96dd',
-  success: '#2e7d32',
-  warning: '#ed6c02',
-  critical: '#d32f2f',
+  success: '#1b4f72',
+  warning: '#1b4f72',
+  critical: '#1b4f72',
 };
 
 const typeIcon = (type, color) => {
@@ -120,9 +120,9 @@ const AllNotificationsPage = () => {
                     </ListItemAvatar>
                     <ListItemText
                       primary={
-                        <Typography variant="body1" sx={{ fontWeight: n.read ? 400 : 700 }}>
+                        <Typography variant="body1" sx={{ fontWeight: n.read ? 400 : 400 }}>
                           {n.title}
-                          {!n.read && <Typography component="span" variant="caption" sx={{ ml: 1, color: 'primary.main', fontWeight: 700 }}>NEW</Typography>}
+                          {!n.read && <Typography component="span" variant="caption" sx={{ ml: 1, color: 'primary.main', fontWeight: 400 }}>NEW</Typography>}
                         </Typography>
                       }
                       secondary={

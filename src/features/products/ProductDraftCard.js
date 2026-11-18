@@ -137,7 +137,7 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
               />
             ) : null}
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 400, letterSpacing: 0.5, textTransform: 'uppercase' }}>
                 {brand.name || 'Unbranded'}
               </Typography>
               {brand.detail && (

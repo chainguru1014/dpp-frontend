@@ -11,8 +11,8 @@ import { passportCompleteness } from '../../utils/passportCompleteness';
 import { profilePercent } from '../admin/CompanyManagementSection';
 
 const TONES = {
-  bad: { color: '#9b2a1f', bg: '#fdecea' },
-  warn: { color: '#8a4b00', bg: '#fff1dc' },
+  bad: { color: '#1b4f72', bg: '#eef5fd' },
+  warn: { color: '#1b4f72', bg: '#eef5fd' },
   info: { color: '#1b4f72', bg: '#e8f1fb' },
 };
 
@@ -22,7 +22,7 @@ const Row = ({ icon: Icon, tone, title, sub, action, onClick }) => (
       <Icon />
     </Box>
     <Box sx={{ flex: 1, minWidth: 0 }}>
-      <Typography noWrap sx={{ fontWeight: 600, color: '#16324a' }} title={typeof title === 'string' ? title : undefined}>{title}</Typography>
+      <Typography noWrap sx={{ fontWeight: 400, color: '#16324a' }} title={typeof title === 'string' ? title : undefined}>{title}</Typography>
       {sub && <Typography noWrap variant="body2" color="text.secondary" title={typeof sub === 'string' ? sub : undefined}>{sub}</Typography>}
     </Box>
     <Button variant="outlined" size="small" onClick={onClick} sx={{ flex: 'none', minWidth: 96 }}>{action}</Button>
@@ -106,7 +106,7 @@ export default function NeedsAttention({
       {loading && rows.length === 0 ? (
         <Box sx={{ pt: 1 }}><Skeleton height={44} /><Skeleton height={44} /></Box>
       ) : rows.length ? rows : (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5, color: '#1e6b34' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5, color: '#1b4f72' }}>
           <CheckCircleIcon />
           <Typography>Nothing is waiting. Every passport is complete and every code is printed.</Typography>
         </Box>

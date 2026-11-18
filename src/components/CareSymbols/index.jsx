@@ -35,7 +35,7 @@ function WashIcon({ temp, selected }) {
         stroke={color}
         d="M6 12.5 L7.6 23.4 Q7.9 26 10.3 26 L21.7 26 Q24.1 26 24.4 23.4 L26 12.5"
       />
-      <text x="16" y="22" textAnchor="middle" fontSize="9" fill={color} fontWeight="bold">
+      <text x="16" y="22" textAnchor="middle" fontSize="9" fill={color} fontWeight="normal">
         {temp}
       </text>
     </Box>
@@ -47,7 +47,7 @@ function DryCleanIcon({ letter, selected }) {
   return (
     <Box component="svg" viewBox="0 0 32 32" width={size} height={size} sx={{ display: 'block' }}>
       <circle cx="16" cy="16" r="11.5" {...common} stroke={color} />
-      <text x="16" y="20.5" textAnchor="middle" fontSize="13" fill={color} fontWeight="bold">
+      <text x="16" y="20.5" textAnchor="middle" fontSize="13" fill={color} fontWeight="normal">
         {letter}
       </text>
     </Box>

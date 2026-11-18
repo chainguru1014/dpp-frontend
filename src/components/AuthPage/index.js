@@ -103,10 +103,13 @@ const AuthPage = ({
   onAppleCredential,
   onRequestOtp,
   onVerifyOtp,
+  onPreviewLogin,
   onOpenPrivacyPreferences,
   activeSlide,
 }) => {
   const [authMode, setAuthMode] = useState('signin'); // 'signin' | 'signup'
+  const [previewBusy, setPreviewBusy] = useState('');
+  const [previewError, setPreviewError] = useState('');
   const [emailStep, setEmailStep] = useState('email'); // 'email' | 'code'
   const [otpEmail, setOtpEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
@@ -312,6 +315,53 @@ const AuthPage = ({
     );
   }
 
+  // ---------- Until release (testing): choose who you are ----------
+  // The email form is hidden; each choice signs straight in to its test
+  // account (the server allows this only while PREVIEW_AUTO_LOGIN=on).
+  if (onPreviewLogin) {
+    const choices = [
+      ['admin', 'Admin', 'Everything on the platform'],
+      ['supervisor', 'Company Supervisor', 'Manage your company, staff and products'],
+      ['employee', 'Company Employee', 'Your daily capture work'],
+      ['consumer', 'Consumer', 'Products you own and follow'],
+    ];
+    const choose = async (role) => {
+      if (previewBusy) return;
+      setPreviewBusy(role);
+      setPreviewError('');
+      const res = await onPreviewLogin(role);
+      if (!res?.ok) {
+        setPreviewError(res?.message || 'Could not sign in. Please try again.');
+        setPreviewBusy('');
+      }
+    };
+    return (
+      <AuthShell activeSlide={activeSlide}>
+        {logo}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <Typography variant="h5" component="h1" sx={{ textAlign: 'center', ...onGlass }}>Sign in as</Typography>
+          {choices.map(([role, label, sub]) => (
+            <Button
+              key={role}
+              variant="contained"
+              fullWidth
+              disabled={!!previewBusy}
+              onClick={() => choose(role)}
+              sx={{ ...bigButtonSx, flexDirection: 'column', alignItems: 'center', py: 1 }}
+            >
+              <span>{previewBusy === role ? 'Signing in…' : label}</span>
+              <Box component="span" sx={{ fontSize: '0.85rem', opacity: 0.85 }}>{sub}</Box>
+            </Button>
+          ))}
+          {!!previewError && <Alert severity="error">{previewError}</Alert>}
+          <Typography variant="body2" color={AUTH_MUTED} sx={{ textShadow, textAlign: 'center' }}>
+            Test sign-in until the product is released.
+          </Typography>
+        </Box>
+      </AuthShell>
+    );
+  }
+
   // ---------- Sign in / create account ----------
   const isSignup = authMode === 'signup';
   return (
@@ -364,7 +414,7 @@ const AuthPage = ({
                 {isSignup ? 'Already have an account?' : 'New here?'}
                 <Button
                   onClick={() => { setAuthMode(isSignup ? 'signin' : 'signup'); setOtpNotice(''); }}
-                  sx={{ minHeight: 40, ml: 0.5, px: 1, fontWeight: 700, ...onGlass, textDecoration: 'underline', '&:hover': { bgcolor: 'rgba(255,255,255,0.35)', textDecoration: 'underline' } }}
+                  sx={{ minHeight: 40, ml: 0.5, px: 1, fontWeight: 400, ...onGlass, textDecoration: 'underline', '&:hover': { bgcolor: 'rgba(255,255,255,0.35)', textDecoration: 'underline' } }}
                 >
                   {isSignup ? 'Sign in' : 'Create an account'}
                 </Button>
@@ -404,7 +454,7 @@ const AuthPage = ({
                   inputMode: 'numeric',
                   pattern: '[0-9]*',
                   maxLength: 6,
-                  style: { letterSpacing: 10, textAlign: 'center', fontSize: '1.6rem', fontWeight: 600 },
+                  style: { letterSpacing: 10, textAlign: 'center', fontSize: '1.6rem', fontWeight: 400 },
                 }}
                 sx={bigFieldSx}
               />

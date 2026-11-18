@@ -57,7 +57,7 @@ export const BrandMark = ({ brand, name, size = 44 }) => {
     <Box component="img" alt="" src={getFileUrl(logo)}
       sx={{ width: size, height: size, borderRadius: '50%', objectFit: 'contain', bgcolor: '#eef2f7', border: '1px solid #dfe5ec', flex: 'none' }} />
   ) : (
-    <Box aria-hidden sx={{ width: size, height: size, borderRadius: '50%', bgcolor: '#16324a', color: '#f3e6c8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', fontWeight: 600, fontSize: size * 0.46, flex: 'none' }}>
+    <Box aria-hidden sx={{ width: size, height: size, borderRadius: '50%', bgcolor: '#16324a', color: '#c9dcef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: size * 0.46, flex: 'none' }}>
       {letter}
     </Box>
   );
@@ -88,7 +88,7 @@ const BrandsTable = ({ rows, loading, onOpen, onEdit, onRemove }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
           <BrandMark brand={row.brand} name={row.name} size={40} />
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 600, color: '#16324a' }} noWrap>{row.brand?.name || row.name}</Typography>
+            <Typography sx={{ fontWeight: 400, color: '#16324a' }} noWrap>{row.brand?.name || row.name}</Typography>
             <Typography variant="body2" color="text.secondary" noWrap>{row.brand?.tagline || row.title || '—'}</Typography>
           </Box>
         </Box>
@@ -122,8 +122,8 @@ const BrandsTable = ({ rows, loading, onOpen, onEdit, onRemove }) => {
       width: 140,
       valueGetter: (p) => profilePercent(p.row.brand),
       renderCell: ({ value }) => (value >= 100
-        ? <Chip size="small" label="Active" sx={{ bgcolor: '#e6f4ea', color: '#1e6b34', fontWeight: 600 }} />
-        : <Chip size="small" label={`Profile ${value}%`} sx={{ bgcolor: '#fff1dc', color: '#8a4b00', fontWeight: 600 }} />),
+        ? <Chip size="small" label="Active" sx={{ bgcolor: '#eef5fd', color: '#1b4f72', fontWeight: 400 }} />
+        : <Chip size="small" label={`Profile ${value}%`} sx={{ bgcolor: '#eef5fd', color: '#1b4f72', fontWeight: 400 }} />),
     },
     {
       field: 'actions',
@@ -257,7 +257,7 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
           </Stack>
         </Stack>
         <TextField label="Short tagline" placeholder="e.g. Built for the far north" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} fullWidth />
-        <Typography sx={{ fontWeight: 600, color: '#16324a', borderTop: '1px solid #e8edf3', pt: 2 }}>Who runs it</Typography>
+        <Typography sx={{ fontWeight: 400, color: '#16324a', borderTop: '1px solid #e8edf3', pt: 2 }}>Who runs it</Typography>
         <TextField
           label="Supervisor email"
           type="email"

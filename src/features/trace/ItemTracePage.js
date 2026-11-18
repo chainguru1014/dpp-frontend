@@ -25,7 +25,7 @@ import { METHOD_LABELS } from './TracePage';
 const USE_GOOGLE_MAPS = !!process.env.REACT_APP_GOOGLE_MAPS_KEY;
 const ItemMap = React.lazy(() => (USE_GOOGLE_MAPS ? import('./GoogleItemMap') : import('./ItemMap')));
 // Same green as the lifecycle line and dots on the map.
-const LIFECYCLE_COLOR = '#2e7d32';
+const LIFECYCLE_COLOR = '#1b4f72';
 const LIFECYCLE_ICONS = { materials: SpaIcon, manufacturing: PrecisionManufacturingIcon, transport: LocalShippingIcon };
 
 const IDENTIFIER_LABELS = { qr: 'QR code', barcode: 'Barcode', nfc: 'NFC tag', rfid: 'RFID tag', gs1dl: 'GS1 Digital Link' };
@@ -39,16 +39,16 @@ const EVENT_KINDS = {
     color: '#2f80c8',
     title: (e) => `${e.source === 'visit' ? 'Product page opened' : 'Scanned'} (${IDENTIFIER_LABELS[e.identifierType] || 'QR code'})`,
   },
-  security_pass: { Icon: VerifiedUserIcon, color: '#2e7d32', title: () => 'Security QR check passed' },
-  security_fail: { Icon: GppBadIcon, color: '#d32f2f', title: () => 'Security QR check failed' },
+  security_pass: { Icon: VerifiedUserIcon, color: '#1b4f72', title: () => 'Security QR check passed' },
+  security_fail: { Icon: GppBadIcon, color: '#1b4f72', title: () => 'Security QR check failed' },
   capture: {
     Icon: AssignmentTurnedInIcon,
-    color: '#6a4fb3',
+    color: '#1b4f72',
     title: (e) => `Work step recorded: ${e.step || processStepTypeLabel(e.stepType) || 'step'}`,
   },
   transfer: {
     Icon: SwapHorizIcon,
-    color: '#b26a00',
+    color: '#1b4f72',
     title: (e) => `Ownership ${e.status === 'confirmed' ? 'transferred' : `transfer ${e.status}`} (${METHOD_LABELS[e.method] || e.method})`,
   },
 };
@@ -81,7 +81,7 @@ function ProductCard({ product, children, right }) {
       />
       <Box sx={{ minWidth: 0, flex: 1 }}>
         {product.brandName && (
-          <Typography variant="caption" sx={{ fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase' }}>{product.brandName}</Typography>
+          <Typography variant="caption" sx={{ fontWeight: 400, letterSpacing: 0.5, textTransform: 'uppercase' }}>{product.brandName}</Typography>
         )}
         <Typography variant="h6" component="h2">{product.name || 'Untitled product'}</Typography>
         <Typography variant="body2" color="text.secondary">
@@ -122,7 +122,7 @@ function Timeline({ events, showItem, onOpenItem }) {
               <kind.Icon sx={{ fontSize: 18 }} />
             </Box>
             <Box sx={{ minWidth: 0 }}>
-              <Typography variant="body1" sx={{ fontWeight: 600 }}>{kind.title(e)}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 400 }}>{kind.title(e)}</Typography>
               <Typography variant="body2" color="text.secondary">
                 {formatWhen(e.at)}{where ? ` · ${where}` : ''}
               </Typography>
@@ -373,7 +373,7 @@ export default function ItemTracePage({
                             <StepIcon sx={{ fontSize: 18 }} />
                           </Box>
                           <Box sx={{ minWidth: 0 }}>
-                            <Typography variant="body1" sx={{ fontWeight: 600 }}>{i + 1}. {s.title}</Typography>
+                            <Typography variant="body1" sx={{ fontWeight: 400 }}>{i + 1}. {s.title}</Typography>
                             <Typography variant="body2" color="text.secondary">
                               {s.detail}{s.latitude == null ? ' · not found on the map' : ''}
                             </Typography>

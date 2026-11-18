@@ -170,15 +170,15 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
               }}
               >
                 <Box sx={{ flex: '1 1 220px', minWidth: 0 }}>
-                  <Typography sx={{ fontSize: 18, fontWeight: 700, color: '#16324a' }}>
-                    Steps <Box component="span" sx={{ color: 'text.secondary', fontWeight: 500 }}>({steps.length} of {MAX_STEPS})</Box>
+                  <Typography sx={{ fontSize: 18, fontWeight: 400, color: '#16324a' }}>
+                    Steps <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>({steps.length} of {MAX_STEPS})</Box>
                   </Typography>
                   <Chip
                     size="small"
                     label={loading ? 'Loading…' : dirty ? 'Not saved yet' : 'All changes saved'}
                     color={dirty ? 'warning' : 'success'}
                     variant={dirty ? 'filled' : 'outlined'}
-                    sx={{ mt: 0.5, fontWeight: 600 }}
+                    sx={{ mt: 0.5, fontWeight: 400 }}
                   />
                 </Box>
                 {dirty && (
@@ -203,7 +203,7 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
                       '&:hover': { borderColor: '#b9cbe0' },
                     }}
                   >
-                    <Box sx={{ width: 34, height: 34, flex: 'none', borderRadius: '50%', bgcolor: '#1b4f72', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                    <Box sx={{ width: 34, height: 34, flex: 'none', borderRadius: '50%', bgcolor: '#1b4f72', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 400 }}>
                       {index + 1}
                     </Box>
                     <TextField
@@ -254,9 +254,9 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
 
             {/* What staff see in the app's Select workflow page. */}
             <Box sx={{ flex: '0 0 300px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              <Typography sx={{ fontWeight: 600, color: '#16324a' }}>What staff see in the app</Typography>
+              <Typography sx={{ fontWeight: 400, color: '#16324a' }}>What staff see in the app</Typography>
               <Box sx={{ width: 280, minHeight: 420, boxSizing: 'border-box', border: '10px solid #1f2430', borderRadius: '34px', bgcolor: '#f4f7fc', p: '24px 14px', display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-                <Typography sx={{ textAlign: 'center', fontWeight: 800, color: '#1b4f72', fontSize: 18, mb: 0.5 }}>Select workflow</Typography>
+                <Typography sx={{ textAlign: 'center', fontWeight: 400, color: '#1b4f72', fontSize: 18, mb: 0.5 }}>Select workflow</Typography>
                 {steps.filter((s) => s.entity.trim()).map((s, i) => (
                   <Box key={i} sx={{ minHeight: 52, px: 1.75, borderRadius: '14px', bgcolor: '#fff', boxShadow: '0 3px 8px rgba(27,79,114,0.10)', display: 'flex', alignItems: 'center', color: '#1b4f72', fontSize: 15 }}>
                     <span><b>{processStepTypeLabel(s.type)}:</b> {s.entity.trim()}</span>

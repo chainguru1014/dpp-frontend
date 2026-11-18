@@ -132,7 +132,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, gtin, serial }) => 
           </IconButton>
           <IconButton
             aria-label="Share on Instagram"
-            sx={{ color: '#e4405f' }}
+            sx={{ color: '#1b4f72' }}
             onClick={() => {
               // Instagram has no web post-intent; use the native share sheet on
               // mobile (lets the user pick Instagram), else copy the link.

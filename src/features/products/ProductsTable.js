@@ -321,7 +321,7 @@ export default function ProductsTable({
     return (
       <Box>
         <Box sx={{ bgcolor: '#fff', border: '1px solid #dfe5ec', borderRadius: 4, overflow: 'hidden', boxShadow: '0 8px 24px rgba(31,51,97,0.08)' }}>
-          <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: cols, gap: 2, px: 2, py: 1.5, bgcolor: '#f2f5f9', fontWeight: 600, color: '#16324a' }}>
+          <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: cols, gap: 2, px: 2, py: 1.5, bgcolor: '#f2f5f9', fontWeight: 400, color: '#16324a' }}>
             <span>Product</span>{showOwner && <span>Brand</span>}<span>Category</span><span>Passport</span><span>Codes</span><span>Updated</span>
           </Box>
           {shown.map((p) => {
@@ -339,7 +339,7 @@ export default function ProductsTable({
                     {thumb && <Box component="img" src={getFileUrl(thumb)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
                   </Box>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography noWrap sx={{ fontWeight: 600, color: '#16324a' }}>{p.name || 'Untitled product'}</Typography>
+                    <Typography noWrap sx={{ fontWeight: 400, color: '#16324a' }}>{p.name || 'Untitled product'}</Typography>
                     <Typography noWrap variant="body2" color="text.secondary">{p.model || p.brandInfo?.name || ''}</Typography>
                   </Box>
                 </Box>
@@ -374,8 +374,8 @@ export default function ProductsTable({
                   ? <Box component="img" src={getFileUrl(g.logo)} alt="" sx={{ width: '82%', height: '82%', objectFit: 'contain' }} />
                   : <StorefrontIcon sx={{ fontSize: 20, color: 'primary.main' }} />}
               </Box>
-              <Typography sx={{ fontSize: 18, fontWeight: 700, color: '#16324a' }}>{g.brand}</Typography>
-              <Box sx={{ px: 1, py: 0.25, borderRadius: 999, bgcolor: '#e8f1fb', color: '#1b4f72', fontSize: 13, fontWeight: 700 }}>
+              <Typography sx={{ fontSize: 18, fontWeight: 400, color: '#16324a' }}>{g.brand}</Typography>
+              <Box sx={{ px: 1, py: 0.25, borderRadius: 999, bgcolor: '#e8f1fb', color: '#1b4f72', fontSize: 13, fontWeight: 400 }}>
                 {g.items.length} {g.items.length === 1 ? 'product' : 'products'}
               </Box>
               <Box sx={{ flex: 1, height: '1px', bgcolor: '#e3e8ef', ml: 1 }} />

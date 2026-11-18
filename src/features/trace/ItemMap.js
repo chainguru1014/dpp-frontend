@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
-export const LIFECYCLE_COLOR = '#2e7d32';
+export const LIFECYCLE_COLOR = '#1b4f72';
 
 // Keeps every point in view whenever the set of points changes.
 function FitToPoints({ points }) {

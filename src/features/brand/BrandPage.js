@@ -290,7 +290,7 @@ export default function BrandPage({
                     <BrandMark brand={details} name={brand.name} size={68} />
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 200 }}>
-                    <Typography sx={{ fontSize: 24, fontWeight: 700, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{details.name || brand.name}</Typography>
+                    <Typography sx={{ fontSize: 24, fontWeight: 400, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{details.name || brand.name}</Typography>
                     <Typography sx={{ color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
                       {[details.tagline, companyRecord?.companyType ? companyTypeLabel(companyRecord.companyType) : '', `${brandProducts.length} ${brandProducts.length === 1 ? 'product' : 'products'}`].filter((v) => v && v !== '—').join(' · ')}
                     </Typography>
@@ -299,7 +299,7 @@ export default function BrandPage({
                     sx={{ bgcolor: 'rgba(255,255,255,0.94)', borderRadius: 3, px: 1.5, py: 1, color: '#16324a' }}>
                     <Typography variant="body2" color="text.secondary">Profile</Typography>
                     <LinearProgress variant="determinate" value={percent} sx={{ width: 110, height: 8, borderRadius: 4 }} color={percent >= 100 ? 'success' : 'warning'} aria-label={`Profile ${percent}% complete`} />
-                    <Typography sx={{ fontWeight: 700 }}>{percent}%</Typography>
+                    <Typography sx={{ fontWeight: 400 }}>{percent}%</Typography>
                     {isAdmin && onOpenProducts && (
                       <Button variant="outlined" startIcon={<Inventory2Icon />} onClick={() => onOpenProducts(brand.company_id)}>Its products</Button>
                     )}
@@ -376,7 +376,7 @@ export default function BrandPage({
                   brand's Supervisor and which email domain its staff use. */}
               <Box sx={{ mt: 3, pt: 2.5, borderTop: '1px solid #e8edf3' }}>
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                  <Typography sx={{ fontSize: 18, fontWeight: 600, color: '#16324a', flex: 1 }}>Team and sign-in</Typography>
+                  <Typography sx={{ fontSize: 18, fontWeight: 400, color: '#16324a', flex: 1 }}>Team and sign-in</Typography>
                   {onOpenEmployees && (
                     <Button startIcon={<GroupsIcon />} onClick={() => onOpenEmployees(brand.company_id)}>Open Employees</Button>
                   )}

@@ -48,7 +48,7 @@ export default function ProductSidePanel({ product, onClose, onEdit, onCodes, on
               >
                 <Box component="img" src={getFileUrl(src)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 {!!more && (
-                  <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(22,50,74,0.55)', color: '#fff', fontWeight: 700, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+{more}</Box>
+                  <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(22,50,74,0.55)', color: '#fff', fontWeight: 400, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+{more}</Box>
                 )}
               </ButtonBase>
             );
@@ -68,8 +68,8 @@ export default function ProductSidePanel({ product, onClose, onEdit, onCodes, on
       </Dialog>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          {brand.name && <Typography sx={{ fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: '#2f68b3' }}>{brand.name}</Typography>}
-          <Typography sx={{ fontSize: 19, fontWeight: 700, color: '#16324a', lineHeight: 1.25 }}>{product.name}</Typography>
+          {brand.name && <Typography sx={{ fontSize: 13, fontWeight: 400, letterSpacing: 1, textTransform: 'uppercase', color: '#2f68b3' }}>{brand.name}</Typography>}
+          <Typography sx={{ fontSize: 19, fontWeight: 400, color: '#16324a', lineHeight: 1.25 }}>{product.name}</Typography>
           {product.model && <Typography variant="body2" color="text.secondary">{product.model}</Typography>}
         </Box>
         {onClose && <IconButton size="small" onClick={onClose} aria-label="Close the product details"><CloseIcon /></IconButton>}
@@ -83,7 +83,7 @@ export default function ProductSidePanel({ product, onClose, onEdit, onCodes, on
           {missing} {missing === 1 ? 'thing' : 'things'} missing: add {missing === 1 ? 'it' : 'them'}
         </Button>
       )}
-      {percent === 100 && <Typography variant="body2" sx={{ color: '#1e6b34', mt: -1 }}>The passport is complete.</Typography>}
+      {percent === 100 && <Typography variant="body2" sx={{ color: '#1b4f72', mt: -1 }}>The passport is complete.</Typography>}
       <Box sx={{ display: 'grid', gridTemplateColumns: '84px minmax(0, 1fr)', rowGap: 0.25, columnGap: 1, fontSize: 14 }}>
         {facts.map(([k, v]) => (
           <React.Fragment key={k}>
@@ -100,7 +100,7 @@ export default function ProductSidePanel({ product, onClose, onEdit, onCodes, on
       <Stack direction="row" spacing={1}>
         <Button variant="text" startIcon={<HistoryIcon />} onClick={onHistory} sx={{ flex: 1.4, height: 38, whiteSpace: 'nowrap', fontSize: 14, bgcolor: '#f2f5f9', '&:hover': { bgcolor: '#e8eef6' } }}>Ownership history</Button>
         {onRemove && (
-          <Button variant="text" color="error" startIcon={<DeleteIcon />} onClick={onRemove} sx={{ flex: 1, height: 38, bgcolor: '#fdecec', '&:hover': { bgcolor: '#fbdcdc' } }}>Remove</Button>
+          <Button variant="text" color="error" startIcon={<DeleteIcon />} onClick={onRemove} sx={{ flex: 1, height: 38, bgcolor: '#eef5fd', '&:hover': { bgcolor: '#eef5fd' } }}>Remove</Button>
         )}
       </Stack>
     </Box>

@@ -15,7 +15,7 @@ export function PassportScore({ product, width = 90 }) {
         color={passportColor(percent)}
         sx={{ width, height: 8, borderRadius: 4, bgcolor: '#e6eaf1' }}
       />
-      <Typography variant="body2" sx={{ fontWeight: 600, minWidth: 38 }}>{percent}%</Typography>
+      <Typography variant="body2" sx={{ fontWeight: 400, minWidth: 38 }}>{percent}%</Typography>
     </Box>
   );
 }

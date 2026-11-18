@@ -182,7 +182,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
           fullWidth
         />
         <Box role="radiogroup" aria-label="Role">
-          <Typography sx={{ fontWeight: 600, color: '#16324a', mb: 1 }}>Role</Typography>
+          <Typography sx={{ fontWeight: 400, color: '#16324a', mb: 1 }}>Role</Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
             {[
               ['working_employee', 'Working employee', 'Uses the mobile app to capture, inspect and ship.'],
@@ -199,7 +199,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
                   onClick={() => setEmployeeType(key)}
                   sx={{ textAlign: 'left', p: 1.75, borderRadius: 3, cursor: 'pointer', font: 'inherit', border: '1.5px solid', borderColor: on ? '#1b4f72' : '#dfe5ec', bgcolor: on ? '#eef5fd' : '#fff', color: '#16324a' }}
                 >
-                  <Typography sx={{ fontWeight: 700 }}>{label}</Typography>
+                  <Typography sx={{ fontWeight: 400 }}>{label}</Typography>
                   <Typography variant="body2" color="text.secondary">{sub}</Typography>
                 </Box>
               );

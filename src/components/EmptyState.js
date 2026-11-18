@@ -16,7 +16,7 @@ export default function EmptyState({ icon: Icon, title, text, action, note, comp
           <Icon sx={{ fontSize: compact ? 40 : 50 }} />
         </Box>
       )}
-      <Typography sx={{ fontSize: 22, fontWeight: 700, color: '#16324a' }}>{title}</Typography>
+      <Typography sx={{ fontSize: 22, fontWeight: 400, color: '#16324a' }}>{title}</Typography>
       {text && <Typography sx={{ fontSize: 16.5, color: '#51617a', maxWidth: 540 }}>{text}</Typography>}
       {action && (
         <Button variant="contained" startIcon={action.icon ? <action.icon /> : undefined} onClick={action.onClick} sx={{ mt: 0.75 }}>

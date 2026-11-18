@@ -68,7 +68,7 @@ function RequestDialog({ request, canWrite, onClose, onSaved, token }) {
           </Stack>
           <Box>
             <Typography variant="body2" color="text.secondary">Product</Typography>
-            <Typography sx={{ fontWeight: 600 }}>
+            <Typography sx={{ fontWeight: 400 }}>
               {request.product_id?.name || request.productName || 'Product'}
               {request.qrcode_id ? ` · item #${request.qrcode_id}` : ''}
             </Typography>

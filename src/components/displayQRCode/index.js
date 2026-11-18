@@ -71,7 +71,7 @@ const QRCode = ({ data, identifer, onDelete }) => {
             ))}
             {pmcEntry && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main', flex: 1 }}>
+                    <Typography variant="caption" sx={{ fontWeight: 400, color: 'primary.main', flex: 1 }}>
                         {pmcEntry.serial}
                     </Typography>
                     <CopyIconButton value={pmcEntry.serial} />

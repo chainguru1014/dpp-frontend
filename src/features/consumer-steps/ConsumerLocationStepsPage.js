@@ -111,7 +111,7 @@ const ConsumerLocationStepsPage = ({ token }) => {
       <Paper variant="outlined" sx={{ p: 2 }}>
         {steps.map((step, index) => (
           <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-            <Typography sx={{ width: 32, fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}>{index + 1}</Typography>
+            <Typography sx={{ width: 32, fontWeight: 400, fontSize: '1.1rem', textAlign: 'center' }}>{index + 1}</Typography>
             <TextField
               label="Name"
               placeholder="e.g. Store"
@@ -162,7 +162,7 @@ const ConsumerLocationStepsPage = ({ token }) => {
           borderColor: dirty ? 'warning.main' : 'divider',
         }}
       >
-        <Typography color={dirty ? 'warning.main' : 'text.secondary'} sx={{ fontWeight: dirty ? 600 : 400 }}>
+        <Typography color={dirty ? 'warning.main' : 'text.secondary'} sx={{ fontWeight: dirty ? 400 : 400 }}>
           {dirty ? 'You have unsaved changes.' : 'All changes saved.'}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>

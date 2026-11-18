@@ -176,7 +176,7 @@ export default function SetupStrip({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', p: 2, mb: 2, bgcolor: 'rgba(47,128,200,0.08)', borderRadius: 2 }}>
         <Box sx={{ flex: '1 1 320px', minWidth: 0 }}>
           <Typography variant="body2" color="text.secondary">Next step</Typography>
-          <Typography variant="subtitle1" component="p" sx={{ fontWeight: 600 }}>{steps.indexOf(next) + 1}. {next.label}</Typography>
+          <Typography variant="subtitle1" component="p" sx={{ fontWeight: 400 }}>{steps.indexOf(next) + 1}. {next.label}</Typography>
           <Typography color="text.secondary">{next.why}</Typography>
         </Box>
         <Button variant="contained" onClick={next.action} sx={{ flexShrink: 0 }}>{next.button}</Button>
@@ -193,7 +193,7 @@ export default function SetupStrip({
               {s.done
                 ? <CheckCircleIcon sx={{ color: 'success.main' }} aria-label="Done" />
                 : <RadioButtonUncheckedIcon sx={{ color: s === next ? 'primary.main' : 'text.disabled' }} aria-label="Not done yet" />}
-              <Typography sx={{ fontWeight: s === next ? 600 : 400 }} color={s.done ? 'text.secondary' : 'text.primary'}>
+              <Typography sx={{ fontWeight: s === next ? 400 : 400 }} color={s.done ? 'text.secondary' : 'text.primary'}>
                 {i + 1}. {s.label}
               </Typography>
             </ButtonBase>

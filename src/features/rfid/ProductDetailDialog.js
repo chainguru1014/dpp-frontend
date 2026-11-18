@@ -33,7 +33,7 @@ const Empty = () => <Typography color="text.secondary" variant="body2">No inform
 const Fact = ({ label, value }) => (value ? (
   <Box>
     <Typography variant="caption" color="text.secondary" sx={{ textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.4, display: 'block' }}>{label}</Typography>
-    <Typography sx={{ fontWeight: 500, lineHeight: 1.35 }}>{value}</Typography>
+    <Typography sx={{ fontWeight: 400, lineHeight: 1.35 }}>{value}</Typography>
   </Box>
 ) : null);
 
@@ -64,7 +64,7 @@ function ClampedText({ text }) {
 
 const Section = ({ title, children }) => (
   <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%' }}>
-    {title && <Typography sx={{ fontWeight: 700, mb: 1 }}>{title}</Typography>}
+    {title && <Typography sx={{ fontWeight: 400, mb: 1 }}>{title}</Typography>}
     {children}
   </Paper>
 );
@@ -111,7 +111,7 @@ export default function ProductDetailDialog({ open, product, loadProduct, onClos
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="lg" PaperProps={{ sx: { borderRadius: 3 } }}>
       {/* Gradient header bar, the same as the theme's DialogTitle. */}
       <Box sx={{ display: 'flex', alignItems: 'center', px: 3, py: 1, color: '#fff', backgroundImage: 'linear-gradient(135deg, #4a96dd 0%, #1b4f72 100%)' }}>
-        <Typography sx={{ fontWeight: 600, fontSize: '1.1rem', flex: 1 }} noWrap>Product details</Typography>
+        <Typography sx={{ fontWeight: 400, fontSize: '1.1rem', flex: 1 }} noWrap>Product details</Typography>
         {loading && <CircularProgress size={20} sx={{ mr: 1, color: '#fff' }} />}
         <IconButton onClick={onClose} aria-label="Close" sx={{ color: '#fff' }}><CloseIcon /></IconButton>
       </Box>
@@ -169,10 +169,10 @@ export default function ProductDetailDialog({ open, product, loadProduct, onClos
           <Grid item xs={12} md={7}>
             <Stack direction="row" spacing={2} alignItems="flex-start" justifyContent="space-between">
               <Box sx={{ minWidth: 0 }}>
-                {!!brand.name && <Typography sx={{ textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.secondary', fontWeight: 600, fontSize: '0.8rem' }}>{brand.name}</Typography>}
-                <Typography sx={{ fontWeight: 700, fontSize: '1.7rem', lineHeight: 1.2 }}>{info.name || 'Unnamed product'}</Typography>
+                {!!brand.name && <Typography sx={{ textTransform: 'uppercase', letterSpacing: '0.12em', color: 'text.secondary', fontWeight: 400, fontSize: '0.8rem' }}>{brand.name}</Typography>}
+                <Typography sx={{ fontWeight: 400, fontSize: '1.7rem', lineHeight: 1.2 }}>{info.name || 'Unnamed product'}</Typography>
                 <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 0.75 }}>
-                  {!!price && <Typography sx={{ fontWeight: 700, fontSize: '1.35rem', color: 'primary.main' }}>{price}</Typography>}
+                  {!!price && <Typography sx={{ fontWeight: 400, fontSize: '1.35rem', color: 'primary.main' }}>{price}</Typography>}
                   <Chip icon={<VerifiedIcon />} label="Genuine product" color="success" variant="outlined" size="small" />
                 </Stack>
               </Box>
@@ -254,7 +254,7 @@ function JourneyTab({ info }) {
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">Step {i + 1}</Typography>
-                  <Typography sx={{ fontWeight: 700, lineHeight: 1.2 }}>{s.label}</Typography>
+                  <Typography sx={{ fontWeight: 400, lineHeight: 1.2 }}>{s.label}</Typography>
                 </Box>
               </Stack>
               {shown.length ? shown.map(([label, value], ri) => (
@@ -293,7 +293,7 @@ function MaterialsTab({ info }) {
         <Section title="Material origins">
           {origins.length ? origins.map((o, i) => (
             <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', gap: 2, py: 1, borderBottom: i < origins.length - 1 ? 1 : 0, borderColor: 'divider' }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>{o.material || '—'}</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 400 }}>{o.material || '—'}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'right' }}>{[o.country || o.origin, o.companyName].filter(Boolean).join(' · ') || '—'}</Typography>
             </Box>
           )) : <Empty />}
@@ -333,7 +333,7 @@ function OriginTab({ info }) {
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 1.5 }}>
               {tiles.map(([label, value]) => (
                 <Box key={label} sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 1.5 }}>
-                  <Typography sx={{ fontWeight: 700, fontSize: '1.15rem', color: 'primary.main' }}>{value}</Typography>
+                  <Typography sx={{ fontWeight: 400, fontSize: '1.15rem', color: 'primary.main' }}>{value}</Typography>
                   <Typography variant="body2" color="text.secondary">{label}</Typography>
                 </Box>
               ))}
@@ -356,7 +356,7 @@ function CareTab({ info }) {
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
               {icons.map((id, i) => (
                 <Box key={`${id}-${i}`} sx={{ width: 76, textAlign: 'center' }}>
-                  <Box sx={{ width: 52, height: 52, mx: 'auto', borderRadius: 2, border: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>
+                  <Box sx={{ width: 52, height: 52, mx: 'auto', borderRadius: 2, border: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 400 }}>
                     {CARE_SYMBOL_GLYPH[id] || '?'}
                   </Box>
                   <Typography variant="caption" color="text.secondary">{CARE_SYMBOL_LABEL[id] || id}</Typography>
@@ -398,7 +398,7 @@ function ReuseTab({ info }) {
                 <Box sx={{ width: 40, height: 40, borderRadius: 2, bgcolor: 'grey.100', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {Icon && <Icon color="primary" />}
                 </Box>
-                <Typography sx={{ fontWeight: 700 }}>{d.meta.shopperTitle}</Typography>
+                <Typography sx={{ fontWeight: 400 }}>{d.meta.shopperTitle}</Typography>
               </Stack>
               <Stack spacing={1.25}>
                 {facts.map(([label, value]) => <Fact key={label} label={label} value={value} />)}
@@ -442,7 +442,7 @@ function ComplianceTab({ info }) {
               <Stack key={i} direction="row" spacing={1.25} sx={{ py: 1, borderBottom: i < certifications.length - 1 ? 1 : 0, borderColor: 'divider' }}>
                 <VerifiedIcon sx={{ color: expired ? 'warning.main' : 'success.main', mt: 0.25 }} />
                 <Box>
-                  <Typography sx={{ fontWeight: 600 }}>{c.title || '—'}</Typography>
+                  <Typography sx={{ fontWeight: 400 }}>{c.title || '—'}</Typography>
                   {!!meta && <Typography variant="body2" color={expired ? 'warning.main' : 'text.secondary'}>{meta}</Typography>}
                   {!!c.content && <Typography variant="body2" color="text.secondary">{c.content}</Typography>}
                 </Box>

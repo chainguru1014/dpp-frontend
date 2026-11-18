@@ -27,7 +27,7 @@ export function BrandPickerGrid({ options = [], selectedId, onPick, title = 'Cho
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 2 }}>
-        <Typography sx={{ fontSize: 18, fontWeight: 700, color: '#16324a' }}>{title}</Typography>
+        <Typography sx={{ fontSize: 18, fontWeight: 400, color: '#16324a' }}>{title}</Typography>
         <TextField
           placeholder="Search by brand or industry"
           inputProps={{ 'aria-label': 'Search brands' }}
@@ -60,7 +60,7 @@ export function BrandPickerGrid({ options = [], selectedId, onPick, title = 'Cho
               >
                 <BrandMark brand={o.brand} name={o.name} size={48} />
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography noWrap sx={{ fontWeight: 700, fontSize: 16, color: '#16324a' }}>{o.name}</Typography>
+                  <Typography noWrap sx={{ fontWeight: 400, fontSize: 16, color: '#16324a' }}>{o.name}</Typography>
                   <Typography noWrap variant="body2" color="text.secondary">
                     {[o.brand?.tagline, o.companyType ? companyTypeLabel(o.companyType) : ''].filter(Boolean).join(' · ') || 'Brand'}
                   </Typography>
@@ -81,7 +81,7 @@ export function BrandBar({ option, onChange, right }) {
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', p: 1.75, mb: 2.5, bgcolor: '#fff', border: '1px solid #dfe5ec', borderRadius: 4, boxShadow: '0 8px 24px rgba(31,51,97,0.08)' }}>
       <BrandMark brand={option.brand} name={option.name} size={52} />
       <Box sx={{ flex: '1 1 220px', minWidth: 0 }}>
-        <Typography noWrap sx={{ fontWeight: 700, fontSize: 18, color: '#16324a' }}>{option.name}</Typography>
+        <Typography noWrap sx={{ fontWeight: 400, fontSize: 18, color: '#16324a' }}>{option.name}</Typography>
         <Typography noWrap color="text.secondary">
           {[option.brand?.tagline, option.companyType ? companyTypeLabel(option.companyType) : ''].filter(Boolean).join(' · ') || 'Brand'}
         </Typography>

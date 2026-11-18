@@ -124,7 +124,7 @@ export default function PageHelp({ page, isAppUser = false }) {
         onClick={(e) => setAnchor(e.currentTarget)}
         startIcon={<HelpOutlineIcon />}
         sx={{
-          color: '#fff', textTransform: 'none', fontWeight: 500, px: 1.25, mr: 0.5, minWidth: 0, flexShrink: 0,
+          color: '#fff', textTransform: 'none', fontWeight: 400, px: 1.25, mr: 0.5, minWidth: 0, flexShrink: 0,
           '& .MuiButton-startIcon': { mr: { xs: 0, sm: 0.75 } },
           '&:hover': { bgcolor: 'rgba(255,255,255,0.14)' },
         }}

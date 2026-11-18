@@ -107,7 +107,7 @@ export default function MediaLightbox({ open, slides, index = 0, onClose }) {
           <IconButton aria-label="Next" onClick={() => go(1)} sx={{ ...navButtonSx, right: 12 }}>
             <ChevronRightIcon fontSize="large" />
           </IconButton>
-          <Typography sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', color: '#fff', bgcolor: 'rgba(0,0,0,0.5)', px: 1.5, py: 0.25, borderRadius: 2, fontWeight: 600 }}>
+          <Typography sx={{ position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)', color: '#fff', bgcolor: 'rgba(0,0,0,0.5)', px: 1.5, py: 0.25, borderRadius: 2, fontWeight: 400 }}>
             {current + 1} / {count}
           </Typography>
         </>

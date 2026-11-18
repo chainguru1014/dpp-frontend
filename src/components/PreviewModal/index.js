@@ -197,7 +197,7 @@ function DeviceShell({ device, gradient, C, children }) {
   return (
     <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: gradient }}>
       <Box sx={{ height: IPHONE_16.statusBar, flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', px: '32px', pt: '6px' }}>
-        <Typography sx={{ flex: 1, fontSize: 17, fontWeight: 600, color: ink, fontFamily: '-apple-system, "SF Pro Text", "Segoe UI", sans-serif' }}>9:41</Typography>
+        <Typography sx={{ flex: 1, fontSize: 17, fontWeight: 400, color: ink, fontFamily: '-apple-system, "SF Pro Text", "Segoe UI", sans-serif' }}>9:41</Typography>
         <Box aria-hidden sx={{ position: 'absolute', top: 11, left: '50%', transform: 'translateX(-50%)', width: 125, height: 37, borderRadius: 20, bgcolor: '#000' }} />
         <Box aria-hidden sx={{ display: 'flex', alignItems: 'center', gap: '5px', color: ink }}>
           <SignalCellularAltIcon sx={{ fontSize: 19 }} />
@@ -231,7 +231,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
     boxShadow: look.cardStyle === 'shadow' ? '0 4px 10px rgba(27,79,114,0.08)' : 'none',
   };
   const mainButton = useMemo(() => dppButtonFill(theme), [theme]);
-  const cardTitle = { fontSize: 13, fontWeight: 700, color: C.primary, mb: 0.75 };
+  const cardTitle = { fontSize: 13, fontWeight: 400, color: C.primary, mb: 0.75 };
   const buttonRadius = `${look.buttonRadius}px`;
   // Lifecycle tabs in the brand's order, minus the ones it hides.
   const lifecycleTabs = useMemo(() => {
@@ -529,7 +529,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
         {highlightRows.map((row, i) => (
           <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.4 }}>
             <row.Icon sx={{ fontSize: 15, color: C.primary }} />
-            <Typography sx={{ fontSize: 12, color: row.strong ? C.primary : C.text, fontWeight: row.strong ? 700 : 400 }}>{row.text}</Typography>
+            <Typography sx={{ fontSize: 12, color: row.strong ? C.primary : C.text, fontWeight: row.strong ? 400 : 400 }}>{row.text}</Typography>
           </Box>
         ))}
       </Box>
@@ -550,7 +550,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
           <Typography sx={{ ...cardTitle, mb: 0 }}>{brand.name}</Typography>
         </Box>
         {!!brand.detail && <Typography sx={{ fontSize: 12, color: C.text, lineHeight: 1.5 }}>{brand.detail}</Typography>}
-        {!!brand.websiteUrl && <Typography sx={{ fontSize: 12, fontWeight: 600, color: C.primary, mt: 0.75 }}>Visit website ›</Typography>}
+        {!!brand.websiteUrl && <Typography sx={{ fontSize: 12, fontWeight: 400, color: C.primary, mt: 0.75 }}>Visit website ›</Typography>}
       </Box>
     ),
     message: () => (!!look.message.title || !!look.message.body) && (
@@ -560,7 +560,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
       </Box>
     ),
     cta: () => !!look.cta.label && !!look.cta.url && (
-      <Box sx={{ mx: 2, mt: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 700, ...mainButton }}>
+      <Box sx={{ mx: 2, mt: 1, py: 1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 400, ...mainButton }}>
         {look.cta.label}
       </Box>
     ),
@@ -574,7 +574,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
       </Box>
     ),
     actions: () => (
-      <Box sx={{ mx: 2, mt: 1, py: 1.1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 700, ...mainButton }}>
+      <Box sx={{ mx: 2, mt: 1, py: 1.1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 400, ...mainButton }}>
         Brand Company
       </Box>
     ),
@@ -607,7 +607,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
                   <Box sx={{ width: 30, height: 30, borderRadius: '50%', bgcolor: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <it.Icon sx={{ fontSize: 16, color: '#fff' }} />
                   </Box>
-                  <Typography sx={{ flex: 1, fontSize: 13, fontWeight: 700, color: C.text }}>{it.label}</Typography>
+                  <Typography sx={{ flex: 1, fontSize: 13, fontWeight: 400, color: C.text }}>{it.label}</Typography>
                   {isOpen ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
                 </Box>
                 {isOpen && <Box sx={{ pb: 1.5 }}>{it.tab ? renderSection(it.tab) : renderTransportDetail()}</Box>}
@@ -662,7 +662,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
                 {!last && !isOpen && <Box sx={{ width: 2, height: 14, bgcolor: C.primary, my: 0.5, borderRadius: 1 }} />}
               </Box>
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 34 }}>
-                <Typography sx={{ fontSize: 13, fontWeight: 700, color: C.text }}>{it.label}</Typography>
+                <Typography sx={{ fontSize: 13, fontWeight: 400, color: C.text }}>{it.label}</Typography>
                 {isOpen ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
               </Box>
             </Box>
@@ -677,7 +677,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
       <Box sx={{ ...card, mt: 2.5, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
         <InfoOutlinedIcon sx={{ fontSize: 18, color: C.primary, mt: 0.25 }} />
         <Box>
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.text }}>Understanding the Product Lifecycle</Typography>
+          <Typography sx={{ fontSize: 12, fontWeight: 400, color: C.text }}>Understanding the Product Lifecycle</Typography>
           <Typography sx={{ fontSize: 11, color: C.muted, mt: 0.25 }}>This page summarizes your product's full lifecycle journey. Tap any step to explore details.</Typography>
         </Box>
       </Box>
@@ -693,7 +693,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
             {careIcons.map((id, i) => (
               <Box key={`${id}-${i}`} sx={{ width: 56, textAlign: 'center' }}>
                 <Box sx={{ width: 40, height: 40, borderRadius: 1.5, border: `1px solid ${C.border}`, mx: 'auto', mb: 0.5, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.text }}>{CARE_SYMBOL_GLYPH[id] || '?'}</Typography>
+                  <Typography sx={{ fontSize: 12, fontWeight: 400, color: C.text }}>{CARE_SYMBOL_GLYPH[id] || '?'}</Typography>
                 </Box>
                 <Typography sx={{ fontSize: 9, color: C.muted, lineHeight: 1.1 }}>{CARE_SYMBOL_LABEL[id] || id}</Typography>
               </Box>
@@ -714,9 +714,9 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
         )) : <Typography sx={{ fontSize: 11, color: C.muted }}>No data yet.</Typography>}
       </Box>
       <Box sx={{ ...card, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-        <EcoIcon sx={{ fontSize: 18, color: '#2e7d32', mt: 0.25 }} />
+        <EcoIcon sx={{ fontSize: 18, color: '#1b4f72', mt: 0.25 }} />
         <Box>
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.text }}>Sustainability & Help</Typography>
+          <Typography sx={{ fontSize: 12, fontWeight: 400, color: C.text }}>Sustainability & Help</Typography>
           <Typography sx={{ fontSize: 11, color: C.muted, mt: 0.25 }}>Proper care extends the life of your product and reduces environmental impact.</Typography>
         </Box>
       </Box>
@@ -754,7 +754,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
                   >
                     <HubIcon sx={{ fontSize: 18, color: C.primary }} />
                     <Box sx={{ flex: 1 }}>
-                      <Typography sx={{ fontSize: 12, fontWeight: 600, color: C.text }}>{o.material || '—'}</Typography>
+                      <Typography sx={{ fontSize: 12, fontWeight: 400, color: C.text }}>{o.material || '—'}</Typography>
                       <Typography sx={{ fontSize: 10, color: C.muted }}>{[o.country || o.origin, o.companyName].filter(Boolean).join(' · ') || '—'}</Typography>
                     </Box>
                     {isOpen ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
@@ -791,9 +791,9 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
       )}
 
       <Box sx={{ ...card, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-        <EcoIcon sx={{ fontSize: 18, color: '#2e7d32', mt: 0.25 }} />
+        <EcoIcon sx={{ fontSize: 18, color: '#1b4f72', mt: 0.25 }} />
         <Box>
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.text }}>Responsible Sourcing</Typography>
+          <Typography sx={{ fontSize: 12, fontWeight: 400, color: C.text }}>Responsible Sourcing</Typography>
           <Typography sx={{ fontSize: 11, color: C.muted, mt: 0.25 }}>Materials are sourced with care for people and the environment.</Typography>
         </Box>
       </Box>
@@ -818,7 +818,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
                   <Icon sx={{ fontSize: 16, color: C.primary }} />
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: C.text }}>{d.meta.shopperTitle}</Typography>
+                  <Typography sx={{ fontSize: 12, fontWeight: 400, color: C.text }}>{d.meta.shopperTitle}</Typography>
                 </Box>
                 {open ? <ExpandLessIcon sx={{ fontSize: 18, color: C.muted }} /> : <ExpandMoreIcon sx={{ fontSize: 18, color: C.muted }} />}
               </Box>
@@ -843,13 +843,13 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
                   )}
                   <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mt: 1 }}>
                     {d.acceptRequests && (
-                      <Box sx={{ ...mainButton, borderRadius: buttonRadius, px: 1.25, py: 0.6, fontSize: 11, fontWeight: 600 }}>{d.meta.button}</Box>
+                      <Box sx={{ ...mainButton, borderRadius: buttonRadius, px: 1.25, py: 0.6, fontSize: 11, fontWeight: 400 }}>{d.meta.button}</Box>
                     )}
                     {!!d.url && (
                       <Box
                         role="button"
                         onClick={() => window.open(d.url, '_blank', 'noopener,noreferrer')}
-                        sx={{ border: `1px solid ${C.primary}`, color: C.primary, borderRadius: buttonRadius, px: 1.25, py: 0.6, fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+                        sx={{ border: `1px solid ${C.primary}`, color: C.primary, borderRadius: buttonRadius, px: 1.25, py: 0.6, fontSize: 11, fontWeight: 400, cursor: 'pointer' }}
                       >
                         Open website
                       </Box>
@@ -864,7 +864,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
       <Box sx={{ ...card, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
         <HelpOutlineIcon sx={{ fontSize: 18, color: C.primary, mt: 0.25 }} />
         <Box>
-          <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.text }}>Need Help?</Typography>
+          <Typography sx={{ fontSize: 12, fontWeight: 400, color: C.text }}>Need Help?</Typography>
           <Typography sx={{ fontSize: 11, color: C.muted, mt: 0.25 }}>Learn how to extend the life or responsibly dispose of your product.</Typography>
         </Box>
       </Box>
@@ -910,7 +910,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
         <Box sx={{ ...card, display: 'flex', gap: 1, alignItems: 'flex-start' }}>
           <VerifiedIcon sx={{ fontSize: 18, color: C.primary, mt: 0.25 }} />
           <Box>
-            <Typography sx={{ fontSize: 12, fontWeight: 700, color: C.text }}>Verified Data</Typography>
+            <Typography sx={{ fontSize: 12, fontWeight: 400, color: C.text }}>Verified Data</Typography>
             <Typography sx={{ fontSize: 11, color: C.muted, mt: 0.25 }}>This product's traceability data is verified using the digital passport.</Typography>
           </Box>
         </Box>
@@ -932,10 +932,10 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
           const meta = [c.issuer && `Issued by ${c.issuer}`, c.number && `Certificate no. ${c.number}`, c.validUntil && `${expired ? 'Expired' : 'Valid until'} ${c.validUntil}`].filter(Boolean).join(' · ');
           return (
             <Box key={i} sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', py: 0.75, borderBottom: i < certifications.length - 1 ? `1px solid ${C.border}` : 'none' }}>
-              <VerifiedIcon sx={{ fontSize: 18, color: expired ? '#b26a00' : '#2e7d32', mt: 0.25 }} />
+              <VerifiedIcon sx={{ fontSize: 18, color: expired ? '#1b4f72' : '#1b4f72', mt: 0.25 }} />
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: 12, fontWeight: 600, color: C.text }}>{c.title || '—'}{covered.length ? ` (${covered.join(', ')})` : ''}</Typography>
-                {!!meta && <Typography sx={{ fontSize: 10, color: expired ? '#b26a00' : C.muted }}>{meta}</Typography>}
+                <Typography sx={{ fontSize: 12, fontWeight: 400, color: C.text }}>{c.title || '—'}{covered.length ? ` (${covered.join(', ')})` : ''}</Typography>
+                {!!meta && <Typography sx={{ fontSize: 10, color: expired ? '#1b4f72' : C.muted }}>{meta}</Typography>}
                 {!!c.content && <Typography sx={{ fontSize: 10, color: C.muted }}>{c.content}</Typography>}
               </Box>
             </Box>
@@ -1007,7 +1007,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
                 <ArrowBackPreviewIcon fontSize="small" />
               </Button>
             ) : <Box sx={{ width: 40, flexShrink: 0 }} />}
-            <Typography id="preview-modal-title" noWrap sx={{ color: C.onHeader, fontSize: 16, fontWeight: 600, flex: 1, textAlign: 'center' }}>
+            <Typography id="preview-modal-title" noWrap sx={{ color: C.onHeader, fontSize: 16, fontWeight: 400, flex: 1, textAlign: 'center' }}>
               {view === 'lifecycle' ? 'Product Lifecycle' : 'Product Overview'}
             </Typography>
             {onClose ? (
@@ -1072,7 +1072,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
                 sx={{ flex: 1, position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               >
                 <tab.Icon sx={{ fontSize: 22, color: active ? C.primary : '#7a8aa3' }} />
-                <Typography sx={{ fontSize: 10, mt: 0.4, color: active ? C.primary : '#333', fontWeight: active ? 600 : 400 }}>
+                <Typography sx={{ fontSize: 10, mt: 0.4, color: active ? C.primary : '#333', fontWeight: active ? 400 : 400 }}>
                   {tab.label}
                 </Typography>
               </Box>
@@ -1201,7 +1201,7 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
       {back ? (
         <Button onClick={back} aria-label="Back" sx={{ minWidth: 40, color: C.onHeader }}><ArrowBackPreviewIcon fontSize="small" /></Button>
       ) : <Box sx={{ width: 40 }} />}
-      <Typography noWrap sx={{ flex: 1, textAlign: 'center', color: C.onHeader, fontSize: 16, fontWeight: 600 }}>{title}</Typography>
+      <Typography noWrap sx={{ flex: 1, textAlign: 'center', color: C.onHeader, fontSize: 16, fontWeight: 400 }}>{title}</Typography>
       {onClose ? (
         <Button onClick={onClose} aria-label="Close preview" sx={{ minWidth: 40, color: C.onHeader }}><CloseIcon fontSize="small" /></Button>
       ) : <Box sx={{ width: 40 }} />}
@@ -1209,7 +1209,7 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
   );
   const pill = (label, onClick) => (
     <Box component="button" type="button" onClick={onClick}
-      sx={{ width: '100%', minHeight: 46, border: 0, borderRadius: '14px', background: GRADIENT, color: C.onHeader, font: 'inherit', fontSize: 16, fontWeight: 600, cursor: 'pointer', boxShadow: '0 6px 14px rgba(27,79,114,0.22)' }}>
+      sx={{ width: '100%', minHeight: 46, border: 0, borderRadius: '14px', background: GRADIENT, color: C.onHeader, font: 'inherit', fontSize: 16, fontWeight: 400, cursor: 'pointer', boxShadow: '0 6px 14px rgba(27,79,114,0.22)' }}>
       {label}
     </Box>
   );
@@ -1233,21 +1233,21 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
               ? <Box component="img" src={getFileUrl(brand.logoUrl)} alt="" sx={{ width: 48, height: 48, objectFit: 'contain', borderRadius: '12px', bgcolor: '#f2f5f9' }} />
               : <Box sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: '#f2f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8a97aa' }}><StorefrontIcon /></Box>}
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 800, color: C.primary, fontSize: 17 }} noWrap>{brand.name || '—'}</Typography>
+              <Typography sx={{ fontWeight: 400, color: C.primary, fontSize: 17 }} noWrap>{brand.name || '—'}</Typography>
               {!!brand.detail && <Typography sx={{ fontSize: 13, color: '#5c6b84', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{brand.detail}</Typography>}
             </Box>
           </Box>
           {!!website && (
-            <Box sx={{ mt: 1.25, display: 'flex', alignItems: 'center', gap: 0.75, height: 38, px: 1.5, borderRadius: '19px', border: `1.5px solid ${C.primary}`, color: C.primary, fontSize: 14, fontWeight: 600 }}>
+            <Box sx={{ mt: 1.25, display: 'flex', alignItems: 'center', gap: 0.75, height: 38, px: 1.5, borderRadius: '19px', border: `1.5px solid ${C.primary}`, color: C.primary, fontSize: 14, fontWeight: 400 }}>
               <LanguageIcon sx={{ fontSize: 18 }} /><Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{website}</Box>
             </Box>
           )}
         </Box>
-        <Typography sx={{ fontWeight: 800, color: C.primary, fontSize: 15 }}>Featured products</Typography>
+        <Typography sx={{ fontWeight: 400, color: C.primary, fontSize: 15 }}>Featured products</Typography>
         <Box sx={{ bgcolor: '#fff', borderRadius: '14px', p: 1, display: 'flex', gap: 1.25, alignItems: 'center', boxShadow: '0 3px 8px rgba(27,79,114,0.08)' }}>
           {images[0] ? <Box component="img" src={src(images[0])} alt="" sx={{ width: 52, height: 52, objectFit: 'cover', borderRadius: '10px' }} /> : <Box sx={{ width: 52, height: 52, borderRadius: '10px', bgcolor: '#f2f5f9' }} />}
           <Box sx={{ minWidth: 0 }}>
-            <Typography noWrap sx={{ fontWeight: 700, color: C.primary, fontSize: 14 }}>{p.name || '—'}</Typography>
+            <Typography noWrap sx={{ fontWeight: 400, color: C.primary, fontSize: 14 }}>{p.name || '—'}</Typography>
             <Typography noWrap sx={{ fontSize: 12.5, color: '#5c6b84' }}>{p.model || brand.name || ''}</Typography>
           </Box>
         </Box>
@@ -1268,7 +1268,7 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
       {!!brand.name && pill('Company', () => setPage('brand'))}
       <Box sx={{ display: 'flex', gap: 1 }}>
         {[['Like', ThumbUpOffAltIcon], ['Cart', AddShoppingCartIcon], ['Not for me', ThumbDownOffAltIcon]].map(([l, Icon]) => (
-          <Box key={l} sx={{ flex: 1, minWidth: 0, height: 44, borderRadius: '14px', bgcolor: 'rgba(0,0,0,0.045)', color: C.text || '#33415c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, px: 0.5, fontSize: 14, fontWeight: 500, whiteSpace: 'nowrap', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+          <Box key={l} sx={{ flex: 1, minWidth: 0, height: 44, borderRadius: '14px', bgcolor: 'rgba(0,0,0,0.045)', color: C.text || '#33415c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, px: 0.5, fontSize: 14, fontWeight: 400, whiteSpace: 'nowrap', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
             <Icon sx={{ fontSize: 20, flexShrink: 0 }} />
             <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{l}</Box>
           </Box>

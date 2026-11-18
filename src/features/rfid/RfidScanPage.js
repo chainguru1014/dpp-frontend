@@ -29,7 +29,7 @@ const STATUS_TEXT = {
   reading: 'Reading tags',
   failed: 'Connection failed',
 };
-const STATUS_COLOR = { idle: '#8a94a6', connecting: '#d9822b', reading: '#2e7d32', failed: '#c62828' };
+const STATUS_COLOR = { idle: '#8a94a6', connecting: '#1b4f72', reading: '#1b4f72', failed: '#1b4f72' };
 
 // RFID Scan: connect a reader and list every product whose tag passes it.
 // The reader is driven exactly as in the staff app's RFID capture (see
@@ -163,7 +163,7 @@ export default function RfidScanPage() {
           <Typography sx={{ fontSize: { xs: '3.5rem', md: '4.5rem' }, fontWeight: 300, lineHeight: 1, color: 'text.primary' }} aria-live="polite">
             {registered}
           </Typography>
-          <Typography sx={{ ...TEXT, mt: 1, letterSpacing: '0.18em', fontWeight: 600, color: 'text.secondary' }}>
+          <Typography sx={{ ...TEXT, mt: 1, letterSpacing: '0.18em', fontWeight: 400, color: 'text.secondary' }}>
             {registered === 1 ? 'PRODUCT SCANNED' : 'PRODUCTS SCANNED'}
           </Typography>
           {unregistered > 0 && (
@@ -215,7 +215,7 @@ export default function RfidScanPage() {
         </Paper>
 
         <Paper sx={{ p: { xs: 2, md: 2.5 }, minHeight: { md: 'calc(100vh - 230px)' } }}>
-          <Typography sx={{ ...TEXT, fontWeight: 700, mb: 1.5 }}>Scanned products</Typography>
+          <Typography sx={{ ...TEXT, fontWeight: 400, mb: 1.5 }}>Scanned products</Typography>
           {items.length === 0 ? (
             <Box sx={{ py: 8, textAlign: 'center' }}>
               <RfidIcon sx={{ fontSize: 44, color: 'text.disabled' }} />
@@ -268,7 +268,7 @@ function ScannedRow({ item, onOpen }) {
         )}
       </Box>
       <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ ...TEXT, fontWeight: 700 }} noWrap>
+        <Typography sx={{ ...TEXT, fontWeight: 400 }} noWrap>
           {p ? p.name || 'Unnamed product' : p === null ? 'Unregistered tag' : 'Looking up…'}
           {!!p?.brandInfo?.name && <Box component="span" sx={{ fontWeight: 400, color: 'text.secondary' }}>{` (Brand: ${p.brandInfo.name})`}</Box>}
         </Typography>
@@ -277,7 +277,7 @@ function ScannedRow({ item, onOpen }) {
         </Typography>
       </Box>
       {p === null && <Chip size="small" label="Not registered" variant="outlined" sx={TEXT} />}
-      {!!price && <Typography sx={{ ...TEXT, fontWeight: 700, color: 'primary.main', whiteSpace: 'nowrap' }}>{price}</Typography>}
+      {!!price && <Typography sx={{ ...TEXT, fontWeight: 400, color: 'primary.main', whiteSpace: 'nowrap' }}>{price}</Typography>}
       {p && (
         <Button size="small" variant="outlined" endIcon={<ChevronRightIcon />} onClick={onOpen} sx={{ ...TEXT, whiteSpace: 'nowrap' }}>
           Product details
@@ -368,7 +368,7 @@ function ReaderSettingsDialog({ open, onClose }) {
             )}
             <FormControlLabel control={<Switch checked={!!form.autoConnectOnStartup} onChange={setFlag('autoConnectOnStartup')} />} label="Connect when the service starts" />
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>Reader admin login</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 400 }}>Reader admin login</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
                 The reader allows one connection at a time. When another device is connected, Connect uses this login to make the reader drop it.
               </Typography>

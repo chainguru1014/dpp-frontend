@@ -124,7 +124,7 @@ export default function PrintDialog({
                         flexShrink: 0,
                     }}
                 >
-                    <Typography id="print-dialog-title" sx={{ fontWeight: 600, fontSize: 20 }}>{title}</Typography>
+                    <Typography id="print-dialog-title" sx={{ fontWeight: 400, fontSize: 20 }}>{title}</Typography>
                     <IconButton onClick={() => setOpen(false)} sx={{ color: '#fff' }} aria-label="Close" disabled={busy}>
                         <CloseIcon />
                     </IconButton>

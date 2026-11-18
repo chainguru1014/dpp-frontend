@@ -86,7 +86,7 @@ export function SecurityFigures({ totals, data }) {
           rows={data.countries.map((c) => ({ label: c.country, value: c.count }))}
           unit="scans"
           unitOne="scan"
-          color="#3a9d6a"
+          color="#1b4f72"
           emptyText="No located scans in this period."
         />
       </Section>
@@ -129,7 +129,7 @@ function Bars({ rows, unit, unitOne = unit, color = '#2f80c8', emptyText }) {
           <Box sx={{ flex: 1, height: 18, bgcolor: '#eef1f6', borderRadius: 1, overflow: 'hidden' }}>
             <Box sx={{ width: `${(r.value / max) * 100}%`, height: '100%', bgcolor: color, borderRadius: 1, minWidth: r.value ? 4 : 0 }} />
           </Box>
-          <Typography variant="body2" sx={{ width: 90, flexShrink: 0, textAlign: 'right', fontWeight: 600 }}>
+          <Typography variant="body2" sx={{ width: 90, flexShrink: 0, textAlign: 'right', fontWeight: 400 }}>
             {r.value.toLocaleString()} {r.value === 1 ? unitOne : unit}
           </Typography>
         </Box>

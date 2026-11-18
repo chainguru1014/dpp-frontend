@@ -21,11 +21,11 @@ function LinkRow({ label, href, color, live, linkText = 'Open ›' }) {
     <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1.5, py: 0.5 }}>
       <Typography sx={{ fontSize: 12, opacity: 0.7, color, fontFamily: 'inherit', wordBreak: 'break-word' }}>{label}</Typography>
       {live ? (
-        <Box component="a" href={href} target="_blank" rel="noopener noreferrer" sx={{ fontSize: 12, fontWeight: 600, color, fontFamily: 'inherit', flexShrink: 0 }}>
+        <Box component="a" href={href} target="_blank" rel="noopener noreferrer" sx={{ fontSize: 12, fontWeight: 400, color, fontFamily: 'inherit', flexShrink: 0 }}>
           {linkText}
         </Box>
       ) : (
-        <Typography sx={{ fontSize: 12, fontWeight: 600, color, fontFamily: 'inherit', flexShrink: 0 }}>{linkText}</Typography>
+        <Typography sx={{ fontSize: 12, fontWeight: 400, color, fontFamily: 'inherit', flexShrink: 0 }}>{linkText}</Typography>
       )}
     </Box>
   );
@@ -36,7 +36,7 @@ function Row({ label, value, color }) {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1.5, py: 0.5 }}>
       <Typography sx={{ fontSize: 12, opacity: 0.7, color, fontFamily: 'inherit' }}>{label}</Typography>
-      <Typography sx={{ fontSize: 12, fontWeight: 600, color, textAlign: 'right', fontFamily: 'inherit', wordBreak: 'break-word' }}>{value}</Typography>
+      <Typography sx={{ fontSize: 12, fontWeight: 400, color, textAlign: 'right', fontFamily: 'inherit', wordBreak: 'break-word' }}>{value}</Typography>
     </Box>
   );
 }
@@ -100,7 +100,7 @@ function sectionBody(key, p, color, live) {
       <>
         {services.map((sv) => (
           <Box key={sv.kind} sx={{ mb: 1 }}>
-            <Typography sx={{ fontSize: 13, fontWeight: 700, color, fontFamily: 'inherit' }}>{sv.meta.shopperTitle}</Typography>
+            <Typography sx={{ fontSize: 13, fontWeight: 400, color, fontFamily: 'inherit' }}>{sv.meta.shopperTitle}</Typography>
             {text(sv.summary) && <Typography sx={{ fontSize: 12, color, fontFamily: 'inherit' }}>{sv.summary}</Typography>}
             {text(sv.cost) && <Row label={sv.meta.cost.label} value={sv.cost} color={color} />}
             {text(sv.time) && <Row label={sv.meta.time.label} value={sv.time} color={color} />}
@@ -184,17 +184,17 @@ export function DppPassportView({ product, theme, live = false, itemId = '', blo
       <Box sx={{ fontFamily: dppFontCss(t.fontFamily) }}>
         {blocked ? (
           // The brand marked this label as a suspected copy.
-          <Box role="alert" sx={{ bgcolor: '#fdecec', color: '#d32f2f', border: '1px solid #d32f2f', borderRadius: 2, px: 1.25, py: 0.9, mb: 1.5 }}>
-            <Typography sx={{ fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Check this product carefully</Typography>
+          <Box role="alert" sx={{ bgcolor: '#eef5fd', color: '#1b4f72', border: '1px solid #1b4f72', borderRadius: 2, px: 1.25, py: 0.9, mb: 1.5 }}>
+            <Typography sx={{ fontSize: 12, fontWeight: 400, fontFamily: 'inherit' }}>Check this product carefully</Typography>
             <Typography sx={{ fontSize: 11, fontFamily: 'inherit' }}>
               This code has been scanned in an unusual pattern. It may be a copy of a genuine label.
             </Typography>
           </Box>
         ) : (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#e7f4e8', color: '#2e7d32', borderRadius: 2, px: 1.25, py: 0.9, mb: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#eef5fd', color: '#1b4f72', borderRadius: 2, px: 1.25, py: 0.9, mb: 1.5 }}>
           <VerifiedUserIcon sx={{ fontSize: 20 }} />
           <Box>
-            <Typography sx={{ fontSize: 12, fontWeight: 700, fontFamily: 'inherit' }}>Product ID authenticated</Typography>
+            <Typography sx={{ fontSize: 12, fontWeight: 400, fontFamily: 'inherit' }}>Product ID authenticated</Typography>
             {text(itemId) && <Typography sx={{ fontSize: 11, fontFamily: 'inherit' }}>ID: {itemId}</Typography>}
           </Box>
         </Box>
@@ -209,12 +209,12 @@ export function DppPassportView({ product, theme, live = false, itemId = '', blo
           {(text(brand.name) || text(brand.logoUrl)) && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
               {text(brand.logoUrl) && <Box component="img" src={getFileUrl(brand.logoUrl)} alt="" sx={{ width: 20, height: 20, objectFit: 'contain' }} />}
-              <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: 0.5, textTransform: 'uppercase', color: t.textColor, opacity: 0.8, fontFamily: 'inherit' }}>
+              <Typography sx={{ fontSize: 11, fontWeight: 400, letterSpacing: 0.5, textTransform: 'uppercase', color: t.textColor, opacity: 0.8, fontFamily: 'inherit' }}>
                 {brand.name}
               </Typography>
             </Box>
           )}
-          <Typography sx={{ fontSize: 18, fontWeight: 700, color: t.accent, lineHeight: 1.25, fontFamily: 'inherit' }}>
+          <Typography sx={{ fontSize: 18, fontWeight: 400, color: t.accent, lineHeight: 1.25, fontFamily: 'inherit' }}>
             {text(p.name) || 'Product name'}
           </Typography>
           {subtitle && <Typography sx={{ fontSize: 12, color: t.textColor, fontFamily: 'inherit' }}>{subtitle}</Typography>}
@@ -244,7 +244,7 @@ export function DppPassportView({ product, theme, live = false, itemId = '', blo
                   py: 1.1,
                   fontFamily: 'inherit',
                   fontSize: 13,
-                  fontWeight: 600,
+                  fontWeight: 400,
                 }}
               >
                 {dppSectionLabel(key)}

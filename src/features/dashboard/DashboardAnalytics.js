@@ -21,7 +21,7 @@ import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 // Clearly different hues (was five similar blue-greys, hard to tell apart,
 // especially for older eyes or colour-blind users). Navy/blue lead so the
 // palette still matches the app.
-const COLORS = ['#1b4f72', '#2f80c8', '#d9822b', '#3a9d6a', '#8a5cc2', '#c0392b', '#6b7a93'];
+const COLORS = ['#1b4f72', '#2f80c8', '#1b4f72', '#1b4f72', '#1b4f72', '#1b4f72', '#6b7a93'];
 
 const CATEGORY_LABELS = {
   denim: 'Denim',
@@ -47,25 +47,25 @@ const KpiContent = ({ icon: Icon, label, value, delta, sub, linked }) => (
       <Icon sx={{ fontSize: 24, color: 'primary.main' }} />
     </Box>
     <Box sx={{ minWidth: 0, flex: 1 }}>
-      <Typography sx={{ color: 'primary.main', fontWeight: 700, fontSize: '1.45rem', lineHeight: 1.15 }}>
+      <Typography sx={{ color: 'primary.main', fontWeight: 400, fontSize: '1.45rem', lineHeight: 1.15 }}>
         {value}
       </Typography>
       <Typography sx={{ fontSize: '0.95rem', color: 'text.secondary', lineHeight: 1.3 }}>
         {label}
       </Typography>
       {delta != null && (
-        <Typography variant="caption" sx={{ color: delta > 0 ? 'success.main' : delta < 0 ? 'error.main' : 'text.secondary', fontWeight: 600, display: 'block', whiteSpace: 'nowrap' }}>
+        <Typography variant="caption" sx={{ color: delta > 0 ? 'success.main' : delta < 0 ? 'error.main' : 'text.secondary', fontWeight: 400, display: 'block', whiteSpace: 'nowrap' }}>
           {delta === 0 ? 'No change in 30 days' : `${delta > 0 ? '▲ +' : '▼ '}${delta}% in 30 days`}
         </Typography>
       )}
       {sub && (
-        <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 600, display: 'block' }}>
+        <Typography variant="caption" sx={{ color: 'success.main', fontWeight: 400, display: 'block' }}>
           {sub}
         </Typography>
       )}
     </Box>
     {linked && (
-      <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', alignItems: 'center', color: 'primary.main', fontSize: '0.85rem', fontWeight: 500 }}>
+      <Box sx={{ position: 'absolute', top: 8, right: 8, display: 'flex', alignItems: 'center', color: 'primary.main', fontSize: '0.85rem', fontWeight: 400 }}>
         View<ChevronRightIcon fontSize="small" />
       </Box>
     )}
@@ -129,7 +129,7 @@ const Donut = ({ segments, labels = CATEGORY_LABELS }) => {
             offset += dash;
             return el;
           })}
-          <text x="70" y="68" textAnchor="middle" fontSize="20" fontWeight="700" fill="#1b4f72">{total}</text>
+          <text x="70" y="68" textAnchor="middle" fontSize="20" fontWeight="400" fill="#1b4f72">{total}</text>
           <text x="70" y="86" textAnchor="middle" fontSize="11" fill="#51617a">scans</text>
         </svg>
       </Box>
@@ -140,7 +140,7 @@ const Donut = ({ segments, labels = CATEGORY_LABELS }) => {
             <Typography variant="body2" sx={{ flex: 1 }}>
               {labels[s.category] || s.category}
             </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+            <Typography variant="body2" sx={{ fontWeight: 400, whiteSpace: 'nowrap' }}>
               {s.count} <Typography component="span" variant="body2" color="text.secondary">({Math.round((s.count / total) * 100)}%)</Typography>
             </Typography>
           </Box>
@@ -244,7 +244,7 @@ const CountryBars = ({ items }) => {
         <Box key={it.country}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.4, gap: 1 }}>
             <Typography variant="body1">{it.country}</Typography>
-            <Typography variant="body1" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+            <Typography variant="body1" sx={{ fontWeight: 400, whiteSpace: 'nowrap' }}>
               {it.count} <Typography component="span" variant="body2" color="text.secondary">({Math.round((it.count / total) * 100)}%)</Typography>
             </Typography>
           </Box>

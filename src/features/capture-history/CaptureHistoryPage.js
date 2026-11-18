@@ -158,7 +158,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
 
   const Stat = ({ label, value }) => (
     <Paper variant="outlined" sx={{ p: 2, textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-      <Typography sx={{ fontSize: '1.8rem', fontWeight: 700, color: 'primary.main', lineHeight: 1.2 }}>{value}</Typography>
+      <Typography sx={{ fontSize: '1.8rem', fontWeight: 400, color: 'primary.main', lineHeight: 1.2 }}>{value}</Typography>
       <Typography color="text.secondary">{label}</Typography>
     </Paper>
   );
@@ -216,7 +216,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
                     }}
                   >
                     <Box sx={{ width: { xs: 110, sm: 140 }, flexShrink: 0, minWidth: 0 }}>
-                      <Typography noWrap title={w.label} sx={{ fontWeight: on ? 700 : 500 }}>{w.label}</Typography>
+                      <Typography noWrap title={w.label} sx={{ fontWeight: on ? 400 : 400 }}>{w.label}</Typography>
                       {isAdmin && w.companyName && (
                         <Typography variant="body2" color="text.secondary" noWrap component="div">{w.companyName}</Typography>
                       )}
@@ -224,7 +224,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
                     <Box sx={{ flex: 1, bgcolor: '#eef2f8', borderRadius: 1, height: 12, overflow: 'hidden' }}>
                       <Box sx={{ width: `${(w.total / maxTotal) * 100}%`, bgcolor: '#2f80c8', height: '100%' }} />
                     </Box>
-                    <Typography sx={{ width: 36, textAlign: 'right', fontWeight: 600 }}>{w.total}</Typography>
+                    <Typography sx={{ width: 36, textAlign: 'right', fontWeight: 400 }}>{w.total}</Typography>
                   </ButtonBase>
                 );
               })

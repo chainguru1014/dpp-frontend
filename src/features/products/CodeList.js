@@ -31,7 +31,7 @@ export default function CodeList({ codes = [], printedAmount = 0, identifiersByQ
   };
   return (
     <Box sx={{ bgcolor: '#fff', border: '1px solid #dfe5ec', borderRadius: 3, overflow: 'hidden' }}>
-      <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'minmax(0, 2.4fr) 120px 140px 110px', gap: 2, px: 2, py: 1.25, bgcolor: '#f2f5f9', fontWeight: 600, color: '#16324a', fontSize: 15 }}>
+      <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'minmax(0, 2.4fr) 120px 140px 110px', gap: 2, px: 2, py: 1.25, bgcolor: '#f2f5f9', fontWeight: 400, color: '#16324a', fontSize: 15 }}>
         <span>Code</span><span>Number</span><span>Printed</span><span />
       </Box>
       {codes.map((item) => {
@@ -53,8 +53,8 @@ export default function CodeList({ codes = [], printedAmount = 0, identifiersByQ
             <Typography sx={{ display: { xs: 'none', md: 'block' } }} color="text.secondary">#{item.qrcode_id}</Typography>
             <Box sx={{ display: { xs: 'none', md: 'block' } }}>
               {printed
-                ? <Chip size="small" label="Printed" sx={{ bgcolor: '#e6f4ea', color: '#1e6b34', fontWeight: 600 }} />
-                : <Chip size="small" label="Not printed" sx={{ bgcolor: '#eef3f9', color: '#1b4f72', fontWeight: 600 }} />}
+                ? <Chip size="small" label="Printed" sx={{ bgcolor: '#eef5fd', color: '#1b4f72', fontWeight: 400 }} />
+                : <Chip size="small" label="Not printed" sx={{ bgcolor: '#eef3f9', color: '#1b4f72', fontWeight: 400 }} />}
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
               <Tooltip title="Copy the link">

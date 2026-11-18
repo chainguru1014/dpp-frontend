@@ -15,7 +15,7 @@ export default function ProductBar({ product, onChange, right }) {
         {thumb && <Box component="img" src={getFileUrl(thumb)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
       </Box>
       <Box sx={{ flex: '1 1 220px', minWidth: 0 }}>
-        <Typography noWrap sx={{ fontWeight: 700, fontSize: 18, color: '#16324a' }}>{product.name || 'Untitled product'}</Typography>
+        <Typography noWrap sx={{ fontWeight: 400, fontSize: 18, color: '#16324a' }}>{product.name || 'Untitled product'}</Typography>
         <Typography noWrap color="text.secondary">{[product.model, product.brandInfo?.name].filter(Boolean).join(' · ')}</Typography>
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

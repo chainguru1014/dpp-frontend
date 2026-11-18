@@ -121,7 +121,7 @@ function ProductPickerDialog({ open, products, onClose, onPick }) {
                   sx={{ width: 56, height: 56, borderRadius: 1.5, objectFit: 'cover', bgcolor: '#eef1f6', flexShrink: 0, visibility: thumb ? 'visible' : 'hidden' }}
                 />
                 <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontWeight: 600 }}>{p.name || 'Untitled product'}</Typography>
+                  <Typography sx={{ fontWeight: 400 }}>{p.name || 'Untitled product'}</Typography>
                   <Typography variant="body2" color="text.secondary">
                     {[p.model, p.brandInfo?.name].filter(Boolean).join(' · ')}
                   </Typography>

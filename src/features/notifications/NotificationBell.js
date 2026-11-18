@@ -30,9 +30,9 @@ import NotificationDetailDialog from './NotificationDetailDialog';
 
 const LEVEL_COLOR = {
   info: '#4a96dd',
-  success: '#2e7d32',
-  warning: '#ed6c02',
-  critical: '#d32f2f',
+  success: '#1b4f72',
+  warning: '#1b4f72',
+  critical: '#1b4f72',
 };
 
 const typeIcon = (type, color) => {

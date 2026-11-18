@@ -250,6 +250,7 @@ const InnerPage = () => {
     loginWithApple,
     requestOtp,
     verifyOtp,
+    previewLogin,
     completeProfile,
     saveAiConciergeConsent,
     isAdmin,
@@ -815,6 +816,14 @@ const InnerPage = () => {
   // Returns { ok, message } straight through so the AuthPage OTP UI can show
   // inline state (sent / rate-limited / failed).
   const requestOtpHandler = async (email, mode) => requestOtp(email, mode);
+
+  // Test sign-in (until release): Admin / Company Supervisor / Company
+  // Employee / Consumer, each straight into its test account.
+  const previewLoginHandler = async (role) => {
+    const res = await previewLogin(role);
+    if (res?.ok) handleAuthSuccess(res.user);
+    return res;
+  };
 
   const verifyOtpHandler = async (email, code, mode) => {
     const res = await verifyOtp(email, code, mode);
@@ -1870,6 +1879,7 @@ const InnerPage = () => {
           onAppleCredential={appleCredentialHandler}
           onRequestOtp={requestOtpHandler}
           onVerifyOtp={verifyOtpHandler}
+          onPreviewLogin={previewLoginHandler}
           onOpenPrivacyPreferences={() => setShowPrivacyPreferences(true)}
           activeSlide={authBgSlide}
         />
@@ -1960,7 +1970,7 @@ const InnerPage = () => {
     '& .MuiListItemText-root': { my: 0 },
     '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 42, justifyContent: 'center' },
     '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 26 },
-    '& .MuiListItemText-primary': { fontSize: '1.1rem', fontWeight: 500, color: '#ffffff', [compactMediaQuery]: { fontSize: '1.02rem' } },
+    '& .MuiListItemText-primary': { fontSize: '1.1rem', fontWeight: 400, color: '#ffffff', [compactMediaQuery]: { fontSize: '1.02rem' } },
     '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.16)' },
     '& .MuiListItemButton-root:focus-visible': { outline: '2px solid #ffffff', outlineOffset: -2 },
     '& .MuiListItemButton-root.Mui-selected': {
@@ -1968,7 +1978,7 @@ const InnerPage = () => {
       borderColor: 'rgba(255,255,255,0.7)',
     },
     '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.32)' },
-    '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { fontWeight: 700 },
+    '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { fontWeight: 400 },
     // Items inside a group sit a step in from the group's own row.
     '& .nav-sub .MuiListItemButton-root': { pl: 3 },
     '& .nav-sub .MuiListItemText-primary': { fontSize: '1.02rem', [compactMediaQuery]: { fontSize: '0.98rem' } },
@@ -2085,7 +2095,7 @@ const InnerPage = () => {
             <ListSubheader
               component="div"
               disableSticky
-              sx={{ bgcolor: 'transparent', color: '#ffffff', fontSize: 12.5, fontWeight: 700, letterSpacing: '1.4px', textTransform: 'uppercase', lineHeight: '30px', mt: 1, px: 2.75 }}
+              sx={{ bgcolor: 'transparent', color: '#ffffff', fontSize: 12.5, fontWeight: 400, letterSpacing: '1.4px', textTransform: 'uppercase', lineHeight: '30px', mt: 1, px: 2.75 }}
             >
               {group.title}
             </ListSubheader>
@@ -2172,10 +2182,10 @@ const InnerPage = () => {
             endIcon={<ExpandMoreIcon />}
             sx={{ color: '#fff', textTransform: 'none', px: 1, gap: 0.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.14)' } }}
           >
-            <Avatar src={getFileUrl(company.avatar)} sx={{ width: 34, height: 34, bgcolor: '#ffffff', color: 'primary.main', fontWeight: 700 }}>
+            <Avatar src={getFileUrl(company.avatar)} sx={{ width: 34, height: 34, bgcolor: '#ffffff', color: 'primary.main', fontWeight: 400 }}>
               {!company.avatar && (company.displayName || company.name)?.[0]?.toUpperCase()}
             </Avatar>
-            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, ml: 1, fontWeight: 500 }}>
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, ml: 1, fontWeight: 400 }}>
               {company.displayName || company.name}
             </Box>
           </Button>
@@ -2712,7 +2722,7 @@ const InnerPage = () => {
             <DialogTitle
               id="product-dialog-title"
               sx={editorAsPage
-                ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, backgroundImage: 'none', bgcolor: '#fff', color: '#16324a', fontSize: 26, fontWeight: 700, px: 3, pt: 2, pb: 1.5, borderBottom: '1px solid #e8edf3' }
+                ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, backgroundImage: 'none', bgcolor: '#fff', color: '#16324a', fontSize: 26, fontWeight: 400, px: 3, pt: 2, pb: 1.5, borderBottom: '1px solid #e8edf3' }
                 : { display: 'flex', alignItems: 'center', justifyContent: 'space-between', pr: 1 }}
             >
               {editorAsPage && (
@@ -2756,7 +2766,7 @@ const InnerPage = () => {
                       // Codes belong to a saved product.
                       disabled={mode === 'print' && !isEditing}
                       label={mode === 'print' && !isEditing ? `${label} (save first)` : label}
-                      sx={{ fontWeight: 600, textTransform: 'none', fontSize: '1rem' }}
+                      sx={{ fontWeight: 400, textTransform: 'none', fontSize: '1rem' }}
                     />
                   ))}
                 </Tabs>
@@ -2813,12 +2823,12 @@ const InnerPage = () => {
                         aria-current={on ? 'step' : undefined}
                         sx={{
                           width: '100%', minHeight: 52, display: 'flex', alignItems: 'center', gap: 1.5, px: 1.5, border: 0, borderRadius: 2.5, cursor: 'pointer',
-                          bgcolor: on ? '#eaf2fc' : 'transparent', color: '#16324a', font: 'inherit', fontSize: 15.5, fontWeight: on ? 700 : 500, textAlign: 'left',
+                          bgcolor: on ? '#eaf2fc' : 'transparent', color: '#16324a', font: 'inherit', fontSize: 15.5, fontWeight: on ? 400 : 400, textAlign: 'left',
                           '&:hover': { bgcolor: on ? '#eaf2fc' : '#f2f5f9' },
                         }}
                       >
-                        {state === 'done' ? <CheckCircleIcon sx={{ color: '#2e7d32' }} />
-                          : state === 'need' ? <ErrorOutlineIcon sx={{ color: '#b26a00' }} />
+                        {state === 'done' ? <CheckCircleIcon sx={{ color: '#1b4f72' }} />
+                          : state === 'need' ? <ErrorOutlineIcon sx={{ color: '#1b4f72' }} />
                             : <RadioButtonUncheckedIcon sx={{ color: '#8a97aa' }} />}
                         <span>{i + 1}. {label}</span>
                       </Box>
@@ -3031,7 +3041,7 @@ const InnerPage = () => {
                           <Box component="img" src={getFileUrl(formBrand.logoUrl)} alt=""
                             sx={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'contain', bgcolor: '#eef2f7', border: '1px solid #dfe5ec', flex: 'none' }} />
                         ) : (
-                          <Box aria-hidden sx={{ width: 48, height: 48, borderRadius: '50%', bgcolor: '#16324a', color: '#f3e6c8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', fontWeight: 600, fontSize: 22, flex: 'none' }}>
+                          <Box aria-hidden sx={{ width: 48, height: 48, borderRadius: '50%', bgcolor: '#16324a', color: '#c9dcef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: 22, flex: 'none' }}>
                             {String(formBrand?.name || '?').charAt(0).toUpperCase()}
                           </Box>
                         )}
@@ -3051,7 +3061,7 @@ const InnerPage = () => {
                             </TextField>
                           ) : (
                             <>
-                              <Typography sx={{ fontWeight: 600, color: '#16324a' }}>
+                              <Typography sx={{ fontWeight: 400, color: '#16324a' }}>
                                 {formBrand?.name || brandInfo.name}
                                 {formBrand?.tagline ? <Typography component="span" color="text.secondary">{` · ${formBrand.tagline}`}</Typography> : null}
                               </Typography>
@@ -3737,7 +3747,7 @@ const InnerPage = () => {
             </Box>
             {(productPanelMode === 'edit' || productPanelMode === 'experience') && !quickAdd && wideEditor && (
               <Box component="aside" aria-label="What shoppers see" sx={{ flex: '0 0 360px', borderLeft: 1, borderColor: 'divider', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, overflowY: 'auto', bgcolor: '#f8fafc' }}>
-                <Typography sx={{ fontWeight: 600, color: '#16324a' }}>What shoppers see</Typography>
+                <Typography sx={{ fontWeight: 400, color: '#16324a' }}>What shoppers see</Typography>
                 {/* The design belongs to the brand: changed on its Brand page. */}
                 {productPanelMode === 'experience' && (
                 <Button

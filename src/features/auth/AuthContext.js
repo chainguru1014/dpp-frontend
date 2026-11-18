@@ -4,6 +4,7 @@ import {
   appleLogin as appleLoginApi,
   requestOtp as requestOtpApi,
   verifyOtp as verifyOtpApi,
+  previewLogin as previewLoginApi,
   completeProfile as completeProfileApi,
   saveAiConciergeConsent as saveAiConciergeConsentApi,
 } from '../../helper';
@@ -201,6 +202,14 @@ export const AuthProvider = ({ children }) => {
     return { ok: true, user: applyAuthResult(patched) };
   };
 
+  // Test sign-in (until release): one fixed account per role.
+  const previewLogin = async (role) => {
+    const res = await previewLoginApi(role);
+    if (!res?.ok) return { ok: false, message: res?.message };
+    const patched = res.user && !res.user.profileCompleted ? { ...res, user: { ...res.user, profileCompleted: true } } : res;
+    return { ok: true, user: applyAuthResult(patched) };
+  };
+
   const completeProfile = async (payload) => applyAuthResult(await completeProfileApi(payload, token));
 
   // Records (or changes) the AI Concierge personalization consent decision —
@@ -243,6 +252,7 @@ export const AuthProvider = ({ children }) => {
         loginWithApple,
         requestOtp,
         verifyOtp,
+        previewLogin,
         completeProfile,
         saveAiConciergeConsent,
         logout,

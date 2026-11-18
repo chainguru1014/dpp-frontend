@@ -29,7 +29,7 @@ const isValidEmail = (e) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e).tr
 const Detail = ({ label, value }) => (
   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '180px 1fr' }, gap: { xs: 0.25, sm: 2 }, py: 1.25, borderBottom: '1px solid', borderColor: 'divider' }}>
     <Typography color="text.secondary">{label}</Typography>
-    <Typography sx={{ fontWeight: 500, wordBreak: 'break-word' }}>{value || '—'}</Typography>
+    <Typography sx={{ fontWeight: 400, wordBreak: 'break-word' }}>{value || '—'}</Typography>
   </Box>
 );
 

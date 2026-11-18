@@ -115,11 +115,11 @@ const summarise = (p) => {
 const Kpi = ({ icon: Icon, value, label }) => (
   <Card sx={{ height: '100%' }}>
     <CardContent sx={{ py: 1.25, '&:last-child': { pb: 1.25 }, display: 'flex', alignItems: 'center', gap: 1.25 }}>
-      <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: '#e8f5ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <Icon sx={{ color: '#2e7d32' }} />
+      <Box sx={{ width: 44, height: 44, borderRadius: 2, bgcolor: '#eef5fd', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon sx={{ color: '#1b4f72' }} />
       </Box>
       <Box sx={{ minWidth: 0 }}>
-        <Typography sx={{ fontWeight: 700, fontSize: '1.35rem', color: 'primary.main', lineHeight: 1.2 }}>{value}</Typography>
+        <Typography sx={{ fontWeight: 400, fontSize: '1.35rem', color: 'primary.main', lineHeight: 1.2 }}>{value}</Typography>
         <Typography color="text.secondary" sx={{ fontSize: '0.95rem', lineHeight: 1.3 }}>{label}</Typography>
       </Box>
     </CardContent>
@@ -131,10 +131,10 @@ const Completeness = ({ value, dense }) => (
     <LinearProgress
       variant="determinate"
       value={value}
-      sx={{ flex: 1, height: dense ? 8 : 10, borderRadius: 5, bgcolor: '#eef1f6', '& .MuiLinearProgress-bar': { bgcolor: value >= 70 ? '#2e7d32' : value >= 40 ? '#d9822b' : '#c0392b' } }}
+      sx={{ flex: 1, height: dense ? 8 : 10, borderRadius: 5, bgcolor: '#eef1f6', '& .MuiLinearProgress-bar': { bgcolor: value >= 70 ? '#1b4f72' : value >= 40 ? '#1b4f72' : '#1b4f72' } }}
       aria-label={`Sustainability data ${value}% complete`}
     />
-    <Typography sx={{ fontWeight: 600, width: 44, textAlign: 'right' }}>{value}%</Typography>
+    <Typography sx={{ fontWeight: 400, width: 44, textAlign: 'right' }}>{value}%</Typography>
   </Box>
 );
 
@@ -161,7 +161,7 @@ const VIEWS = {
   lca: {
     title: 'LCA',
     image: lcaImage,
-    imageBg: '#10221f',
+    imageBg: '#123a56',
     heading: 'Life Cycle Assessment (LCA)',
     text: 'The environmental impact of a product at every stage: materials, manufacturing, transport, use and end of life.',
     description: 'Each product’s life cycle: materials, manufacturing, transport, use and end of life.',

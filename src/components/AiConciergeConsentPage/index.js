@@ -74,7 +74,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
                 <FeatureIcon sx={{ fontSize: 24, color: ON_GLASS }} />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 600, ...onGlass }}>{title}</Typography>
+                <Typography sx={{ fontWeight: 400, ...onGlass }}>{title}</Typography>
                 <Typography sx={onGlass}>{description}</Typography>
               </Box>
             </Box>
@@ -83,7 +83,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
 
           {/* Placed after the explanation on purpose: read first, then choose.
               Nothing is pre-selected on a first visit. */}
-          <Typography component="h2" sx={{ fontWeight: 600, mt: 2, mb: 1, ...onGlass }} id="consent-question">
+          <Typography component="h2" sx={{ fontWeight: 400, mt: 2, mb: 1, ...onGlass }} id="consent-question">
             May the AI Concierge learn from your scans, favourites and browsing to personalise the app?
           </Typography>
           <RadioGroup

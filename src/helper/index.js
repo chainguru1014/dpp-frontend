@@ -249,6 +249,20 @@ export const requestOtp = async (email, mode = 'signin') => {
 // Verifies the 6-digit code. Also returns { ok, message } (rather than
 // throwing/alerting) so the inline OTP form can show "invalid/expired code"
 // without a blocking alert.
+// Until release, for testing: sign straight in to the test account for a
+// role ('admin' | 'supervisor' | 'employee' | 'consumer'). The server only
+// allows it while PREVIEW_AUTO_LOGIN=on.
+export const previewLogin = async (role) => {
+    try {
+        const res = await axios.post(`${Backend_URL}auth/preview-login`, { role });
+        const normalized = normalizeAuthResponse(res);
+        if (!normalized) return { ok: false, message: res?.data?.message || 'Could not sign in.' };
+        return { ok: true, ...normalized };
+    } catch (err) {
+        return { ok: false, message: err.response?.data?.message || err.message || 'Could not sign in.' };
+    }
+}
+
 export const verifyOtp = async (email, code) => {
     try {
         const res = await axios.post(`${Backend_URL}auth/otp/verify`, { email, code });

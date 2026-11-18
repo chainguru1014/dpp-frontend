@@ -20,7 +20,7 @@ export default function RfidIcon(props) {
         textAnchor="middle"
         fill="currentColor"
         fontFamily="Arial, Helvetica, sans-serif"
-        fontWeight="700"
+        fontWeight="400"
         fontSize="6.6"
         textLength="15.6"
         lengthAdjust="spacingAndGlyphs"

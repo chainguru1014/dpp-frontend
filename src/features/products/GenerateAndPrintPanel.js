@@ -174,7 +174,7 @@ const GenerateAndPrintPanel = ({
                 <Icon />
               </Box>
               <Box sx={{ minWidth: 0 }}>
-                <Typography noWrap sx={{ fontWeight: 700, fontSize: 15, lineHeight: 1.3 }}>{t.label}</Typography>
+                <Typography noWrap sx={{ fontWeight: 400, fontSize: 15, lineHeight: 1.3 }}>{t.label}</Typography>
                 {/* At most two short lines, so every card stays low. */}
                 <Typography variant="body2" color="text.secondary" sx={{ fontSize: 13, lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{t.short}</Typography>
               </Box>

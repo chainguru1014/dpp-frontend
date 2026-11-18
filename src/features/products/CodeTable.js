@@ -43,7 +43,7 @@ export default function CodeTable({ rows = [], codeLabel = 'Code', numberLabel =
   const cols = 'minmax(0, 2.2fr) minmax(150px, 1fr) 120px 130px';
   return (
     <Box sx={{ bgcolor: '#fff', border: '1px solid #dfe5ec', borderRadius: 3, overflow: 'hidden' }}>
-      <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: cols, gap: 2, px: 2, py: 1.25, bgcolor: '#f2f5f9', fontWeight: 600, color: '#16324a', fontSize: 15 }}>
+      <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: cols, gap: 2, px: 2, py: 1.25, bgcolor: '#f2f5f9', fontWeight: 400, color: '#16324a', fontSize: 15 }}>
         <span>{codeLabel}</span><span>{numberLabel}</span><span>Printed</span><span />
       </Box>
       {rows.map((row) => (
@@ -58,8 +58,8 @@ export default function CodeTable({ rows = [], codeLabel = 'Code', numberLabel =
           <Typography sx={{ display: { xs: 'none', md: 'block' } }} color="text.secondary" noWrap>{row.number}</Typography>
           <Box sx={{ display: { xs: 'none', md: 'block' } }}>
             {row.printed == null ? null : row.printed
-              ? <Chip size="small" label="Printed" sx={{ bgcolor: '#e6f4ea', color: '#1e6b34', fontWeight: 600 }} />
-              : <Chip size="small" label="Not printed" sx={{ bgcolor: '#eef3f9', color: '#1b4f72', fontWeight: 600 }} />}
+              ? <Chip size="small" label="Printed" sx={{ bgcolor: '#eef5fd', color: '#1b4f72', fontWeight: 400 }} />
+              : <Chip size="small" label="Not printed" sx={{ bgcolor: '#eef3f9', color: '#1b4f72', fontWeight: 400 }} />}
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
             <Tooltip title={`Copy the ${copyNoun}`}>

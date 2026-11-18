@@ -77,7 +77,7 @@ function ServiceCard({ kind, value, onChange }) {
             <Stack spacing={1}>
               {value.steps.map((step, i) => (
                 <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography sx={{ width: 24, textAlign: 'right', fontWeight: 600 }}>{i + 1}.</Typography>
+                  <Typography sx={{ width: 24, textAlign: 'right', fontWeight: 400 }}>{i + 1}.</Typography>
                   <TextField
                     fullWidth size="small" value={step}
                     inputProps={{ 'aria-label': `${meta.title} step ${i + 1}`, maxLength: 240 }}
