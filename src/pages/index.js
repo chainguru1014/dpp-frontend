@@ -171,7 +171,7 @@ import { confirmAction, notify, notifyError, notifySuccess } from '../utils/feed
 // weight only downloads when a user actually opens the preview or print dialog.
 const PreviewModal = React.lazy(() => import('../components/PreviewModal'));
 // The same phone view the preview dialog shows, for the studio's Experience part.
-const DppPhoneView = React.lazy(() => import('../components/PreviewModal').then((m) => ({ default: m.DppPhoneView })));
+const IPhonePreview = React.lazy(() => import('../components/PreviewModal').then((m) => ({ default: m.IPhonePreview })));
 const PrintModal = React.lazy(() => import('../components/printModal'));
 
 
@@ -2899,11 +2899,9 @@ const InnerPage = () => {
                       >
                         Change the DPP design
                       </Button>
-                      <Box sx={{ width: 340, maxWidth: '100%', height: 640, mx: 'auto', border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 4 }}>
-                        <Suspense fallback={<Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5, bgcolor: '#fff' }}><CircularProgress size={28} /><Typography variant="body2" color="text.secondary">Loading the preview…</Typography></Box>}>
-                          <DppPhoneView productInfo={formProduct} theme={formTheme} />
-                        </Suspense>
-                      </Box>
+                      <Suspense fallback={<Box sx={{ height: 620, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}><CircularProgress size={28} /><Typography variant="body2" color="text.secondary">Loading the preview…</Typography></Box>}>
+                        <IPhonePreview productInfo={formProduct} theme={formTheme} width={300} />
+                      </Suspense>
                       </Box>
                     </Grid>
                     )}
@@ -3757,11 +3755,9 @@ const InnerPage = () => {
                   Change the DPP design
                 </Button>
                 )}
-                <Box sx={{ width: 320, flex: '1 1 auto', minHeight: 420, maxHeight: 820, border: '10px solid #1f2430', borderRadius: '34px', overflow: 'hidden', boxShadow: 3, bgcolor: '#fff' }}>
-                  <Suspense fallback={<Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={28} /></Box>}>
-                    <DppPhoneView productInfo={formProduct} theme={formTheme} />
-                  </Suspense>
-                </Box>
+                <Suspense fallback={<Box sx={{ height: 620, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={28} /></Box>}>
+                  <IPhonePreview productInfo={formProduct} theme={formTheme} width={300} />
+                </Suspense>
                 <Typography variant="body2" color="text.secondary">Changes show here as you type.</Typography>
               </Box>
             )}

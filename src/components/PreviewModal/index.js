@@ -1152,6 +1152,37 @@ export default function PreviewModal({ open, setOpen, productInfo, theme }) {
 // the Brand page (Brands) or the Product Overview (Product Information),
 // each with a back arrow to the summary. Used by every preview on the admin
 // site (preview dialog, product editor, Brand profile design tab).
+// The iPhone 16 at its real size (393 x 852 points plus the bezel), scaled
+// down to `width`: the product editor's "What shoppers see".
+export function IPhonePreview({ productInfo, theme, width = 300 }) {
+  const outerW = IPHONE_16.width + IPHONE_16.bezel * 2;
+  const outerH = IPHONE_16.height + IPHONE_16.bezel * 2;
+  const scale = width / outerW;
+  return (
+    <Box sx={{ width, height: Math.round(outerH * scale), flexShrink: 0, position: 'relative', mx: 'auto' }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: outerW,
+          height: outerH,
+          transform: `scale(${scale})`,
+          transformOrigin: 'top left',
+          p: `${IPHONE_16.bezel}px`,
+          bgcolor: '#1d1d1f',
+          borderRadius: `${IPHONE_16.radius + IPHONE_16.bezel}px`,
+          boxShadow: '0 18px 44px rgba(0,0,0,0.28), inset 0 0 0 2px #3a3a3c',
+        }}
+      >
+        <Box sx={{ width: IPHONE_16.width, height: IPHONE_16.height, borderRadius: `${IPHONE_16.radius}px`, overflow: 'hidden', position: 'relative', bgcolor: '#fff' }}>
+          <DppPhoneView productInfo={productInfo} theme={theme} device />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
 export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
   const [page, setPage] = useState('summary');
   const C = useMemo(() => dppPalette(theme), [theme]);
@@ -1183,10 +1214,12 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
     </Box>
   );
   const shell = (title, back, body) => (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: C.bg, fontFamily: '-apple-system, "Segoe UI", Roboto, sans-serif' }}>
-      {bar(title, back)}
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 1.75, display: 'flex', flexDirection: 'column', gap: 1.75 }}>{body}</Box>
-    </Box>
+    <DeviceShell device={device} gradient={GRADIENT} C={C}>
+      <Box sx={{ height: device ? 'auto' : '100%', flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', bgcolor: C.bg, fontFamily: '-apple-system, "Segoe UI", Roboto, sans-serif' }}>
+        {bar(title, back)}
+        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', p: 1.75, display: 'flex', flexDirection: 'column', gap: 1.75 }}>{body}</Box>
+      </Box>
+    </DeviceShell>
   );
 
   if (page === 'brand') {
@@ -1232,10 +1265,13 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
           </Box>
         ))}
       </Box>
-      {!!brand.name && pill('Brands', () => setPage('brand'))}
+      {!!brand.name && pill('Company', () => setPage('brand'))}
       <Box sx={{ display: 'flex', gap: 1 }}>
-        {['Like', 'Cart', 'Not for me'].map((l) => (
-          <Box key={l} sx={{ flex: 1, height: 38, borderRadius: '19px', border: `1.5px solid ${C.primary}`, color: C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 600, bgcolor: '#fff' }}>{l}</Box>
+        {[['Like', ThumbUpOffAltIcon], ['Cart', AddShoppingCartIcon], ['Not for me', ThumbDownOffAltIcon]].map(([l, Icon]) => (
+          <Box key={l} sx={{ flex: 1, minWidth: 0, height: 44, borderRadius: '14px', bgcolor: 'rgba(0,0,0,0.045)', color: C.text || '#33415c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, px: 0.5, fontSize: 14, fontWeight: 500, whiteSpace: 'nowrap', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
+            <Icon sx={{ fontSize: 20, flexShrink: 0 }} />
+            <Box component="span" sx={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{l}</Box>
+          </Box>
         ))}
       </Box>
       {pill('Product Information', () => setPage('overview'))}

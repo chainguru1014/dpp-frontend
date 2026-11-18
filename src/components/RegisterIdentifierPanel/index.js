@@ -133,7 +133,17 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
   //    (https://id.gs1.org/01/<GTIN-14>/21/<serial>).
   const canGenerate = lockedSourceType === 'barcode' || lockedSourceType === 'gs1dl';
   const gtinDigits = String(product?.gtin || '').replace(/\D/g, '');
-  const gtin14 = gtinDigits.length >= 8 && gtinDigits.length <= 14 ? gtinDigits.padStart(14, '0') : '';
+  const ownGtin14 = gtinDigits.length >= 8 && gtinDigits.length <= 14 ? gtinDigits.padStart(14, '0') : '';
+  // No GTIN on the product yet: an in-house one (GS1's restricted range,
+  // starting with 2, as Barcode's Create uses), fixed per product so its
+  // serial numbers continue. Adding the product's own GS1 GTIN replaces it.
+  const internalGtin14 = useMemo(() => {
+    const hex = String(productId || '').replace(/[^0-9a-f]/gi, '').slice(-10);
+    if (!hex) return '';
+    const body = String(parseInt(hex, 16) % 100000000000).padStart(11, '0');
+    return toValidEan13(`2${body}`).padStart(14, '0');
+  }, [productId]);
+  const gtin14 = ownGtin14 || internalGtin14;
   const [genAmount, setGenAmount] = useState(10);
   const [generating, setGenerating] = useState(false);
   const handleGenerate = async () => {
@@ -274,7 +284,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
               startIcon={<AddIcon />}
               onClick={handleGenerate}
               disabled={generating || !companyId || !(Number(genAmount) > 0) || (lockedSourceType === 'gs1dl' && !gtin14)}
-              title={lockedSourceType === 'gs1dl' && !gtin14 ? 'Add the product’s GTIN first (Edit product > Basics).' : undefined}
+              title={lockedSourceType === 'gs1dl' && !gtin14 ? 'Save the product first.' : undefined}
               sx={{ height: 48, whiteSpace: 'nowrap' }}
             >
               {generating ? 'Creating…' : `Create ${Number(genAmount) > 0 ? Number(genAmount) : ''}`}
@@ -345,9 +355,9 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
           </Button>
         )}
       </Box>
-      {canGenerate && lockedSourceType === 'gs1dl' && !gtin14 && (
+      {canGenerate && lockedSourceType === 'gs1dl' && !ownGtin14 && (
         <Typography variant="body2" color="text.secondary" sx={{ mt: -1, mb: 1.5 }}>
-          To create GS1 Digital Links, add the product’s GTIN first (Edit product &gt; Basics).
+          This product has no GTIN yet, so Create uses an in-house number ({gtin14}). To use your GS1 number, add the GTIN in Edit product &gt; Basics.
         </Typography>
       )}
       {enableCsvImport && csvSummary && (
