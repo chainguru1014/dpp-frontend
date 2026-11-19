@@ -2005,7 +2005,7 @@ const InnerPage = () => {
         ['dashboard', 'Dashboard', DashboardIcon, true],
         ['products', 'Products', Inventory2Icon, true],
         ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
-        ['captureHistory', 'My Captures', AssessmentIcon, canSeeCaptureHistory],
+        ['captureHistory', 'My work records', AssessmentIcon, canSeeCaptureHistory],
         ['rfidScan', 'RFID Scan', RfidIcon, isDesktopApp],
       ],
     },
@@ -2023,7 +2023,7 @@ const InnerPage = () => {
       key: 'daily',
       title: 'Daily work',
       items: [
-        ['captureHistory', 'Captures', AssessmentIcon, canSeeCaptureHistory],
+        ['captureHistory', 'Work records', AssessmentIcon, canSeeCaptureHistory],
         ['shipmentInspection', 'Shipments', LocalShippingIcon, canSeeShipmentInspection],
         // Only in the desktop app (Windows, Mac or Linux): a web browser can't reach the reader.
         ['rfidScan', 'RFID Scan', RfidIcon, isDesktopApp],

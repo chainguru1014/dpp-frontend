@@ -327,7 +327,7 @@ export default function DashboardAnalytics({
     !isAppUser && { key: 'codes', icon: QrCode2Icon, label: 'Codes scanned', value: t.uniqueItems ?? 0, delta: t.deltas?.uniqueItems, onClick: onNavigateToGenerateCode },
   ].filter(Boolean);
   const captureCards = [
-    { key: 'captures', icon: CameraAltIcon, label: isWorkingEmployee ? 'My captures' : 'Captures', value: captureStats?.total ?? 0, onClick: onNavigateToCaptureHistory },
+    { key: 'captures', icon: CameraAltIcon, label: isWorkingEmployee ? 'My work records' : 'Work records', value: captureStats?.total ?? 0, onClick: onNavigateToCaptureHistory },
     { key: 'capturedProducts', icon: Inventory2Icon, label: 'Products captured', value: captureStats?.uniqueProducts ?? 0, onClick: onNavigateToCaptureHistory },
     { key: 'capturedCodes', icon: QrCode2Icon, label: 'Codes captured', value: captureStats?.uniqueCodes ?? 0, onClick: onNavigateToCaptureHistory },
   ];
@@ -462,7 +462,7 @@ export default function DashboardAnalytics({
               </Section>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Section title="Captures per day (last 30 days)" sx={{ height: 'auto' }}>
+              <Section title="Work records per day (last 30 days)" sx={{ height: 'auto' }}>
                 <LineChart data={captureStats?.capturesByDay || []} noun="captures" />
               </Section>
             </Grid>
@@ -483,7 +483,7 @@ export default function DashboardAnalytics({
           {showCaptures ? (
             <>
               {kpiRow(captureCards)}
-              <Section title="Captures per day (last 30 days)" sx={{ height: 'auto' }}>
+              <Section title="Work records per day (last 30 days)" sx={{ height: 'auto' }}>
                 <LineChart data={captureStats?.capturesByDay || []} noun="captures" />
               </Section>
             </>

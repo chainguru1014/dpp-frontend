@@ -130,13 +130,13 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
     return (
       <Box>
         <PageHeader
-          title={selfEmployee ? 'My Captures' : 'Captures'}
+          title={selfEmployee ? 'My work records' : 'Work records'}
           description={selfEmployee
             ? 'Work steps you recorded with the mobile app.'
             : 'Work steps your employees recorded with the mobile app, per person.'}
         />
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
-          <CircularProgress aria-label="Loading captures" />
+          <CircularProgress aria-label="Loading work records" />
         </Box>
       </Box>
     );
@@ -166,7 +166,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
   return (
     <Box>
       <PageHeader
-        title={selfOnly ? 'My Captures' : 'Captures'}
+        title={selfOnly ? 'My work records' : 'Work records'}
         description={selfOnly
           ? 'Work steps you recorded with the mobile app.'
           : 'Work steps your employees recorded with the mobile app, per person.'}
@@ -193,7 +193,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
         <Grid item xs={12} md={6}>
           <Paper variant="outlined" sx={{ p: 2, height: '100%', maxHeight: { md: 260 }, overflowY: 'auto' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-              <Typography variant="h6" component="h2">Captures per person</Typography>
+              <Typography variant="h6" component="h2">Work records per person</Typography>
               {workerFilter !== 'all' && (
                 <Button size="small" onClick={() => { setWorkerFilter('all'); setTablePage(0); }}>Show everyone</Button>
               )}
@@ -235,12 +235,12 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
 
         <Grid item xs={12} md={selfOnly ? 12 : 6}>
           <Grid container spacing={2} sx={{ height: { md: 'calc(100% + 16px)' } }}>
-            <Grid item xs={6} md={selfOnly ? 4 : 6}><Stat label="All captures" value={companyDocs.length} /></Grid>
+            <Grid item xs={6} md={selfOnly ? 4 : 6}><Stat label="All work records" value={companyDocs.length} /></Grid>
             <Grid item xs={6} md={selfOnly ? 4 : 6}><Stat label="Today" value={todayCount} /></Grid>
             {!selfOnly && (
               <Grid item xs={6} md={6}>
                 <Stat
-                  label="Employees with captures"
+                  label="Employees with work records"
                   value={`${byWorker.filter((w) => !w.removed && w.total > 0).length} of ${byWorker.filter((w) => !w.removed).length}`}
                 />
               </Grid>
@@ -291,8 +291,8 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
                 <TableCell colSpan={colCount}>
                   <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
                     {dateFrom || dateTo || workerFilter !== 'all'
-                      ? 'No captures match these filters.'
-                      : 'No captures yet. They appear here when employees record work steps in the mobile app.'}
+                      ? 'No work records match these filters.'
+                      : 'No work records yet. They appear here when employees save work in the mobile app.'}
                   </Typography>
                 </TableCell>
               </TableRow>

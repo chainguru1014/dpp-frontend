@@ -54,7 +54,7 @@ const DashboardPage = ({
     : isAppUser
       ? 'Your products and the codes you have scanned.'
       : isWorkingEmployee
-        ? 'Your company’s scan activity and your own captures.'
+        ? 'Your company’s scan activity and your own work records.'
         : 'How your products are being scanned, and where.';
 
   const actions = isAppUser ? (

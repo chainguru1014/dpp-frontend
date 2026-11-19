@@ -93,7 +93,7 @@ function RequestDialog({ request, canWrite, onClose, onSaved, token }) {
             disabled={!canWrite || busy}
             inputProps={{ maxLength: 1500 }}
           />
-          {!canWrite && <Alert severity="info">Only a Supervisor or the company account can answer requests.</Alert>}
+          {!canWrite && <Alert severity="info">Only a Supervisor or the company account can respond to requests.</Alert>}
           {(request.history || []).length > 1 && (
             <Box>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>History</Typography>
@@ -228,7 +228,7 @@ export default function ServiceRequestsPage({ token, showCompany = false, onOpen
                   </Typography>
                 </Box>
                 <Button variant={OPEN.includes(row.status) && canWrite ? 'contained' : 'outlined'} onClick={() => setSelected(row)} sx={{ flexShrink: 0, alignSelf: 'center' }}>
-                  {OPEN.includes(row.status) && canWrite ? 'Answer' : 'Open'}
+                  {OPEN.includes(row.status) && canWrite ? 'Review request' : 'View request'}
                 </Button>
               </Box>
             );

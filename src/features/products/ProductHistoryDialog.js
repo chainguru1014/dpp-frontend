@@ -9,9 +9,7 @@ import {
   Box,
   Typography,
   Chip,
-  IconButton,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import { DataGrid } from '@mui/x-data-grid';
 import { getProductTransfers } from '../../helper';
 import { METHOD_LABELS, StatusChip } from '../trace/TracePage';
@@ -72,11 +70,8 @@ export default function ProductHistoryDialog({ open, onClose, product }) {
       <DialogTitle>
         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h6" sx={{ fontWeight: 400 }}>
-            Ownership History — {product?.name || ''}
+            Ownership history — {product?.name || ''}
           </Typography>
-          <IconButton aria-label="close" onClick={onClose} size="small">
-            <CloseIcon />
-          </IconButton>
         </Box>
       <DialogClose onClick={onClose} /></DialogTitle>
       <DialogContent dividers>
@@ -89,6 +84,8 @@ export default function ProductHistoryDialog({ open, onClose, product }) {
             disableRowSelectionOnClick
             initialState={{ pagination: { paginationModel: { page: 0, pageSize: 25 } } }}
             pageSizeOptions={[10, 25, 50]}
+            localeText={{ noRowsLabel: 'No ownership transfers yet' }}
+            hideFooter={!loading && rows.length === 0}
             sx={{
               border: 0,
               '& .MuiDataGrid-columnHeaders': { backgroundColor: '#eef1f6' },

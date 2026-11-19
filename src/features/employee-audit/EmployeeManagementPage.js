@@ -26,7 +26,7 @@ const EmployeeManagementPage = ({ token, isAdmin, companyId }) => {
           : 'The people who can sign in for your brand.'}
         actions={(
           <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => { setTab('roster'); setInviteSignal((n) => n + 1); }}>
-            Add an employee
+            Invite employee
           </Button>
         )}
       />

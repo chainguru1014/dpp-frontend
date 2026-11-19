@@ -193,7 +193,7 @@ export default function RfidScanPage() {
               disabled={busy}
               sx={{ flex: 1 }}
             >
-              {connected ? 'Disconnect' : 'Connect'}
+              {connected ? 'Disconnect' : 'Connect reader'}
             </Button>
             <Button variant="outlined" startIcon={<ClearAllIcon />} onClick={clear} disabled={!items.length}>
               Clear

@@ -1265,7 +1265,7 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
           </Box>
         ))}
       </Box>
-      {!!brand.name && pill('Company', () => setPage('brand'))}
+      {!!brand.name && pill('Brand details', () => setPage('brand'))}
       <Box sx={{ display: 'flex', gap: 1 }}>
         {[['Like', ThumbUpOffAltIcon], ['Cart', AddShoppingCartIcon], ['Not for me', ThumbDownOffAltIcon]].map(([l, Icon]) => (
           <Box key={l} sx={{ flex: 1, minWidth: 0, height: 44, borderRadius: '14px', bgcolor: 'rgba(0,0,0,0.045)', color: C.text || '#33415c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, px: 0.5, fontSize: 14, fontWeight: 400, whiteSpace: 'nowrap', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
@@ -1274,7 +1274,7 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
           </Box>
         ))}
       </Box>
-      {pill('Product Information', () => setPage('overview'))}
+      {pill('View passport', () => setPage('overview'))}
     </>
   ));
 }

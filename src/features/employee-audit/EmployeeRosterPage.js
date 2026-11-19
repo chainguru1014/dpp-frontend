@@ -134,7 +134,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        Add an employee
+        Invite employee
         <IconButton onClick={onClose} color="inherit" aria-label="Close"><CloseIcon /></IconButton>
       </DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -224,7 +224,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onClose} disabled={saving}>Cancel</Button>
         <Button variant="contained" onClick={handleSave} disabled={saving}>
-          {saving ? 'Adding…' : 'Add employee'}
+          {saving ? 'Sending invitation…' : 'Invite employee'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -235,7 +235,7 @@ const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restri
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
-  // The page header's "Add an employee" button.
+  // The page header's "Invite employee" button.
   useEffect(() => { if (inviteSignal > 0) setInviteOpen(true); }, [inviteSignal]);
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({
@@ -314,7 +314,7 @@ const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restri
   const handleRemove = async (employee) => {
     const sure = await confirmAction({
       title: 'Remove this employee?',
-      message: `${employee.name || employee.email || 'This person'} will no longer be able to sign in. Their past captures stay in Capture History.`,
+      message: `${employee.name || employee.email || 'This person'} will no longer be able to sign in. Their past work records stay in Work records.`,
       confirmText: 'Remove',
       danger: true,
     });

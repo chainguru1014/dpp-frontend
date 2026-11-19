@@ -47,7 +47,7 @@ const PAGE_HELP = {
     appUser: 'Every product code you have scanned, newest first.',
   },
   captureHistory: {
-    title: 'Captures',
+    title: 'Work records',
     text: 'The work steps your employees recorded in the mobile app (receiving, packing and so on), per person. Narrow the list by date or person; a flagged entry is one the app marked for review.',
   },
   lca: {
