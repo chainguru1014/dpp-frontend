@@ -1,4 +1,5 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { reportBarTitle } from './barTitle';
 import { Box, IconButton, ListItemIcon, Menu, MenuItem, Tab, Tabs, Tooltip, Typography } from '@mui/material';
 import PageHeaderContext from './PageHeaderContext';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
@@ -17,31 +18,25 @@ const PageHeader = ({ title: ownTitle, description, actions, moreActions, icon, 
   const title = shared?.title || ownTitle;
   const tabs = (shared?.tabs || []).filter(Boolean);
   const more = (moreActions || []).filter(Boolean);
+  // The title shows in the shell's top bar (design WEB_*: no subtitle there);
+  // this row keeps only the page's buttons and tabs.
+  useEffect(() => { if (title) reportBarTitle(title); }, [title]);
+  const hasActions = !!actions || more.length > 0;
 
   return (
     <>
+    {hasActions && (
     <Box
       sx={{
         display: 'flex',
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        justifyContent: 'space-between',
-        flexDirection: { xs: 'column', sm: 'row' },
-        gap: 2,
-        mb: 3.5,
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        flexWrap: 'wrap',
+        gap: 1.5,
+        mb: 2.5,
+        mt: -0.5,
       }}
     >
-      <Box sx={{ minWidth: 0 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="h5" component="h1">
-            {title}
-          </Typography>
-        </Box>
-        {description && (
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 0.75, maxWidth: '70ch' }}>
-            {description}
-          </Typography>
-        )}
-      </Box>
       {(actions || more.length > 0) && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', flexShrink: 0 }}>
           {actions}
@@ -52,7 +47,7 @@ const PageHeader = ({ title: ownTitle, description, actions, moreActions, icon, 
                   aria-label="More actions"
                   aria-haspopup="menu"
                   onClick={(e) => setAnchor(e.currentTarget)}
-                  sx={{ border: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}
+                  sx={{ bgcolor: 'rgba(120,120,128,0.13)', width: 42, height: 42 }}
                 >
                   <MoreHorizIcon />
                 </IconButton>
@@ -83,12 +78,13 @@ const PageHeader = ({ title: ownTitle, description, actions, moreActions, icon, 
         </Box>
       )}
     </Box>
-    {aboveTabs && <Box sx={{ mt: -1.5, mb: 3 }}>{aboveTabs}</Box>}
+    )}
+    {aboveTabs && <Box sx={{ mb: 3 }}>{aboveTabs}</Box>}
     {tabs.length > 1 && (
       <Tabs
         value={shared.active}
         onChange={(e, v) => shared.onChange(v)}
-        sx={{ mt: -1.5, mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        sx={{ mb: 3, minHeight: 0, display: 'inline-flex', bgcolor: 'rgba(120,120,128,0.14)', borderRadius: '20px', p: '3px', '& .MuiTabs-indicator': { display: 'none' }, '& .MuiTab-root': { minHeight: 34, borderRadius: '17px', px: 2.5, py: 0.5, color: '#1c1c1e' }, '& .MuiTab-root.Mui-selected': { bgcolor: '#ffffff', color: '#1c1c1e', boxShadow: '0 3px 10px rgba(0,0,0,0.12)' } }}
       >
         {tabs.map(([page, label]) => <Tab key={page} value={page} label={label} />)}
       </Tabs>

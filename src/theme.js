@@ -13,7 +13,7 @@ const blue = '#4a96dd';     // lighter azure (gradient light stop / accents)
 const gray = '#51617a';     // secondary text — darkened from #6b7a93 for contrast
 const buttonBlue = '#2f80c8';     // button blue (canonical app blue)
 const buttonBlueDark = '#256aa8'; // button hover
-const bg = '#f5f7fa';       // near-white / light gray canvas
+const bg = '#eef1f5';       // light gray canvas (HIG web design)
 const border = '#dfe5ec';
 
 // Laptop-only density: below this width, AND only with a precise pointer
@@ -33,12 +33,12 @@ const theme = createTheme({
     error: { main: '#1b4f72' },
     warning: { main: '#1b4f72' },
     background: { default: bg, paper: '#ffffff' },
-    text: { primary: '#16324a', secondary: gray, disabled: '#7d8a9c' },
+    text: { primary: '#1c1c1e', secondary: '#5f6b78', disabled: '#8a95a1' },
     divider: border,
   },
-  shape: { borderRadius: 12 },
+  shape: { borderRadius: 14 },
   typography: {
-    fontFamily: '"Poppins","Segoe UI",system-ui,-apple-system,Roboto,sans-serif',
+    fontFamily: '-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",system-ui,Roboto,sans-serif',
     fontSize: 16,
     fontWeightRegular: 400,
     fontWeightMedium: 400,
@@ -73,11 +73,11 @@ const theme = createTheme({
         // 48px target everywhere; only a little denser on mouse-driven
         // compact laptops.
         root: {
-          borderRadius: 10,
+          borderRadius: 999,
           textTransform: 'none',
           fontWeight: 400,
-          minHeight: 48,
-          paddingInline: 26,
+          minHeight: 46,
+          paddingInline: 22,
           paddingBlock: 10,
           [compactMediaQuery]: {
             minHeight: 44,
@@ -98,7 +98,8 @@ const theme = createTheme({
         // drop it so MUI's grey shows.
         containedPrimary: {
           backgroundColor: navy,
-          backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navy} 100%)`,
+          backgroundImage: 'linear-gradient(135deg, #2a78bd 0%, #1b4f72 100%)',
+          boxShadow: '0 6px 16px rgba(27,79,114,0.24)',
           color: '#ffffff',
           '&:hover': { backgroundColor: navyDark, backgroundImage: `linear-gradient(135deg, ${buttonBlueDark} 0%, ${navyDark} 100%)` },
           '&.Mui-disabled': { backgroundImage: 'none' },
@@ -113,10 +114,13 @@ const theme = createTheme({
           '&:hover': { backgroundImage: 'linear-gradient(135deg, #1b4f72 0%, #123a56 100%)' },
           '&.Mui-disabled': { backgroundImage: 'none' },
         },
+        // Secondary buttons: a soft grey capsule (HIG "tinted" style).
         outlinedPrimary: {
-          color: buttonBlueDark,
-          borderColor: buttonBlue,
-          '&:hover': { borderColor: buttonBlueDark, backgroundColor: 'rgba(47,128,200,0.08)' },
+          color: '#1c1c1e',
+          border: 0,
+          backgroundColor: 'rgba(120,120,128,0.13)',
+          '&:hover': { border: 0, backgroundColor: 'rgba(120,120,128,0.2)' },
+          '&.Mui-disabled': { border: 0 },
         },
         textPrimary: {
           color: buttonBlueDark,
@@ -147,13 +151,13 @@ const theme = createTheme({
         },
       },
     },
-    MuiPaper: { styleOverrides: { rounded: { borderRadius: 16 } } },
+    MuiPaper: { styleOverrides: { rounded: { borderRadius: 24 }, outlined: { borderColor: 'transparent' } } },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          border: `1px solid ${border}`,
-          boxShadow: '0 8px 24px rgba(31,51,97,0.08)',
+          borderRadius: 24,
+          border: 0,
+          boxShadow: '0 1px 2px rgba(18,58,86,0.04)',
         },
       },
     },
@@ -170,8 +174,9 @@ const theme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: 10,
+          borderRadius: 14,
           fontSize: '1.0625rem',
+          backgroundColor: '#ffffff',
           [compactMediaQuery]: { fontSize: '1rem' },
         },
         input: {
@@ -186,38 +191,39 @@ const theme = createTheme({
         root: { minHeight: 48, fontSize: '1.0625rem' },
       },
     },
-    MuiChip: { styleOverrides: { root: { fontWeight: 400, fontSize: '0.92rem' } } },
+    MuiChip: { styleOverrides: { root: { fontWeight: 400, fontSize: '0.92rem', borderRadius: 999 }, outlined: { borderColor: 'transparent', backgroundColor: 'rgba(120,120,128,0.12)' } } },
     MuiTooltip: {
       styleOverrides: { tooltip: { backgroundColor: navy, fontSize: 14, borderRadius: 8, padding: '6px 10px' } },
     },
     MuiTableCell: {
       styleOverrides: {
-        root: { fontSize: '1rem', paddingTop: 14, paddingBottom: 14 },
-        head: { fontWeight: 400, color: '#16324a' },
+        root: { fontSize: '1rem', paddingTop: 13, paddingBottom: 13, borderBottomColor: '#eef0f2' },
+        head: { fontWeight: 400, color: '#5f6b78', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.03em' },
       },
     },
     MuiDataGrid: {
       styleOverrides: {
-        root: { fontSize: '1rem', '& .MuiDataGrid-columnHeaders': { backgroundColor: '#f2f5f9' } },
-        columnHeaderTitle: { fontWeight: 400, color: '#16324a' },
+        root: { fontSize: '1rem', border: 0, borderRadius: 24, backgroundColor: '#ffffff', '& .MuiDataGrid-columnHeaders': { backgroundColor: '#ffffff' } },
+        columnHeaderTitle: { fontWeight: 400, color: '#5f6b78', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.03em' },
       },
     },
-    MuiTableHead: { styleOverrides: { root: { backgroundColor: '#f2f5f9' } } },
+    MuiTableHead: { styleOverrides: { root: { backgroundColor: 'transparent' } } },
     MuiAlert: { styleOverrides: { root: { fontSize: '1rem' } } },
     // Unified dialog look across the admin panel: rounded card + gradient header bar.
     MuiDialog: {
       styleOverrides: {
-        paper: { borderRadius: 14, overflow: 'hidden' },
+        // Centred glass sheet (design WEB_* dialogs).
+        paper: { borderRadius: 28, overflow: 'hidden', boxShadow: '0 24px 60px rgba(18,40,60,0.28)' },
       },
     },
     MuiDialogTitle: {
       styleOverrides: {
         root: {
-          backgroundImage: `linear-gradient(135deg, ${blue} 0%, ${navy} 100%)`,
-          color: '#ffffff',
+          backgroundColor: '#ffffff',
+          color: '#1c1c1e',
           fontWeight: 400,
           fontSize: 22,
-          padding: '18px 28px',
+          padding: '22px 28px 6px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -228,9 +234,9 @@ const theme = createTheme({
     MuiDialogActions: {
       styleOverrides: {
         root: {
-          padding: '14px 24px 20px',
+          padding: '14px 24px 22px',
           gap: 12,
-          borderTop: `1px solid ${border}`,
+          borderTop: 0,
           '& > :not(:first-of-type)': { marginLeft: 0 },
           [compactMediaQuery]: { padding: '10px 20px 14px' },
         },

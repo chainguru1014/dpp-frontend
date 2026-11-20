@@ -113,7 +113,7 @@ const NotificationBell = ({ onShowAll }) => {
   return (
     <>
       <Tooltip title="Notifications">
-        <IconButton color="inherit" onClick={handleOpen} sx={{ mr: 1 }} aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}>
+        <IconButton color="inherit" onClick={handleOpen} aria-label={unread ? `Notifications, ${unread} new` : 'Notifications'}>
           <Badge badgeContent={unread} color="error" max={99}>
             <NotificationsNoneIcon />
           </Badge>

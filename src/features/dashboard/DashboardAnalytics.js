@@ -12,7 +12,10 @@ import SellIcon from '@mui/icons-material/Sell';
 import PublicIcon from '@mui/icons-material/Public';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
-import { getAnalytics, getCaptureStats } from '../../helper';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import useSaveCounts from '../products/useSaveCounts';
+import axios from 'axios';
+import { getAnalytics, getCaptureStats, Backend_URL } from '../../helper';
 import { useAuth } from '../auth/AuthContext';
 import Loader from '../../components/Loader';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -262,7 +265,7 @@ const activeFilterCount = (f) => Object.values(f).filter(Boolean).length;
 
 export default function DashboardAnalytics({
   ownerKind = null, ownerId = null,
-  onNavigateToScanHistory, onNavigateToCaptureHistory, onNavigateToProducts, onNavigateToGenerateCode,
+  onNavigateToScanHistory, onNavigateToCaptureHistory, onNavigateToProducts, onNavigateToGenerateCode, onNavigateToFavorites,
   filtersOpen = false, onActiveFilterCountChange,
   // The dashboard has two layers: four figures and two charts, then
   // everything else once "More analytics" is opened.
@@ -290,6 +293,13 @@ export default function DashboardAnalytics({
   // Capture figures: super admin — every capture; company / Supervisor —
   // its company's; working employee — their own. Not shown to app users.
   const { token, company, isAppUser } = useAuth();
+  const saveTotal = useSaveCounts().total;
+  const [favCount, setFavCount] = useState(0);
+  useEffect(() => {
+    if (!isAppUser || !company?._id) return;
+    axios.get(`${Backend_URL}engagement/album/list?user_id=${encodeURIComponent(company._id)}`)
+      .then((r) => setFavCount((r.data?.data || []).length)).catch(() => {});
+  }, [isAppUser, company?._id]);
   const isWorkingEmployee = company?.actorKind === 'Employee' && company?.employeeType !== 'supervisor';
   const showCaptures = !isAppUser;
   const [captureStats, setCaptureStats] = useState(null);
@@ -323,7 +333,9 @@ export default function DashboardAnalytics({
   // product types scanned; `uniqueItems` is distinct scanned item codes.
   const scanCards = [
     { key: 'scans', icon: QrCodeScannerIcon, label: isAppUser ? 'My scans' : 'Scans', value: t.scans ?? 0, delta: t.deltas?.scans, onClick: onNavigateToScanHistory },
-    { key: 'products', icon: Inventory2Icon, label: 'Products scanned', value: t.uniqueSkus ?? 0, delta: t.deltas?.uniqueSkus, onClick: onNavigateToProducts },
+    isAppUser
+      ? { key: 'favorites', icon: FavoriteIcon, label: 'Favorites', value: favCount, onClick: onNavigateToFavorites || onNavigateToProducts }
+      : { key: 'saves', icon: FavoriteIcon, label: 'Saved by shoppers', value: saveTotal, onClick: onNavigateToProducts },
     !isAppUser && { key: 'codes', icon: QrCode2Icon, label: 'Codes scanned', value: t.uniqueItems ?? 0, delta: t.deltas?.uniqueItems, onClick: onNavigateToGenerateCode },
   ].filter(Boolean);
   const captureCards = [

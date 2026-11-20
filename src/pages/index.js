@@ -119,6 +119,9 @@ import AuthPage from '../components/AuthPage';
 import AiConciergeConsentPage from '../components/AiConciergeConsentPage';
 import { useAuthBackgroundSlide } from '../components/AuthShell';
 import yometelLogoWhite from '../assets/yometel-logo-white.png';
+import yometelLogoBlue from '../assets/yometel-logo-trans.png';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import { onBarTitle } from '../components/PageHeader/barTitle';
 import ProfilePage from '../features/profile/ProfilePage';
 import EmployeeManagementPage from '../features/employee-audit/EmployeeManagementPage';
 import ProcessStepsPage from '../features/process-steps/ProcessStepsPage';
@@ -149,6 +152,8 @@ import BrandPage from '../features/brand/BrandPage';
 import PageHeaderContext from '../components/PageHeader/PageHeaderContext';
 import ProductBar from '../components/ProductBar';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
+import FavoritesPage from '../features/favorites/FavoritesPage';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatPage from '../features/chat/ChatPage';
 import NotificationBell from '../features/notifications/NotificationBell';
 import SystemNotificationsPage from '../features/notifications/SystemNotificationsPage';
@@ -180,7 +185,7 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 const KNOWN_PAGES = [
   'dashboard', 'rfidScan', 'products', 'newProduct', 'generateCode', 'shipmentInspection', 'users', 'companies', 'employeeAuditLog',
   'processSteps', 'captureHistory', 'history', 'lca', 'esg', 'notifications',
-  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security', 'serviceRequests', 'brand',
+  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security', 'serviceRequests', 'brand', 'favorites',
 ];
 const pageFromPath = (pathname) => {
   const match = String(pathname || '').match(/^\/admin\/([^/?#]+)/);
@@ -226,6 +231,21 @@ const ITEM_CATEGORY_OPTIONS = [
 // logo container so the logo is always centered over the bar at every breakpoint.
 // Kept deliberately narrow so the content area gets more room.
 const LEFT_BAR_WIDTH = { md: 252, xl: 280 };
+// Frosted glass (sidebar, toolbar buttons): blurred white over the canvas.
+const GLASS = {
+  backgroundColor: 'rgba(255,255,255,0.7)',
+  backdropFilter: 'blur(22px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(22px) saturate(180%)',
+  border: '1px solid rgba(255,255,255,0.8)',
+  boxShadow: '0 8px 28px rgba(18,58,86,0.10), inset 0 1px 0 rgba(255,255,255,0.9)',
+};
+// Menu names, for pages whose header doesn't report its own title.
+const NAV_LABELS = {
+  dashboard: 'Dashboard', products: 'Products', generateCode: 'Generate Code', captureHistory: 'Work records',
+  shipmentInspection: 'Shipments', rfidScan: 'RFID Scan', history: 'Scans & Security', lca: 'Sustainability',
+  serviceRequests: 'Service Requests', recommendations: 'Shopper Preview', notifications: 'Announcements',
+  companies: 'Brands', processSteps: 'Workflows', employeeAuditLog: 'Employees', users: 'App Users', brand: 'Brand profile',
+};
 const MOBILE_NAV_WIDTH = 260;
 
 const InnerPage = () => {
@@ -282,7 +302,7 @@ const InnerPage = () => {
   const WORKING_EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'rfidScan', 'products', 'profile', 'allNotifications', 'generateCode', 'captureHistory'];
   // A normal DPP (app) user: the common pages (Products read-only), plus
   // Scan History.
-  const APP_USER_ALLOWED_PAGES = [...COMMON_PAGES, 'history'];
+  const APP_USER_ALLOWED_PAGES = [...COMMON_PAGES, 'history', 'favorites'];
   // Create/edit/delete products — never a working employee or an app user.
   const canEditProducts = canManageProducts && !isWorkingEmployee;
   // A company login (its admin email) acts as that company's Supervisor.
@@ -698,6 +718,19 @@ const InnerPage = () => {
   // (nothing could be clicked).
   const editorAsPage = wideEditor && !quickAdd && canEditProducts;
   // Two pages under one menu item share a title, with tabs under the header.
+  // The toolbar's title: what the page's PageHeader reports, else its menu name.
+  const [barTitles, setBarTitles] = useState({});
+  const activePageRef = React.useRef(activePage);
+  activePageRef.current = activePage;
+  useEffect(() => onBarTitle((title) => {
+    const page = activePageRef.current;
+    setBarTitles((m) => (m[page] === title ? m : { ...m, [page]: title }));
+  }), []);
+  const navLabelOf = (page) => {
+    const extra = { profile: 'My profile', allNotifications: 'Notifications', newProduct: 'New product', editProduct: 'Edit product', itemSearch: 'Product Journey', security: 'Scans & Security', esg: 'Sustainability', chat: 'Shopper Preview', favorites: 'Favorites' };
+    return extra[page] || NAV_LABELS[page] || '';
+  };
+
   const sharedHeader = (() => {
     if ((activePage === 'history' || activePage === 'security') && !isAppUser) {
       return { title: 'Scans & Security', tabs: [['history', 'All scans'], canSeeItemSearch && ['security', 'Suspected copies']], active: activePage, onChange: (p) => go(p) };
@@ -1945,39 +1978,42 @@ const InnerPage = () => {
   // Shared styling for both the desktop sidebar and the mobile overlay drawer.
   // Vertical blue gradient, kept deep enough at the bottom that the white
   // labels stay readable (the old light-blue bottom stop was ~1.8:1).
+  // macOS-style floating glass sidebar (design WEB_*).
   const drawerPaperSx = {
-    // Top stop matches the AppBar gradient's left-edge colour (#4584db) so the
-    // two meet seamlessly at the top-left corner.
-    backgroundImage: 'linear-gradient(180deg, #4584db 0%, #3a78c9 55%, #2f68b3 100%)',
-    backgroundColor: '#3a78c9',
-    color: '#ffffff',
-    borderRight: 'none',
+    ...GLASS,
+    color: '#1c1c1e',
+    border: '1px solid rgba(255,255,255,0.8)',
+    padding: '8px 10px 16px',
     overflowX: 'hidden',
     overflowY: 'auto',
   };
+  const sideLogo = (
+    <Box sx={{ px: 1.5, pt: 1.5, pb: 1, display: 'flex', alignItems: 'center' }}>
+      <Box component="img" src={yometelLogoBlue} alt="Yometel" sx={{ height: 38, width: 'auto', display: 'block' }} />
+    </Box>
+  );
   const navSx = {
     '& .MuiListItemButton-root': {
-      borderRadius: 2,
-      border: '1px solid transparent',
-      mx: 1,
+      borderRadius: '21px',
+      mx: 0,
       my: 0.25,
-      py: 0.5,
+      py: 0.25,
       px: 1.25,
-      // 46 px rows: every page fits on a laptop screen without folding.
-      minHeight: 46,
-      [compactMediaQuery]: { mx: 0.75, my: 0.2, py: 0.4, px: 1, minHeight: 44 },
+      minHeight: 40,
+      [compactMediaQuery]: { my: 0.1, minHeight: 38 },
     },
     '& .MuiListItemText-root': { my: 0 },
-    '& .MuiListItemIcon-root': { color: '#ffffff', minWidth: 42, justifyContent: 'center' },
-    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 26 },
-    '& .MuiListItemText-primary': { fontSize: '1.1rem', fontWeight: 400, color: '#ffffff', [compactMediaQuery]: { fontSize: '1.02rem' } },
-    '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(255,255,255,0.16)' },
-    '& .MuiListItemButton-root:focus-visible': { outline: '2px solid #ffffff', outlineOffset: -2 },
+    '& .MuiListItemIcon-root': { color: '#1c1c1e', minWidth: 36, justifyContent: 'flex-start' },
+    '& .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 22 },
+    '& .MuiListItemText-primary': { fontSize: '1rem', fontWeight: 400, color: '#1c1c1e' },
+    '& .MuiListItemButton-root:hover': { backgroundColor: 'rgba(120,120,128,0.1)' },
+    '& .MuiListItemButton-root:focus-visible': { outline: '2px solid #2a78bd', outlineOffset: -2 },
     '& .MuiListItemButton-root.Mui-selected': {
-      backgroundColor: 'rgba(255,255,255,0.24)',
-      borderColor: 'rgba(255,255,255,0.7)',
+      backgroundImage: 'linear-gradient(135deg,#2a78bd,#1b4f72)',
+      boxShadow: '0 6px 16px rgba(27,79,114,0.25)',
     },
-    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundColor: 'rgba(255,255,255,0.32)' },
+    '& .MuiListItemButton-root.Mui-selected .MuiListItemIcon-root, & .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { color: '#ffffff' },
+    '& .MuiListItemButton-root.Mui-selected:hover': { backgroundImage: 'linear-gradient(135deg,#256aa8,#123a56)' },
     '& .MuiListItemButton-root.Mui-selected .MuiListItemText-primary': { fontWeight: 400 },
     // Items inside a group sit a step in from the group's own row.
     '& .nav-sub .MuiListItemButton-root': { pl: 3 },
@@ -1996,6 +2032,7 @@ const InnerPage = () => {
       title: null,
       items: isAppUser ? [
         ['dashboard', 'Dashboard', DashboardIcon, true],
+        ['favorites', 'Favorites', FavoriteIcon, true],
         ['products', 'My Products', Inventory2Icon, true],
         ['history', 'My Scans', HistoryIcon, true],
         ['lca', 'Sustainability', SpaIcon, true, ['esg']],
@@ -2095,7 +2132,7 @@ const InnerPage = () => {
             <ListSubheader
               component="div"
               disableSticky
-              sx={{ bgcolor: 'transparent', color: '#ffffff', fontSize: 12.5, fontWeight: 400, letterSpacing: '1.4px', textTransform: 'uppercase', lineHeight: '30px', mt: 1, px: 2.75 }}
+              sx={{ bgcolor: 'transparent', color: '#5f6b78', fontSize: 12, fontWeight: 400, letterSpacing: '0.4px', textTransform: 'uppercase', lineHeight: '28px', mt: 1, px: 1.5 }}
             >
               {group.title}
             </ListSubheader>
@@ -2108,44 +2145,88 @@ const InnerPage = () => {
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <AppBar
-        position="fixed"
-        sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          backgroundImage:
-            'linear-gradient(90deg, #4584db 0%, #4585db 60%, #4787d1 100%)',
-        }}
-      >
-        <Toolbar disableGutters sx={{ pr: { xs: 2, md: 3 }, pl: { xs: 2, md: 0 } }}>
-          <IconButton
-            color="inherit"
-            aria-label="Toggle navigation"
-            onClick={() => setMobileNavOpen((open) => !open)}
-            sx={{ display: { xs: 'inline-flex', md: 'none' }, mr: 0.5 }}
-          >
-            <MenuIcon />
-          </IconButton>
+
+      {/* minHeight 0 lets the content area below be the one scrolling box
+          (menu and top bar stay put, and sticky save bars work). */}
+      <Box sx={{ display: 'flex', flexGrow: 1, minHeight: 0, bgcolor: '#eef1f5' }}>
+        {/* Desktop sidebar (md and up) — narrower (240) from md through lg
+            (covers 1280x720/1366x768 client displays), widening back to 280
+            only at xl (1536px+) where there's room to spare. */}
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            width: { md: 268, xl: 288 },
+            flexShrink: 0,
+            '& .MuiDrawer-paper': { width: { md: 244, xl: 264 }, boxSizing: 'border-box', ...drawerPaperSx, top: 12, left: 12, height: 'calc(100% - 24px)', borderRadius: '26px' },
+            ...navSx,
+          }}
+        >
+          {sideLogo}
+          {navList}
+        </Drawer>
+
+        {/* Mobile / tablet overlay drawer (below md) */}
+        <Drawer
+          variant="temporary"
+          open={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+          ModalProps={{ keepMounted: true }}
+          // Sit just below the AppBar (drawer+1) so the hamburger stays clickable
+          // to toggle the drawer closed.
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            zIndex: (theme) => theme.zIndex.drawer,
+            '& .MuiDrawer-paper': { width: MOBILE_NAV_WIDTH, boxSizing: 'border-box', ...drawerPaperSx },
+            ...navSx,
+          }}
+        >
+          {sideLogo}
+          {navList}
+        </Drawer>
+
+        <Box
+          sx={{
+            flexGrow: 1,
+            minWidth: 0,
+            p: { xs: 2, md: 4, xl: 5 },
+            [compactMediaQuery]: { p: 2.5 },
+            pt: '0 !important',
+            bgcolor: '#eef1f5',
+            overflow: 'auto',
+          }}
+        >
+          {/* Top of every page (design WEB_*): Back, the page title (never
+              shrinks), then search, help, bell and account. Page buttons,
+              tabs and filters sit in a row underneath (PageHeader). */}
           <Box
             sx={{
-              // Matches the sidebar Drawer's width below (LEFT_BAR_WIDTH)
-              // so the logo stays centered over the bar at every breakpoint.
-              width: { xs: 'auto', ...LEFT_BAR_WIDTH },
-              flexShrink: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              px: 1.5,
+              position: 'sticky', top: 0, zIndex: 6, display: 'flex', alignItems: 'center', gap: 1.5,
+              minHeight: 76, mx: { xs: -2, md: -4, xl: -5 }, px: { xs: 2, md: 4, xl: 5 }, mb: 1,
+              [compactMediaQuery]: { mx: -2.5, px: 2.5 },
+              background: 'linear-gradient(180deg, rgba(238,241,245,0.96) 70%, rgba(238,241,245,0))',
             }}
           >
-            {/* White Yometel wordmark sits directly on the blue bar. */}
-            <Box
-              component="img"
-              src={yometelLogoWhite}
-              alt="Yometel"
-              sx={{ height: { xs: 24, md: 28, xl: 30 }, width: 'auto', display: 'block' }}
-            />
-          </Box>
-          <Box sx={{ flexGrow: 1 }} />
+            <IconButton
+              aria-label="Open menu"
+              onClick={() => setMobileNavOpen((open) => !open)}
+              sx={{ ...GLASS, display: { xs: 'inline-flex', md: 'none' }, width: 42, height: 42, color: '#1c1c1e' }}
+            >
+              <MenuIcon />
+            </IconButton>
+            {activePage !== 'dashboard' && (
+              <IconButton
+                aria-label="Back"
+                onClick={() => setActivePage(previousPage && previousPage !== activePage ? previousPage : 'dashboard')}
+                sx={{ ...GLASS, width: 42, height: 42, color: '#1c1c1e', flexShrink: 0 }}
+              >
+                <ChevronLeftIcon sx={{ fontSize: 28 }} />
+              </IconButton>
+            )}
+            <Typography component="h1" sx={{ fontSize: { xs: 24, md: 30 }, lineHeight: 1.2, color: '#1c1c1e', whiteSpace: 'nowrap', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: { xs: '50vw', md: 'none' } }}>
+              {barTitles[activePage] || navLabelOf(activePage)}
+            </Typography>
+            <Box sx={{ flexGrow: 1 }} />
           {/* Find any item from any page: type or scan a code, press Enter. */}
           {canSeeItemSearch && (
             <Box
@@ -2167,22 +2248,24 @@ const InnerPage = () => {
                 inputProps={{ 'aria-label': 'Find an item by any code' }}
                 value={headerSearch}
                 onChange={(e) => setHeaderSearch(e.target.value)}
-                sx={{ bgcolor: '#ffffff', borderRadius: 2, '& .MuiOutlinedInput-notchedOutline': { border: 0 } }}
+                sx={{ ...GLASS, borderRadius: '21px', '& .MuiOutlinedInput-root': { borderRadius: '21px', minHeight: 42 }, '& .MuiOutlinedInput-notchedOutline': { border: 0 } }}
                 InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
               />
             </Box>
           )}
-          <PageHelp page={activePage} isAppUser={isAppUser} />
-          <NotificationBell onShowAll={() => setActivePage('allNotifications')} />
+          <Box sx={{ ...GLASS, borderRadius: '21px', display: 'flex', alignItems: 'center', '& .MuiIconButton-root': { color: '#1c1c1e', p: 1 } }}>
+            <PageHelp page={activePage} isAppUser={isAppUser} />
+            <NotificationBell onShowAll={() => setActivePage('allNotifications')} />
+          </Box>
           <Button
             color="inherit"
             aria-label="Account menu"
             aria-haspopup="menu"
             onClick={(e) => setProfileMenuAnchor(e.currentTarget)}
             endIcon={<ExpandMoreIcon />}
-            sx={{ color: '#fff', textTransform: 'none', px: 1, gap: 0.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.14)' } }}
+            sx={{ ...GLASS, color: '#1c1c1e', textTransform: 'none', minHeight: 42, borderRadius: '21px', pl: 0.5, pr: 1.5, gap: 0.5, '&:hover': { bgcolor: 'rgba(255,255,255,0.9)' } }}
           >
-            <Avatar src={getFileUrl(company.avatar)} sx={{ width: 34, height: 34, bgcolor: '#ffffff', color: 'primary.main', fontWeight: 400 }}>
+            <Avatar src={getFileUrl(company.avatar)} sx={{ width: 34, height: 34, backgroundImage: 'linear-gradient(135deg,#2a78bd,#1b4f72)', color: '#ffffff', fontWeight: 400 }}>
               {!company.avatar && (company.displayName || company.name)?.[0]?.toUpperCase()}
             </Avatar>
             <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, ml: 1, fontWeight: 400 }}>
@@ -2215,60 +2298,8 @@ const InnerPage = () => {
               Sign out
             </MenuItem>
           </Menu>
-        </Toolbar>
-      </AppBar>
+          </Box>
 
-      {/* minHeight 0 lets the content area below be the one scrolling box
-          (menu and top bar stay put, and sticky save bars work). */}
-      <Box sx={{ display: 'flex', flexGrow: 1, pt: 8, minHeight: 0 }}>
-        {/* Desktop sidebar (md and up) — narrower (240) from md through lg
-            (covers 1280x720/1366x768 client displays), widening back to 280
-            only at xl (1536px+) where there's room to spare. */}
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            width: LEFT_BAR_WIDTH,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': { width: LEFT_BAR_WIDTH, boxSizing: 'border-box', ...drawerPaperSx },
-            ...navSx,
-          }}
-        >
-          <Toolbar />
-          <Box sx={{ height: 8 }} />
-          {navList}
-        </Drawer>
-
-        {/* Mobile / tablet overlay drawer (below md) */}
-        <Drawer
-          variant="temporary"
-          open={mobileNavOpen}
-          onClose={() => setMobileNavOpen(false)}
-          ModalProps={{ keepMounted: true }}
-          // Sit just below the AppBar (drawer+1) so the hamburger stays clickable
-          // to toggle the drawer closed.
-          sx={{
-            display: { xs: 'block', md: 'none' },
-            zIndex: (theme) => theme.zIndex.drawer,
-            '& .MuiDrawer-paper': { width: MOBILE_NAV_WIDTH, boxSizing: 'border-box', ...drawerPaperSx },
-            ...navSx,
-          }}
-        >
-          {/* Spacer matching the fixed AppBar height so the first item isn't clipped. */}
-          <Toolbar />
-          {navList}
-        </Drawer>
-
-        <Box
-          sx={{
-            flexGrow: 1,
-            minWidth: 0,
-            p: { xs: 2, md: 4, xl: 5 },
-            [compactMediaQuery]: { p: 2.5 },
-            bgcolor: '#f5f6fa',
-            overflow: 'auto',
-          }}
-        >
           {activePage === 'dashboard' && (
             <DashboardPage
               isAdmin={isAdmin}
@@ -2305,6 +2336,7 @@ const InnerPage = () => {
               onNavigate={go}
               onNavigateToUsers={() => setActivePage('users')}
               onNavigateToProducts={() => setActivePage('products')}
+              onNavigateToFavorites={isAppUser ? () => go('favorites') : undefined}
               // KPI cards link to their source page -- only when the current
               // role can actually see that page (same gates as the sidebar).
               onNavigateToScanHistory={!isWorkingEmployee ? () => go('history') : undefined}
@@ -2321,6 +2353,7 @@ const InnerPage = () => {
           )}
 
           {activePage === 'chat' && <ChatPage company={company} isAppUser={isAppUser} />}
+          {activePage === 'favorites' && <FavoritesPage company={company} onOpenRecommendations={() => go('recommendations')} />}
 
 
           {/* Scan History and Ownership Transfers: super admin sees everything;

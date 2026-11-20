@@ -5,6 +5,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import PageHeader from '../../components/PageHeader';
 import DashboardAnalytics from './DashboardAnalytics';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import QuickStartCards from './QuickStartCards';
 import NeedsAttention from './NeedsAttention';
 import AddIcon from '@mui/icons-material/Add';
@@ -16,7 +17,7 @@ const DashboardPage = ({
   canEditProcessSteps = false, products = [], brands = [], company,
   onSetUpBrand, onCompletePassport, onGenerateCodesFor,
   onNavigateToNewProduct, onNavigate = () => {}, onNavigateToProducts,
-  onNavigateToScanHistory, onNavigateToCaptureHistory, onNavigateToGenerateCode, onAnalyzeProduct,
+  onNavigateToScanHistory, onNavigateToCaptureHistory, onNavigateToGenerateCode, onAnalyzeProduct, onNavigateToFavorites,
 }) => {
   // Non-super accounts see analytics scoped to the products they own.
   const ownerKind = isAppUser ? 'User' : 'Company';
@@ -59,8 +60,9 @@ const DashboardPage = ({
 
   const actions = isAppUser ? (
     <>
+      {onNavigateToFavorites && <Button variant="contained" startIcon={<FavoriteIcon />} onClick={onNavigateToFavorites}>Favorites</Button>}
       <Button variant="outlined" startIcon={<Inventory2Icon />} onClick={onNavigateToProducts}>My products</Button>
-      <Button variant="contained" startIcon={<HistoryIcon />} onClick={onNavigateToScanHistory}>My scans</Button>
+      <Button variant="outlined" startIcon={<HistoryIcon />} onClick={onNavigateToScanHistory}>My scans</Button>
     </>
   ) : canEditProducts && onNavigateToNewProduct ? (
     <Button variant="contained" startIcon={<AddIcon />} onClick={onNavigateToNewProduct}>New product</Button>
@@ -134,6 +136,7 @@ const DashboardPage = ({
         onNavigateToScanHistory={onNavigateToScanHistory}
         onNavigateToCaptureHistory={onNavigateToCaptureHistory}
         onNavigateToProducts={onNavigateToProducts}
+        onNavigateToFavorites={onNavigateToFavorites}
         onNavigateToGenerateCode={onNavigateToGenerateCode}
         filtersOpen={filtersOpen}
         onTotalsLoaded={(totals) => setScans(totals.scans || 0)}

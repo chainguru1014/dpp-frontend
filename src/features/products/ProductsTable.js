@@ -6,6 +6,8 @@ import EmptyState from '../../components/EmptyState';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { getFileUrl } from '../../helper';
 import Loader from '../../components/Loader';
+import useSaveCounts from './useSaveCounts';
+import FavoriteIcon from '@mui/icons-material/Favorite';
 import { PassportScore } from './PassportReadinessPanel';
 
 // Per page; with brand groups more fit, since the headings split the grid.
@@ -24,6 +26,7 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
   const owner = product.company_id;
   const subtitle = [product.model, product.brandInfo?.name || owner?.name].filter(Boolean).join(' · ');
   const Root = onClick ? ButtonBase : Box;
+  const saves = useSaveCounts().counts[String(product._id)] || 0;
 
   const rootSx = compact
     ? {
@@ -37,9 +40,9 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
         p: 1.5,
         bgcolor: selected ? 'rgba(47,128,200,0.10)' : '#fff',
         border: '1px solid',
-        borderColor: selected ? '#2f80c8' : 'divider',
-        boxShadow: selected ? 'inset 5px 0 0 #2f80c8' : 1,
-        borderRadius: 3,
+        borderColor: selected ? '#2f80c8' : 'transparent',
+        boxShadow: selected ? 'inset 5px 0 0 #2f80c8' : 'none',
+        borderRadius: '20px',
         transition: 'box-shadow 120ms, border-color 120ms',
         ...(onClick ? { '&:hover': { borderColor: '#2f80c8', boxShadow: selected ? 'inset 5px 0 0 #2f80c8' : 3 } } : {}),
         '&:focus-visible': { outline: '3px solid #2f80c8', outlineOffset: 2 },
@@ -54,9 +57,9 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
         p: 1.75,
         bgcolor: selected ? 'rgba(47,128,200,0.10)' : '#fff',
         border: '1px solid',
-        borderColor: selected ? '#2f80c8' : 'divider',
-        boxShadow: selected ? 'inset 5px 0 0 #2f80c8' : 1,
-        borderRadius: 3,
+        borderColor: selected ? '#2f80c8' : 'transparent',
+        boxShadow: selected ? 'inset 5px 0 0 #2f80c8' : 'none',
+        borderRadius: '20px',
         transition: 'box-shadow 120ms, border-color 120ms',
         ...(onClick ? { '&:hover': { borderColor: '#2f80c8', boxShadow: selected ? 'inset 5px 0 0 #2f80c8' : 3 } } : {}),
         '&:focus-visible': { outline: '3px solid #2f80c8', outlineOffset: 2 },
@@ -71,22 +74,23 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
         sx={{
           display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', height: '100%', textAlign: 'left', p: 1.25,
           bgcolor: selected ? 'rgba(47,128,200,0.10)' : '#fff',
-          border: '1px solid', borderColor: selected ? '#2f80c8' : 'divider',
-          boxShadow: selected ? 'inset 4px 0 0 #2f80c8' : 1,
-          borderRadius: 3,
+          border: '1px solid', borderColor: selected ? '#2f80c8' : 'transparent',
+          boxShadow: selected ? 'inset 4px 0 0 #2f80c8' : 'none',
+          borderRadius: '20px',
           transition: 'box-shadow 120ms, border-color 120ms',
           ...(onClick ? { '&:hover': { borderColor: '#2f80c8', boxShadow: selected ? 'inset 4px 0 0 #2f80c8' : 3 } } : {}),
           '&:focus-visible': { outline: '3px solid #2f80c8', outlineOffset: 2 },
         }}
       >
         <Box sx={{ width: 76, height: 76, flexShrink: 0, borderRadius: 2, bgcolor: '#f2f5f9', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          {thumb && <Box component="img" alt="" src={getFileUrl(thumb)} sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+          {thumb && <Box component="img" alt="" src={getFileUrl(thumb)} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
         </Box>
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Typography variant="subtitle2" component="span" sx={{ display: 'block', lineHeight: 1.3, fontSize: 15 }} noWrap>
             {product.name || 'Untitled product'}
           </Typography>
           {subtitle && <Typography variant="caption" color="text.secondary" component="span" sx={{ display: 'block' }} noWrap>{subtitle}</Typography>}
+          {!isAppUser && saves > 0 && <Typography variant="caption" component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#1b5b91' }}><FavoriteIcon sx={{ fontSize: 14, color: '#2a78bd' }} />{saves} {saves === 1 ? 'shopper saved' : 'shoppers saved'} this</Typography>}
           {showOwner && owner && (
             <Link
               component="span"
@@ -140,6 +144,7 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
             {product.name || 'Untitled product'}
           </Typography>
           {subtitle && <Typography variant="caption" color="text.secondary" component="span" sx={{ display: 'block' }} noWrap>{subtitle}</Typography>}
+          {!isAppUser && saves > 0 && <Typography variant="caption" component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#1b5b91' }}><FavoriteIcon sx={{ fontSize: 14, color: '#2a78bd' }} />{saves} {saves === 1 ? 'shopper saved' : 'shoppers saved'} this</Typography>}
           {showOwner && owner && (
             <Link
               component="span"
@@ -295,7 +300,7 @@ export default function ProductsTable({
       return <EmptyState icon={Inventory2Icon} title="No products here" text={emptyText} action={emptyAction} note={emptyNote} compact />;
     }
     return (
-      <Box sx={{ bgcolor: '#fff', borderRadius: 3, border: '1px dashed', borderColor: 'divider', p: 5, textAlign: 'center' }}>
+      <Box sx={{ bgcolor: '#fff', borderRadius: '20px', border: '1px dashed', borderColor: 'divider', p: 5, textAlign: 'center' }}>
         <Typography color="text.secondary" sx={{ maxWidth: 520, mx: 'auto' }}>{emptyText}</Typography>
       </Box>
     );
@@ -336,7 +341,7 @@ export default function ProductsTable({
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
                   <Box sx={{ width: 48, height: 48, flex: 'none', borderRadius: 2, bgcolor: '#f2f5f9', border: '1px solid #e3e8ef', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {thumb && <Box component="img" src={getFileUrl(thumb)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />}
+                    {thumb && <Box component="img" src={getFileUrl(thumb)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                   </Box>
                   <Box sx={{ minWidth: 0 }}>
                     <Typography noWrap sx={{ fontWeight: 400, color: '#16324a' }}>{p.name || 'Untitled product'}</Typography>
