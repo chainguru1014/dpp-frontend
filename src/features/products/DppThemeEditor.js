@@ -143,6 +143,9 @@ function OrderList({ items, labelOf, onChange, disabled }) {
 // Colors, Style, Layout, Content. `theme` is always a complete, normalized
 // theme; every change is reported through `onChange` so the phone preview
 // beside it updates as the brand edits.
+// Compact buttons that fit next to the ready-made looks heading.
+const ROW_BTN = { whiteSpace: 'nowrap', minHeight: 32, height: 32, py: 0, px: 1.5, fontSize: 14, minWidth: 0 };
+
 export default function DppThemeEditor({ theme, onChange, onSave, onReset, saving, dirty, canEdit = true }) {
   const [group, setGroup] = useState('colours');
   const set = (patch) => onChange({ ...theme, ...patch });
@@ -169,7 +172,20 @@ export default function DppThemeEditor({ theme, onChange, onSave, onReset, savin
       {group === 'colours' && (
         <Stack spacing={2.5}>
           <Box>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>Start from a ready-made look</Typography>
+            {/* The ready-made looks heading, with Undo changes and Back to the
+                Yometel look on its right (under it, right-aligned, when the
+                column is too narrow for one row). */}
+            <Box sx={{ display: 'flex', alignItems: 'center', columnGap: 1, rowGap: 0.5, flexWrap: 'wrap', mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ flex: '1 1 auto', whiteSpace: 'nowrap' }}>Ready-made looks</Typography>
+              {canEdit && (
+                <Box sx={{ display: 'flex', gap: 1, ml: 'auto', flexShrink: 0 }}>
+                  {dirty && <Button size="small" onClick={onReset} sx={{ ...ROW_BTN, px: 1 }}>Undo changes</Button>}
+                  <Tooltip title="Back to the Yometel look">
+                    <Button size="small" variant="outlined" aria-label="Back to the Yometel look" onClick={() => onChange({ ...DEFAULT_DPP_THEME })} sx={ROW_BTN}>Yometel look</Button>
+                  </Tooltip>
+                </Box>
+              )}
+            </Box>
             <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
               {PRESETS.map((preset) => (
                 <Button
@@ -293,13 +309,13 @@ export default function DppThemeEditor({ theme, onChange, onSave, onReset, savin
         </Stack>
       )}
 
-      {canEdit && (
+      {/* Own Save only where the page has no Save of its own (the product
+          window saves the design with Save changes). */}
+      {canEdit && onSave && (
         <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 3 }}>
           <Button variant="contained" onClick={onSave} disabled={saving || !dirty}>
             {saving ? 'Saving…' : dirty ? 'Save design' : 'Design saved'}
           </Button>
-          {dirty && <Button onClick={onReset}>Undo changes</Button>}
-          <Button onClick={() => onChange({ ...DEFAULT_DPP_THEME })}>Back to the Yometel look</Button>
         </Stack>
       )}
     </Box>

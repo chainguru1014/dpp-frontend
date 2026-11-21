@@ -694,20 +694,22 @@ const InnerPage = () => {
   // admin's own account is not a brand; its products keep what they have).
   // One company = one brand: the product's company's brand.
   const formBrand = brands.find((b) => String(b.company_id) === formCompanyId) || brandOf(formCompanyId, brandInfo.name) || null;
-  const formTheme = formBrand?.dppTheme || brandOf(formCompanyId, brandInfo.name)?.dppTheme;
   // The design being changed on the Experience step (null: as saved).
   const [designDraft, setDesignDraft] = useState(null);
   const [designSaving, setDesignSaving] = useState(false);
   useEffect(() => { setDesignDraft(null); }, [formBrand?._id]);
+  // Saved with the product (Save changes); true when there was nothing to
+  // save or it worked.
   const saveDesign = async () => {
-    if (!formBrand || !designDraft) return;
+    if (!formBrand || !designDraft) return true;
+    if (JSON.stringify(normalizeDppTheme(designDraft)) === JSON.stringify(normalizeDppTheme(formBrand.dppTheme))) { setDesignDraft(null); return true; }
     setDesignSaving(true);
     const res = await updateBrandById(token, formBrand._id, { dppTheme: normalizeDppTheme(designDraft) });
     setDesignSaving(false);
-    if (!res.ok) { notifyError(res.message); return; }
+    if (!res.ok) { notifyError(res.message); return false; }
     setBrands((list) => list.map((b) => (b._id === formBrand._id ? { ...b, ...(res.data || {}), dppTheme: res.data?.dppTheme || normalizeDppTheme(designDraft) } : b)));
     setDesignDraft(null);
-    notifySuccess('Design saved. It now applies to all this brand’s product pages.');
+    return true;
   };
   // Brand companies the super admin can add a product to.
   const brandCompanies = brands.filter((b, i, all) => String(b.company_id) !== String(company?._id || '')
@@ -1186,6 +1188,8 @@ const InnerPage = () => {
 
   const addProductHandler = async ({ thenCodes = false } = {}) => {
     if (!validateRequiredProductFields()) return;
+    // The DPP UI Design changes (the brand's design) are saved too.
+    if (!(await saveDesign())) return;
     setSavingProduct(true);
     const ok = await addProduct({
       name: productName,
@@ -1256,6 +1260,8 @@ const InnerPage = () => {
 
   const updateProductHandler = async ({ thenCodes = false } = {}) => {
     if (!validateRequiredProductFields()) return;
+    // The DPP UI Design changes (the brand's design) are saved too.
+    if (!(await saveDesign())) return;
     setSavingProduct(true);
     const ok = await updateProduct({
       _id: isEditing,
@@ -2973,7 +2979,6 @@ const InnerPage = () => {
                             <DppThemeEditor
                               theme={designDraft || normalizeDppTheme(formBrand.dppTheme)}
                               onChange={(next) => setDesignDraft(next)}
-                              onSave={saveDesign}
                               onReset={() => setDesignDraft(null)}
                               saving={designSaving}
                               dirty={!!designDraft && JSON.stringify(normalizeDppTheme(designDraft)) !== JSON.stringify(normalizeDppTheme(formBrand.dppTheme))}
@@ -3949,10 +3954,6 @@ const InnerPage = () => {
           } : undefined}
           open={openPreviewModal}
           setOpen={setOpenPreviewModal}
-          // From the studio: the design of the brand typed into the form.
-          // From the Products page: left out, so the saved design of the
-          // product's own brand loads.
-          theme={activePage === 'newProduct' ? formTheme : undefined}
           productInfo={
             // If selectedProduct exists and we're viewing from products page, use it
             // Otherwise use form data
