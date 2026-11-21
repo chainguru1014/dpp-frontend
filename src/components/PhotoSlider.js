@@ -8,7 +8,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 // onto the next or previous one, as in the app's photo viewer. Arrow keys
 // work too. `fit`: 'cover' fills the frame (the app), 'contain' shows the
 // whole photo.
-export function PhotoTrack({ images, index, onIndex, fit = 'cover', sx }) {
+export function PhotoTrack({ images, index, onIndex, fit = 'cover', sx, onTap }) {
   const box = useRef(null);
   const [dx, setDx] = useState(0);
   const drag = useRef(null);
@@ -16,13 +16,13 @@ export function PhotoTrack({ images, index, onIndex, fit = 'cover', sx }) {
   const go = (i) => onIndex(Math.max(0, Math.min(count - 1, i)));
 
   const down = (e) => {
-    if (count < 2) return;
+    if (count < 2) { drag.current = { x: e.clientX, t: Date.now(), w: 1, moved: false, still: true }; return; }
     drag.current = { x: e.clientX, t: Date.now(), w: box.current?.offsetWidth || 1, moved: false };
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
   const move = (e) => {
     const d = drag.current;
-    if (!d) return;
+    if (!d || d.still) return;
     let v = e.clientX - d.x;
     if (Math.abs(v) > 4) d.moved = true;
     // A little give at the first and last photo.
@@ -34,6 +34,9 @@ export function PhotoTrack({ images, index, onIndex, fit = 'cover', sx }) {
     if (!d) return;
     drag.current = null;
     const v = e.clientX - d.x;
+    // A tap (no drag): onTap.
+    if (!d.moved && Math.abs(v) < 5) { setDx(0); if (onTap) onTap(); return; }
+    if (d.still) return;
     const fast = Math.abs(v) / Math.max(1, Date.now() - d.t) > 0.5;
     if ((v < -d.w * 0.18 || (fast && v < -20)) && index < count - 1) go(index + 1);
     else if ((v > d.w * 0.18 || (fast && v > 20)) && index > 0) go(index - 1);

@@ -420,10 +420,11 @@ export function PassportScreen({ product, view = 'passport', onView = () => {} }
       <>
         <Backdrop image={main} />
         <Box sx={{ position: 'absolute', inset: 0, overflowY: 'auto', pb: '110px', ...NO_SCROLLBAR }}>
-          <ButtonBase onClick={() => main && setViewer(true)} aria-label="Show the photos" sx={{ display: 'block', width: '100%', height: 306, position: 'relative', WebkitMaskImage: 'linear-gradient(180deg,#000 68%,transparent 100%)', maskImage: 'linear-gradient(180deg,#000 68%,transparent 100%)' }}>
-            {main && <Box component="img" src={main} alt={p.name || ''} sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
-            <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 25%)' }} />
-          </ButtonBase>
+          {/* The photo: dragged left / right like the app; a tap opens Photos. */}
+          <Box aria-label="Show the photos" role="button" sx={{ width: '100%', height: 306, position: 'relative', WebkitMaskImage: 'linear-gradient(180deg,#000 68%,transparent 100%)', maskImage: 'linear-gradient(180deg,#000 68%,transparent 100%)' }}>
+            {images.length > 0 && <PhotoTrack images={images} index={Math.min(index, images.length - 1)} onIndex={setIndex} onTap={() => setViewer(true)} sx={{ position: 'absolute', inset: 0 }} />}
+            <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 25%)', pointerEvents: 'none' }} />
+          </Box>
           {images.length > 1 && (
             <Box sx={{ mt: '-78px', position: 'relative', display: 'flex', gap: 1, justifyContent: 'center', alignItems: 'center' }}>
               {images.slice(0, 5).map((src, i) => {
