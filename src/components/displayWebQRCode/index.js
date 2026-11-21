@@ -25,7 +25,7 @@ const WebQRCode = ({data, identifer}) => {
             <div>
                 <img
                     src={`${qrcodeImage}`}
-                    alt="Web QR Code"
+                    alt="Web QR code"
                     loading="lazy"
                 />
             </div>

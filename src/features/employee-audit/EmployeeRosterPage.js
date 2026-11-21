@@ -104,7 +104,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
       return;
     }
     if (!name.trim()) {
-      setError('A name is required — it is shown on the work steps they record in the mobile app.');
+      setError('Please enter a name. It’s shown on the work steps they record in the app.');
       return;
     }
     setSaving(true);
@@ -378,13 +378,13 @@ const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restri
             value={draft.employeeType}
             onChange={(e) => setDraft((d) => ({ ...d, employeeType: e.target.value }))}
           >
-            <MenuItem value="working_employee">Working Employee</MenuItem>
+            <MenuItem value="working_employee">Working employee</MenuItem>
             {!restrictToWorkingEmployee && <MenuItem value="supervisor">Supervisor</MenuItem>}
           </Select>
         ) : p.row.employeeType === 'supervisor' ? (
           'Supervisor'
         ) : (
-          'Working Employee'
+          'Working employee'
         ),
     },
     {
@@ -438,7 +438,7 @@ const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restri
             onChange={(e) => setEmployeeTypeFilter(e.target.value)}
           >
             <MenuItem value="all">All</MenuItem>
-            <MenuItem value="working_employee">Working Employee</MenuItem>
+            <MenuItem value="working_employee">Working employee</MenuItem>
             <MenuItem value="supervisor">Supervisor</MenuItem>
           </Select>
         </FormControl>

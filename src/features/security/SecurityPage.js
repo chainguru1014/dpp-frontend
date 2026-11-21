@@ -229,7 +229,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
         <Stack spacing={2}>
           <Section
             title="Codes to check"
-            description="Location comes from the scanner's GPS or internet address, which can be wrong (for example with a VPN). Treat these as reasons to look, then decide."
+            description="Location comes from the scanner’s GPS or internet address, which can be wrong (for example with a VPN). Treat these as reasons to look, then decide."
           >
             {data.suspects.length === 0 ? (
               <Alert severity="success">No code shows warning signs in this period.</Alert>

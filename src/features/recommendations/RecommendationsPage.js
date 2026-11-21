@@ -261,7 +261,7 @@ export default function RecommendationsPage({ company, isAdmin, isAppUser = fals
                       <Box sx={{ position: 'absolute', top: 12, left: 12, px: 1.5, height: 30, borderRadius: '15px', display: 'flex', alignItems: 'center', bgcolor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)', fontSize: 14 }}>
                         {score}% match
                       </Box>
-                      <IconButton onClick={() => toggleSave(p)} aria-label={on ? 'Remove from favorites' : 'Save to favorites'} sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.85)', '&:hover': { bgcolor: '#fff' } }}>
+                      <IconButton onClick={() => toggleSave(p)} aria-label={on ? 'Remove from Favorites' : 'Save to Favorites'} sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(255,255,255,0.85)', '&:hover': { bgcolor: '#fff' } }}>
                         {on ? <FavoriteIcon sx={{ color: '#2a78bd' }} /> : <FavoriteBorderIcon sx={{ color: '#2a78bd' }} />}
                       </IconButton>
                     </Box>

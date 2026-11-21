@@ -49,18 +49,18 @@ const StaffProfile = ({ company }) => (
           <Box>
             <Typography variant="h6">{company.displayName || company.email}</Typography>
             <Typography color="text.secondary">
-              {company.employeeType === 'supervisor' ? 'Supervisor' : 'Working Employee'} at {company.name}
+              {company.employeeType === 'supervisor' ? 'Supervisor' : 'Working employee'} at {company.name}
             </Typography>
           </Box>
         </Box>
         <Detail label="Name" value={company.displayName} />
         <Detail label="Email" value={company.email} />
-        <Detail label="Role" value={company.employeeType === 'supervisor' ? 'Supervisor' : 'Working Employee'} />
+        <Detail label="Role" value={company.employeeType === 'supervisor' ? 'Supervisor' : 'Working employee'} />
         <Detail label="Company" value={company.name} />
         <Typography color="text.secondary" sx={{ mt: 2 }}>
           {company.employeeType === 'supervisor'
             ? 'To change these details, ask your company administrator or the Yometel team.'
-            : 'To change these details, ask your supervisor.'}
+            : 'To change these details, ask your Supervisor.'}
         </Typography>
       </CardContent>
     </Card>

@@ -70,10 +70,10 @@ export default function ShipmentInspectionPage({ token, products }) {
       <PageHeader
         icon={LocalShippingIcon}
         title="Shipments"
-        description="Create a shipment's expected-item list, print its QR code for the box, and review RFID gate-scan results against it."
+        description="Create a shipment’s expected-item list, print its QR code for the box, and review RFID gate-scan results against it."
         actions={
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => setCreateOpen(true)}>
-            Create Manifest
+            Create manifest
           </Button>
         }
       />
@@ -176,7 +176,7 @@ function CreateManifestDialog({ open, onClose, products, token, onCreated }) {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Create Shipment Manifest<DialogClose onClick={onClose} /></DialogTitle>
+      <DialogTitle>Create shipment manifest<DialogClose onClick={onClose} /></DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ mt: 1 }}>
           <TextField select label="Product" value={productId} onChange={(e) => setProductId(e.target.value)} fullWidth>
@@ -211,8 +211,8 @@ function CreateManifestDialog({ open, onClose, products, token, onCreated }) {
           />
           <Alert severity="info" variant="outlined">
             Only items whose QR codes already exist for this product can be included — generate those first if needed.
-            Each expected item's RFID tag must also be paired to that specific unit (Generate Code → RFID Tag → pair),
-            not just registered to the product generally, for a gate scan to ever match it.
+            Each expected item’s RFID tag must also be paired to that exact item (Generate Code → RFID tag → Pair tags),
+            not only registered to the product, or the gate scan can’t match it.
           </Alert>
         </Stack>
       </DialogContent>
@@ -296,7 +296,7 @@ function ManifestDetailDialog({ manifest, token, onClose }) {
               <Loader minHeight={80} />
             ) : history.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                Not inspected yet — scan this manifest's QR in the staff app, then scan the gate.
+                Not inspected yet — scan this manifest’s QR code in the staff app, then scan the gate.
               </Typography>
             ) : (
               <Stack spacing={1}>

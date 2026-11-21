@@ -38,7 +38,7 @@ const SecurityQRCode = ({ data, identifer, onDelete }) => {
 
     return (
         <Box sx={{ maxWidth: 228, width: '100%' }}>
-            <img src={qrcodeImage} alt="Security QR Code" loading="lazy" style={{ width: '100%', display: 'block' }} />
+            <img src={qrcodeImage} alt="Security QR code" loading="lazy" style={{ width: '100%', display: 'block' }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                 <Tooltip title={securityUrl}>
                     <Typography variant="caption" sx={{ wordBreak: 'break-all', flex: 1 }}>

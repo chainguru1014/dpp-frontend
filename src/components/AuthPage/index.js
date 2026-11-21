@@ -355,7 +355,7 @@ const AuthPage = ({
           ))}
           {!!previewError && <Alert severity="error">{previewError}</Alert>}
           <Typography variant="body2" color={AUTH_MUTED} sx={{ textShadow, textAlign: 'center' }}>
-            Test sign-in until the product is released.
+            Test sign-in, available until launch.
           </Typography>
         </Box>
       </AuthShell>
@@ -375,7 +375,7 @@ const AuthPage = ({
                 {isSignup ? 'Create an account' : 'Sign in'}
               </Typography>
               <Typography color={AUTH_MUTED} sx={{ textShadow,  textAlign: 'center', mt: 0.75 }}>
-                Enter your email. We will send you a 6-digit code, so you don&apos;t need a password.
+                Enter your email. We’ll send you a 6-digit code, so you don’t need a password.
               </Typography>
             </Box>
             <Box component="form" onSubmit={handleSendCode} sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>

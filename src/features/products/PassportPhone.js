@@ -322,7 +322,7 @@ export default function PassportPhone({ product, width = 300, view: viewProp, on
   const outerH = SCREEN.h + SCREEN.bezel * 2;
   const scale = width / outerW;
   return (
-    <Box aria-label="Preview of the shopper's product page" sx={{ width, height: Math.round(outerH * scale), flexShrink: 0, position: 'relative', mx: 'auto' }}>
+    <Box aria-label="Preview of the shopper’s product page" sx={{ width, height: Math.round(outerH * scale), flexShrink: 0, position: 'relative', mx: 'auto' }}>
       <Box sx={{ position: 'absolute', top: 0, left: 0, width: outerW, height: outerH, transform: `scale(${scale})`, transformOrigin: 'top left', p: `${SCREEN.bezel}px`, bgcolor: '#1d1d1f', borderRadius: `${SCREEN.radius + SCREEN.bezel}px`, boxShadow: '0 18px 44px rgba(0,0,0,0.28), inset 0 0 0 2px #3a3a3c' }}>
         <Box sx={{ width: SCREEN.w, height: SCREEN.h, borderRadius: `${SCREEN.radius}px`, overflow: 'hidden', position: 'relative', bgcolor: BG, fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif', '& .MuiTypography-root': { fontFamily: 'inherit' } }}>
           <PassportScreen product={product} view={view} onView={setView} />

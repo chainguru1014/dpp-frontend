@@ -66,7 +66,7 @@ function TryScanDialog({ open, onClose, product, onDone }) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Not now</Button>
-        <Button variant="contained" onClick={onDone}>I have tried it</Button>
+        <Button variant="contained" onClick={onDone}>I’ve tried it</Button>
       </DialogActions>
     </Dialog>
   );

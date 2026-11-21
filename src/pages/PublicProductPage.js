@@ -45,11 +45,11 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, gtin, serial }) => 
         if (response.ok && data.status === 'success') {
           setProduct(data.data);
         } else {
-          setError(data.message || 'We could not find this product.');
+          setError(data.message || 'We couldn’t find this product.');
         }
       } catch (err) {
         console.error('Error fetching product:', err);
-        setError('The product information could not be loaded. Please check your connection and try again.');
+        setError('The product information couldn’t be loaded. Please check your connection and try again.');
       } finally {
         setLoading(false);
       }
@@ -87,7 +87,7 @@ const PublicProductPage = ({ qrcodeKey, productId, qrcodeId, gtin, serial }) => 
           <>
             <Typography variant="h6" component="h1">Product not found</Typography>
             <Typography color="text.secondary" sx={{ maxWidth: 420 }}>
-              {error || 'We could not find this product.'} Please scan the label on the product again.
+              {error || 'We couldn’t find this product.'} Please scan the label on the product again.
             </Typography>
           </>
         )}

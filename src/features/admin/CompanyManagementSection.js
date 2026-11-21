@@ -198,7 +198,7 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      notify("Please enter the Supervisor's email address. They sign in with it and finish the brand profile.", 'warning');
+      notify("Please enter the Supervisor’s email address. They sign in with it and finish the brand profile.", 'warning');
       return;
     }
     // A domain is what follows the @ ("hm.com"), never a whole address.
@@ -269,7 +269,7 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
         <TextField
           label="Staff email domain"
           placeholder={form.email.includes('@') ? form.email.split('@')[1] : 'e.g. hm.com'}
-          helperText="People with this email domain can sign in as this brand's staff. The Supervisor's domain is added automatically; add more separated by commas."
+          helperText="People with this email domain can sign in as this brand’s staff. The Supervisor’s domain is added automatically; add more separated by commas."
           value={form.allowedEmailDomains}
           onChange={(e) => setForm({ ...form, allowedEmailDomains: e.target.value })}
           fullWidth

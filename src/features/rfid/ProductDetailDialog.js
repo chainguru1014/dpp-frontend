@@ -173,7 +173,7 @@ export default function ProductDetailDialog({ open, product, loadProduct, onClos
                 <Typography sx={{ fontWeight: 400, fontSize: '1.7rem', lineHeight: 1.2 }}>{info.name || 'Unnamed product'}</Typography>
                 <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 0.75 }}>
                   {!!price && <Typography sx={{ fontWeight: 400, fontSize: '1.35rem', color: 'primary.main' }}>{price}</Typography>}
-                  <Chip icon={<VerifiedIcon />} label="Genuine product" color="success" variant="outlined" size="small" />
+                  <Chip icon={<VerifiedIcon />} label="Registered product" color="success" variant="outlined" size="small" />
                 </Stack>
               </Box>
               {!!website && (

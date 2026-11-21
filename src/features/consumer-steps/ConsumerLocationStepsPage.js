@@ -16,7 +16,7 @@ const emptyStep = () => ({ entity: '' });
 
 // Manages the numbered location tiles shown on the shopper mobile app's Home
 // screen (name only) — the platform-wide equivalent of ProcessStepsPage.js,
-// managed by the super admin (Settings > Shopper App Steps in the menu).
+// managed by the super admin (Settings > Shopper app steps in the menu).
 const ConsumerLocationStepsPage = ({ token }) => {
   const [steps, setSteps] = useState([emptyStep()]);
   const [loading, setLoading] = useState(false);
@@ -97,8 +97,8 @@ const ConsumerLocationStepsPage = ({ token }) => {
   return (
     <Box sx={{ pb: 10 }}>
       <PageHeader
-        title="Shopper App Steps"
-        description={`The numbered place tiles on the shopper app's Home screen, for every shopper and every brand. You can have 1 to ${MAX_STEPS}.`}
+        title="Shopper app steps"
+        description={`The numbered place tiles on the shopper app’s Home screen, for every shopper and every brand. You can have 1 to ${MAX_STEPS}.`}
         actions={(
           <Button variant="outlined" startIcon={<AddIcon />} onClick={handleAdd} disabled={steps.length >= MAX_STEPS}>
             Add step

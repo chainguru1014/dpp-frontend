@@ -290,7 +290,7 @@ export default function ItemTracePage({
         dense
         groupByBrand
         emptyText={input.trim()
-          ? 'No product matches. If this is a code from a code or tag, press "Find code".'
+          ? 'No product matches. If you typed a code from a label or tag, press “Find code”.'
           : 'No products yet.'}
         onSelectProduct={(row) => { setPickingProduct(false); openProduct(row._id); }}
       />
@@ -303,8 +303,8 @@ export default function ItemTracePage({
         {!loading && result?.type === 'list' && (
           <Alert severity="info">
             {result.products.length === 0
-              ? `No code matches "${input}". Check it for typing mistakes — a code is only found when it is entered in full.`
-              : 'That is not a code. Click one of the products above to see its activity.'}
+              ? `No code matches “${input}”. Check it for typing mistakes: a code is only found when it’s entered in full.`
+              : 'That isn’t a code. Click one of the products above to see its activity.'}
           </Alert>
         )}
 

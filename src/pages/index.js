@@ -241,7 +241,7 @@ const GLASS = {
 };
 // Menu names, for pages whose header doesn't report its own title.
 const NAV_LABELS = {
-  dashboard: 'Dashboard', products: 'Products', generateCode: 'Generate Code', captureHistory: 'Work records',
+  dashboard: 'Dashboard', products: 'Products', generateCode: 'Generate Code', captureHistory: 'Work Records',
   shipmentInspection: 'Shipments', rfidScan: 'RFID Scan', history: 'Scans & Security', lca: 'Sustainability',
   serviceRequests: 'Service Requests', recommendations: 'Shopper Preview', notifications: 'Announcements',
   companies: 'Brands', processSteps: 'Workflows', employeeAuditLog: 'Employees', users: 'App Users', brand: 'Brand profile',
@@ -1505,7 +1505,7 @@ const InnerPage = () => {
     }
     
     if (!company || !company._id) {
-      notifyError('Your company details could not be loaded. Please sign out and in again.');
+      notifyError('Your company details couldn’t be loaded. Please sign out and sign in again.');
       return;
     }
     if (!(await confirmLargeBatch('Security QR codes'))) return;
@@ -2060,7 +2060,7 @@ const InnerPage = () => {
       key: 'daily',
       title: 'Daily work',
       items: [
-        ['captureHistory', 'Work records', AssessmentIcon, canSeeCaptureHistory],
+        ['captureHistory', 'Work Records', AssessmentIcon, canSeeCaptureHistory],
         ['shipmentInspection', 'Shipments', LocalShippingIcon, canSeeShipmentInspection],
         // Only in the desktop app (Windows, Mac or Linux): a web browser can't reach the reader.
         ['rfidScan', 'RFID Scan', RfidIcon, isDesktopApp],
@@ -2579,7 +2579,7 @@ const InnerPage = () => {
                         }}
                         sx={{ height: 44 }}
                       >
-                        New Product
+                        New product
                       </Button>
                     )}
                     {canEditProducts && (
@@ -2670,7 +2670,7 @@ const InnerPage = () => {
                   : isAppUser
                     ? 'You don’t own any products yet. When you scan a product code in the Yometel DPP app and claim it, it appears here.'
                     : canEditProducts
-                      ? 'No products yet. Click "New Product" to add your first one.'
+                      ? 'No products yet. Click “New product” to add your first one.'
                       : 'Your company has no products yet.'}
                 onSelectProduct={(row) => {
                   productSelectHandler(row);
@@ -2922,7 +2922,7 @@ const InnerPage = () => {
                       <Box sx={{ position: { md: 'sticky' }, top: { md: 0 } }}>
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>What shoppers see</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        The product page in the app, in your design. Use Overview and Lifecycle at the bottom to move around.
+                        The product page in the app, in your design. Tap its rows and buttons to move around, as shoppers do.
                       </Typography>
                       {/* The design belongs to the brand (all its products share
                           it), so it is changed on the Brand page — opened on
@@ -2978,14 +2978,14 @@ const InnerPage = () => {
                             value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ''))}
                             inputProps={{ inputMode: 'decimal' }}
                             InputProps={{ startAdornment: <InputAdornment position="start">{currency || 'EUR'}</InputAdornment> }}
-                            helperText="Shown in the app's cart and purchase page. Leave empty if not sold online." />
+                            helperText="Shown in the app’s cart and purchase page. Leave empty if not sold online." />
                           <TextField label="Currency" placeholder="EUR" sx={{ width: { xs: '100%', sm: 140 }, flexShrink: 0 }}
                             value={currency} onChange={(e) => setCurrency(e.target.value.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase())}
                             helperText="e.g. EUR, USD, JPY" />
                         </Stack>
                         <TextField label="Buy link" placeholder="https://shop.example.com/item" fullWidth
                           value={purchaseUrl} onChange={(e) => setPurchaseUrl(e.target.value)}
-                          helperText="Where the app's Buy button opens. Leave empty to use the brand website." />
+                          helperText="Where the app’s View in shop button opens. Leave empty to use the brand website." />
                         {!quickAdd && (
                         <>
                         <TextField label="Model or short description" placeholder="e.g. Slim Fit" fullWidth value={productModel} onChange={(e) => setProductModel(e.target.value)} />
@@ -2995,7 +2995,7 @@ const InnerPage = () => {
                           fullWidth multiline minRows={3}
                           value={aboutProduct}
                           onChange={(e) => setAboutProduct(e.target.value)}
-                          helperText="Shown to shoppers under Product Lifecycle > Details in the app."
+                          helperText="Shown to shoppers under Details in the app."
                         />
                         </>
                         )}
@@ -3201,7 +3201,7 @@ const InnerPage = () => {
                           </Typography>
                         </Grid>
                         <Grid item xs={12} sm={6}>
-                          <TextField label="Product type" placeholder="e.g. Men's outerwear" fullWidth
+                          <TextField label="Product type" placeholder="e.g. Men’s outerwear" fullWidth
                             value={productType} onChange={(e) => setProductType(e.target.value)} />
                         </Grid>
                         <Grid item xs={12} sm={6}>
@@ -3317,7 +3317,7 @@ const InnerPage = () => {
                     <Box component="section">
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Materials</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        What the product is made of. The percentages should add up to 100%. Tick "Required for verification" for a
+                        What the product is made of. The percentages should add up to 100%. Tick “Required for verification” for a
                         material that must be backed by a certificate, then choose which certificate (added below) covers it.
                       </Typography>
                       <Stack spacing={1.5}>
@@ -3398,7 +3398,7 @@ const InnerPage = () => {
                         fullWidth
                         value={materialSize.size}
                         onChange={(e) => setMaterialSize((prev) => ({ ...prev, size: e.target.value }))}
-                        helperText="Longer size information for the app's Materials screen. The short size (e.g. M) is on step 1."
+                        helperText="Longer size information for the app’s Materials page. The short size (e.g. M) is on step 1."
                       />
                     </Box>
 
@@ -3495,7 +3495,7 @@ const InnerPage = () => {
                       minRows={3}
                       value={(maintenance.tips || []).join('\n')}
                       onChange={(e) => setMaintenance((prev) => ({ ...prev, tips: e.target.value.split('\n').map((t) => t.trim()).filter(Boolean) }))}
-                      helperText="Shown on the app's Care tab. If left empty, tips are created from the symbols above."
+                      helperText="Shown on the app’s Care page. If left empty, tips are created from the symbols above."
                     />
                     <VideoListEditor
                       title="Videos"
@@ -3512,7 +3512,7 @@ const InnerPage = () => {
 
                     <Box component="section">
                       <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Sustainability impact</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Figures such as "12.4 kg CO2e avoided", each with a short explanation.</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Figures such as “12.4 kg CO₂e avoided”, each with a short explanation.</Typography>
                       <Stack spacing={1.5}>
                         {(sustainabilityImpact.items || []).map((it, i) => (
                           <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap' }}>
@@ -3589,7 +3589,7 @@ const InnerPage = () => {
                         <Grid item xs={12} sm={6}>
                           <TextField label="Country of origin (shown on the product summary)" placeholder="e.g. Sri Lanka" fullWidth value={traceabilityEsg.originCountry}
                             onChange={(e) => setTraceabilityEsg((prev) => ({ ...prev, originCountry: e.target.value }))}
-                            helperText="Also used by the dashboard's Origin Country filter." />
+                            helperText="Also used by the dashboard’s country filters." />
                         </Grid>
                       </Grid>
                     </Box>
@@ -3691,7 +3691,7 @@ const InnerPage = () => {
                   <Box component="section">
                     <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Warranty</Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                      Shown on the app's product summary. The end date is counted from the day the product is added.
+                      Shown on the app’s product page. The end date is counted from the day the product is added.
                     </Typography>
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6}>
@@ -3899,9 +3899,9 @@ const InnerPage = () => {
             <Typography><span>Name:</span> {ownerInfo.name}</Typography>
             {ownerInfo.email && <Typography><span>Email:</span> {ownerInfo.email}</Typography>}
             {ownerInfo.location && <Typography><span>Location:</span> {ownerInfo.location}</Typography>}
-            {ownerInfo.company_name && <Typography><span>Company Name:</span> {ownerInfo.company_name}</Typography>}
+            {ownerInfo.company_name && <Typography><span>Company name:</span> {ownerInfo.company_name}</Typography>}
             {ownerInfo.company_detail && (
-              <Typography sx={{ mt: 1 }}><span>Company Detail:</span> {ownerInfo.company_detail}</Typography>
+              <Typography sx={{ mt: 1 }}><span>About the company:</span> {ownerInfo.company_detail}</Typography>
             )}
           </DialogContent>
           <DialogActions>

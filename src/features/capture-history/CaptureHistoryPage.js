@@ -199,7 +199,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
               )}
             </Box>
             {byWorker.length === 0 ? (
-              <Typography color="text.secondary">No employees yet. Add them on the Employee page.</Typography>
+              <Typography color="text.secondary">No employees yet. Add them on the Employees page.</Typography>
             ) : (
               byWorker.map((w) => {
                 const on = workerFilter === w.id;

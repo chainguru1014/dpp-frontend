@@ -73,7 +73,7 @@ export default function PairTagsDialog({ open, onClose, product, totalItems }) {
       <DialogTitle>Pair tags with items<DialogClose onClick={close} /></DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Ties each tag to one item of "{product?.name}". After pairing, reading the tag and scanning the item's QR code open the same
+          Ties each tag to one item of "{product?.name}". After pairing, reading the tag and scanning the item’s QR code open the same
           passport and the same history. This product has {totalItems} item{totalItems === 1 ? '' : 's'} (QR codes).
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>

@@ -9,7 +9,7 @@ import {
   DEFAULT_DPP_THEME, DPP_CHOICES, DPP_FONTS, dppBlockLabel, dppSectionLabel,
 } from '../../utils/dppTheme';
 
-// Ready-made looks: a full set of colours and style choices in one click.
+// Ready-made looks: a full set of colors and style choices in one click.
 const PRESETS = [
   { name: 'Yometel blue', swatch: ['#1b4f72', '#f4f7fc'], theme: {} },
   {
@@ -44,7 +44,7 @@ const KEPT_BY_PRESETS = ['heroLayout', 'showProductId', 'blocks', 'sections', 'm
 const HEX = /^#[0-9a-fA-F]{6}$/;
 
 // Colour swatch (the browser's own picker) beside the hex value, so it can be
-// picked by eye or pasted from the brand guide. `fallback` is the colour an
+// picked by eye or pasted from the brand guide. `fallback` is the color an
 // optional setting follows while it is left empty.
 function ColorField({ label, value, onChange, disabled, fallback }) {
   const optional = fallback !== undefined;
@@ -55,7 +55,7 @@ function ColorField({ label, value, onChange, disabled, fallback }) {
         type="color"
         value={HEX.test(value) ? value : (fallback || '#000000')}
         disabled={disabled}
-        aria-label={`${label} colour`}
+        aria-label={`${label} color`}
         onChange={(e) => onChange(e.target.value)}
         sx={{ width: 48, height: 48, p: 0, border: '1px solid', borderColor: 'divider', borderRadius: 1, bgcolor: 'transparent', cursor: disabled ? 'default' : 'pointer', flexShrink: 0 }}
       />
@@ -140,7 +140,7 @@ function OrderList({ items, labelOf, onChange, disabled }) {
 }
 
 // Design controls for the shopper's product page, in four short groups:
-// Colours, Style, Layout, Content. `theme` is always a complete, normalized
+// Colors, Style, Layout, Content. `theme` is always a complete, normalized
 // theme; every change is reported through `onChange` so the phone preview
 // beside it updates as the brand edits.
 export default function DppThemeEditor({ theme, onChange, onSave, onReset, saving, dirty, canEdit = true }) {
@@ -160,7 +160,7 @@ export default function DppThemeEditor({ theme, onChange, onSave, onReset, savin
       </Typography>
 
       <Tabs value={group} onChange={(e, v) => setGroup(v)} variant="scrollable" allowScrollButtonsMobile sx={{ mb: 2.5, borderBottom: 1, borderColor: 'divider' }}>
-        <Tab value="colours" label="Colours" />
+        <Tab value="colours" label="Colors" />
         <Tab value="style" label="Style" />
         <Tab value="layout" label="Layout" />
         <Tab value="content" label="Content" />
@@ -199,7 +199,7 @@ export default function DppThemeEditor({ theme, onChange, onSave, onReset, savin
             <ColorField label="“Authenticated” badge" value={theme.badgeColor} fallback={theme.accent} disabled={off} onChange={(v) => set({ badgeColor: v })} />
           </Box>
           <Typography variant="body2" color="text.secondary">
-            Leave Top bar or the badge empty to use the button colour. Text on the top bar turns dark or white by itself so it stays readable.
+            Leave Top bar or the badge empty to use the button color. Text on the top bar turns dark or white by itself so it stays readable.
           </Typography>
         </Stack>
       )}
@@ -274,7 +274,7 @@ export default function DppThemeEditor({ theme, onChange, onSave, onReset, savin
           <Box>
             <Typography variant="subtitle2" sx={{ mb: 0.25 }}>Your button</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-              One button that opens a web page of yours, for example your shop, warranty registration or loyalty programme.
+              One button that opens a web page of yours, for example your shop, warranty registration or loyalty program.
             </Typography>
             <Stack spacing={2}>
               <TextField label="Button text" placeholder="e.g. Shop the collection" value={theme.cta.label} disabled={off}

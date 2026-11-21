@@ -32,7 +32,7 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
         <PrintDialog
             open={open}
             setOpen={setOpen}
-            title="Print QR Codes"
+            title="Print QR codes"
             subtitle={product?.name}
             totalAmount={totalAmount}
             printedAmount={printed}

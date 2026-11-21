@@ -241,7 +241,7 @@ export default function RfidScanPage() {
       <Dialog open={!!noticeReader} onClose={() => setNoticeReader(null)} maxWidth="xs" fullWidth>
         <DialogTitle>{noticeReader?.label}<DialogClose onClick={() => setNoticeReader(null)} /></DialogTitle>
         <DialogContent>
-          <Typography sx={TEXT}>The {noticeReader?.label} is under construction. Please use the Impinj Fixed Reader for now.</Typography>
+          <Typography sx={TEXT}>The {noticeReader?.label} isn’t available yet. Please use the Impinj fixed reader for now.</Typography>
         </DialogContent>
         <DialogActions>
           <Button variant="contained" onClick={() => setNoticeReader(null)}>OK</Button>

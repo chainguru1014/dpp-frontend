@@ -57,7 +57,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
             {mode === 'review' ? 'Privacy preferences' : 'Meet your AI Concierge'}
           </Typography>
           <Typography sx={{ textAlign: 'center', mb: 2, ...onGlass }}>
-            An optional helper that personalises the app for you.
+            An optional helper that personalizes the app for you.
           </Typography>
 
           {/* Two columns on wider screens so the Yes/No choice below stays
@@ -84,7 +84,7 @@ const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, savin
           {/* Placed after the explanation on purpose: read first, then choose.
               Nothing is pre-selected on a first visit. */}
           <Typography component="h2" sx={{ fontWeight: 400, mt: 2, mb: 1, ...onGlass }} id="consent-question">
-            May the AI Concierge learn from your scans, favourites and browsing to personalise the app?
+            May the AI Concierge learn from your scans, favorites and browsing to personalize the app?
           </Typography>
           <RadioGroup
             aria-labelledby="consent-question"

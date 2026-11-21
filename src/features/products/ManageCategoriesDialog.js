@@ -110,7 +110,7 @@ const ManageCategoriesDialog = ({ open, onClose, token, onSaved, canManageAll = 
 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Manage Categories<DialogClose onClick={saving ? undefined : onClose} /></DialogTitle>
+      <DialogTitle>Manage categories<DialogClose onClick={saving ? undefined : onClose} /></DialogTitle>
       <DialogContent dividers>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {canManageAll
@@ -160,7 +160,7 @@ const ManageCategoriesDialog = ({ open, onClose, token, onSaved, canManageAll = 
                     </>
                   )}
                   {!locked && (
-                  <Tooltip title={isFallback ? '"Others" is the fallback category and can’t be removed' : 'Remove'}>
+                  <Tooltip title={isFallback ? '“Others” is the fallback category and can’t be removed.' : 'Remove'}>
                     <span>
                       <IconButton size="small" color="error" aria-label="Remove category" disabled={isFallback} onClick={() => remove(index)}>
                         <DeleteIcon fontSize="small" />
@@ -172,7 +172,7 @@ const ManageCategoriesDialog = ({ open, onClose, token, onSaved, canManageAll = 
               );
             })}
             <Box>
-              <Button startIcon={<AddIcon />} onClick={add}>Add Category</Button>
+              <Button startIcon={<AddIcon />} onClick={add}>Add category</Button>
             </Box>
           </Stack>
         )}
@@ -180,7 +180,7 @@ const ManageCategoriesDialog = ({ open, onClose, token, onSaved, canManageAll = 
         {removed.length > 0 && (
           <Alert severity="warning" sx={{ mt: 2 }}>
             Removing {removed.length} categor{removed.length === 1 ? 'y' : 'ies'}. Products in{' '}
-            {removed.length === 1 ? 'it' : 'them'} will move to &quot;Others&quot; when you save.
+            {removed.length === 1 ? 'it' : 'them'} will move to “Others” when you save.
           </Alert>
         )}
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}

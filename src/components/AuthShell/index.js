@@ -198,7 +198,7 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
         for
       </Typography>
       <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 400, fontSize: taglineFontSize, lineHeight: 1.2 }}>
-        Circular Economy Environment
+        a circular economy
       </Typography>
     </Box>
 
@@ -277,13 +277,13 @@ const AuthShell = ({ children, cardSx, activeSlide: controlledActiveSlide }) => 
       }}
     >
       <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 400, fontSize: taglineFontSize, lineHeight: 1.2 }}>
-        Improved Traceability
+        Better traceability
       </Typography>
       <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 400, fontSize: taglineFontSize, lineHeight: 1.2, fontStyle: 'italic', my: 0.3 }}>
         as
       </Typography>
       <Typography variant="h4" sx={{ fontFamily: taglineFontFamily, fontWeight: 400, fontSize: taglineFontSize, lineHeight: 1.2 }}>
-        Your Concierge
+        Your AI Concierge
       </Typography>
     </Box>
   </Box>

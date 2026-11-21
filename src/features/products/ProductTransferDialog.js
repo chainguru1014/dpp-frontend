@@ -112,7 +112,7 @@ export default function ProductTransferDialog({ open, onClose, product, actor, o
       return;
     }
     if (!isValidEmail(email)) {
-      setError('Enter a valid receiver email address.');
+      setError('Enter a valid recipient email address.');
       return;
     }
     setLoading(true);
@@ -135,7 +135,7 @@ export default function ProductTransferDialog({ open, onClose, product, actor, o
             Minted units: <span>{minted}</span>
             {' · '}Available to transfer:{' '}
             <span>{availLoading ? '…' : (available != null ? available : minted)}</span>.
-            Choose how many units to transfer, the business method, and the receiver's email.
+            Choose how many units to transfer, the transfer method and the recipient’s email.
           </Typography>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           {available === 0 && !availLoading && (
@@ -158,7 +158,7 @@ export default function ProductTransferDialog({ open, onClose, product, actor, o
               ))}
             </TextField>
             <TextField
-              label="Receiver email"
+              label="Recipient email"
               type="email"
               size="small"
               value={email}
@@ -185,14 +185,14 @@ export default function ProductTransferDialog({ open, onClose, product, actor, o
         <DialogContent dividers>
           <Typography variant="body2">
             <span>{email}</span> is not registered yet. Please confirm this email is correct.
-            We'll assign ownership to this email and send them an invitation to register and claim it.
+            We’ll assign ownership to this email and send them an invitation to register and claim it.
           </Typography>
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmNew(false)} disabled={loading}>Edit email</Button>
           <Button onClick={doTransfer} variant="contained" disabled={loading}>
-            {loading ? <CircularProgress size={20} /> : 'Confirm & send invite'}
+            {loading ? <CircularProgress size={20} /> : 'Confirm and send invite'}
           </Button>
         </DialogActions>
       </Dialog>

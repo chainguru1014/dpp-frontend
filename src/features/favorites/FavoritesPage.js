@@ -80,7 +80,7 @@ export default function FavoritesPage({ company, onOpenRecommendations }) {
                 <Box sx={{ position: 'relative', height: 220, bgcolor: '#eef1f4' }}>
                   {v.image && <Box component="img" src={getFileUrl(v.image)} alt={v.name} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                   <IconButton
-                    aria-label="Remove from favorites"
+                    aria-label="Remove from Favorites"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); remove(it); }}
                     sx={{ position: 'absolute', top: 10, right: 10, bgcolor: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(12px)', '&:hover': { bgcolor: '#fff' } }}
                   >

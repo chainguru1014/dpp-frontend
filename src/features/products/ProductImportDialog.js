@@ -104,7 +104,7 @@ export default function ProductImportDialog({ open, onClose, token, categoryOpti
               )}
               {parsed.unknownColumns.length > 0 && (
                 <Alert severity="warning" sx={{ mt: 1 }}>
-                  These columns are not recognised and will be ignored: {parsed.unknownColumns.join(', ')}.
+                  These columns are not recognized and will be ignored: {parsed.unknownColumns.join(', ')}.
                 </Alert>
               )}
               {[...blocking, ...warnings].slice(0, 30).map((p, i) => (
@@ -155,7 +155,7 @@ export default function ProductImportDialog({ open, onClose, token, categoryOpti
 
           <Typography variant="caption" color="text.secondary">
             Columns: {PRODUCT_COLUMNS.map((c) => c.header).join(', ')}. Photos and the brand logo are given as web addresses; care symbols
-            and documents are added afterwards in each product's window.
+            and documents are added afterwards on each product’s page.
           </Typography>
         </Stack>
       </DialogContent>

@@ -21,7 +21,7 @@ const CopyIconButton = ({ value, size = 'small' }) => {
   };
 
   return (
-    <Tooltip title={copied ? 'Copied!' : 'Copy'}>
+    <Tooltip title={copied ? 'Copied' : 'Copy'}>
       <IconButton size={size} onClick={handleCopy} disabled={!value}>
         {copied ? <CheckIcon fontSize="inherit" color="success" /> : <ContentCopyIcon fontSize="inherit" />}
       </IconButton>

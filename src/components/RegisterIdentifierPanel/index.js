@@ -261,7 +261,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
       )}
       {!lockedSourceType && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Register this product's own barcode, GTIN, NFC tag or RFID tag so scanning it in the app opens this product. Use this for codes printed outside this platform.
+          Register this product’s own barcode, GTIN, NFC tag or RFID tag so scanning it in the app opens this product. Use this for codes printed outside this platform.
         </Typography>
       )}
       {/* One line above the table:
@@ -383,7 +383,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
 
       {!companyId && (
         <Typography variant="body2" color="error" sx={{ mb: 2 }}>
-          Company information not available — cannot register identifiers.
+          Company details are missing, so codes can’t be registered.
         </Typography>
       )}
       {pageItems.length > 0 ? (

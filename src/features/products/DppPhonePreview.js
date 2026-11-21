@@ -269,7 +269,7 @@ export default function DppPhonePreview({ product, theme, width = 300 }) {
   const t = normalizeDppTheme(theme);
   return (
     <Box
-      aria-label="Preview of the shopper's product page"
+      aria-label="Preview of the shopper’s product page"
       sx={{
         width,
         maxWidth: '100%',

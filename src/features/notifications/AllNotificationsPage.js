@@ -122,7 +122,7 @@ const AllNotificationsPage = () => {
                       primary={
                         <Typography variant="body1" sx={{ fontWeight: n.read ? 400 : 400 }}>
                           {n.title}
-                          {!n.read && <Typography component="span" variant="caption" sx={{ ml: 1, color: 'primary.main', fontWeight: 400 }}>NEW</Typography>}
+                          {!n.read && <Typography component="span" variant="caption" sx={{ ml: 1, color: 'primary.main', fontWeight: 400 }}>New</Typography>}
                         </Typography>
                       }
                       secondary={

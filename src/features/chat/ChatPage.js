@@ -53,14 +53,14 @@ export default function ChatPage({ company, isAppUser = false }) {
       const { data } = await axios.post(`${Backend_URL}chat/transcribe`, body);
       const text = String(data?.text || '').trim();
       if (!text) {
-        notifyError('We could not hear any words. Please try again a little closer to the microphone.');
+        notifyError('We couldn’t hear anything. Please try again a little closer to the microphone.');
         return;
       }
       setInput((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text));
       inputRef.current?.focus();
     } catch (e) {
       console.error('Transcription failed:', e?.response?.status, e?.response?.data?.message || e?.message);
-      notifyError('Voice input is not available right now. Please type your question instead.');
+      notifyError('Voice input isn’t available right now. Please type your question instead.');
     } finally {
       setVoiceState('idle');
     }
@@ -219,7 +219,7 @@ export default function ChatPage({ company, isAppUser = false }) {
           size="small"
           inputRef={inputRef}
           placeholder={voiceState === 'recording'
-            ? 'Listening… press the stop button when you are done'
+            ? 'Listening… Press stop when you’re done.'
             : voiceState === 'transcribing' ? 'Turning your voice into text…' : 'Type or say your question and press Enter'}
           inputProps={{ 'aria-label': 'Your question' }}
           value={input}

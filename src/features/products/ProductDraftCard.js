@@ -204,9 +204,9 @@ export default function ProductDraftCard({ product, onPreview, onTransferHistory
         {onPrintCode && <Button variant="outlined" color="primary" startIcon={<PrintIcon />} onClick={onPrintCode}>Generate Code</Button>}
         <Button variant="outlined" color="primary" startIcon={<VisibilityIcon />} onClick={onPreview}>Preview product page</Button>
         {/* Omitted for read-only roles (no handler passed). */}
-        {onEdit && <Button variant="outlined" color="primary" startIcon={<EditIcon />} onClick={onEdit}>Edit Product</Button>}
-        <Button variant="outlined" color="primary" startIcon={<HistoryIcon />} onClick={onTransferHistory}>Ownership History</Button>
-        {onRemove && <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={onRemove}>Remove Product</Button>}
+        {onEdit && <Button variant="outlined" color="primary" startIcon={<EditIcon />} onClick={onEdit}>Edit product</Button>}
+        <Button variant="outlined" color="primary" startIcon={<HistoryIcon />} onClick={onTransferHistory}>Ownership history</Button>
+        {onRemove && <Button variant="outlined" color="error" startIcon={<DeleteIcon />} onClick={onRemove}>Remove product</Button>}
       </Stack>
     </Box>
   );

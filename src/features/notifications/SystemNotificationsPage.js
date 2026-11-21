@@ -217,7 +217,7 @@ const SystemNotificationsPage = () => {
               ) : rows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                    <Typography color="text.secondary">No announcements yet. Click "New announcement" to send one.</Typography>
+                    <Typography color="text.secondary">No announcements yet. Click “New announcement” to send one.</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
