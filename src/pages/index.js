@@ -1721,8 +1721,8 @@ const InnerPage = () => {
     setOwnerInfo(prod.company_id || null);
     setPage(1);
   };
-  // Opening the page always starts on the first product; also covers the
-  // product list arriving after the page is already open.
+  // Opening the page from the menu starts on "Choose a product" (the first
+  // step); another page that already chose a product goes straight to it.
   const generateCodeDefaultedRef = useRef(false);
   // Set when another page opens Generate Code for a product it already chose.
   const keepGenerateSelectionRef = useRef(false);
@@ -1736,9 +1736,9 @@ const InnerPage = () => {
       generateCodeDefaultedRef.current = true;
       return;
     }
-    if (generateCodeDefaultedRef.current || !products.length) return;
+    if (generateCodeDefaultedRef.current) return;
     generateCodeDefaultedRef.current = true;
-    selectGenerateCodeProduct(products[0]);
+    setPickingCodeProduct(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePage, products]);
 
@@ -2504,8 +2504,13 @@ const InnerPage = () => {
                 />
               ) : (
                 <Box sx={{ mb: 3.5 }}>
-                  <Typography variant="h6" component="h2" sx={{ mb: 1.5 }}>Choose a product</Typography>
+                  {/* The list's page numbers sit on the right of this line. */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5, flexWrap: 'wrap' }}>
+                    <Typography variant="h6" component="h2" sx={{ flex: 1 }}>Choose a product</Typography>
+                    <Box id="generate-pager" sx={{ display: 'flex', alignItems: 'center' }} />
+                  </Box>
                   <ProductsTable
+                    pagerSlot="generate-pager"
                     products={products}
                     loading={productsLoading}
                     selectedId={generateCodeProduct?._id}
@@ -2515,7 +2520,7 @@ const InnerPage = () => {
                       selectGenerateCodeProduct(prod);
                       setPickingCodeProduct(false);
                     }}
-                    columns={6}
+                    columns={4}
                     dense
                   />
                 </Box>
@@ -2651,8 +2656,6 @@ const InnerPage = () => {
                     ),
                   }}
                 />
-                {/* The list's page numbers, on the right of the search. */}
-                <Box id="products-pager" sx={{ ml: 'auto !important', display: 'flex', alignItems: 'center' }} />
               </Stack>
 
               <ProductsTable
@@ -2664,7 +2667,6 @@ const InnerPage = () => {
                 columns={selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) ? 2 : 4}
                 dense
                 groupByBrand
-                pagerSlot="products-pager"
                 emptyText={productNameFilter.trim()
                   ? 'No products match your search.'
                   : isAppUser

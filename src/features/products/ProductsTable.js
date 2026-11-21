@@ -319,7 +319,15 @@ export default function ProductsTable({
   const range = `${(current - 1) * PAGE_SIZE + 1}–${Math.min(current * PAGE_SIZE, rows.length)} of ${rows.length}`;
   // In the given slot (beside the search box): the range and page numbers on
   // one line. Otherwise under the list.
-  const pager = pages > 1 && (slotEl
+  const compactPager = (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+      <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{range}</Typography>
+      <Pagination count={pages} page={current} onChange={(e, p) => setPage(p)} color="primary" shape="rounded" siblingCount={0} />
+    </Box>
+  );
+  // Grouped by brand: the page numbers on the right of the first brand's line.
+  const pagerInHeader = pages > 1 && !slotEl && groupByBrand;
+  const pager = pages > 1 && !pagerInHeader && (slotEl
     ? createPortal(
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{range}</Typography>
@@ -389,7 +397,7 @@ export default function ProductsTable({
           Typography noWrap can't shrink below that) would end up wider than
           its neighbors. minmax(0, 1fr) forces every column to the same
           strict 1/N width regardless of content. */}
-      {(groupByBrand ? groupsOf(shown) : [{ brand: '', items: shown }]).map((g) => (
+      {(groupByBrand ? groupsOf(shown) : [{ brand: '', items: shown }]).map((g, gi) => (
         <Box key={g.brand || 'all'} sx={{ mb: groupByBrand ? 2.5 : 0 }}>
           {groupByBrand && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.25 }}>
@@ -403,6 +411,7 @@ export default function ProductsTable({
                 {g.items.length} {g.items.length === 1 ? 'product' : 'products'}
               </Box>
               <Box sx={{ flex: 1, height: '1px', bgcolor: '#e3e8ef', ml: 1 }} />
+              {gi === 0 && pagerInHeader && compactPager}
             </Box>
           )}
           <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${Math.min(columns, 2)}, minmax(0, 1fr))`, md: `repeat(${columns}, minmax(0, 1fr))` } }}>

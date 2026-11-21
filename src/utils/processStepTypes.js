@@ -6,14 +6,14 @@
 export const PROCESS_STEP_TYPES = [
   { value: 'receiving', label: 'Receiving' },
   { value: 'shipping', label: 'Shipping' },
-  { value: 'finalInspection', label: 'Final Inspection' },
-  { value: 'inboundScan', label: 'Inbound Scan' },
+  { value: 'finalInspection', label: 'Final inspection' },
+  { value: 'inboundScan', label: 'Inbound scan' },
   { value: 'packing', label: 'Packing' },
   { value: 'unpacking', label: 'Unpacking' },
-  { value: 'storeReceipt', label: 'Store Receipt' },
+  { value: 'storeReceipt', label: 'Store receipt' },
   { value: 'inspection', label: 'Inspection' },
-  { value: 'returnCheck', label: 'Return Check' },
-  { value: 'disposal', label: 'Disposal Registration' },
+  { value: 'returnCheck', label: 'Return check' },
+  { value: 'disposal', label: 'Disposal registration' },
   { value: 'general', label: 'General' },
 ];
 

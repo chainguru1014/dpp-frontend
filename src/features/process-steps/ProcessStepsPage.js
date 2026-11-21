@@ -198,27 +198,29 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
                   <Box
                     key={index}
                     sx={{
-                      display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                      p: 1.5, borderRadius: 3, border: '1px solid #e3e8ef', bgcolor: '#fff',
+                      display: 'flex', alignItems: 'center', gap: 1, flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                      px: 1.25, py: 0.75, borderRadius: '16px', border: '1px solid #e3e8ef', bgcolor: '#fff',
                       '&:hover': { borderColor: '#b9cbe0' },
                     }}
                   >
-                    <Box sx={{ width: 34, height: 34, flex: 'none', borderRadius: '50%', bgcolor: '#1b4f72', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 400 }}>
+                    <Box sx={{ width: 28, height: 28, flex: 'none', borderRadius: '50%', bgcolor: '#1b4f72', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 400, fontSize: 14 }}>
                       {index + 1}
                     </Box>
                     <TextField
+                      size="small"
                       label="Place"
                       placeholder="e.g. Tokyo DC"
                       value={step.entity}
                       onChange={(e) => handleChange(index, 'entity', e.target.value)}
-                      sx={{ flex: '1 1 220px' }}
+                      sx={{ flex: '1 1 200px' }}
                     />
                     <TextField
                       select
+                      size="small"
                       label="Step type"
                       value={step.type}
                       onChange={(e) => handleChange(index, 'type', e.target.value)}
-                      sx={{ flex: '1 1 200px' }}
+                      sx={{ flex: '1 1 180px' }}
                     >
                       {TYPE_OPTIONS.map((opt) => (
                         <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
@@ -227,21 +229,21 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
                     <Box sx={{ display: 'flex', flexShrink: 0 }}>
                       <Tooltip title="Move up">
                         <span>
-                          <IconButton aria-label={`Move step ${index + 1} up`} disabled={index === 0} onClick={() => move(index, -1)}>
+                          <IconButton size="small" aria-label={`Move step ${index + 1} up`} disabled={index === 0} onClick={() => move(index, -1)}>
                             <ArrowUpwardIcon />
                           </IconButton>
                         </span>
                       </Tooltip>
                       <Tooltip title="Move down">
                         <span>
-                          <IconButton aria-label={`Move step ${index + 1} down`} disabled={index === steps.length - 1} onClick={() => move(index, 1)}>
+                          <IconButton size="small" aria-label={`Move step ${index + 1} down`} disabled={index === steps.length - 1} onClick={() => move(index, 1)}>
                             <ArrowDownwardIcon />
                           </IconButton>
                         </span>
                       </Tooltip>
                       <Tooltip title="Remove step">
                         <span>
-                          <IconButton aria-label={`Remove step ${index + 1}`} color="error" onClick={() => handleRemove(index)} disabled={steps.length <= MIN_STEPS}>
+                          <IconButton size="small" aria-label={`Remove step ${index + 1}`} color="error" onClick={() => handleRemove(index)} disabled={steps.length <= MIN_STEPS}>
                             <DeleteIcon />
                           </IconButton>
                         </span>
@@ -252,20 +254,10 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
               </Box>
             </Paper>
 
-            {/* What staff see in the app's Select workflow page. */}
-            <Box sx={{ flex: '0 0 300px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              <Typography sx={{ fontWeight: 400, color: '#16324a' }}>What staff see in the app</Typography>
-              <Box sx={{ width: 280, minHeight: 420, boxSizing: 'border-box', border: '10px solid #1f2430', borderRadius: '34px', bgcolor: '#f4f7fc', p: '24px 14px', display: 'flex', flexDirection: 'column', gap: 1.25 }}>
-                <Typography sx={{ textAlign: 'center', fontWeight: 400, color: '#1b4f72', fontSize: 18, mb: 0.5 }}>Select workflow</Typography>
-                {steps.filter((s) => s.entity.trim()).map((s, i) => (
-                  <Box key={i} sx={{ minHeight: 52, px: 1.75, borderRadius: '14px', bgcolor: '#fff', boxShadow: '0 3px 8px rgba(27,79,114,0.10)', display: 'flex', alignItems: 'center', color: '#1b4f72', fontSize: 15 }}>
-                    <span><b>{processStepTypeLabel(s.type)}:</b> {s.entity.trim()}</span>
-                  </Box>
-                ))}
-                {!steps.some((s) => s.entity.trim()) && (
-                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>Name a place to see the step here.</Typography>
-                )}
-              </Box>
+            {/* What staff see in the app's Select workflow page (iPhone 16). */}
+            <Box sx={{ flex: '0 0 300px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, position: { lg: 'sticky' }, top: { lg: 84 } }}>
+              <Typography sx={{ color: '#5f6b78', fontSize: 14 }}>What staff see in the app</Typography>
+              <SelectWorkflowPhone steps={steps.filter((x) => x.entity.trim())} />
             </Box>
           </Box>
         </>
@@ -273,5 +265,51 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
     </Box>
   );
 };
+
+// The app's Select workflow page (app/src/screens/SelectWorkflowScreen.tsx)
+// drawn at the iPhone 16's 393 x 852 pt and scaled to 300 px: round back
+// button, large title, then every workflow on one screen; each row's height
+// comes from the room and the number of rows (40 to 60 pt), the first one
+// shown as chosen.
+const PHONE = { w: 393, h: 852, bezel: 12, radius: 55 };
+const BLUE = '#2a78bd';
+function SelectWorkflowPhone({ steps, width = 300 }) {
+  const outerW = PHONE.w + PHONE.bezel * 2;
+  const outerH = PHONE.h + PHONE.bezel * 2;
+  const scale = width / outerW;
+  const listH = PHONE.h - 170 - 40;
+  const gap = 8;
+  const n = Math.max(1, steps.length);
+  const rowH = Math.max(40, Math.min(60, Math.floor((listH - gap * (n - 1)) / n)));
+  const font = Math.max(14, Math.min(18, Math.round(rowH * 0.34)));
+  return (
+    <Box sx={{ width, height: Math.round(outerH * scale), position: 'relative', flexShrink: 0 }} aria-label="Preview of the app's Select workflow page">
+      <Box sx={{ position: 'absolute', top: 0, left: 0, width: outerW, height: outerH, transform: `scale(${scale})`, transformOrigin: 'top left', p: `${PHONE.bezel}px`, bgcolor: '#1d1d1f', borderRadius: `${PHONE.radius + PHONE.bezel}px`, boxShadow: '0 18px 44px rgba(0,0,0,0.28), inset 0 0 0 2px #3a3a3c' }}>
+        <Box sx={{ width: PHONE.w, height: PHONE.h, borderRadius: `${PHONE.radius}px`, overflow: 'hidden', position: 'relative', bgcolor: '#f4f7fc', fontFamily: '-apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif' }}>
+          <Box sx={{ position: 'absolute', top: 11, left: '50%', ml: '-63px', width: 126, height: 37, borderRadius: '20px', bgcolor: '#000' }} />
+          <Box sx={{ position: 'absolute', top: 58, left: 16, width: 40, height: 40, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.85)', boxShadow: '0 2px 10px rgba(0,0,0,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1c1c1e', fontSize: 26, lineHeight: 1 }}>‹</Box>
+          <Typography sx={{ position: 'absolute', top: 108, left: 20, fontSize: 34, color: '#1c1c1e', fontFamily: 'inherit' }}>Select workflow</Typography>
+          <Box sx={{ position: 'absolute', top: 170, left: 16, right: 16, height: listH, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: `${gap}px` }}>
+            {steps.map((st, i) => {
+              const on = i === 0;
+              return (
+                <Box key={i} sx={{ height: rowH, flexShrink: 0, display: 'flex', alignItems: 'stretch', borderRadius: '16px', border: `${on ? 2 : 1.5}px solid ${BLUE}`, bgcolor: on ? '#eef5fd' : '#fff', overflow: 'hidden', boxShadow: '0 2px 6px rgba(27,79,114,0.08)' }}>
+                  <Box sx={{ width: Math.max(40, rowH), flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: on ? BLUE : '#f1f5fb', color: on ? '#fff' : BLUE, fontSize: font }}>{i + 1}</Box>
+                  <Typography noWrap sx={{ alignSelf: 'center', px: 2, fontSize: font, color: '#1c1c1e', fontFamily: 'inherit' }}>
+                    {`${st.entity.trim()} (${processStepTypeLabel(st.type)})`}
+                  </Typography>
+                </Box>
+              );
+            })}
+            {!steps.length && (
+              <Typography sx={{ textAlign: 'center', color: '#5f6b78', fontSize: 17, fontFamily: 'inherit' }}>Name a place to see the step here.</Typography>
+            )}
+          </Box>
+          <Box sx={{ position: 'absolute', bottom: 8, left: '50%', ml: '-70px', width: 140, height: 5, borderRadius: '3px', bgcolor: 'rgba(0,0,0,0.75)' }} />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
 
 export default ProcessStepsPage;
