@@ -17,7 +17,7 @@ import ProductDetailDialog from './ProductDetailDialog';
 import {
   IMPINJ_DEFAULT_READER_SETTINGS, IMPINJ_READER_DISPLAY_NAME, RFID_POLL_MS, RFID_READER_TYPES, STATUS_CHECK_EVERY_N_TICKS,
   connectAndStartImpinj, fetchProduct, formatPrice, getImpinjReaderSettings, getImpinjReaderStatus, getImpinjTagsInView,
-  lookupTagProduct, stopAndDisconnectImpinj, updateImpinjReaderSettings,
+  lookupTagProduct, stopAndDisconnectImpinj, updateImpinjReaderSettings, isDesktopApp,
 } from './rfidReader';
 
 // The one text size used across the page (the large count aside).
@@ -40,6 +40,8 @@ export default function RfidScanPage() {
   const [status, setStatus] = useState('idle');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // In a web browser the reader can't be reached: explain where it works.
+  const [webOnlyOpen, setWebOnlyOpen] = useState(false);
   // Newest first: { epc, firstSeen, lastSeen, product } (product: undefined
   // while it is being looked up, null for a tag that isn't registered).
   const [items, setItems] = useState([]);
@@ -111,6 +113,7 @@ export default function RfidScanPage() {
   }, [connected]);
 
   const connect = async () => {
+    if (!isDesktopApp) { setWebOnlyOpen(true); return; }
     setError('');
     setBusy(true);
     setStatus('connecting');
@@ -156,6 +159,28 @@ export default function RfidScanPage() {
         icon={RfidIcon}
         title="RFID Scan"
       />
+
+      <Dialog open={webOnlyOpen} onClose={() => setWebOnlyOpen(false)} maxWidth="xs" fullWidth aria-labelledby="rfid-web-title">
+        <DialogTitle id="rfid-web-title">RFID scanning needs the Yometel app</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 1.5 }}>
+            For security, a web browser can’t connect to RFID readers on your network or over Bluetooth.
+          </Typography>
+          <Typography sx={{ mb: 1.5 }}>
+            To scan RFID tags, please use one of these:
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 2.5, '& li': { mb: 0.75 } }}>
+            <li><b>Yometel DPP Manager</b> for Windows, Mac or Linux, with a fixed reader such as the Impinj R700.</li>
+            <li><b>The Yometel DPP mobile app</b> on iPhone or Android, with a handheld reader: open Record work and choose RFID.</li>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
+            Everything you record there appears here right away, in Work Records and Product Journey.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained" onClick={() => setWebOnlyOpen(false)}>OK</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Count and reader controls (2/5) beside the scanned products (3/5). */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 3fr' }, gap: 2, alignItems: 'start' }}>

@@ -2949,7 +2949,7 @@ const InnerPage = () => {
                     <Grid item xs={12} md={5} sx={{ order: { md: 2 } }}>
                       <Box sx={{ position: { md: 'sticky' }, top: { md: 0 } }}>
                       <Suspense fallback={<Box sx={{ height: 620, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}><CircularProgress size={28} /><Typography variant="body2" color="text.secondary">Loading the preview…</Typography></Box>}>
-                        <PassportPhone product={{ ...formProduct, price: Number(price) || 0, currency }} width={300} />
+                        <PassportPhone product={{ ...formProduct, price: Number(price) || 0, currency }} width={300} theme={designDraft || formBrand?.dppTheme} />
                       </Suspense>
                       </Box>
                     </Grid>
@@ -3808,7 +3808,7 @@ const InnerPage = () => {
             {(productPanelMode === 'edit' || productPanelMode === 'experience') && !quickAdd && wideEditor && (
               <Box component="aside" aria-label="What shoppers see" sx={{ flex: '0 0 360px', borderLeft: 1, borderColor: 'divider', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, overflowY: 'auto', bgcolor: '#f8fafc' }}>
                 <Suspense fallback={<Box sx={{ height: 620, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={28} /></Box>}>
-                  <PassportPhone product={{ ...formProduct, price: Number(price) || 0, currency }} width={300} />
+                  <PassportPhone product={{ ...formProduct, price: Number(price) || 0, currency }} width={300} theme={designDraft || formBrand?.dppTheme} />
                 </Suspense>
               </Box>
             )}
@@ -3936,6 +3936,9 @@ const InnerPage = () => {
       {company && openPreviewModal && (
         <Suspense fallback={<Backdrop open sx={{ zIndex: (theme) => theme.zIndex.modal }}><CircularProgress sx={{ color: '#fff' }} /></Backdrop>}>
         <ProductPreviewDialog
+          theme={activePage === 'newProduct'
+            ? (designDraft || formBrand?.dppTheme)
+            : brands.find((b) => String(b.company_id) === String(selectedProduct?.company_id?._id || selectedProduct?.company_id || ''))?.dppTheme}
           onEdit={activePage === 'products' && selectedProduct && canEditProducts ? () => {
             const index = products.findIndex((p) => p._id === selectedProduct._id);
             if (index >= 0) {

@@ -13,7 +13,7 @@ const NOTES = {
 // Preview (design HIG_Preview): the passport shoppers see, in an iPhone, with
 // Passport / Details / Photos to jump between its pages, Edit product and Done.
 // Same props as the old PreviewModal (open, setOpen, productInfo), plus onEdit.
-export default function ProductPreviewDialog({ open, setOpen, onClose, productInfo, onEdit }) {
+export default function ProductPreviewDialog({ open, setOpen, onClose, productInfo, onEdit, theme }) {
   const [view, setView] = useState('passport');
   const small = useMediaQuery('(max-width:760px)');
   const short = useMediaQuery('(max-height:760px)');
@@ -23,7 +23,7 @@ export default function ProductPreviewDialog({ open, setOpen, onClose, productIn
   return (
     <Dialog open={!!open} onClose={close} maxWidth="md" PaperProps={{ sx: { borderRadius: '32px', bgcolor: '#f4f6f9', p: { xs: 2, sm: 3 }, overflow: 'hidden' } }}>
       <Box sx={{ display: 'flex', flexDirection: small ? 'column' : 'row', gap: 3, alignItems: small ? 'center' : 'stretch' }}>
-        <PassportPhone product={productInfo} view={view} onView={setView} width={short ? 250 : 300} />
+        <PassportPhone product={productInfo} view={view} onView={setView} width={short ? 250 : 300} theme={theme} />
         <Box sx={{ width: small ? '100%' : 300, display: 'flex', flexDirection: 'column', position: 'relative' }}>
           <IconButton onClick={close} aria-label="Close the preview" sx={{ position: 'absolute', top: -4, right: -4, bgcolor: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', '&:hover': { bgcolor: '#fff' } }}>
             <CloseIcon />

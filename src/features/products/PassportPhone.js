@@ -37,6 +37,7 @@ import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import { getFileUrl } from '../../helper';
 import { readyServices } from '../../utils/circularity';
+import { DPP_TEXT_SCALE, dppFontCss, isDefaultDppTheme, normalizeDppTheme } from '../../utils/dppTheme';
 import { PhotoTrack, Thumbs } from '../../components/PhotoSlider';
 
 // The phone app's product pages, drawn for the admin web with the product
@@ -64,6 +65,38 @@ const SHARE_COLORS = ['#7fb6ea', '#c7ddf3', '#4d8fd0', '#e8f1fb', '#a9cdf0'];
 const SEG = { repair: 'Repair', resell: 'Resell', rent: 'Rent', recycle: 'Recycle' };
 const NO_SCROLLBAR = { scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } };
 
+// The brand's product page design applied to the passport (the app's
+// utils/dppTheme passportLookOf): tint, button fill, corners, font, size,
+// and the optional blocks. Standard look when the design is the default.
+const mixHex = (a, b, amount) => {
+  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16));
+  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16));
+  return `#${pa.map((v, i) => Math.round(v + (pb[i] - v) * amount).toString(16).padStart(2, '0')).join('')}`;
+};
+const STANDARD = { tone: TONE, fill: GRADIENT, text: '#fff', outline: '', btnRadius: 26, cardRadius: 24, font: '', scale: 1, accentLight: ACC, theme: null };
+export const lookOf = (raw) => {
+  if (!raw || isDefaultDppTheme(raw)) return STANDARD;
+  const t = normalizeDppTheme(raw);
+  const header = t.headerColor || t.accent;
+  const outline = t.buttonStyle === 'outline';
+  return {
+    tone: header,
+    fill: t.buttonStyle === 'solid' ? t.accent : `linear-gradient(135deg,${mixHex(t.accent, '#ffffff', 0.35)},${t.accent})`,
+    text: outline ? '#ffffff' : t.buttonText,
+    outline: outline ? mixHex(t.accent, '#ffffff', 0.45) : '',
+    btnRadius: Math.round(Math.min(26, (t.buttonRadius * 26) / 12)),
+    cardRadius: Math.round(Math.min(32, (t.cardRadius * 24) / 16)),
+    font: t.fontFamily === 'system' ? '' : dppFontCss(t.fontFamily),
+    scale: DPP_TEXT_SCALE[t.textScale] || 1,
+    accentLight: mixHex(header, '#ffffff', 0.6),
+    theme: t,
+  };
+};
+const LookContext = React.createContext(STANDARD);
+const filled = (L) => (L.outline
+  ? { backgroundImage: 'none', bgcolor: 'rgba(255,255,255,0.1)', border: `1.5px solid ${L.outline}`, color: L.text }
+  : { backgroundImage: L.fill.startsWith('linear') ? L.fill : 'none', bgcolor: L.fill.startsWith('linear') ? 'transparent' : L.fill, color: L.text });
+
 const text = (v) => String(v ?? '').trim();
 const list = (v) => (Array.isArray(v) ? v : []);
 const imgSrc = (img) => getFileUrl(typeof img === 'string' ? img : img?.src || img?.url || '');
@@ -84,11 +117,11 @@ function passportLine(p) {
   return parts.filter((v, i) => !parts.some((o, j) => j !== i && o.toLowerCase().includes(v.toLowerCase()) && (o.length > v.length || j < i))).join(' · ');
 }
 
-function Backdrop({ image }) {
+function Backdrop({ image, tone }) {
   return (
     <Box sx={{ position: 'absolute', inset: 0, overflow: 'hidden', bgcolor: BG }} aria-hidden>
       {image && <Box component="img" src={image} alt="" sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(40px)', transform: 'scale(1.3)' }} />}
-      <Box sx={{ position: 'absolute', inset: 0, bgcolor: TONE, opacity: 0.55 }} />
+      <Box sx={{ position: 'absolute', inset: 0, bgcolor: tone || TONE, opacity: 0.55 }} />
     </Box>
   );
 }
@@ -117,10 +150,11 @@ function TabBar({ light = false }) {
 // Rows on dark glass, as the app's Section: icon / number, label (+ sub),
 // value, chevron when it opens something.
 function Section({ title, rows = [], children }) {
+  const L = React.useContext(LookContext);
   return (
     <Box sx={{ mt: 2.25 }}>
       {title && <Typography sx={{ color: W2, fontSize: 13, letterSpacing: '0.02em', px: '34px', pb: 0.75, fontFamily: 'inherit' }}>{title.toUpperCase()}</Typography>}
-      <Box sx={{ mx: 2, borderRadius: '24px', overflow: 'hidden', ...DARK_GLASS }}>
+      <Box sx={{ mx: 2, borderRadius: `${L.cardRadius}px`, overflow: 'hidden', ...DARK_GLASS }}>
         {children}
         {rows.map((r, i) => {
           const Icon = r.icon;
@@ -147,6 +181,7 @@ const Para = ({ children }) => <Typography sx={{ color: '#fff', fontSize: 15, li
 const STEP_TITLE = { materials: 'Materials', manufacturing: 'Made in', transport: 'Transport', care: 'Care', service: 'Service & resale' };
 
 function DetailsPage({ p, step, open }) {
+  const L = React.useContext(LookContext);
   const [kind, setKind] = useState(null);
   const t = p.traceabilityEsg || {};
   const route = t.route || {};
@@ -263,7 +298,7 @@ function DetailsPage({ p, step, open }) {
         </Box>
       </Section>
       {service.acceptRequests && (
-        <Box sx={{ mx: 2, mt: 1.75, height: 52, borderRadius: '26px', backgroundImage: GRADIENT, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, fontSize: 17 }}>
+        <Box sx={{ mx: 2, mt: 1.75, height: 52, borderRadius: `${L.btnRadius}px`, ...filled(L), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, fontSize: 17 }}>
           <BuildOutlinedIcon sx={{ fontSize: 20 }} />{service.meta?.button || 'Send request'}
         </Box>
       )}
@@ -330,6 +365,7 @@ function BrandPage({ p, main }) {
  *  'photos') let the Preview dialog jump to a page; everything else is a
  *  page stack inside the phone. */
 export function PassportScreen({ product, view = 'passport', onView = () => {} }) {
+  const L = React.useContext(LookContext);
   const p = product || {};
   const images = list(p.images).map(imgSrc).filter(Boolean).slice(0, 8);
   const [index, setIndex] = useState(0);
@@ -379,7 +415,7 @@ export function PassportScreen({ product, view = 'passport', onView = () => {} }
     const stageH = Math.round(SCREEN.w * (step ? 0.42 : 0.36));
     page = (
       <>
-        <Backdrop image={main} />
+        <Backdrop image={main} tone={L.tone} />
         <Box sx={{ position: 'absolute', inset: 0, overflowY: 'auto', pb: '110px', ...NO_SCROLLBAR }}>
           <Box sx={{ height: stageH, position: 'relative', WebkitMaskImage: 'linear-gradient(180deg,#000 55%,transparent 100%)', maskImage: 'linear-gradient(180deg,#000 55%,transparent 100%)' }}>
             {main && <Box component="img" src={main} alt="" sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
@@ -418,7 +454,7 @@ export function PassportScreen({ product, view = 'passport', onView = () => {} }
     const line = passportLine(p);
     page = (
       <>
-        <Backdrop image={main} />
+        <Backdrop image={main} tone={L.tone} />
         <Box sx={{ position: 'absolute', inset: 0, overflowY: 'auto', pb: '110px', ...NO_SCROLLBAR }}>
           {/* The photo: dragged left / right like the app; a tap opens Photos. */}
           <Box aria-label="Show the photos" role="button" sx={{ width: '100%', height: 306, position: 'relative', WebkitMaskImage: 'linear-gradient(180deg,#000 68%,transparent 100%)', maskImage: 'linear-gradient(180deg,#000 68%,transparent 100%)' }}>
@@ -439,34 +475,45 @@ export function PassportScreen({ product, view = 'passport', onView = () => {} }
             </Box>
           )}
           <Box sx={{ px: 3, mt: images.length > 1 ? 1.75 : '-60px', position: 'relative' }}>
-            {brandName && <Typography sx={{ fontSize: 13, letterSpacing: '0.08em', color: ACC, fontFamily: 'inherit' }}>{brandName.toUpperCase()}</Typography>}
+            {brandName && <Typography sx={{ fontSize: 13, letterSpacing: '0.08em', color: L.accentLight, fontFamily: 'inherit' }}>{brandName.toUpperCase()}</Typography>}
             <Typography sx={{ fontSize: 26, color: '#fff', lineHeight: 1.25, fontFamily: 'inherit' }}>{text(p.name) || 'Product name'}</Typography>
             {line && <Typography sx={{ fontSize: 15, color: W2, mt: 0.25, fontFamily: 'inherit' }}>{line}</Typography>}
           </Box>
           <Box sx={{ display: 'flex', gap: 1.25, mx: 2, mt: 2 }}>
-            {buttons.map((b) => {
+            {(L.theme && !L.theme.blocks.some((x) => x.key === 'feedback' && x.visible) ? [] : buttons).map((b) => {
               const Icon = b.icon;
               return (
                 <Box key={b.label} sx={{ position: 'relative' }}>
                   <ButtonBase onClick={b.onClick} aria-label={b.label} aria-pressed={b.on}
-                    sx={{ width: 52, height: 52, borderRadius: '26px', color: '#fff', ...(b.on ? { backgroundImage: GRADIENT, border: '2px solid rgba(255,255,255,0.85)', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' } : DARK_GLASS) }}>
+                    sx={{ width: 52, height: 52, borderRadius: '26px', color: '#fff', ...(b.on ? { ...filled(L), border: L.outline ? `1.5px solid ${L.outline}` : '2px solid rgba(255,255,255,0.85)', boxShadow: '0 8px 20px rgba(0,0,0,0.25)' } : DARK_GLASS) }}>
                     <Icon sx={{ fontSize: 23 }} />
                   </ButtonBase>
                   {b.on && (
                     <Box sx={{ position: 'absolute', top: -3, right: -3, width: 20, height: 20, borderRadius: '10px', bgcolor: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                      <CheckIcon sx={{ fontSize: 13, color: TONE }} />
+                      <CheckIcon sx={{ fontSize: 13, color: L.tone }} />
                     </Box>
                   )}
                 </Box>
               );
             })}
-            <ButtonBase onClick={() => { open(null); onView('details'); }} sx={{ flex: 1, height: 52, borderRadius: '26px', backgroundImage: GRADIENT, color: '#fff', gap: 1, fontSize: 16, boxShadow: '0 8px 20px rgba(0,0,0,0.25)', fontFamily: 'inherit' }}>
+            <ButtonBase onClick={() => { open(null); onView('details'); }} sx={{ flex: 1, height: 52, borderRadius: `${L.btnRadius}px`, ...filled(L), gap: 1, fontSize: 16, boxShadow: L.outline ? 'none' : '0 8px 20px rgba(0,0,0,0.25)', fontFamily: 'inherit' }}>
               <ArticleOutlinedIcon sx={{ fontSize: 19 }} />Details
             </ButtonBase>
           </Box>
           <Box sx={{ mt: 0 }}>
             <Section rows={rows} />
           </Box>
+          {L.theme && L.theme.blocks.some((x) => x.key === 'message' && x.visible) && (text(L.theme.message.title) || text(L.theme.message.body)) && (
+            <Section>
+              <Box sx={{ p: 2 }}>
+                {text(L.theme.message.title) && <Typography sx={{ color: '#fff', fontSize: 17, mb: 0.5, fontFamily: 'inherit' }}>{L.theme.message.title}</Typography>}
+                {text(L.theme.message.body) && <Typography sx={{ color: W2, fontSize: 15, lineHeight: 1.45, fontFamily: 'inherit' }}>{L.theme.message.body}</Typography>}
+              </Box>
+            </Section>
+          )}
+          {L.theme && L.theme.blocks.some((x) => x.key === 'cta' && x.visible) && text(L.theme.cta.label) && (
+            <Box sx={{ mx: 2, mt: 2, height: 52, borderRadius: `${L.btnRadius}px`, ...filled(L), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>{L.theme.cta.label}</Box>
+          )}
         </Box>
         {topBar(<>
           <Circle label="Share"><IosShareIcon sx={{ fontSize: 20 }} /></Circle>
@@ -500,7 +547,8 @@ export function PassportScreen({ product, view = 'passport', onView = () => {} }
 
 /** The passport in an iPhone 16 frame, `width` px wide. Controlled (view,
  *  onView) or on its own. */
-export default function PassportPhone({ product, width = 300, view: viewProp, onView }) {
+export default function PassportPhone({ product, width = 300, view: viewProp, onView, theme }) {
+  const L = lookOf(theme);
   const [own, setOwn] = useState('passport');
   const view = viewProp || own;
   const setView = onView || setOwn;
@@ -510,8 +558,10 @@ export default function PassportPhone({ product, width = 300, view: viewProp, on
   return (
     <Box aria-label="Preview of the shopper’s product page" sx={{ width, height: Math.round(outerH * scale), flexShrink: 0, position: 'relative', mx: 'auto' }}>
       <Box sx={{ position: 'absolute', top: 0, left: 0, width: outerW, height: outerH, transform: `scale(${scale})`, transformOrigin: 'top left', p: `${SCREEN.bezel}px`, bgcolor: '#1d1d1f', borderRadius: `${SCREEN.radius + SCREEN.bezel}px`, boxShadow: '0 18px 44px rgba(0,0,0,0.28), inset 0 0 0 2px #3a3a3c' }}>
-        <Box sx={{ width: SCREEN.w, height: SCREEN.h, borderRadius: `${SCREEN.radius}px`, overflow: 'hidden', position: 'relative', bgcolor: BG, fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif', '& .MuiTypography-root': { fontFamily: 'inherit' } }}>
-          <PassportScreen product={product} view={view} onView={setView} />
+        <Box sx={{ width: SCREEN.w, height: SCREEN.h, borderRadius: `${SCREEN.radius}px`, overflow: 'hidden', position: 'relative', bgcolor: BG, fontFamily: L.font || '-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif', '& .MuiTypography-root': { fontFamily: 'inherit', ...(L.scale !== 1 ? { zoom: L.scale } : {}) } }}>
+          <LookContext.Provider value={L}>
+            <PassportScreen product={product} view={view} onView={setView} />
+          </LookContext.Provider>
           <Box sx={{ position: 'absolute', top: 11, left: '50%', ml: '-63px', width: 126, height: 37, borderRadius: '20px', bgcolor: '#000', zIndex: 7 }} aria-hidden />
           <Box sx={{ position: 'absolute', bottom: 8, left: '50%', ml: '-70px', width: 140, height: 5, borderRadius: '3px', bgcolor: 'rgba(255,255,255,0.7)', zIndex: 7 }} aria-hidden />
         </Box>
