@@ -297,6 +297,9 @@ const InnerPage = () => {
   const COMMON_PAGES = ['dashboard', 'products', 'profile', 'lca', 'esg', 'allNotifications', 'recommendations', 'chat'];
   const EMPLOYEE_ALLOWED_PAGES = [...COMMON_PAGES, 'rfidScan', 'newProduct', 'generateCode', 'shipmentInspection', 'processSteps', 'history', 'captureHistory', 'employeeAuditLog', 'itemSearch', 'security', 'serviceRequests', 'brand'];
   const isSupervisor = isEmployeeActor && company?.employeeType === 'supervisor';
+  // RFID Scan: company staff (working employees and Supervisors) in any
+  // browser; other accounts only in the desktop app.
+  const canSeeRfidScan = isDesktopApp || isEmployeeActor;
   const isWorkingEmployee = isEmployeeActor && !isSupervisor;
   // A working employee: only what their job needs — Dashboard, Products
   // (read-only), Generate Code and their own Capture History (plus Profile
@@ -596,7 +599,7 @@ const InnerPage = () => {
     // reachable from the Products page for read-only roles.
     // RFID Scan exists only in the desktop app; a browser bookmark or typed
     // /admin/rfidScan lands on Dashboard instead.
-    const desktopOnlyBlocked = activePage === 'rfidScan' && !isDesktopApp;
+    const desktopOnlyBlocked = activePage === 'rfidScan' && !canSeeRfidScan;
     if (desktopOnlyBlocked || hiddenForRole(activePage) || (!allowed.includes(activePage) && activePage !== 'newProduct')) {
       setActivePage('dashboard');
       return;
@@ -689,8 +692,8 @@ const InnerPage = () => {
   const formCompanyId = String((isEditing && (selectedProduct?.company_id?._id || selectedProduct?.company_id)) || (isAdmin && productCompanyId) || company?._id || '');
   // One brand per company: the product shows its company's brand (the super
   // admin's own account is not a brand; its products keep what they have).
-  const formIsBrandCompany = !(isAdmin && formCompanyId === String(company?._id || ''));
-  const formBrand = formIsBrandCompany ? (brands.find((b) => String(b.company_id) === formCompanyId) || null) : null;
+  // One company = one brand: the product's company's brand.
+  const formBrand = brands.find((b) => String(b.company_id) === formCompanyId) || brandOf(formCompanyId, brandInfo.name) || null;
   const formTheme = formBrand?.dppTheme || brandOf(formCompanyId, brandInfo.name)?.dppTheme;
   // The design being changed on the Experience step (null: as saved).
   const [designDraft, setDesignDraft] = useState(null);
@@ -1171,6 +1174,14 @@ const InnerPage = () => {
     selectGenerateCodeProduct(prod);
     setPickingCodeProduct(false);
     go('generateCode');
+    // Start at the top of Generate Code (the editor had scrolled down).
+    const toTop = () => {
+      window.scrollTo({ top: 0 });
+      document.querySelectorAll('main, [data-main-scroll]').forEach((el) => { el.scrollTop = 0; });
+      document.scrollingElement && (document.scrollingElement.scrollTop = 0);
+    };
+    setTimeout(toTop, 0);
+    setTimeout(toTop, 300);
   };
 
   const addProductHandler = async ({ thenCodes = false } = {}) => {
@@ -2061,7 +2072,7 @@ const InnerPage = () => {
         ['products', 'Products', Inventory2Icon, true],
         ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
         ['captureHistory', 'My work records', AssessmentIcon, canSeeCaptureHistory],
-        ['rfidScan', 'RFID Scan', RfidIcon, isDesktopApp],
+        ['rfidScan', 'RFID Scan', RfidIcon, canSeeRfidScan],
       ],
     },
   ] : [
@@ -2081,7 +2092,7 @@ const InnerPage = () => {
         ['captureHistory', 'Work Records', AssessmentIcon, canSeeCaptureHistory],
         ['shipmentInspection', 'Shipments', LocalShippingIcon, canSeeShipmentInspection],
         // Only in the desktop app (Windows, Mac or Linux): a web browser can't reach the reader.
-        ['rfidScan', 'RFID Scan', RfidIcon, isDesktopApp],
+        ['rfidScan', 'RFID Scan', RfidIcon, canSeeRfidScan],
       ],
     },
     {
@@ -2453,7 +2464,7 @@ const InnerPage = () => {
             <ServiceRequestsPage token={token} showCompany={isAdmin} onOpenProducts={() => go('products')} />
           )}
 
-          {activePage === 'rfidScan' && !isAppUser && isDesktopApp && <RfidScanPage />}
+          {activePage === 'rfidScan' && !isAppUser && canSeeRfidScan && <RfidScanPage />}
 
           {activePage === 'shipmentInspection' && canSeeShipmentInspection && (
             <ShipmentInspectionPage token={token} products={products} />

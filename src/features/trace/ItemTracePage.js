@@ -355,7 +355,7 @@ export default function ItemTracePage({
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(0, 2fr)' }, gap: 2, alignItems: 'start' }}>
               <Stack spacing={2}>
               {/* What the brand entered for the product: materials, where it was made, how it was shipped. */}
-              <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2 }}>
+              <Box sx={{ bgcolor: '#fff', borderRadius: '24px', boxShadow: '0 1px 2px rgba(18,58,86,0.06)', p: 2 }}>
                 <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Product lifecycle</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   From the product’s information: where its materials come from, where it was made and how it was shipped.
@@ -386,7 +386,7 @@ export default function ItemTracePage({
                   </Box>
                 )}
               </Box>
-              <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2 }}>
+              <Box sx={{ bgcolor: '#fff', borderRadius: '24px', boxShadow: '0 1px 2px rgba(18,58,86,0.06)', p: 2 }}>
                 <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>
                   {result.type === 'item' ? 'History of this item' : 'Latest activity across all items'}
                 </Typography>
@@ -398,7 +398,7 @@ export default function ItemTracePage({
                 />
               </Box>
               </Stack>
-              <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2, position: { lg: 'sticky' }, top: { lg: 0 } }}>
+              <Box sx={{ bgcolor: '#fff', borderRadius: '24px', boxShadow: '0 1px 2px rgba(18,58,86,0.06)', p: 2, position: { lg: 'sticky' }, top: { lg: 0 } }}>
                 <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>On the map</Typography>
                 {mapPoints.length || lifecyclePoints.length ? (
                   <>
