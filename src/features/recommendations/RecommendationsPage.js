@@ -9,6 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
 import { Backend_URL, getFileUrl, getProductsByUser, getOwnedProducts } from '../../helper';
 import PageHeader from '../../components/PageHeader';
+import ProductPreviewDialog from '../products/ProductPreviewDialog';
 
 // Shopper Preview / Recommendations (design WEB_ShopperPreview, _Listen,
 // _Results): the shopper taps what they like (or says it), and the picks come
@@ -92,6 +93,8 @@ export default function RecommendationsPage({ company, isAdmin, isAppUser = fals
   const [listening, setListening] = useState(false);
   const [heard, setHeard] = useState('');
   const [saved, setSaved] = useState(new Set());
+  // The product whose passport preview is open (View).
+  const [viewing, setViewing] = useState(null);
   const recRef = useRef(null);
 
   useEffect(() => {
@@ -272,6 +275,16 @@ export default function RecommendationsPage({ company, isAdmin, isAppUser = fals
                           {`Because: ${why.join(', ')}`}
                         </Typography>
                       )}
+                      <Box sx={{ flexGrow: 1 }} />
+                      {/* Save (heart) and View (the passport shoppers see). */}
+                      <Box sx={{ display: 'flex', gap: 1, mt: 1.5 }}>
+                        <Button variant="outlined" onClick={() => toggleSave(p)} aria-pressed={on}
+                          startIcon={on ? <FavoriteIcon sx={{ color: '#2a78bd' }} /> : <FavoriteBorderIcon />}
+                          sx={{ flex: 1, height: 40, px: 1, whiteSpace: 'nowrap', ...(on ? { bgcolor: '#e8f1fa', borderColor: '#bcd6ee', color: '#1b4f72' } : {}) }}>
+                          {on ? 'Saved' : 'Save'}
+                        </Button>
+                        <Button variant="contained" onClick={() => setViewing(p)} sx={{ flex: 1, height: 40, px: 1 }}>View</Button>
+                      </Box>
                     </Box>
                   </Box>
                 );
@@ -280,6 +293,8 @@ export default function RecommendationsPage({ company, isAdmin, isAppUser = fals
           )}
         </Box>
       )}
+
+      <ProductPreviewDialog open={!!viewing} onClose={() => setViewing(null)} productInfo={viewing} />
 
       {/* Listening sheet: what we heard, as chips, then Show picks. */}
       <Dialog open={listening} onClose={() => stopListening(false)} maxWidth="xs" fullWidth>

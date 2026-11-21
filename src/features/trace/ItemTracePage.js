@@ -232,6 +232,8 @@ export default function ItemTracePage({
       lng: e.place.longitude,
       color: (EVENT_KINDS[e.kind] || EVENT_KINDS.scan).color,
       label: `${(EVENT_KINDS[e.kind] || EVENT_KINDS.scan).title(e)} — ${formatWhen(e.at)}`,
+      // Shown on the map beside the dot: "Tokyo, Japan".
+      place: [...new Set([e.place?.city, e.place?.country].filter(Boolean))].join(', ') || e.place?.region || '',
     }));
   const selectedId = result && result.type !== 'list' ? result.product?._id : undefined;
   // The product list shows while choosing; afterwards the product bar.
@@ -240,7 +242,7 @@ export default function ItemTracePage({
   const lifecycle = (result && result.type !== 'list' && result.lifecycle) || [];
   const lifecyclePoints = lifecycle
     .filter((s) => typeof s.latitude === 'number' && typeof s.longitude === 'number')
-    .map((s) => ({ lat: s.latitude, lng: s.longitude, color: LIFECYCLE_COLOR, label: `${s.title}: ${s.detail}` }));
+    .map((s) => ({ lat: s.latitude, lng: s.longitude, color: LIFECYCLE_COLOR, label: `${s.title}: ${s.detail}`, place: s.placeName || '' }));
 
   return (
     <Box>

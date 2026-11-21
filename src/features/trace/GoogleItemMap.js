@@ -29,7 +29,7 @@ const loadGoogleMaps = () => {
 
 // The same picture as ItemMap, on Google Maps: the lifecycle steps the brand
 // entered (green dots joined by a line, in order) and what was actually
-// recorded (a dot in each event's colour, no line). Each point: { lat, lng, label, color }.
+// recorded (a dot in each event's colour, no line). Each point: { lat, lng, label, color, place }.
 export default function GoogleItemMap({ points = [], lifecycle = [], height = 360 }) {
   const ref = useRef(null);
   const [failed, setFailed] = useState(false);
@@ -50,14 +50,20 @@ export default function GoogleItemMap({ points = [], lifecycle = [], height = 36
           fullscreenControl: true,
         });
         const bounds = new maps.LatLngBounds();
+        // The place ("Tokyo, Japan") is written above its first dot.
+        const named = new Set();
         const dot = (p, scale, color) => {
           const position = { lat: p.lat, lng: p.lng };
           bounds.extend(position);
+          const place = String(p.place || '').trim();
+          const showPlace = place && !named.has(place.toLowerCase());
+          if (showPlace) named.add(place.toLowerCase());
           drawn.push(new maps.Marker({
             map,
             position,
             title: p.label,
-            icon: { path: maps.SymbolPath.CIRCLE, scale, fillColor: color, fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2 },
+            label: showPlace ? { text: place, fontSize: '13px', color: '#1c1c1e' } : undefined,
+            icon: { path: maps.SymbolPath.CIRCLE, scale, fillColor: color, fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2, labelOrigin: new maps.Point(0, -2.6) },
           }));
         };
 

@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, ButtonBase, Link, Pagination, Typography } from '@mui/material';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
@@ -279,6 +280,8 @@ export default function ProductsTable({
   // Cards under a heading per brand company (brands A–Z, the list's own
   // order inside each brand).
   groupByBrand = false,
+  // id of an element (e.g. beside the search box) to show the page numbers in.
+  pagerSlot,
 }) {
   const rows = useMemo(() => {
     const list = products || [];
@@ -296,6 +299,10 @@ export default function ProductsTable({
   }, [rows.length]);
   const current = Math.min(page, pages);
   const shown = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+  const [slotEl, setSlotEl] = useState(null);
+  useEffect(() => {
+    setSlotEl(pagerSlot ? document.getElementById(pagerSlot) : null);
+  }, [pagerSlot]);
 
   if (loading && !rows.length) return <Loader label="Loading products…" />;
   if (!rows.length) {
@@ -309,14 +316,23 @@ export default function ProductsTable({
     );
   }
 
-  const pager = pages > 1 && (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-      <Typography variant="body2" color="text.secondary">
-        {(current - 1) * PAGE_SIZE + 1}–{Math.min(current * PAGE_SIZE, rows.length)} of {rows.length} products
-      </Typography>
-      <Pagination count={pages} page={current} onChange={(e, p) => setPage(p)} color="primary" shape="rounded" size="large" />
-    </Box>
-  );
+  const range = `${(current - 1) * PAGE_SIZE + 1}–${Math.min(current * PAGE_SIZE, rows.length)} of ${rows.length}`;
+  // In the given slot (beside the search box): the range and page numbers on
+  // one line. Otherwise under the list.
+  const pager = pages > 1 && (slotEl
+    ? createPortal(
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{range}</Typography>
+        <Pagination count={pages} page={current} onChange={(e, p) => setPage(p)} color="primary" shape="rounded" siblingCount={0} />
+      </Box>,
+      slotEl,
+    )
+    : (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+        <Typography variant="body2" color="text.secondary">{range} products</Typography>
+        <Pagination count={pages} page={current} onChange={(e, p) => setPage(p)} color="primary" shape="rounded" size="large" />
+      </Box>
+    ));
 
   if (layout === 'table') {
     const updated = (p) => {
@@ -406,14 +422,7 @@ export default function ProductsTable({
           </Box>
         </Box>
       ))}
-      {pages > 1 && (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-          <Typography variant="body2" color="text.secondary">
-            {(current - 1) * PAGE_SIZE + 1}–{Math.min(current * PAGE_SIZE, rows.length)} of {rows.length} products
-          </Typography>
-          <Pagination count={pages} page={current} onChange={(e, p) => setPage(p)} color="primary" shape="rounded" size="large" />
-        </Box>
-      )}
+      {pager}
     </Box>
   );
 }

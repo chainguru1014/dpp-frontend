@@ -170,13 +170,13 @@ import { normalizeCircularity, disposalFromCircularity } from '../utils/circular
 import { AuthProvider, useAuth } from '../features/auth/AuthContext';
 import { compactMediaQuery } from '../theme';
 import { confirmAction, notify, notifyError, notifySuccess } from '../utils/feedbackBus';
+// The passport shoppers see, in an iPhone: the studio's preview and the
+// Preview dialog.
+import PassportPhone from '../features/products/PassportPhone';
+import ProductPreviewDialog from '../features/products/ProductPreviewDialog';
 
-// PreviewModal and PrintModal pull in the heavy PDF stack (@react-pdf-viewer /
-// pdfjs-dist / @react-pdf/renderer) plus react-youtube — lazy-loaded so that
-// weight only downloads when a user actually opens the preview or print dialog.
-const PreviewModal = React.lazy(() => import('../components/PreviewModal'));
-// The same phone view the preview dialog shows, for the studio's Experience part.
-const IPhonePreview = React.lazy(() => import('../components/PreviewModal').then((m) => ({ default: m.IPhonePreview })));
+// PrintModal pulls in the heavy PDF stack (@react-pdf/renderer) — lazy-loaded
+// so that weight only downloads when a user actually opens the print dialog.
 const PrintModal = React.lazy(() => import('../components/printModal'));
 
 
@@ -2224,7 +2224,7 @@ const InnerPage = () => {
               </IconButton>
             )}
             <Typography component="h1" sx={{ fontSize: { xs: 24, md: 30 }, lineHeight: 1.2, color: '#1c1c1e', whiteSpace: 'nowrap', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: { xs: '50vw', md: 'none' } }}>
-              {barTitles[activePage] || navLabelOf(activePage)}
+              {barTitles[activePage] || (activePage === 'newProduct' && isEditing ? 'Edit product' : navLabelOf(activePage))}
             </Typography>
             {/* The page's tabs and its buttons come up here (PageHeader
                 portals them in); on narrow screens they stay on the page. */}
@@ -2583,7 +2583,7 @@ const InnerPage = () => {
                       </Button>
                     )}
                     {canEditProducts && (
-                      <ButtonGroup variant="outlined" aria-label="Spreadsheet" sx={{ height: 44, bgcolor: 'background.paper', borderRadius: 2 }}>
+                      <ButtonGroup variant="outlined" aria-label="Spreadsheet" sx={{ height: 40, alignSelf: 'center', bgcolor: 'background.paper', borderRadius: '999px', '& .MuiButton-root': { height: 40 } }}>
                         <Button startIcon={<UploadFileIcon />} title="Add or change many products from a spreadsheet" onClick={() => setOpenProductImport(true)}>Import</Button>
                         <Button
                           startIcon={<DownloadIcon />}
@@ -2651,6 +2651,8 @@ const InnerPage = () => {
                     ),
                   }}
                 />
+                {/* The list's page numbers, on the right of the search. */}
+                <Box id="products-pager" sx={{ ml: 'auto !important', display: 'flex', alignItems: 'center' }} />
               </Stack>
 
               <ProductsTable
@@ -2662,6 +2664,7 @@ const InnerPage = () => {
                 columns={selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) ? 2 : 4}
                 dense
                 groupByBrand
+                pagerSlot="products-pager"
                 emptyText={productNameFilter.trim()
                   ? 'No products match your search.'
                   : isAppUser
@@ -2939,7 +2942,7 @@ const InnerPage = () => {
                         Change the DPP design
                       </Button>
                       <Suspense fallback={<Box sx={{ height: 620, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}><CircularProgress size={28} /><Typography variant="body2" color="text.secondary">Loading the preview…</Typography></Box>}>
-                        <IPhonePreview productInfo={formProduct} theme={formTheme} width={300} />
+                        <PassportPhone product={{ ...formProduct, price: Number(price) || 0, currency }} width={300} />
                       </Suspense>
                       </Box>
                     </Grid>
@@ -3795,7 +3798,7 @@ const InnerPage = () => {
                 </Button>
                 )}
                 <Suspense fallback={<Box sx={{ height: 620, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={28} /></Box>}>
-                  <IPhonePreview productInfo={formProduct} theme={formTheme} width={300} />
+                  <PassportPhone product={{ ...formProduct, price: Number(price) || 0, currency }} width={300} />
                 </Suspense>
                 <Typography variant="body2" color="text.secondary">Changes show here as you type.</Typography>
               </Box>
@@ -3923,7 +3926,15 @@ const InnerPage = () => {
       />
       {company && openPreviewModal && (
         <Suspense fallback={<Backdrop open sx={{ zIndex: (theme) => theme.zIndex.modal }}><CircularProgress sx={{ color: '#fff' }} /></Backdrop>}>
-        <PreviewModal
+        <ProductPreviewDialog
+          onEdit={activePage === 'products' && selectedProduct && canEditProducts ? () => {
+            const index = products.findIndex((p) => p._id === selectedProduct._id);
+            if (index >= 0) {
+              setProductPanelMode('edit');
+              setPreviousPage('products');
+              editProductHandler(index);
+            }
+          } : undefined}
           open={openPreviewModal}
           setOpen={setOpenPreviewModal}
           // From the studio: the design of the brand typed into the form.
@@ -3938,6 +3949,8 @@ const InnerPage = () => {
               : {
                   name: productName,
                   model: productModel,
+                  price: Number(price) || 0,
+                  currency,
                   detail: productDetail,
                   aboutProduct,
       productType, color, size, manufactureDate, warrantyStatus, warrantyValidYears,
