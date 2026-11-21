@@ -30,7 +30,7 @@ const EmployeeManagementPage = ({ token, isAdmin, companyId }) => {
           </Button>
         )}
       />
-      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}>
+      <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
         <Tab value="roster" label="Employee list" />
         <Tab value="auditLog" label="Sign-in history" />
       </Tabs>

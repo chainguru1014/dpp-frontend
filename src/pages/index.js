@@ -2228,7 +2228,7 @@ const InnerPage = () => {
             </Typography>
             {/* The page's tabs and its buttons come up here (PageHeader
                 portals them in); on narrow screens they stay on the page. */}
-            <Box id="toolbar-tabs" sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', minWidth: 0 }} />
+            <Box id="toolbar-tabs" sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', flexShrink: 0 }} />
             <Box sx={{ flexGrow: 1 }} />
             <Box id="toolbar-actions" sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 1, flexShrink: 0 }} />
           {/* Find any item from any page: type or scan a code, press Enter. */}
@@ -2789,7 +2789,7 @@ const InnerPage = () => {
                   variant="scrollable"
                   allowScrollButtonsMobile
                   aria-label="Product passport steps"
-                  sx={{ flex: 1, minWidth: 0 }}
+                  sx={{ my: 1.25, flex: '0 1 auto', minWidth: 0 }}
                 >
                   {STUDIO_PHASES.map(({ mode, label }) => (
                     <Tab

@@ -128,14 +128,29 @@ const theme = createTheme({
         },
       },
     },
+    // Tabs are Apple segmented controls: a grey track with the chosen
+    // segment as a raised white pill (no underline).
+    MuiTabs: {
+      styleOverrides: {
+        root: { minHeight: 0, display: 'inline-flex', maxWidth: '100%', flexShrink: 0, backgroundColor: 'rgba(120,120,128,0.14)', borderRadius: 20, padding: 3 },
+        indicator: { display: 'none' },
+        flexContainer: { gap: 2 },
+        scrollButtons: { width: 28, borderRadius: 14 },
+      },
+    },
     MuiTab: {
       styleOverrides: {
         root: {
           textTransform: 'none',
-          fontSize: '1.0625rem',
+          fontSize: '0.9375rem',
           fontWeight: 400,
-          minHeight: 54,
-          [compactMediaQuery]: { minHeight: 46, fontSize: '1rem', paddingTop: 6, paddingBottom: 6 },
+          minHeight: 34,
+          minWidth: 0,
+          borderRadius: 17,
+          padding: '4px 18px',
+          color: '#1c1c1e',
+          '&.Mui-selected': { backgroundColor: '#ffffff', color: '#1c1c1e', boxShadow: '0 3px 10px rgba(0,0,0,0.12)' },
+          '&.Mui-disabled': { color: 'rgba(60,60,67,0.35)' },
         },
       },
     },
@@ -198,13 +213,13 @@ const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: { fontSize: '1rem', paddingTop: 13, paddingBottom: 13, borderBottomColor: '#eef0f2' },
-        head: { fontWeight: 400, color: '#5f6b78', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.03em' },
+        head: { fontWeight: 400, color: '#5f6b78', fontSize: '0.875rem' },
       },
     },
     MuiDataGrid: {
       styleOverrides: {
         root: { fontSize: '1rem', border: 0, borderRadius: 24, backgroundColor: '#ffffff', '& .MuiDataGrid-columnHeaders': { backgroundColor: '#ffffff' } },
-        columnHeaderTitle: { fontWeight: 400, color: '#5f6b78', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '0.03em' },
+        columnHeaderTitle: { fontWeight: 400, color: '#5f6b78', fontSize: '0.875rem' },
       },
     },
     MuiTableHead: { styleOverrides: { root: { backgroundColor: 'transparent' } } },

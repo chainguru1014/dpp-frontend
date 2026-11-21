@@ -175,7 +175,7 @@ export default function ServiceRequestsPage({ token, showCompany = false, onOpen
         moreActions={[{ label: 'Reload', icon: RefreshIcon, onClick: load }]}
       />
 
-      <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }} variant="scrollable" allowScrollButtonsMobile>
+      <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 2 }} variant="scrollable" allowScrollButtonsMobile>
         {TABS.map((t) => <Tab key={t.value} value={t.value} label={`${t.label} (${tabCount(t.value)})`} />)}
       </Tabs>
 
