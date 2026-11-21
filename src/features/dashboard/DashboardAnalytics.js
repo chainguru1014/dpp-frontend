@@ -19,7 +19,6 @@ import { getAnalytics, getCaptureStats, Backend_URL } from '../../helper';
 import { useAuth } from '../auth/AuthContext';
 import Loader from '../../components/Loader';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 // Clearly different hues (was five similar blue-greys, hard to tell apart,
 // especially for older eyes or colour-blind users). Navy/blue lead so the
@@ -506,15 +505,17 @@ export default function DashboardAnalytics({
       </>
       )}
 
-      {onToggleMore && (
+      {/* More analytics opens the second layer; once open there is no
+          "Fewer analytics" button (it stays open on this visit). */}
+      {onToggleMore && !moreOpen && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
           <Button
             variant="outlined"
             onClick={onToggleMore}
             aria-expanded={moreOpen}
-            endIcon={moreOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            endIcon={<ExpandMoreIcon />}
           >
-            {moreOpen ? 'Fewer analytics' : 'More analytics'}
+            More analytics
           </Button>
         </Box>
       )}

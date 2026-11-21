@@ -55,7 +55,7 @@ export const BrandMark = ({ brand, name, size = 44 }) => {
   const letter = String(brand?.name || name || '?').trim().charAt(0).toUpperCase() || '?';
   return logo ? (
     <Box component="img" alt="" src={getFileUrl(logo)}
-      sx={{ width: size, height: size, borderRadius: '50%', objectFit: 'contain', bgcolor: '#eef2f7', border: '1px solid #dfe5ec', flex: 'none' }} />
+      sx={{ display: 'block', width: size, height: size, borderRadius: '50%', objectFit: 'contain', bgcolor: '#eef2f7', border: '1px solid #dfe5ec', flex: 'none', boxSizing: 'border-box' }} />
   ) : (
     <Box aria-hidden sx={{ width: size, height: size, borderRadius: '50%', bgcolor: '#16324a', color: '#c9dcef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Georgia, serif', fontWeight: 400, fontSize: size * 0.46, flex: 'none' }}>
       {letter}

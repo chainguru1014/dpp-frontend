@@ -286,7 +286,7 @@ export default function BrandPage({
               }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2.5, py: 2, flexWrap: 'wrap', color: '#fff' }}>
-                  <Box sx={{ border: '3px solid #fff', borderRadius: '50%', bgcolor: '#fff', boxShadow: 2 }}>
+                  <Box sx={{ display: 'flex', lineHeight: 0, flex: 'none', border: '3px solid #fff', borderRadius: '50%', bgcolor: '#fff', boxShadow: 2 }}>
                     <BrandMark brand={details} name={brand.name} size={68} />
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 200 }}>
@@ -349,7 +349,7 @@ export default function BrandPage({
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       <BrandMark brand={details} name={details.name} size={64} />
                       {canEdit && (
-                        <Button variant="outlined" component="label" disabled={uploading === 'logoUrl'}>
+                        <Button variant="outlined" component="label" disabled={uploading === 'logoUrl'} sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
                           {uploading === 'logoUrl' ? 'Uploading…' : details.logoUrl ? 'Change logo' : 'Upload logo'}
                           <input type="file" accept="image/*" hidden onChange={(e) => uploadImage('logoUrl', e)} />
                         </Button>
@@ -361,10 +361,10 @@ export default function BrandPage({
                     <Stack direction="row" spacing={1.5} alignItems="center">
                       {details.coverUrl && (
                         <Box component="img" src={getFileUrl(details.coverUrl)} alt="Brand cover"
-                          sx={{ width: 180, height: 72, objectFit: 'cover', border: '1px solid', borderColor: 'divider', borderRadius: 2 }} />
+                          sx={{ display: 'block', width: 120, height: 64, flex: '0 1 120px', minWidth: 72, objectFit: 'cover', border: '1px solid', borderColor: 'divider', borderRadius: 2 }} />
                       )}
                       {canEdit && (
-                        <Button variant="outlined" component="label" disabled={uploading === 'coverUrl'}>
+                        <Button variant="outlined" component="label" disabled={uploading === 'coverUrl'} sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
                           {uploading === 'coverUrl' ? 'Uploading…' : details.coverUrl ? 'Change cover' : 'Add a cover photo'}
                           <input type="file" accept="image/*" hidden onChange={(e) => uploadImage('coverUrl', e)} />
                         </Button>
