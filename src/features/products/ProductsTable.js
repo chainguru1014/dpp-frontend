@@ -100,8 +100,9 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
               variant="caption"
               sx={{ display: 'block' }}
               onClick={(e) => {
+                if (!onOwnerClick) return;
                 e.stopPropagation();
-                if (onOwnerClick) onOwnerClick(product);
+                onOwnerClick(product);
               }}
             >
               <Typography variant="caption" noWrap sx={{ display: 'block' }}>Owner: {owner.name}</Typography>
@@ -154,8 +155,9 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
               variant="caption"
               sx={{ display: 'block' }}
               onClick={(e) => {
+                if (!onOwnerClick) return;
                 e.stopPropagation();
-                if (onOwnerClick) onOwnerClick(product);
+                onOwnerClick(product);
               }}
             >
               <Typography variant="caption" noWrap sx={{ display: 'block' }}>Owner: {owner.name}</Typography>
@@ -207,8 +209,9 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
             underline="hover"
             variant="body2"
             onClick={(e) => {
+              if (!onOwnerClick) return;
               e.stopPropagation();
-              if (onOwnerClick) onOwnerClick(product);
+              onOwnerClick(product);
             }}
           >
             Owner: {owner.name}{owner.email ? ` (${owner.email})` : ''}

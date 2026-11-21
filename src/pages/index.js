@@ -2226,7 +2226,11 @@ const InnerPage = () => {
             <Typography component="h1" sx={{ fontSize: { xs: 24, md: 30 }, lineHeight: 1.2, color: '#1c1c1e', whiteSpace: 'nowrap', flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: { xs: '50vw', md: 'none' } }}>
               {barTitles[activePage] || navLabelOf(activePage)}
             </Typography>
+            {/* The page's tabs and its buttons come up here (PageHeader
+                portals them in); on narrow screens they stay on the page. */}
+            <Box id="toolbar-tabs" sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', minWidth: 0 }} />
             <Box sx={{ flexGrow: 1 }} />
+            <Box id="toolbar-actions" sx={{ display: { xs: 'none', lg: 'flex' }, alignItems: 'center', gap: 1, flexShrink: 0 }} />
           {/* Find any item from any page: type or scan a code, press Enter. */}
           {canSeeItemSearch && (
             <Box
@@ -2239,7 +2243,7 @@ const InnerPage = () => {
                 setHeaderSearch('');
                 go('itemSearch');
               }}
-              sx={{ display: { xs: 'none', md: 'block' }, mr: 1.5, width: { md: 260, lg: 340 } }}
+              sx={{ display: { xs: 'none', md: 'block' }, width: { md: 190, xl: 240 }, flexShrink: 1 }}
             >
               <TextField
                 size="small"
@@ -2254,7 +2258,6 @@ const InnerPage = () => {
             </Box>
           )}
           <Box sx={{ ...GLASS, borderRadius: '21px', display: 'flex', alignItems: 'center', '& .MuiIconButton-root': { color: '#1c1c1e', p: 1 } }}>
-            <PageHelp page={activePage} isAppUser={isAppUser} />
             <NotificationBell onShowAll={() => setActivePage('allNotifications')} />
           </Box>
           <Button
@@ -2268,7 +2271,7 @@ const InnerPage = () => {
             <Avatar src={getFileUrl(company.avatar)} sx={{ width: 34, height: 34, backgroundImage: 'linear-gradient(135deg,#2a78bd,#1b4f72)', color: '#ffffff', fontWeight: 400 }}>
               {!company.avatar && (company.displayName || company.name)?.[0]?.toUpperCase()}
             </Avatar>
-            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, ml: 1, fontWeight: 400 }}>
+            <Box component="span" sx={{ display: { xs: 'none', xl: 'inline' }, ml: 1, fontWeight: 400, whiteSpace: 'nowrap' }}>
               {company.displayName || company.name}
             </Box>
           </Button>
@@ -2670,14 +2673,7 @@ const InnerPage = () => {
                   productSelectHandler(row);
                   setTimeout(() => { if (window.innerWidth < 1200) productCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
                 }}
-                onOwnerClick={(product) => {
-                  if (product.company_id) {
-                    setOwnerInfo(product.company_id);
-                    setOpenOwnerDialog(true);
-                    // Don't show product preview when clicking owner
-                    setOpenPreviewModal(false);
-                  }
-                }}
+                // A click anywhere on a card selects it (the owner is plain text).
               />
                 </Box>
                 {/* The selected product, beside the list (it must be in the
