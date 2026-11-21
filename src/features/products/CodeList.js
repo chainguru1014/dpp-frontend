@@ -3,7 +3,22 @@ import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import qrcode from 'qrcode';
+import DownloadIcon from '@mui/icons-material/Download';
 import { notifySuccess } from '../../utils/feedbackBus';
+
+// Download a QR code as a 600 px PNG (made on click).
+export const downloadQrImage = async (data, name) => {
+  try {
+    const url = await qrcode.toDataURL(String(data || ''), { margin: 2, width: 600 });
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name || 'qr-code.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } catch (e) { /* nothing to download */ }
+};
+
 
 // A small QR picture for a list row.
 const QrThumb = ({ data }) => {
@@ -31,14 +46,14 @@ export default function CodeList({ codes = [], printedAmount = 0, identifiersByQ
   };
   return (
     <Box sx={{ bgcolor: '#fff', border: '1px solid #dfe5ec', borderRadius: 3, overflow: 'hidden' }}>
-      <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'minmax(0, 2.4fr) 120px 140px 110px', gap: 2, px: 2, py: 1.25, bgcolor: '#f2f5f9', fontWeight: 400, color: '#16324a', fontSize: 15 }}>
+      <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: 'minmax(0, 2.4fr) 120px 140px 150px', gap: 2, px: 2, py: 1.25, bgcolor: '#f2f5f9', fontWeight: 400, color: '#16324a', fontSize: 15 }}>
         <span>Code</span><span>Number</span><span>Printed</span><span />
       </Box>
       {codes.map((item) => {
         const printed = Number(item.qrcode_id) <= Number(printedAmount || 0);
         const tags = identifiersByQrcodeId?.get(item.qrcode_id) || [];
         return (
-          <Box key={item.qrcode_id} sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: 'minmax(0, 2.4fr) 120px 140px 110px' }, gap: 2, alignItems: 'center', px: 2, py: 1, borderTop: '1px solid #e8edf3' }}>
+          <Box key={item.qrcode_id} sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: 'minmax(0, 2.4fr) 120px 140px 150px' }, gap: 2, alignItems: 'center', px: 2, py: 1, borderTop: '1px solid #e8edf3' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
               <QrThumb data={item.url} />
               <Box sx={{ minWidth: 0 }}>
@@ -59,6 +74,9 @@ export default function CodeList({ codes = [], printedAmount = 0, identifiersByQ
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
               <Tooltip title="Copy the link">
                 <IconButton aria-label={`Copy the link of code ${item.qrcode_id}`} onClick={() => copy(item.url)}><ContentCopyIcon /></IconButton>
+              </Tooltip>
+              <Tooltip title="Download the picture">
+                <IconButton aria-label={`Download the picture of code ${item.qrcode_id}`} onClick={() => downloadQrImage(item.url, `qr-code-${item.qrcode_id}.png`)}><DownloadIcon /></IconButton>
               </Tooltip>
               {onDelete && (
                 <Tooltip title="Remove this code">

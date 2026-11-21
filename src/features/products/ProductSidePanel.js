@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Button, ButtonBase, Dialog, IconButton, Typography } from '@mui/material';
+import { Box, Button, ButtonBase, IconButton, Typography } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
@@ -8,6 +8,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { getFileUrl } from '../../helper';
+import PhotoViewerDialog from '../../components/PhotoSlider';
 import { PassportScore } from './PassportReadinessPanel';
 import { passportCompleteness } from '../../utils/passportCompleteness';
 
@@ -71,13 +72,7 @@ export default function ProductSidePanel({ product, onClose, onEdit, onCodes, on
           </Box>
         )}
       </Box>
-      <Dialog open={openPhoto} onClose={() => setOpenPhoto(false)} maxWidth="md"
-        PaperProps={{ sx: { bgcolor: 'transparent', boxShadow: 'none', position: 'relative' } }}>
-        <IconButton onClick={() => setOpenPhoto(false)} aria-label="Close the photo" sx={{ position: 'absolute', top: 8, right: 8, bgcolor: 'rgba(0,0,0,0.45)', color: '#fff', '&:hover': { bgcolor: 'rgba(0,0,0,0.6)' } }}>
-          <CloseIcon />
-        </IconButton>
-        {main && <Box component="img" src={getFileUrl(main)} alt={product.name} sx={{ display: 'block', maxWidth: '90vw', maxHeight: '86vh', objectFit: 'contain', borderRadius: '20px', bgcolor: '#fff' }} />}
-      </Dialog>
+      <PhotoViewerDialog open={openPhoto} images={images.map((x) => getFileUrl(x))} index={index} onClose={() => setOpenPhoto(false)} alt={product.name} />
 
       <Box sx={{ px: 1 }}>
         {brand.name && <Typography sx={{ fontSize: 12, letterSpacing: '0.06em', textTransform: 'uppercase', color: SECONDARY }}>{brand.name}</Typography>}
@@ -109,14 +104,15 @@ export default function ProductSidePanel({ product, onClose, onEdit, onCodes, on
         {onCodes && <Button variant="outlined" startIcon={<QrCode2Icon />} onClick={onCodes} sx={{ flex: 1, height: 42, px: 1, whiteSpace: 'nowrap' }}>Codes</Button>}
         <Button variant="outlined" startIcon={<PhoneIphoneIcon />} onClick={onPreview} sx={{ flex: 1, height: 42, px: 1, whiteSpace: 'nowrap' }}>Preview</Button>
       </Box>
-      <Box sx={{ bgcolor: '#f4f6f9', borderRadius: '20px', overflow: 'hidden', display: 'flex' }}>
-        <ButtonBase onClick={onHistory} sx={{ ...row, flex: 1, width: 'auto', gap: 1 }}>
+      {/* Two separate buttons: history, and (apart from it) Remove. */}
+      <Box sx={{ display: 'flex', gap: 0.75 }}>
+        <ButtonBase onClick={onHistory} sx={{ ...row, flex: 1, width: 'auto', gap: 1, bgcolor: '#f4f6f9', borderRadius: '20px' }}>
           <HistoryIcon sx={{ color: '#2a78bd', fontSize: 20 }} />
           <Typography sx={{ fontSize: 14, color: INK, flex: 1 }}>Ownership history</Typography>
           <ChevronRightIcon sx={{ color: '#b4bcc6', fontSize: 20 }} />
         </ButtonBase>
         {onRemove && (
-          <ButtonBase onClick={onRemove} aria-label="Remove product" sx={{ ...row, width: 'auto', gap: 1, borderLeft: '1px solid #e8eaed' }}>
+          <ButtonBase onClick={onRemove} aria-label="Remove product" sx={{ ...row, width: 'auto', gap: 1, bgcolor: '#f4f6f9', borderRadius: '20px' }}>
             <DeleteOutlineIcon sx={{ color: '#1b4f72', fontSize: 20 }} />
             <Typography sx={{ fontSize: 14, color: '#1b4f72' }}>Remove</Typography>
           </ButtonBase>

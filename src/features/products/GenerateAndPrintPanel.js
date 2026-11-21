@@ -3,7 +3,7 @@ import { Box, Button, Chip, TextField, Typography, Pagination, ToggleButton, Tog
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import LanguageIcon from '@mui/icons-material/Language';
-import SensorsIcon from '@mui/icons-material/Sensors';
+import SensorsIcon from '../../components/icons/RfidIcon';
 import NfcIcon from '@mui/icons-material/Nfc';
 import ViewWeekIcon from '@mui/icons-material/ViewWeek';
 import CodeList from './CodeList';
@@ -349,6 +349,8 @@ const GenerateAndPrintPanel = ({
                     sub: item.pmc_code || '',
                     number: `#${item.security_qrcode_id}`,
                     printed: Number(item.security_qrcode_id) <= Number(selectedProduct?.security_printed_amount || 0),
+                    downloadQr: url,
+                    downloadName: `security-qr-${item.security_qrcode_id}.png`,
                     onDelete: onDeleteSecurityQrCode ? () => onDeleteSecurityQrCode(item.security_qrcode_id) : undefined,
                   };
                 })}

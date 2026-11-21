@@ -11,7 +11,7 @@ import {
 import DownloadIcon from '@mui/icons-material/Download';
 import AddIcon from '@mui/icons-material/Add';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
-import SensorsIcon from '@mui/icons-material/Sensors';
+import SensorsIcon from '../icons/RfidIcon';
 import NfcIcon from '@mui/icons-material/Nfc';
 import qrcode from 'qrcode';
 import {
@@ -424,6 +424,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
                 number: [position ? `#${position}` : '', item.pmc_code].filter(Boolean).join(' · '),
                 printed: lockedSourceType ? position > 0 && position <= printedCount : undefined,
                 downloadUrl: barcodeImg || undefined,
+                downloadQr: type === 'gs1dl' ? item.raw_value : undefined,
                 downloadName: `${type}-${item.raw_value}.png`,
                 onDelete: () => handleDelete(item._id),
               };

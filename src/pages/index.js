@@ -160,7 +160,9 @@ import SystemNotificationsPage from '../features/notifications/SystemNotificatio
 import AllNotificationsPage from '../features/notifications/AllNotificationsPage';
 import ProductHistoryDialog from '../features/products/ProductHistoryDialog';
 import ProductTransferDialog from '../features/products/ProductTransferDialog';
-import { getFileUrl, getItemCategories } from '../helper';
+import { getFileUrl, getItemCategories, updateBrandById } from '../helper';
+import DppThemeEditor from '../features/products/DppThemeEditor';
+import { normalizeDppTheme } from '../utils/dppTheme';
 import ManageCategoriesDialog from '../features/products/ManageCategoriesDialog';
 import CompanyManagementSection from '../features/admin/CompanyManagementSection';
 import PageHeader from '../components/PageHeader';
@@ -213,10 +215,11 @@ const EMPTY_TAB_VIDEOS = { materials: [], care: [], dispose: [], traceability: [
 const normalizeTabVideos = (raw) => Object.fromEntries(
   Object.keys(EMPTY_TAB_VIDEOS).map((key) => [key, Array.isArray(raw?.[key]) ? raw[key] : []]),
 );
+// The product window's two steps; codes are made on Generate Code, which
+// opens with the product selected once it is saved.
 const STUDIO_PHASES = [
-  { mode: 'edit', label: '1. Data' },
-  { mode: 'experience', label: '2. Experience' },
-  { mode: 'print', label: '3. Codes' },
+  { mode: 'edit', label: 'Data Input' },
+  { mode: 'experience', label: 'DPP UI Design' },
 ];
 // Default item categories — only used until the managed list (super admin,
 // Products > Manage Categories) loads from the backend.
@@ -689,6 +692,20 @@ const InnerPage = () => {
   const formIsBrandCompany = !(isAdmin && formCompanyId === String(company?._id || ''));
   const formBrand = formIsBrandCompany ? (brands.find((b) => String(b.company_id) === formCompanyId) || null) : null;
   const formTheme = formBrand?.dppTheme || brandOf(formCompanyId, brandInfo.name)?.dppTheme;
+  // The design being changed on the Experience step (null: as saved).
+  const [designDraft, setDesignDraft] = useState(null);
+  const [designSaving, setDesignSaving] = useState(false);
+  useEffect(() => { setDesignDraft(null); }, [formBrand?._id]);
+  const saveDesign = async () => {
+    if (!formBrand || !designDraft) return;
+    setDesignSaving(true);
+    const res = await updateBrandById(token, formBrand._id, { dppTheme: normalizeDppTheme(designDraft) });
+    setDesignSaving(false);
+    if (!res.ok) { notifyError(res.message); return; }
+    setBrands((list) => list.map((b) => (b._id === formBrand._id ? { ...b, ...(res.data || {}), dppTheme: res.data?.dppTheme || normalizeDppTheme(designDraft) } : b)));
+    setDesignDraft(null);
+    notifySuccess('Design saved. It now applies to all this brand’s product pages.');
+  };
   // Brand companies the super admin can add a product to.
   const brandCompanies = brands.filter((b, i, all) => String(b.company_id) !== String(company?._id || '')
     && all.findIndex((x) => String(x.company_id) === String(b.company_id)) === i);
@@ -1145,8 +1162,17 @@ const InnerPage = () => {
     return false;
   };
 
-  // thenCodes: stay in the product window and open the saved product's
-  // Codes (the Experience step's save button).
+  // After a product is saved: close the window and open Generate Code with
+  // the product selected (its codes are the next step).
+  const openCodesFor = (prod) => {
+    resetFields();
+    setProductPanelMode('edit');
+    keepGenerateSelectionRef.current = true;
+    selectGenerateCodeProduct(prod);
+    setPickingCodeProduct(false);
+    go('generateCode');
+  };
+
   const addProductHandler = async ({ thenCodes = false } = {}) => {
     if (!validateRequiredProductFields()) return;
     setSavingProduct(true);
@@ -1204,13 +1230,10 @@ const InnerPage = () => {
     // Keep the form (and everything typed) open if saving failed.
     if (!ok) return;
     const list = await loadProductsForCurrentCompany();
-    if (thenCodes) {
-      const saved = (list || []).find((p) => p._id === ok._id);
-      if (saved) {
-        await editProductHandler(saved);
-        setProductPanelMode('print');
-        return;
-      }
+    const savedNew = (list || []).find((p) => p._id === ok._id);
+    if (savedNew) {
+      openCodesFor(savedNew);
+      return;
     }
     resetFields();
     // Redirect to previous page (dashboard or products)
@@ -1277,15 +1300,10 @@ const InnerPage = () => {
     setSavingProduct(false);
     if (!ok) return;
     const list = await loadProductsForCurrentCompany();
-    if (thenCodes) {
-      // Saved: the form now matches the product, so nothing is unsaved.
+    const savedEdit = (list || []).find((p) => p._id === isEditing);
+    if (savedEdit) {
       productFormSnapshotRef.current = productFormSignature;
-      const saved = (list || []).find((p) => p._id === isEditing);
-      if (saved) {
-        setSelectedProduct(saved);
-        setTotalAmount(saved.total_minted_amount || 0);
-      }
-      setProductPanelMode('print');
+      openCodesFor(savedEdit);
       return;
     }
     resetFields();
@@ -2695,12 +2713,10 @@ const InnerPage = () => {
                         setOpenProductHistory(true);
                       }}
                       onCodes={isAppUser ? undefined : () => {
-                        const index = products.findIndex((p) => p._id === selectedProduct._id);
-                        if (index >= 0) {
-                          setProductPanelMode('print');
-                          setPreviousPage('products');
-                          editProductHandler(index);
-                        }
+                        keepGenerateSelectionRef.current = true;
+                        selectGenerateCodeProduct(selectedProduct);
+                        setPickingCodeProduct(false);
+                        go('generateCode');
                       }}
                       onEdit={canEditProducts ? () => {
                         const index = products.findIndex((p) => p._id === selectedProduct._id);
@@ -2768,7 +2784,7 @@ const InnerPage = () => {
               {productPanelMode === 'print'
                 ? `Codes for ${selectedProduct?.name || 'this product'}`
                 : isEditing
-                ? `Edit product${productName ? `: ${productName}` : ''}`
+                ? (productName || 'Edit product')
                 : 'New product'}
               </Box>
               {!editorAsPage && (
@@ -2785,8 +2801,7 @@ const InnerPage = () => {
                 <Tabs
                   value={productPanelMode}
                   onChange={(e, mode) => {
-                    if (mode === 'print' && isProductFormDirty) updateProductHandler({ thenCodes: true });
-                    else setProductPanelMode(mode);
+                    setProductPanelMode(mode);
                   }}
                   variant="scrollable"
                   allowScrollButtonsMobile
@@ -2872,7 +2887,7 @@ const InnerPage = () => {
                     <>
                       <Divider sx={{ my: 1 }} />
                       <Box component="button" type="button"
-                        onClick={() => (isProductFormDirty ? updateProductHandler({ thenCodes: true }) : setProductPanelMode('print'))}
+                        onClick={() => (isProductFormDirty ? updateProductHandler() : openCodesFor(selectedProduct))}
                         sx={{ width: '100%', minHeight: 52, display: 'flex', alignItems: 'center', gap: 1.5, px: 1.5, border: 0, borderRadius: 2.5, cursor: 'pointer', bgcolor: 'transparent', color: '#16324a', font: 'inherit', fontSize: 15.5, '&:hover': { bgcolor: '#f2f5f9' } }}>
                         <QrCode2Icon /><span style={{ flex: 1 }}>Codes</span>
                         <Typography variant="body2" color="text.secondary">{(Number(selectedProduct?.total_minted_amount) || 0).toLocaleString()}</Typography>
@@ -2922,27 +2937,6 @@ const InnerPage = () => {
                     {!wideEditor && (
                     <Grid item xs={12} md={5} sx={{ order: { md: 2 } }}>
                       <Box sx={{ position: { md: 'sticky' }, top: { md: 0 } }}>
-                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>What shoppers see</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        The product page in the app, in your design. Tap its rows and buttons to move around, as shoppers do.
-                      </Typography>
-                      {/* The design belongs to the brand (all its products share
-                          it), so it is changed on the Brand page — opened on
-                          this product's brand. */}
-                      <Button
-                        variant="outlined"
-                        startIcon={<PaletteIcon />}
-                        sx={{ mb: 1.5 }}
-                        onClick={async () => {
-                          const target = { companyId: formCompanyId };
-                          if (await closeProductDialog(null, 'closeButton')) {
-                            setBrandPageTarget(target);
-                            setActivePage('brand');
-                          }
-                        }}
-                      >
-                        Change the DPP design
-                      </Button>
                       <Suspense fallback={<Box sx={{ height: 620, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}><CircularProgress size={28} /><Typography variant="body2" color="text.secondary">Loading the preview…</Typography></Box>}>
                         <PassportPhone product={{ ...formProduct, price: Number(price) || 0, currency }} width={300} />
                       </Suspense>
@@ -2950,13 +2944,35 @@ const InnerPage = () => {
                     </Grid>
                     )}
                     <Grid item xs={12} md={wideEditor ? 12 : 7} sx={{ order: { md: 1 } }}>
-                      <PassportReadinessPanel
-                        product={formProduct}
-                        onGoToStep={(step) => {
-                          setDetailTab(step);
-                          setProductPanelMode('edit');
-                        }}
-                      />
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} lg={wideEditor ? 6 : 12}>
+                          <PassportReadinessPanel
+                            product={formProduct}
+                            onGoToStep={(step) => {
+                              setDetailTab(step);
+                              setProductPanelMode('edit');
+                            }}
+                          />
+                        </Grid>
+                        {/* The product page design (colours, font, layout…) of
+                            the product's brand: every product of the brand uses
+                            it. Saved to the brand. */}
+                        <Grid item xs={12} lg={wideEditor ? 6 : 12}>
+                          {formBrand ? (
+                            <DppThemeEditor
+                              theme={designDraft || normalizeDppTheme(formBrand.dppTheme)}
+                              onChange={(next) => setDesignDraft(next)}
+                              onSave={saveDesign}
+                              onReset={() => setDesignDraft(null)}
+                              saving={designSaving}
+                              dirty={!!designDraft && JSON.stringify(normalizeDppTheme(designDraft)) !== JSON.stringify(normalizeDppTheme(formBrand.dppTheme))}
+                              canEdit={canEditProducts}
+                            />
+                          ) : (
+                            <Typography color="text.secondary">Choose the product’s brand on step 1 to change its design.</Typography>
+                          )}
+                        </Grid>
+                      </Grid>
                     </Grid>
                   </Grid>
                 )}
@@ -3732,7 +3748,7 @@ const InnerPage = () => {
                   {missing.length > 0 && (
                     <Alert severity={showFieldErrors ? 'warning' : 'info'} sx={{ py: 0.25 }}>
                       Still needed before you can save: {missing.join(', ')}.
-                      {(detailTab !== 0 || !inData) && ' These are all on step 1 of Data.'}
+                      {(detailTab !== 0 || !inData) && ' They are all in Basics & photos, the first part of Data Input.'}
                     </Alert>
                   )}
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -3753,11 +3769,11 @@ const InnerPage = () => {
                             else setDetailTab((t) => Math.min(lastStep, t + 1));
                           }}
                         >
-                          Next: {detailTab === lastStep ? 'Experience' : PRODUCT_FORM_STEPS[detailTab + 1]}
+                          Next: {detailTab === lastStep ? 'DPP UI Design' : PRODUCT_FORM_STEPS[detailTab + 1]}
                         </Button>
                       </>
                     ) : (
-                      <Button onClick={() => setProductPanelMode('edit')}>Back to Data</Button>
+                      <Button onClick={() => setProductPanelMode('edit')}>Back to Data Input</Button>
                     )}
                     <Box sx={{ flexGrow: 1 }} />
                     {!quickAdd && (
@@ -3765,11 +3781,10 @@ const InnerPage = () => {
                         Preview
                       </Button>
                     )}
-                    {/* On Experience — the last step before Codes, which has no
-                        save button of its own — saving also opens Codes. */}
+                    {/* Saving opens Generate Code with this product. */}
                     <Button
                       variant="contained"
-                      onClick={() => (isEditing ? updateProductHandler : addProductHandler)({ thenCodes: productPanelMode === 'experience' })}
+                      onClick={() => (isEditing ? updateProductHandler : addProductHandler)()}
                       disabled={savingProduct}
                     >
                       {savingProduct ? 'Saving…' : addLabel}
@@ -3781,28 +3796,9 @@ const InnerPage = () => {
             </Box>
             {(productPanelMode === 'edit' || productPanelMode === 'experience') && !quickAdd && wideEditor && (
               <Box component="aside" aria-label="What shoppers see" sx={{ flex: '0 0 360px', borderLeft: 1, borderColor: 'divider', p: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, overflowY: 'auto', bgcolor: '#f8fafc' }}>
-                <Typography sx={{ fontWeight: 400, color: '#16324a' }}>What shoppers see</Typography>
-                {/* The design belongs to the brand: changed on its Brand page. */}
-                {productPanelMode === 'experience' && (
-                <Button
-                  variant="outlined"
-                  startIcon={<PaletteIcon />}
-                  size="small"
-                  onClick={async () => {
-                    const target = { companyId: formCompanyId };
-                    if (await closeProductDialog(null, 'closeButton')) {
-                      setBrandPageTarget(target);
-                      setActivePage('brand');
-                    }
-                  }}
-                >
-                  Change the DPP design
-                </Button>
-                )}
                 <Suspense fallback={<Box sx={{ height: 620, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress size={28} /></Box>}>
                   <PassportPhone product={{ ...formProduct, price: Number(price) || 0, currency }} width={300} />
                 </Suspense>
-                <Typography variant="body2" color="text.secondary">Changes show here as you type.</Typography>
               </Box>
             )}
             </Box>

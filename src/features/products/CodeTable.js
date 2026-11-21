@@ -5,6 +5,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DownloadIcon from '@mui/icons-material/Download';
 import qrcode from 'qrcode';
 import { notifySuccess } from '../../utils/feedbackBus';
+import { downloadQrImage } from './CodeList';
 
 // A small QR picture for a table row.
 export const QrThumb = ({ data }) => {
@@ -31,7 +32,8 @@ export const ImageThumb = ({ src, icon: Icon, wide = false }) => (
 // Code (QR, Security QR, GS1 Digital Link, RFID, NFC, Barcode): the code with
 // its picture, its number, whether it is printed, and Copy / Download /
 // Remove.
-//   rows: [{ key, thumb, code, sub, number, printed, onDelete, downloadUrl, downloadName }]
+//   rows: [{ key, thumb, code, sub, number, printed, onDelete, downloadUrl, downloadName, downloadQr }]
+//   downloadQr: the QR's content; Download makes its picture on click.
 export default function CodeTable({ rows = [], codeLabel = 'Code', numberLabel = 'Number', copyNoun = 'code' }) {
   if (!rows.length) return null;
   const copy = (text) => {
@@ -68,6 +70,11 @@ export default function CodeTable({ rows = [], codeLabel = 'Code', numberLabel =
             {row.downloadUrl && (
               <Tooltip title="Download the picture">
                 <IconButton component="a" href={row.downloadUrl} download={row.downloadName || 'code.png'} aria-label={`Download the picture of ${row.code}`}><DownloadIcon /></IconButton>
+              </Tooltip>
+            )}
+            {!row.downloadUrl && row.downloadQr && (
+              <Tooltip title="Download the picture">
+                <IconButton onClick={() => downloadQrImage(row.downloadQr, row.downloadName || 'qr-code.png')} aria-label={`Download the picture of ${row.code}`}><DownloadIcon /></IconButton>
               </Tooltip>
             )}
             {row.onDelete && (
