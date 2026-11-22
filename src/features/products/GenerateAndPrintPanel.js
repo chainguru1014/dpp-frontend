@@ -12,6 +12,7 @@ import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
 import LinkIcon from '@mui/icons-material/Link';
 import qrcode from 'qrcode';
+import { QR_PRINT_OPTIONS } from '../../components/printModal/qrPrintOptions';
 import CircularProgressWithLabel from '../../components/CircularProgressBar';
 import QRCode from '../../components/displayQRCode';
 import RegisterIdentifierPanel from '../../components/RegisterIdentifierPanel';
@@ -130,7 +131,7 @@ const GenerateAndPrintPanel = ({
     const slice = (securityQRCodes || []).slice(Math.max(0, fromN - 1), toN);
     return Promise.all(slice.map(async (item) => {
       const url = `${SECURITY_BASE_URL}/product/${item.encrypted_key}`;
-      const img = await qrcode.toDataURL(url).catch(() => null);
+      const img = await qrcode.toDataURL(url, QR_PRINT_OPTIONS).catch(() => null);
       return { img, code: url, pmc: item.pmc_code };
     }));
   };

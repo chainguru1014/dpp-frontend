@@ -1,5 +1,6 @@
 import * as React from 'react';
 import qrcode from 'qrcode';
+import { QR_PRINT_OPTIONS } from './qrPrintOptions';
 import PrintDialog from './PrintDialog';
 import { printProductQRCodes, getProductQRcodes } from '../../helper';
 
@@ -16,7 +17,7 @@ export default function PrintModal({ open, setOpen, totalAmount, product, setPro
         const urls = await getProductQRcodes(product._id, 0, fromN, toN);
         return Promise.all(
             (Array.isArray(urls) ? urls : []).map(async (item) => ({
-                img: await qrcode.toDataURL(String(item?.url || '')),
+                img: await qrcode.toDataURL(String(item?.url || ''), QR_PRINT_OPTIONS),
                 code: item?.url,
             }))
         );

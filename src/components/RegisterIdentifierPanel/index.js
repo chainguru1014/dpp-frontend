@@ -14,6 +14,7 @@ import UploadFileIcon from '@mui/icons-material/UploadFile';
 import SensorsIcon from '../icons/RfidIcon';
 import NfcIcon from '@mui/icons-material/Nfc';
 import qrcode from 'qrcode';
+import { QR_PRINT_OPTIONS } from '../printModal/qrPrintOptions';
 import {
   registerProductIdentifier,
   bulkRegisterProductIdentifiers,
@@ -239,7 +240,7 @@ const RegisterIdentifierPanel = ({ productId, companyId, lockedSourceType, produ
         return { img: renderEan13ToDataUrl(item.raw_value), code: item.raw_value };
       }
       if (item.source_type === 'gs1dl' && item.raw_value) {
-        const img = await qrcode.toDataURL(item.raw_value).catch(() => null);
+        const img = await qrcode.toDataURL(item.raw_value, QR_PRINT_OPTIONS).catch(() => null);
         return { img, code: item.raw_value };
       }
       return { code: item.raw_value };
