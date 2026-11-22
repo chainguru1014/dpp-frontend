@@ -2283,8 +2283,8 @@ const InnerPage = () => {
               <TextField
                 size="small"
                 fullWidth
-                placeholder="Find an item by any code"
-                inputProps={{ 'aria-label': 'Find an item by any code' }}
+                placeholder="Find item"
+                inputProps={{ 'aria-label': 'Find an item by any of its codes' }}
                 value={headerSearch}
                 onChange={(e) => setHeaderSearch(e.target.value)}
                 sx={{ ...GLASS, borderRadius: '21px', '& .MuiOutlinedInput-root': { borderRadius: '21px', minHeight: 42 }, '& .MuiOutlinedInput-notchedOutline': { border: 0 } }}
