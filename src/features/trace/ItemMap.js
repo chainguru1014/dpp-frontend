@@ -38,6 +38,19 @@ const bubbleIcon = (count, color, viaIp, problem) => {
 function FitToPoints({ points, resetTick }) {
   const map = useMap();
   const signature = JSON.stringify(points);
+  // Never zoomed out past the world's height (no grey band above or below).
+  useEffect(() => {
+    const fill = () => {
+      const h = map.getSize().y;
+      map.setMinZoom(Math.max(1, Math.ceil(Math.log2(h / 256) * 4) / 4));
+    };
+    map.setMaxBounds([[-85, -540], [85, 540]]);
+    map.options.maxBoundsViscosity = 1;
+    map.options.zoomSnap = 0.25;
+    fill();
+    map.on('resize', fill);
+    return () => { map.off('resize', fill); };
+  }, [map]);
   useEffect(() => {
     if (!points.length) return;
     if (points.length === 1) map.setView(points[0], 5);
