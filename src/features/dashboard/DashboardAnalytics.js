@@ -174,13 +174,13 @@ const formatDay = (iso) => {
 // Area chart with Y gridlines and weekly X labels. Drawn in a fixed
 // coordinate space that scales proportionally (no stretched text), with room
 // at the top and sides so the outermost labels are never clipped.
-const LineChart = ({ data, noun = 'scans' }) => {
+const LineChart = ({ data, noun = 'scans', tall = false }) => {
   if (!data.length || !data.some((d) => d.count > 0)) return <EmptyChart text={`No ${noun} in the last 30 days.`} />;
   const leftPad = 34;
   const rightPad = 14;
   const topPad = 12;
-  const plotWidth = 380;
-  const plotHeight = 100;
+  const plotWidth = tall ? 340 : 380;
+  const plotHeight = tall ? 230 : 100;
   const bottomPad = 24;
   const width = leftPad + plotWidth + rightPad;
   const height = topPad + plotHeight + bottomPad;
@@ -264,12 +264,12 @@ const CountryBars = ({ items }) => {
 const Stat = ({ icon: Icon, label, value, delta, sub, onClick }) => {
   const body = (
     <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5, '&:last-child': { pb: 1.5 } }}>
-      <Icon sx={{ fontSize: 40, color: 'primary.main', flexShrink: 0 }} />
+      <Icon sx={{ fontSize: 34, color: 'primary.main', flexShrink: 0 }} />
       <Box sx={{ minWidth: 0 }}>
         <Typography sx={{ fontSize: 13.5, color: 'text.secondary', lineHeight: 1.2 }} noWrap>{label}</Typography>
         <Typography sx={{ fontSize: 24, fontWeight: 600, color: '#1c2430', lineHeight: 1.25 }} noWrap>{typeof value === 'number' ? value.toLocaleString() : value}</Typography>
         {delta != null ? (
-          <Typography sx={{ fontSize: 12.5, color: delta >= 0 ? 'primary.main' : 'error.main' }} noWrap>{`${delta > 0 ? '+' : ''}${delta}% vs last 30 days`}</Typography>
+          <Typography sx={{ fontSize: 12.5, color: delta >= 0 ? 'primary.main' : 'error.main' }} noWrap>{`${delta > 0 ? '+' : ''}${delta}% in 30 days`}</Typography>
         ) : sub ? (
           <Typography sx={{ fontSize: 12.5, color: 'text.secondary' }} noWrap>{sub}</Typography>
         ) : null}
@@ -427,12 +427,12 @@ export default function DashboardAnalytics({
       <Grid container spacing={2} sx={{ mb: 2 }}>
         <Grid item xs={12} md={4}>
           <Section title={isAppUser ? 'My scans by item category' : 'Scans by Item Category'}>
-            <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
+            <Donut segments={(a.categoryBreakdown || []).filter((x) => x.count > 0)} labels={categoryLabels} />
           </Section>
         </Grid>
         <Grid item xs={12} md={4}>
           <Section title="Scans Trend (Last 30 Days)">
-            <LineChart data={a.scansByDay || []} />
+            <LineChart data={a.scansByDay || []} tall />
           </Section>
         </Grid>
         <Grid item xs={12} md={4}>
@@ -448,7 +448,7 @@ export default function DashboardAnalytics({
         <Paper sx={{ px: 2, py: 1.5 }}>
           <Typography variant="subtitle1" component="h2" sx={{ mb: 1 }}>Traceability Overview</Typography>
           <Box sx={{ overflowX: 'auto' }}>
-            <Table size="small" sx={{ '& th': { fontSize: 13, color: 'text.secondary', bgcolor: '#f6f8fb' }, '& td': { fontSize: 13.5 } }}>
+            <Table size="small" sx={{ '& th': { fontSize: 13, color: 'text.secondary', bgcolor: '#f6f8fb', whiteSpace: 'nowrap' }, '& td': { fontSize: 13.5 } }}>
               <TableHead>
                 <TableRow>
                   <TableCell rowSpan={2}>Item Category</TableCell>

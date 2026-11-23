@@ -41,11 +41,11 @@ function BigCard({ icon: Icon, title, text, onClick }) {
       }}
     >
       {/* The icon with the title on its right, the help line under both. */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Box sx={{ width: 44, height: 44, flexShrink: 0, borderRadius: 2, bgcolor: 'rgba(47,128,200,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, maxWidth: '100%', minWidth: 0 }}>
+        <Box sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: 2, bgcolor: 'rgba(47,128,200,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon sx={{ fontSize: 26, color: 'primary.main' }} />
         </Box>
-        <Typography variant="h6" component="span" sx={{ lineHeight: 1.25, fontSize: 18 }}>{title}</Typography>
+        <Typography variant="h6" component="span" noWrap sx={{ lineHeight: 1.25, fontSize: 17, minWidth: 0 }}>{title}</Typography>
       </Box>
       {/* One line (client request): short help text, never wrapping. */}
       <Typography variant="body2" color="text.secondary" component="span" noWrap sx={{ fontSize: 14.5, maxWidth: '100%' }}>{text}</Typography>
