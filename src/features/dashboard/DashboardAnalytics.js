@@ -11,6 +11,8 @@ import CheckroomIcon from '@mui/icons-material/Checkroom';
 import SellIcon from '@mui/icons-material/Sell';
 import PublicIcon from '@mui/icons-material/Public';
 import VerifiedIcon from '@mui/icons-material/Verified';
+import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
+import StorefrontIcon from '@mui/icons-material/StorefrontOutlined';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import useSaveCounts from '../products/useSaveCounts';
@@ -18,7 +20,6 @@ import axios from 'axios';
 import { getAnalytics, getCaptureStats, Backend_URL } from '../../helper';
 import { useAuth } from '../auth/AuthContext';
 import Loader from '../../components/Loader';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 // Clearly different hues (was five similar blue-greys, hard to tell apart,
 // especially for older eyes or colour-blind users). Navy/blue lead so the
@@ -259,6 +260,50 @@ const CountryBars = ({ items }) => {
   );
 };
 
+// A figure card (client dashboard): line icon, label, the number, the change.
+const Stat = ({ icon: Icon, label, value, delta, sub, onClick }) => {
+  const body = (
+    <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1.5, '&:last-child': { pb: 1.5 } }}>
+      <Icon sx={{ fontSize: 40, color: 'primary.main', flexShrink: 0 }} />
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontSize: 13.5, color: 'text.secondary', lineHeight: 1.2 }} noWrap>{label}</Typography>
+        <Typography sx={{ fontSize: 24, fontWeight: 600, color: '#1c2430', lineHeight: 1.25 }} noWrap>{typeof value === 'number' ? value.toLocaleString() : value}</Typography>
+        {delta != null ? (
+          <Typography sx={{ fontSize: 12.5, color: delta >= 0 ? 'primary.main' : 'error.main' }} noWrap>{`${delta > 0 ? '+' : ''}${delta}% vs last 30 days`}</Typography>
+        ) : sub ? (
+          <Typography sx={{ fontSize: 12.5, color: 'text.secondary' }} noWrap>{sub}</Typography>
+        ) : null}
+      </Box>
+    </CardContent>
+  );
+  return (
+    <Card sx={{ height: '100%' }}>
+      {onClick ? <CardActionArea onClick={onClick} sx={{ height: '100%' }} aria-label={`${label}: ${value}`}>{body}</CardActionArea> : body}
+    </Card>
+  );
+};
+
+// Scans by country: name, bar, number and share on one line each.
+const CountryRows = ({ items }) => {
+  if (!items || !items.length) return <EmptyChart />;
+  const total = items.reduce((t, x) => t + x.count, 0) || 1;
+  const max = Math.max(1, ...items.map((i) => i.count));
+  return (
+    <Stack spacing={0.9} sx={{ pt: 0.5 }}>
+      {items.slice(0, 10).map((it) => (
+        <Box key={it.country} sx={{ display: 'grid', gridTemplateColumns: '108px 1fr 64px 48px', alignItems: 'center', gap: 1 }}>
+          <Typography sx={{ fontSize: 13.5 }} noWrap>{it.country}</Typography>
+          <Box sx={{ height: 12, borderRadius: 1, bgcolor: '#eef1f6', overflow: 'hidden' }}>
+            <Box sx={{ height: '100%', width: `${(it.count / max) * 100}%`, bgcolor: 'primary.main', opacity: 0.55 + 0.45 * (it.count / max), borderRadius: 1 }} />
+          </Box>
+          <Typography sx={{ fontSize: 13.5, textAlign: 'right' }}>{it.count.toLocaleString()}</Typography>
+          <Typography sx={{ fontSize: 13.5, textAlign: 'right', color: 'text.secondary' }}>{`${((it.count / total) * 100).toFixed(1)}%`}</Typography>
+        </Box>
+      ))}
+    </Stack>
+  );
+};
+
 const EMPTY_FILTERS = { date_from: '', date_to: '', item_category: '', origin_country: '', destination_country: '', city: '' };
 const activeFilterCount = (f) => Object.values(f).filter(Boolean).length;
 
@@ -328,248 +373,96 @@ export default function DashboardAnalytics({
   const t = a.totals || {};
   const applied = appliedCount;
 
-  // Field mapping (see backend qrcodeController): `uniqueSkus` is distinct
-  // product types scanned; `uniqueItems` is distinct scanned item codes.
-  const scanCards = [
-    { key: 'scans', icon: QrCodeScannerIcon, label: isAppUser ? 'My scans' : 'Scans', value: t.scans ?? 0, delta: t.deltas?.scans, onClick: onNavigateToScanHistory },
-    isAppUser
-      ? { key: 'favorites', icon: FavoriteIcon, label: 'Favorites', value: favCount, onClick: onNavigateToFavorites || onNavigateToProducts }
-      : { key: 'saves', icon: FavoriteIcon, label: 'Saved by shoppers', value: saveTotal, onClick: onNavigateToProducts },
-    !isAppUser && { key: 'codes', icon: QrCode2Icon, label: 'Codes scanned', value: t.uniqueItems ?? 0, delta: t.deltas?.uniqueItems, onClick: onNavigateToGenerateCode },
-  ].filter(Boolean);
-  const captureCards = [
-    { key: 'captures', icon: CameraAltIcon, label: isWorkingEmployee ? 'My work records' : 'Work records', value: captureStats?.total ?? 0, onClick: onNavigateToCaptureHistory },
-    { key: 'capturedProducts', icon: Inventory2Icon, label: 'Products captured', value: captureStats?.uniqueProducts ?? 0, onClick: onNavigateToCaptureHistory },
-    { key: 'capturedCodes', icon: QrCode2Icon, label: 'Codes captured', value: captureStats?.uniqueCodes ?? 0, onClick: onNavigateToCaptureHistory },
-  ];
-  const categoryCards = [
-    { key: 'countries', icon: PublicIcon, label: 'Countries', value: t.countries ?? 0, delta: t.deltas?.countries },
-    !isAppUser && { key: 'integrity', icon: VerifiedIcon, label: 'Records verified', value: `${t.dataIntegrity ?? 100}%` },
-  ].filter(Boolean);
-  const kpiRow = (items) => (
-    <Grid container spacing={2} sx={{ mb: 2 }}>
-      {items.map((c) => (
-        <Grid item key={c.key} xs={12} sm={12 / items.length}>
-          <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} onClick={c.onClick} />
-        </Grid>
-      ))}
-    </Grid>
-  );
+  // The client's dashboard (2026-11-24): six figures in a row; scans by
+  // category, the 30-day trend and scans by country side by side; the
+  // filters; then the traceability table.
+  const sixStats = isAppUser
+    ? [
+      { key: 'scans', icon: QrCodeScannerIcon, label: 'My scans', value: t.scans ?? 0, delta: t.deltas?.scans, onClick: onNavigateToScanHistory },
+      { key: 'favorites', icon: FavoriteIcon, label: 'Favorites', value: favCount, onClick: onNavigateToFavorites || onNavigateToProducts },
+      { key: 'countries', icon: PublicIcon, label: 'Countries', value: t.countries ?? 0 },
+    ]
+    : [
+      { key: 'scans', icon: QrCodeScannerIcon, label: 'Total Scans', value: t.scans ?? 0, delta: t.deltas?.scans, onClick: onNavigateToScanHistory },
+      { key: 'items', icon: CheckroomIcon, label: 'Unique Items', value: t.uniqueItems ?? 0, delta: t.deltas?.uniqueItems, onClick: onNavigateToGenerateCode },
+      { key: 'skus', icon: SellIcon, label: 'Unique SKUs', value: t.uniqueSkus ?? 0, delta: t.deltas?.uniqueSkus, onClick: onNavigateToProducts },
+      { key: 'stores', icon: StorefrontIcon, label: 'Retail Stores', value: t.retailStores ?? 0, delta: t.deltas?.retailStores },
+      { key: 'countries', icon: PublicIcon, label: 'Countries', value: t.countries ?? 0, sub: 'Where scanned' },
+      { key: 'integrity', icon: VerifiedUserOutlinedIcon, label: 'Data Integrity', value: `${t.dataIntegrity ?? 100}%`, sub: 'Verified' },
+    ];
 
-  const scanCountries = (
-    <Section title="Countries where products were scanned">
-      <CountryBars items={a.countryBreakdown || []} />
-    </Section>
+  const set = (k) => (e) => setFilters((f) => ({ ...f, [k]: e.target.value }));
+  const sel = (label, k, options, all, render = (x) => x) => (
+    <TextField select size="small" label={label} value={filters[k]} onChange={set(k)} sx={{ minWidth: 150, flex: 1 }}>
+      <MenuItem value="">{all}</MenuItem>
+      {options.map((o) => <MenuItem key={o} value={o}>{render(o)}</MenuItem>)}
+    </TextField>
   );
-
-  const filterPanel = (
-    <Collapse in={filtersOpen || applied > 0} unmountOnExit>
-      <Paper sx={{ p: 2, mb: 1.5 }}>
-        {applied > 0 && !filtersOpen ? (
-          <Stack direction="row" spacing={1.5} alignItems="center" justifyContent="space-between" flexWrap="wrap" useFlexGap>
-            <Typography>
-              Figures are filtered ({applied} filter{applied === 1 ? '' : 's'}).
-            </Typography>
-            <Button onClick={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); }}>
-              Clear filters
-            </Button>
-          </Stack>
-        ) : (
-          <>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TextField
-                  label="From date" type="date" fullWidth InputLabelProps={{ shrink: true }}
-                  value={filters.date_from} onChange={(e) => setFilters((f) => ({ ...f, date_from: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TextField
-                  label="To date" type="date" fullWidth InputLabelProps={{ shrink: true }}
-                  value={filters.date_to} onChange={(e) => setFilters((f) => ({ ...f, date_to: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TextField
-                  select label="Product category" fullWidth value={filters.item_category}
-                  onChange={(e) => setFilters((f) => ({ ...f, item_category: e.target.value }))}
-                >
-                  <MenuItem value="">All categories</MenuItem>
-                  {(a.filterOptions?.itemCategories || []).map((k) => (
-                    <MenuItem key={k} value={k}>{categoryLabels[k] || k}</MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TextField
-                  select label="Made in" fullWidth value={filters.origin_country}
-                  onChange={(e) => setFilters((f) => ({ ...f, origin_country: e.target.value }))}
-                >
-                  <MenuItem value="">All countries</MenuItem>
-                  {(a.filterOptions?.originCountries || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TextField
-                  select label="Scanned in" fullWidth value={filters.destination_country}
-                  onChange={(e) => setFilters((f) => ({ ...f, destination_country: e.target.value }))}
-                >
-                  <MenuItem value="">All countries</MenuItem>
-                  {(a.filterOptions?.destinationCountries || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4} lg={2}>
-                <TextField
-                  select label="City" fullWidth value={filters.city}
-                  onChange={(e) => setFilters((f) => ({ ...f, city: e.target.value }))}
-                >
-                  <MenuItem value="">All cities</MenuItem>
-                  {(a.filterOptions?.cities || []).map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-                </TextField>
-              </Grid>
-            </Grid>
-            <Stack direction="row" spacing={1} justifyContent="flex-end" sx={{ mt: 2 }}>
-              {applied > 0 && (
-                <Button onClick={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); }}>Clear filters</Button>
-              )}
-              <Button onClick={() => setFilters(EMPTY_FILTERS)}>Reset</Button>
-              <Button variant="contained" onClick={() => setAppliedFilters(filters)}>Apply filters</Button>
-            </Stack>
-          </>
-        )}
-      </Paper>
-    </Collapse>
-  );
-
-  const kpiColumn = (items) => (
-    <Stack spacing={2} sx={{ height: '100%' }}>
-      {items.map((c) => (
-        <Box key={c.key} sx={{ flex: 1, display: 'flex', '& > *': { flex: 1 } }}>
-          <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} onClick={c.onClick} />
-        </Box>
-      ))}
-    </Stack>
+  const filterBar = (
+    <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+      <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={filters.date_from} onChange={set('date_from')} sx={{ width: 160 }} />
+      <Typography color="text.secondary">~</Typography>
+      <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={filters.date_to} onChange={set('date_to')} sx={{ width: 160 }} />
+      {sel('Item Category', 'item_category', a.filterOptions?.itemCategories || [], 'All', (k) => categoryLabels[k] || k)}
+      {sel('Origin Country', 'origin_country', a.filterOptions?.originCountries || [], 'All')}
+      {sel('Destination Country', 'destination_country', a.filterOptions?.destinationCountries || [], 'All')}
+      {sel('City', 'city', a.filterOptions?.cities || [], 'All')}
+      <Stack alignItems="center" spacing={0.25}>
+        <Button variant="contained" onClick={() => setAppliedFilters(filters)} sx={{ minWidth: 96 }}>Apply</Button>
+        <Button size="small" onClick={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); }} sx={{ minHeight: 0, py: 0 }}>Reset</Button>
+      </Stack>
+    </Paper>
   );
 
   return (
     <Box>
-      {filterPanel}
-
-      {attention && showCaptures ? (
-        <>
-          <Grid container spacing={2} sx={{ mb: 2 }} alignItems="stretch">
-            <Grid item xs={12} md={6} sx={{ '& > *': { height: '100%', mb: '0 !important' } }}>{attention}</Grid>
-            <Grid item xs={12} md={6}>
-              <Grid container spacing={2} sx={{ height: { md: 'calc(100% + 16px)' } }}>
-                <Grid item xs={12} sm={6}>{kpiColumn(scanCards)}</Grid>
-                <Grid item xs={12} sm={6}>{kpiColumn(captureCards)}</Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid item xs={12} md={6}>
-              <Section title="Scans per day (last 30 days)" sx={{ height: 'auto' }}>
-                <LineChart data={a.scansByDay || []} />
-              </Section>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Section title="Work records per day (last 30 days)" sx={{ height: 'auto' }}>
-                <LineChart data={captureStats?.capturesByDay || []} noun="captures" />
-              </Section>
-            </Grid>
-          </Grid>
-        </>
-      ) : (
-      <>
-      {attention}
-      {/* First layer: scan figures and chart beside capture figures and chart. */}
       <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} md={6}>
-          {kpiRow(scanCards)}
-          <Section title="Scans per day (last 30 days)" sx={{ height: 'auto' }}>
+        {sixStats.map((c) => (
+          <Grid item key={c.key} xs={12} sm={6} md={4} lg={12 / sixStats.length}>
+            <Stat {...c} />
+          </Grid>
+        ))}
+      </Grid>
+
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={4}>
+          <Section title={isAppUser ? 'My scans by item category' : 'Scans by Item Category'}>
+            <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
+          </Section>
+        </Grid>
+        <Grid item xs={12} md={4}>
+          <Section title="Scans Trend (Last 30 Days)">
             <LineChart data={a.scansByDay || []} />
           </Section>
         </Grid>
-        <Grid item xs={12} md={6}>
-          {showCaptures ? (
-            <>
-              {kpiRow(captureCards)}
-              <Section title="Work records per day (last 30 days)" sx={{ height: 'auto' }}>
-                <LineChart data={captureStats?.capturesByDay || []} noun="captures" />
-              </Section>
-            </>
-          ) : scanCountries}
-        </Grid>
-      </Grid>
-
-      </>
-      )}
-
-      {/* More analytics opens the second layer; once open there is no
-          "Fewer analytics" button (it stays open on this visit). */}
-      {onToggleMore && !moreOpen && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={onToggleMore}
-            aria-expanded={moreOpen}
-            endIcon={<ExpandMoreIcon />}
-          >
-            More analytics
-          </Button>
-        </Box>
-      )}
-
-      {/* Second layer: the category and country splits and the traceability
-          table. */}
-      <Collapse in={moreOpen || !onToggleMore} unmountOnExit>
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} md={6}>
-          <Section title={isAppUser ? 'My scans by product category' : 'Scans by product category'}>
-            <Donut segments={a.categoryBreakdown || []} labels={categoryLabels} />
-            <Box sx={{ mt: 2 }}>
-              <Grid container spacing={2}>
-                {categoryCards.map((c) => (
-                  <Grid item key={c.key} xs={12} sm={12 / categoryCards.length}>
-                    <Kpi icon={c.icon} label={c.label} value={c.value} delta={c.delta} />
-                  </Grid>
-                ))}
-              </Grid>
-            </Box>
+        <Grid item xs={12} md={4}>
+          <Section title="Scans by Country (Destination)">
+            <CountryRows items={a.countryBreakdown || []} />
           </Section>
         </Grid>
-        {showCaptures && (
-          <Grid item xs={12} md={6}>
-            {scanCountries}
-          </Grid>
-        )}
       </Grid>
 
-      {/* Brand/traceability detail — not meaningful for shoppers. */}
+      {filterBar}
+
       {!isAppUser && (
         <Paper sx={{ px: 2, py: 1.5 }}>
-          <Typography variant="subtitle1" component="h2">
-            Where each product category is made and scanned
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-            Number of scans per country, for each product category and country of manufacture.
-          </Typography>
+          <Typography variant="subtitle1" component="h2" sx={{ mb: 1 }}>Traceability Overview</Typography>
           <Box sx={{ overflowX: 'auto' }}>
-            <Table size="small">
+            <Table size="small" sx={{ '& th': { fontSize: 13, color: 'text.secondary', bgcolor: '#f6f8fb' }, '& td': { fontSize: 13.5 } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell rowSpan={2}>Product category</TableCell>
-                  <TableCell rowSpan={2}>Made in</TableCell>
-                  <TableCell rowSpan={2} align="right">Total scans</TableCell>
+                  <TableCell rowSpan={2}>Item Category</TableCell>
+                  <TableCell rowSpan={2}>SKU / Style No.</TableCell>
+                  <TableCell rowSpan={2}>Origin Country</TableCell>
+                  <TableCell rowSpan={2} align="center">Total Scanned<br />(PCS)</TableCell>
                   {traceabilityColumns.length > 0 && (
-                    <TableCell align="center" colSpan={traceabilityColumns.length} sx={{ borderBottom: 'none' }}>
-                      Scanned in
-                    </TableCell>
+                    <TableCell align="center" colSpan={traceabilityColumns.length}>Destination (Country)</TableCell>
                   )}
-                  <TableCell rowSpan={2}>Top cities</TableCell>
+                  <TableCell rowSpan={2}>City (Top)</TableCell>
+                  <TableCell rowSpan={2} align="center">Stores</TableCell>
                 </TableRow>
                 <TableRow>
-                  {traceabilityColumns.map((c) => <TableCell key={c} align="right">{c}</TableCell>)}
+                  {traceabilityColumns.map((c) => <TableCell key={c} align="center">{c}</TableCell>)}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -578,23 +471,25 @@ export default function DashboardAnalytics({
                   return (
                     <TableRow key={`${row.skuStyleNumber || row.originCountry}-${row.itemCategory}`} hover>
                       <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                          <CategoryIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <CategoryIcon sx={{ fontSize: 22, color: 'primary.main' }} />
                           {categoryLabels[row.itemCategory] || row.itemCategory}
                         </Box>
                       </TableCell>
+                      <TableCell>{row.skuStyleNumber || '—'}</TableCell>
                       <TableCell>{row.originCountry || '—'}</TableCell>
-                      <TableCell align="right">{row.totalScanned}</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 600 }}>{Number(row.totalScanned || 0).toLocaleString()}</TableCell>
                       {traceabilityColumns.map((c) => (
-                        <TableCell key={c} align="right">{row.destinationBreakdown?.[c] || 0}</TableCell>
+                        <TableCell key={c} align="center">{Number(row.destinationBreakdown?.[c] || 0).toLocaleString()}</TableCell>
                       ))}
                       <TableCell>{(row.topCities || []).join(', ') || '—'}</TableCell>
+                      <TableCell align="center">{row.stores ?? '—'}</TableCell>
                     </TableRow>
                   );
                 })}
                 {!(a.traceabilityOverview || []).length && (
                   <TableRow>
-                    <TableCell colSpan={4 + traceabilityColumns.length}>
+                    <TableCell colSpan={6 + traceabilityColumns.length}>
                       <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
                         No scans yet. Figures appear here once people scan your product codes.
                       </Typography>
@@ -606,7 +501,6 @@ export default function DashboardAnalytics({
           </Box>
         </Paper>
       )}
-      </Collapse>
     </Box>
   );
 }

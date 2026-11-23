@@ -47,7 +47,8 @@ function BigCard({ icon: Icon, title, text, onClick }) {
         </Box>
         <Typography variant="h6" component="span" sx={{ lineHeight: 1.25, fontSize: 18 }}>{title}</Typography>
       </Box>
-      <Typography variant="body2" color="text.secondary" component="span" sx={{ fontSize: 14.5 }}>{text}</Typography>
+      {/* One line (client request): short help text, never wrapping. */}
+      <Typography variant="body2" color="text.secondary" component="span" noWrap sx={{ fontSize: 14.5, maxWidth: '100%' }}>{text}</Typography>
     </ButtonBase>
   );
 }
@@ -167,25 +168,25 @@ export default function QuickStartCards({
     productOptions.length > 0 && {
       icon: Inventory2Icon,
       title: productOptions.length > 1 ? 'Add / Manage products' : productOptions[0].title,
-      text: platform ? 'Every company’s products and their passports.' : onAddProduct ? 'Your products and their passports.' : 'Your company’s products and their passports.',
+      text: platform ? 'All products and their passports' : 'Your products and their passports',
       onClick: openOrGo('products', productOptions),
     },
     onGenerateCodes && {
       icon: QrCode2Icon,
       title: 'Generate / Print codes',
-      text: 'Create a code for each item, then download the codes to print.',
+      text: 'Create and print item codes',
       onClick: onGenerateCodes,
     },
     organizationOptions.length > 0 && {
       icon: GroupsIcon,
       title: 'Manage organization',
-      text: platform ? 'The companies on the platform and their employees.' : 'Your employees and the steps they record in the mobile app.',
+      text: platform ? 'Brands and their teams' : 'Your team and their work steps',
       onClick: openOrGo('organization', organizationOptions),
     },
     onAnalyzeProduct && {
       icon: InsightsIcon,
       title: 'Analyze products',
-      text: 'See a product’s journey: where it was made, shipped and scanned.',
+      text: 'Follow a product’s journey',
       // One product: nothing to choose, go straight to its journey.
       onClick: () => (products.length === 1 ? onAnalyzeProduct(products[0]) : setDialog('analyze')),
     },
