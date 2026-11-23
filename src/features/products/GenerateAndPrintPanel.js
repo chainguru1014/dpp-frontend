@@ -6,7 +6,6 @@ import LanguageIcon from '@mui/icons-material/Language';
 import SensorsIcon from '../../components/icons/RfidIcon';
 import NfcIcon from '@mui/icons-material/Nfc';
 import ViewWeekIcon from '@mui/icons-material/ViewWeek';
-import CodeList from './CodeList';
 import CodeTable, { QrThumb } from './CodeTable';
 import AddIcon from '@mui/icons-material/Add';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -262,11 +261,29 @@ const GenerateAndPrintPanel = ({
           </Box>
           <PairTagsDialog open={pairOpen} onClose={() => setPairOpen(false)} product={selectedProduct} totalItems={total} />
           {qrView === 'list' ? (
-            <CodeList
-              codes={pageCodes}
-              printedAmount={selectedProduct?.printed_amount || 0}
-              identifiersByQrcodeId={identifiersByQrcodeId}
-              onDelete={onDeleteQrCode}
+            // The same table as the GS1 Digital Link tab: the link and its
+            // QR picture with "Item #n" under it, then No. / Passport ID,
+            // Printed, and Copy / Download / Remove.
+            <CodeTable
+              codeLabel="QR code"
+              numberLabel="No. / Passport ID"
+              copyNoun="link"
+              rows={pageCodes.map((item) => {
+                const tags = identifiersByQrcodeId.get(item.qrcode_id) || [];
+                const passportId = item.pmc_code || tags.find((x) => x.type === 'PMC Code')?.serial || '';
+                const otherTags = tags.filter((x) => x.type !== 'PMC Code').map((x) => `${x.type}: ${x.serial}`).filter(Boolean);
+                return {
+                  key: item.qrcode_id,
+                  thumb: <QrThumb data={item.url} />,
+                  code: item.url,
+                  sub: [`Item #${item.qrcode_id}`, ...otherTags].join(' · '),
+                  number: [`#${item.qrcode_id}`, passportId].filter(Boolean).join(' · '),
+                  printed: Number(item.qrcode_id) <= printedCount,
+                  downloadQr: item.url,
+                  downloadName: `qr-code-${item.qrcode_id}.png`,
+                  onDelete: onDeleteQrCode ? () => onDeleteQrCode(item.qrcode_id) : undefined,
+                };
+              })}
             />
           ) : (
           <Box sx={GRID_SX}>
