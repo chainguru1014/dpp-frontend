@@ -175,6 +175,7 @@ import { confirmAction, notify, notifyError, notifySuccess } from '../utils/feed
 // The passport shoppers see, in an iPhone: the studio's preview and the
 // Preview dialog.
 import PassportPhone from '../features/products/PassportPhone';
+import ProductShowcase from '../features/products/ProductShowcase';
 import ProductPreviewDialog from '../features/products/ProductPreviewDialog';
 
 // PrintModal pulls in the heavy PDF stack (@react-pdf/renderer) — lazy-loaded
@@ -2696,13 +2697,16 @@ const InnerPage = () => {
                 />
               </Stack>
 
+              {/* Choosing a product (as on Product Journey): the list; once one
+                  is chosen the list makes way for its card. */}
+              {!(selectedProduct && products.some((p) => p._id === selectedProduct._id)) && (
               <ProductsTable
                 products={filteredProducts}
                 loading={productsLoading}
                 selectedId={selectedProduct?._id}
                 isAppUser={isAppUser}
                 showOwner={isAdmin}
-                columns={selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) ? 2 : 4}
+                columns={4}
                 dense
                 groupByBrand
                 emptyText={productNameFilter.trim()
@@ -2718,50 +2722,39 @@ const InnerPage = () => {
                 }}
                 // A click anywhere on a card selects it (the owner is plain text).
               />
+              )}
                 </Box>
                 {/* The selected product, beside the list (it must be in the
                     current filtered list: the selection is remembered across
                     sessions). */}
-                {selectedProduct && filteredProducts.some((p) => p._id === selectedProduct._id) && (
-                  <Box ref={productCardRef} sx={{ flex: { xs: '1 1 100%', lg: '0 0 400px' }, maxWidth: { lg: 420 }, scrollMarginTop: 16 }}>
-                    <ProductSidePanel
-                      product={selectedProduct}
-                      onClose={() => setSelectedProduct(null)}
-                      onPreview={() => setOpenPreviewModal(true)}
-                      onHistory={() => {
-                        setHistoryProduct(selectedProduct);
-                        setOpenProductHistory(true);
-                      }}
-                      onCodes={isAppUser ? undefined : () => {
-                        keepGenerateSelectionRef.current = true;
-                        selectGenerateCodeProduct(selectedProduct);
-                        setPickingCodeProduct(false);
-                        go('generateCode');
-                      }}
-                      onEdit={canEditProducts ? () => {
-                        const index = products.findIndex((p) => p._id === selectedProduct._id);
-                        if (index >= 0) {
-                          setProductPanelMode('edit');
-                          setPreviousPage('products');
-                          editProductHandler(index);
-                        }
-                      } : undefined}
-                      onCompletePassport={canEditProducts ? () => {
-                        const index = products.findIndex((p) => p._id === selectedProduct._id);
-                        if (index >= 0) {
-                          setProductPanelMode('edit');
-                          setPreviousPage('products');
-                          editProductHandler(index);
-                        }
-                      } : undefined}
-                      onRemove={canEditProducts ? () => {
-                        const index = products.findIndex((p) => p._id === selectedProduct._id);
-                        if (index >= 0) deleteProductHandler(index);
-                      } : undefined}
-                    />
-                  </Box>
-                )}
               </Box>
+              {selectedProduct && products.some((p) => p._id === selectedProduct._id) && (
+                <Box ref={productCardRef} sx={{ scrollMarginTop: 16 }}>
+                  <ProductShowcase
+                    product={products.find((p) => p._id === selectedProduct._id) || selectedProduct}
+                    onChange={() => setSelectedProduct(null)}
+                    onPreview={() => setOpenPreviewModal(true)}
+                    onCodes={isAppUser ? undefined : () => {
+                      keepGenerateSelectionRef.current = true;
+                      selectGenerateCodeProduct(selectedProduct);
+                      setPickingCodeProduct(false);
+                      go('generateCode');
+                    }}
+                    onEdit={canEditProducts ? () => {
+                      const index = products.findIndex((p) => p._id === selectedProduct._id);
+                      if (index >= 0) {
+                        setProductPanelMode('edit');
+                        setPreviousPage('products');
+                        editProductHandler(index);
+                      }
+                    } : undefined}
+                    onRemove={canEditProducts ? () => {
+                      const index = products.findIndex((p) => p._id === selectedProduct._id);
+                      if (index >= 0) deleteProductHandler(index);
+                    } : undefined}
+                  />
+                </Box>
+              )}
 
             </Box>
           )}

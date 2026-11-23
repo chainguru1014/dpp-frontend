@@ -1,149 +1,118 @@
 import React, { useState } from 'react';
-import { Box, Button, FormControlLabel, Radio, RadioGroup, Typography } from '@mui/material';
-import QrCode2Icon from '@mui/icons-material/QrCode2';
-import ShieldIcon from '@mui/icons-material/Shield';
-import PeopleIcon from '@mui/icons-material/People';
-import LockIcon from '@mui/icons-material/Lock';
-import AuthShell from '../AuthShell';
-import { compactMediaQuery } from '../../theme';
+import { Box, Button, ButtonBase, Typography } from '@mui/material';
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
+import VerifiedUserOutlinedIcon from '@mui/icons-material/VerifiedUserOutlined';
+import GroupsOutlinedIcon from '@mui/icons-material/GroupsOutlined';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import lake from '../../assets/consent-lake.jpg';
+import logo from '../../assets/yometel-logo-blue-clear.png';
 
-// Text and icons on the see-through card in the brand blue (#2f80c8), (plain,
-// no glow).
-const AUTH_BLUE = '#1b4f72'; // dark blue: every text, label and icon on the card
-// Same gray as the sign-in card's fields and secondary buttons (AuthPage).
-const AUTH_GRAY = '#dde2e8';
-const AUTH_GRAY_SELECTED = '#cbd8e8';
-// White on the glass on every photo (CSS variables set by AuthShell).
-const ON_GLASS = 'var(--auth-on-glass, #1b4f72)';
-const onGlass = { color: ON_GLASS, textShadow: 'none' };
+// AI Concierge (client design 2026-11-24): a mountain-lake photo filling the
+// screen and one white card in the middle — the logo, "Welcome / Meet Your
+// AI Concierge", the four points, the agreement, I agree / I disagree and
+// Continue. Nothing is chosen at first, so Continue waits for a choice.
+//
+// `mode: 'gate'` shows once after a shopper account's first sign-in; 'review'
+// is the Privacy preferences link (with Cancel).
+const NAVY = '#1d4f91';
+const SERIF = 'Georgia, "Times New Roman", serif';
 
 const FEATURES = [
-  {
-    icon: QrCode2Icon,
-    title: 'Suggestions just for you',
-    description: 'Learns from your scans and favourites to suggest products you may like.',
-  },
-  {
-    icon: ShieldIcon,
-    title: 'Your privacy comes first',
-    description: 'Your real identity is never stored with this data.',
-  },
-  {
-    icon: PeopleIcon,
-    title: 'Helpful tips',
-    description: 'Care tips and style ideas for the clothes you own.',
-  },
-  {
-    icon: LockIcon,
-    title: 'You stay in control',
-    description: 'Change this choice any time under Privacy preferences.',
-  },
+  { icon: QrCodeScannerIcon, title: 'Personalized just for you', text: 'Your AI Concierge learns from your scans, favorites, and browsing habits to recommend products and brands you’ll love.' },
+  { icon: VerifiedUserOutlinedIcon, title: 'Your privacy is our priority', text: 'Your real identity is never saved. Your scans and preferences are linked only to your unique profile, and to what you ask or need help.' },
+  { icon: GroupsOutlinedIcon, title: 'Smarter recommendations', text: 'From styling trends to care tips, you’ll receive relevant information about your closet and preferences to improve product recommendations and services.' },
+  { icon: LockOutlinedIcon, title: 'You’re in control', text: 'You can update your preferences and manage data permissions anytime in your account settings.' },
 ];
 
-// `mode: 'gate'` is shown once, right after a shopper account's first
-// sign-in or sign-up, until that account has recorded a choice (see
-// pages/index.js). It's also reachable before login via the "Privacy
-// preferences" link (`mode: 'review'`), stored on this device only since
-// there's no account yet — submitting or Cancel returns to the sign-in page.
-const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, saving, apiError, activeSlide }) => {
-  // `null` = no choice made yet, which keeps the main button disabled.
+const Rule = ({ diamond }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, my: 1.75 }}>
+    <Box sx={{ flex: 1, height: '1px', bgcolor: '#d8dee8' }} />
+    {diamond && <Box sx={{ width: 6, height: 6, transform: 'rotate(45deg)', bgcolor: '#9aaccb' }} />}
+    {diamond && <Box sx={{ flex: 1, height: '1px', bgcolor: '#d8dee8' }} />}
+  </Box>
+);
+
+const AiConciergeConsentPage = ({ mode, initialConsent, onSubmit, onClose, saving, apiError }) => {
   const [consent, setConsent] = useState(initialConsent != null ? !!initialConsent : null);
+  const choice = (value, label) => {
+    const on = consent === value;
+    return (
+      <ButtonBase
+        onClick={() => setConsent(value)}
+        role="radio"
+        aria-checked={on}
+        sx={{
+          flex: 1, height: 46, borderRadius: 23, fontSize: 16,
+          border: '2px solid', borderColor: NAVY,
+          bgcolor: on ? NAVY : '#fff', color: on ? '#fff' : '#7a8698',
+          transition: 'background-color 120ms',
+        }}
+      >
+        {label}
+      </ButtonBase>
+    );
+  };
 
   return (
-    <AuthShell activeSlide={activeSlide} cardSx={{ height: 'auto', width: { xs: '100%', sm: 640 } }}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}>
-          <Typography variant="h5" component="h1" sx={{ textAlign: 'center', mb: 0.5, ...onGlass }}>
-            {mode === 'review' ? 'Privacy preferences' : 'Meet your AI Concierge'}
+    <Box
+      sx={{
+        minHeight: '100vh', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        backgroundImage: `url(${lake})`, backgroundSize: 'cover', backgroundPosition: 'center', p: { xs: 1.5, sm: 3 },
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%', maxWidth: 620, bgcolor: 'rgba(255,255,255,0.97)', borderRadius: '28px',
+          boxShadow: '0 24px 60px rgba(10,30,60,0.28)', px: { xs: 2.5, sm: 5 }, py: { xs: 3, sm: 3.5 },
+        }}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <Box component="img" src={logo} alt="Yometel" sx={{ height: 42, display: 'inline-block' }} />
+          <Typography sx={{ mt: 1.25, letterSpacing: 3, fontSize: 14, color: NAVY }}>WELCOME</Typography>
+          <Typography component="h1" sx={{ fontFamily: SERIF, fontSize: { xs: 28, sm: 36 }, color: NAVY, lineHeight: 1.2 }}>
+            {mode === 'review' ? 'Privacy Preferences' : 'Meet Your AI Concierge'}
           </Typography>
-          <Typography sx={{ textAlign: 'center', mb: 2, ...onGlass }}>
-            An optional helper that personalizes the app for you.
-          </Typography>
+        </Box>
+        <Rule diamond />
 
-          {/* Two columns on wider screens so the Yes/No choice below stays
-              visible without scrolling on a 1280x720 laptop. */}
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, columnGap: 2.5, rowGap: 1.5 }}>
-          {FEATURES.map(({ icon: FeatureIcon, title, description }) => (
-            <Box key={title} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.25 }}>
-              <Box
-                sx={{
-                  width: 40, height: 40, flexShrink: 0, borderRadius: '50%',
-                  bgcolor: 'var(--auth-icon-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}
-              >
-                <FeatureIcon sx={{ fontSize: 24, color: ON_GLASS }} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {FEATURES.map(({ icon: Icon, title, text }) => (
+            <Box key={title} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+              <Box sx={{ width: 50, height: 50, flexShrink: 0, borderRadius: '50%', bgcolor: '#e8eff8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon sx={{ fontSize: 26, color: NAVY }} />
               </Box>
               <Box>
-                <Typography sx={{ fontWeight: 400, ...onGlass }}>{title}</Typography>
-                <Typography sx={onGlass}>{description}</Typography>
+                <Typography sx={{ fontWeight: 700, fontSize: 15, color: '#10233f' }}>{title}</Typography>
+                <Typography sx={{ fontSize: 14, lineHeight: 1.45, color: '#2b3a52' }}>{text}</Typography>
               </Box>
             </Box>
           ))}
-          </Box>
-
-          {/* Placed after the explanation on purpose: read first, then choose.
-              Nothing is pre-selected on a first visit. */}
-          <Typography component="h2" sx={{ fontWeight: 400, mt: 2, mb: 1, ...onGlass }} id="consent-question">
-            May the AI Concierge learn from your scans, favorites and browsing to personalize the app?
-          </Typography>
-          <RadioGroup
-            aria-labelledby="consent-question"
-            value={consent === null ? '' : consent ? 'yes' : 'no'}
-            onChange={(e) => setConsent(e.target.value === 'yes')}
-            sx={{ gap: 1, flexDirection: { xs: 'column', sm: 'row' }, '& > *': { flex: 1 } }}
-          >
-            {[
-              { value: 'yes', label: 'Yes, personalise it' },
-              { value: 'no', label: 'No, thank you' },
-            ].map((opt) => (
-              <FormControlLabel
-                key={opt.value}
-                value={opt.value}
-                control={<Radio />}
-                label={opt.label}
-                sx={{
-                  m: 0,
-                  px: 1.5,
-                  py: 0.75,
-                  border: '2px solid',
-                  borderColor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? AUTH_BLUE : 'divider',
-                  borderRadius: 2,
-                  bgcolor: (consent === null ? '' : consent ? 'yes' : 'no') === opt.value ? AUTH_GRAY_SELECTED : AUTH_GRAY,
-                  '& .MuiFormControlLabel-label': { fontSize: '1.05rem', color: AUTH_BLUE },
-                  '& .MuiRadio-root, & .MuiRadio-root.Mui-checked': { color: AUTH_BLUE },
-                }}
-              />
-            ))}
-          </RadioGroup>
-
-          {!!apiError && (
-            <Typography color="error" sx={{ mt: 1.5 }} role="alert">{apiError}</Typography>
-          )}
         </Box>
 
-        <Box sx={{ flexShrink: 0, pt: 2.5, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={() => onSubmit(consent)}
-            disabled={!!saving || consent === null}
-            sx={{ minHeight: 50, fontSize: '1.05rem', borderRadius: 2, [compactMediaQuery]: { minHeight: 50 } }}
-          >
-            {saving ? 'Saving…' : mode === 'review' ? 'Save my choice' : 'Continue'}
-          </Button>
-          {consent === null && (
-            <Typography variant="body2" sx={{ textAlign: 'center', ...onGlass }}>
-              Please choose Yes or No above to continue.
-            </Typography>
-          )}
-          {mode === 'review' && (
-            <Button onClick={onClose} fullWidth sx={{ minHeight: 44, ...onGlass, '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}>
-              Cancel
-            </Button>
-          )}
+        <Rule />
+        <Typography sx={{ textAlign: 'center', fontSize: 14.5, color: '#1c2b44', px: { sm: 3 } }}>
+          I agree to let the AI Concierge of this app learn from my scans, favorites, and browsing history to personalize my experience.
+        </Typography>
+
+        <Box role="radiogroup" aria-label="Your choice" sx={{ display: 'flex', gap: 2, mt: 2 }}>
+          {choice(true, 'I agree')}
+          {choice(false, 'I disagree')}
         </Box>
+        {!!apiError && <Typography color="error" sx={{ mt: 1.5, textAlign: 'center' }} role="alert">{apiError}</Typography>}
+        <Button
+          variant="contained"
+          fullWidth
+          onClick={() => onSubmit(consent)}
+          disabled={!!saving || consent === null}
+          sx={{ mt: 1.5, height: 46, borderRadius: 23, fontSize: 16, bgcolor: NAVY, '&:hover': { bgcolor: '#173f74' } }}
+        >
+          {saving ? 'Saving…' : 'Continue'}
+        </Button>
+        {mode === 'review' && (
+          <Button onClick={onClose} fullWidth sx={{ mt: 1, color: NAVY }}>Cancel</Button>
+        )}
       </Box>
-    </AuthShell>
+    </Box>
   );
 };
 
