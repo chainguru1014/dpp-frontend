@@ -96,7 +96,40 @@ function TumbleDryIcon({ dots, selected }) {
   );
 }
 
+// Wool, silk, knitwear and leather care (2026-11-23; same set as the app).
+const svgBox = (color, children) => (
+  <Box component="svg" viewBox="0 0 32 32" width={size} height={size} sx={{ display: 'block' }}>{children(color)}</Box>
+);
+const TUB = (c) => (
+  <>
+    <path {...common} stroke={c} d="M6 12.5 q2.5 -2.6 5 0 t5 0 t5 0 t5 0" />
+    <path {...common} stroke={c} d="M6 12.5 L7.6 23.4 Q7.9 26 10.3 26 L21.7 26 Q24.1 26 24.4 23.4 L26 12.5" />
+  </>
+);
+const SQUARE = (c) => <rect x="4" y="4" width="24" height="24" rx="3.5" {...common} stroke={c} />;
+const IRON = (c) => (
+  <>
+    <path {...common} stroke={c} d="M6 20.5 L25.5 20.5 L25.5 17 C25.5 13.5 22.5 11.5 18.5 11.5 L12 11.5 C9 11.5 6.8 13.8 6 17 Z" />
+    <path {...common} stroke={c} d="M12.5 11.5 C13.5 9.2 16.9 9.2 18 11.5" />
+  </>
+);
+const X = (c, d) => <path {...common} stroke={c} strokeWidth={stroke * 1.2} d={d} />;
+const HandWashIcon = ({ selected }) => svgBox(selected ? ACTIVE : IDLE, (c) => <>{TUB(c)}<path {...common} stroke={c} d="M12 9 L12 4.5 M14 9 L14 3.5 M16 9 L16 4 M18 9.5 L18 5.5 M11 9.5 Q15 11.5 19.5 9.5" /></>);
+const NoWashIcon = ({ selected }) => svgBox(selected ? ACTIVE : IDLE, (c) => <>{TUB(c)}{X(c, 'M8 9 L24 27 M24 9 L8 27')}</>);
+const NoTumbleIcon = ({ selected }) => svgBox(selected ? ACTIVE : IDLE, (c) => <>{SQUARE(c)}<circle cx="16" cy="16" r="6.5" {...common} stroke={c} />{X(c, 'M7 7 L25 25 M25 7 L7 25')}</>);
+const DryFlatIcon = ({ selected }) => svgBox(selected ? ACTIVE : IDLE, (c) => <>{SQUARE(c)}<path {...common} stroke={c} d="M9 16 L23 16" /></>);
+const LineDryIcon = ({ selected }) => svgBox(selected ? ACTIVE : IDLE, (c) => <>{SQUARE(c)}<path {...common} stroke={c} d="M5 9 Q16 17 27 9" /></>);
+const NoIronIcon = ({ selected }) => svgBox(selected ? ACTIVE : IDLE, (c) => <>{IRON(c)}{X(c, 'M8 8 L24 24 M24 8 L8 24')}</>);
+const NoDryCleanIcon = ({ selected }) => svgBox(selected ? ACTIVE : IDLE, (c) => <><circle cx="16" cy="16" r="11.5" {...common} stroke={c} />{X(c, 'M7.5 7.5 L24.5 24.5 M24.5 7.5 L7.5 24.5')}</>);
+
 const MAINTENANCE_ICON_CONFIG = [
+  { id: 'wash_hand', label: 'Hand wash', render: (selected) => <HandWashIcon selected={selected} /> },
+  { id: 'wash_no', label: 'Do not wash', render: (selected) => <NoWashIcon selected={selected} /> },
+  { id: 'tumble_dry_no', label: 'Do not tumble dry', render: (selected) => <NoTumbleIcon selected={selected} /> },
+  { id: 'dry_flat', label: 'Dry flat', render: (selected) => <DryFlatIcon selected={selected} /> },
+  { id: 'dry_line', label: 'Line dry', render: (selected) => <LineDryIcon selected={selected} /> },
+  { id: 'iron_no', label: 'Do not iron', render: (selected) => <NoIronIcon selected={selected} /> },
+  { id: 'dry_clean_no', label: 'Do not dry clean', render: (selected) => <NoDryCleanIcon selected={selected} /> },
   { id: 'wash_30', label: 'Wash 30', render: (selected) => <WashIcon temp={30} selected={selected} /> },
   { id: 'wash_40', label: 'Wash 40', render: (selected) => <WashIcon temp={40} selected={selected} /> },
   { id: 'wash_50', label: 'Wash 50', render: (selected) => <WashIcon temp={50} selected={selected} /> },
