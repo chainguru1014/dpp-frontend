@@ -2088,6 +2088,11 @@ const InnerPage = () => {
       title: 'Products',
       items: [
         ['products', 'Products', Inventory2Icon, true],
+        // Brands (super admin) / Brand profile (a brand): with the products
+        // (client request, 2026-11-23).
+        isAdmin
+          ? ['companies', 'Brands', StorefrontIcon, !isEmployeeActor]
+          : ['brand', 'Brand profile', PaletteIcon, canSeeItemSearch],
         ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
       ],
     },
@@ -2124,7 +2129,6 @@ const InnerPage = () => {
       key: 'platform',
       title: 'Platform',
       items: [
-        ['companies', 'Brands', StorefrontIcon, !isEmployeeActor],
         ['processSteps', 'Workflows', AccountTreeIcon, true],
         ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
         ['users', 'App Users', PersonIcon, !isEmployeeActor],
@@ -2133,7 +2137,6 @@ const InnerPage = () => {
       key: 'brand',
       title: 'Your brand',
       items: [
-        ['brand', 'Brand profile', PaletteIcon, canSeeItemSearch],
         ['processSteps', 'Workflows', AccountTreeIcon, isCompanyAccount || isSupervisor],
         ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
       ],
