@@ -102,54 +102,53 @@ const EmptyChart = ({ text = 'No scans yet.' }) => (
   <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>{text}</Typography>
 );
 
-// SVG donut chart for [{category,count}] segments.
+// Pie chart (client example): the legend on top, a full pie with soft
+// colours, white edges and each share written inside its slice.
+const PIE_COLORS = ['#cdb9b1', '#b7d3b3', '#c7b4dc', '#d8d6b4', '#b4c4d9', '#9c6b6b', '#e6b8a2', '#a8cfcf', '#d9b3c9', '#b8b8b8'];
 const Donut = ({ segments, labels = CATEGORY_LABELS }) => {
-  const total = segments.reduce((s, x) => s + (x.count || 0), 0);
+  const items = [...segments].filter((s) => s.count > 0).sort((a, b) => b.count - a.count);
+  const total = items.reduce((t, x) => t + x.count, 0);
   if (!total) return <EmptyChart />;
-  const r = 48;
-  const circumference = 2 * Math.PI * r;
-  let offset = 0;
+  const R = 100;
+  const C = 110;
+  let angle = -Math.PI / 2;
+  const slices = items.map((s, i) => {
+    const frac = s.count / total;
+    const a0 = angle;
+    const a1 = angle + frac * Math.PI * 2;
+    angle = a1;
+    const large = a1 - a0 > Math.PI ? 1 : 0;
+    const p = (a, r = R) => [C + r * Math.cos(a), C + r * Math.sin(a)];
+    const [x0, y0] = p(a0);
+    const [x1, y1] = p(a1);
+    const d = items.length === 1
+      ? `M ${C - R} ${C} A ${R} ${R} 0 1 1 ${C + R} ${C} A ${R} ${R} 0 1 1 ${C - R} ${C} Z`
+      : `M ${C} ${C} L ${x0} ${y0} A ${R} ${R} 0 ${large} 1 ${x1} ${y1} Z`;
+    const [lx, ly] = p((a0 + a1) / 2, R * 0.62);
+    return { key: s.category, d, color: PIE_COLORS[i % PIE_COLORS.length], pct: frac * 100, lx, ly };
+  });
   return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
-      <Box sx={{ position: 'relative', width: 116, height: 116, flexShrink: 0 }}>
-        <svg width="116" height="116" viewBox="0 0 140 140" role="img" aria-label="Scans by product category">
-          <circle cx="70" cy="70" r={r} fill="none" stroke="#eef1f6" strokeWidth="20" />
-          {segments.map((s, i) => {
-            if (!s.count) return null;
-            const frac = s.count / total;
-            const dash = frac * circumference;
-            const el = (
-              <circle
-                key={s.category}
-                cx="70" cy="70" r={r} fill="none"
-                stroke={COLORS[i % COLORS.length]}
-                strokeWidth="20"
-                strokeDasharray={`${dash} ${circumference - dash}`}
-                strokeDashoffset={-offset}
-                transform="rotate(-90 70 70)"
-              />
-            );
-            offset += dash;
-            return el;
-          })}
-          <text x="70" y="68" textAnchor="middle" fontSize="20" fontWeight="400" fill="#1b4f72">{total}</text>
-          <text x="70" y="86" textAnchor="middle" fontSize="11" fill="#51617a">scans</text>
-        </svg>
-      </Box>
-      <Stack spacing={0.4} sx={{ flex: 1, minWidth: 0, width: '100%' }}>
-        {segments.map((s, i) => (
-          <Box key={s.category} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box sx={{ width: 12, height: 12, borderRadius: '3px', bgcolor: COLORS[i % COLORS.length], flexShrink: 0 }} />
-            <Typography variant="body2" sx={{ flex: 1 }}>
-              {labels[s.category] || s.category}
-            </Typography>
-            <Typography variant="body2" sx={{ fontWeight: 400, whiteSpace: 'nowrap' }}>
-              {s.count} <Typography component="span" variant="body2" color="text.secondary">({Math.round((s.count / total) * 100)}%)</Typography>
-            </Typography>
+    <Box>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 1.5, rowGap: 0.5, mb: 1.5 }}>
+        {items.map((s, i) => (
+          <Box key={s.category} sx={{ display: 'flex', alignItems: 'center', gap: 0.6 }}>
+            <Box sx={{ width: 14, height: 11, borderRadius: '2px', bgcolor: PIE_COLORS[i % PIE_COLORS.length] }} />
+            <Typography sx={{ fontSize: 13, color: '#4a5568' }}>{labels[s.category] || s.category}</Typography>
           </Box>
         ))}
-      </Stack>
-    </Stack>
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+        <svg width="100%" height="230" viewBox="0 0 220 220" role="img" aria-label="Scans by item category" style={{ maxWidth: 260 }}>
+          {slices.map((sl) => <path key={sl.key} d={sl.d} fill={sl.color} stroke="#fff" strokeWidth="1.5" />)}
+          {slices.filter((sl) => sl.pct >= 4).map((sl) => (
+            <g key={`t${sl.key}`}>
+              <rect x={sl.lx - 18} y={sl.ly - 8} width="36" height="16" rx="3" fill="rgba(255,255,255,0.75)" />
+              <text x={sl.lx} y={sl.ly + 4} textAnchor="middle" fontSize="10.5" fill="#333">{`${sl.pct.toFixed(1)}%`}</text>
+            </g>
+          ))}
+        </svg>
+      </Box>
+    </Box>
   );
 };
 

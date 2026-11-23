@@ -231,6 +231,9 @@ export default function ItemTracePage({
       lat: e.place.latitude,
       lng: e.place.longitude,
       color: (EVENT_KINDS[e.kind] || EVENT_KINDS.scan).color,
+      // The bubble's colour and its GPS / IP mark (ItemMap).
+      kind: e.kind === 'security_fail' ? 'problem' : e.kind === 'capture' ? 'staff' : e.kind === 'transfer' ? 'transfer' : 'genuine',
+      viaIp: e.place?.source === 'ip',
       label: `${(EVENT_KINDS[e.kind] || EVENT_KINDS.scan).title(e)} — ${formatWhen(e.at)}`,
       // Shown on the map beside the dot: "Tokyo, Japan".
       place: [...new Set([e.place?.city, e.place?.country].filter(Boolean))].join(', ') || e.place?.region || '',
