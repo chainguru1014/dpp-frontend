@@ -27,7 +27,7 @@ function BigCard({ icon: Icon, title, text, onClick }) {
         textAlign: 'left',
         gap: 0.75,
         px: 2,
-        py: 1.75,
+        py: 1.25,
         minHeight: 0,
         width: '100%',
         bgcolor: '#fff',
@@ -40,15 +40,16 @@ function BigCard({ icon: Icon, title, text, onClick }) {
         '&:focus-visible': { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 2 },
       }}
     >
-      {/* The icon with the title on its right, the help line under both. */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, maxWidth: '100%', minWidth: 0 }}>
-        <Box sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: 2, bgcolor: 'rgba(47,128,200,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* The icon on the left; the title and the help line on its right. */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, width: '100%', minWidth: 0 }}>
+        <Box sx={{ width: 44, height: 44, flexShrink: 0, borderRadius: 2.5, bgcolor: 'rgba(47,128,200,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icon sx={{ fontSize: 26, color: 'primary.main' }} />
         </Box>
-        <Typography variant="h6" component="span" noWrap sx={{ lineHeight: 1.25, fontSize: 17, minWidth: 0 }}>{title}</Typography>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="h6" component="span" noWrap sx={{ display: 'block', lineHeight: 1.25, fontSize: 17 }}>{title}</Typography>
+          <Typography variant="body2" color="text.secondary" component="span" noWrap sx={{ display: 'block', fontSize: 13.5 }}>{text}</Typography>
+        </Box>
       </Box>
-      {/* One line (client request): short help text, never wrapping. */}
-      <Typography variant="body2" color="text.secondary" component="span" noWrap sx={{ fontSize: 14.5, maxWidth: '100%' }}>{text}</Typography>
     </ButtonBase>
   );
 }

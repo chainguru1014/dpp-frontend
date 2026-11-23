@@ -2007,6 +2007,8 @@ const InnerPage = () => {
   };
 
   const go = (page) => {
+    // Products opens on the list: choose a product first (client request).
+    if (page === 'products') setSelectedProduct(null);
     setActivePage(page);
     setMobileNavOpen(false);
   };
@@ -2681,6 +2683,7 @@ const InnerPage = () => {
               })()}
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: { xs: 'wrap', lg: 'nowrap' } }}>
                 <Box sx={{ flex: '999 1 560px', minWidth: 0 }}>
+              {!(selectedProduct && products.some((p) => p._id === selectedProduct._id)) && (
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
                 <TextField
                   id="product-search"
@@ -2696,6 +2699,7 @@ const InnerPage = () => {
                   }}
                 />
               </Stack>
+              )}
 
               {/* Choosing a product (as on Product Journey): the list; once one
                   is chosen the list makes way for its card. */}

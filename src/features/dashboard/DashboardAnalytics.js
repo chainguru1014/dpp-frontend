@@ -104,7 +104,8 @@ const EmptyChart = ({ text = 'No scans yet.' }) => (
 
 // Pie chart (client example): the legend on top, a full pie with soft
 // colours, white edges and each share written inside its slice.
-const PIE_COLORS = ['#cdb9b1', '#b7d3b3', '#c7b4dc', '#d8d6b4', '#b4c4d9', '#9c6b6b', '#e6b8a2', '#a8cfcf', '#d9b3c9', '#b8b8b8'];
+// Dark blue first, then clearly different blues and blue-greys.
+const PIE_COLORS = ['#1b4f72', '#2f80c8', '#5aa9e6', '#9cc9ef', '#24527a', '#4f7cac', '#7f9db9', '#c6dcef', '#3b6e8f', '#a7b8c9'];
 const Donut = ({ segments, labels = CATEGORY_LABELS }) => {
   const items = [...segments].filter((s) => s.count > 0).sort((a, b) => b.count - a.count);
   const total = items.reduce((t, x) => t + x.count, 0);

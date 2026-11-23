@@ -103,7 +103,7 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
                 <Typography sx={{ fontSize: 14.5 }}>Traceable product identity</Typography>
               </Stack>
             </Stack>
-            {onChange && <Button startIcon={<SwapHorizIcon />} onClick={onChange} sx={{ mt: 2 }}>Change product</Button>}
+            {onChange && <Button variant="contained" startIcon={<SwapHorizIcon />} onClick={onChange} sx={{ mt: 2.5, height: 44 }}>Change product</Button>}
           </Box>
 
           {/* Four photos; < > move along one at a time (round the end). Each
@@ -115,19 +115,20 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
                   <Box sx={{ aspectRatio: '3 / 4.4', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', bgcolor: '#eef1f4' }}>
                     {img && <Box component="img" src={getFileUrl(img)} alt={`${product?.name || ''} ${k + 1}`} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                   </Box>
-                  {buttons[k] && (
+                  {buttons[k] && (buttons[k].primary ? (
+                    // The New product button's gradient.
+                    <Button variant="contained" fullWidth startIcon={buttons[k].icon} onClick={buttons[k].onClick} sx={{ mt: 1, height: 38 }}>{buttons[k].label}</Button>
+                  ) : (
                     <ButtonBase
                       onClick={buttons[k].onClick}
                       sx={{
-                        mt: 1, width: '100%', height: 38, borderRadius: 2, gap: 0.75, fontSize: 14,
-                        ...(buttons[k].primary
-                          ? { bgcolor: 'primary.main', color: '#fff', '&:hover': { bgcolor: 'primary.dark' } }
-                          : { border: '1px solid', borderColor: buttons[k].danger ? 'error.light' : 'primary.main', color: buttons[k].danger ? 'error.main' : 'primary.main', '&:hover': { bgcolor: buttons[k].danger ? '#fdf1f1' : '#eef5fd' } }),
+                        mt: 1, width: '100%', height: 38, borderRadius: '19px', gap: 0.75, fontSize: 14,
+                        border: '1px solid', borderColor: buttons[k].danger ? 'error.light' : 'primary.main', color: buttons[k].danger ? 'error.main' : 'primary.main', '&:hover': { bgcolor: buttons[k].danger ? '#fdf1f1' : '#eef5fd' },
                       }}
                     >
                       {buttons[k].icon}{buttons[k].label}
                     </ButtonBase>
-                  )}
+                  ))}
                 </Box>
               ))}
             </Box>
@@ -141,23 +142,20 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
         </Box>
       </Paper>
 
-      <Paper sx={{ p: 2, mb: 2 }}>
-        <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap sx={{ mb: 1.5 }}>
-          <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} />
-          <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} />
-          <TextField size="small" select label="Status" value={status} onChange={(e) => setStatus(e.target.value)} sx={{ minWidth: 150 }}>
-            <MenuItem value="">All</MenuItem>
-            {['pending', 'confirmed', 'rejected', 'cancelled'].map((s) => <MenuItem key={s} value={s}><StatusChip status={s} /></MenuItem>)}
-          </TextField>
-          <TextField size="small" select label="Method" value={method} onChange={(e) => setMethod(e.target.value)} sx={{ minWidth: 150 }}>
-            <MenuItem value="">All</MenuItem>
-            {methods.map((m) => <MenuItem key={m} value={m}>{METHOD_LABELS[m] || m}</MenuItem>)}
-          </TextField>
-        </Stack>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <TextField size="small" fullWidth placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} />
-          <IconButton aria-label="Reload" onClick={load} color="primary"><RefreshIcon /></IconButton>
-        </Stack>
+      {/* The filters on one line. */}
+      <Paper sx={{ p: 1.5, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: { xs: 'wrap', lg: 'nowrap' } }}>
+        <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ width: 160, flexShrink: 0 }} />
+        <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={to} onChange={(e) => setTo(e.target.value)} sx={{ width: 160, flexShrink: 0 }} />
+        <TextField size="small" select label="Status" value={status} onChange={(e) => setStatus(e.target.value)} sx={{ width: 150, flexShrink: 0 }}>
+          <MenuItem value="">All</MenuItem>
+          {['pending', 'confirmed', 'rejected', 'cancelled'].map((x) => <MenuItem key={x} value={x}><StatusChip status={x} /></MenuItem>)}
+        </TextField>
+        <TextField size="small" select label="Method" value={method} onChange={(e) => setMethod(e.target.value)} sx={{ width: 150, flexShrink: 0 }}>
+          <MenuItem value="">All</MenuItem>
+          {methods.map((m) => <MenuItem key={m} value={m}>{METHOD_LABELS[m] || m}</MenuItem>)}
+        </TextField>
+        <TextField size="small" placeholder="Search" value={q} onChange={(e) => setQ(e.target.value)} sx={{ flex: 1, minWidth: 180 }} />
+        <IconButton aria-label="Reload" onClick={load} color="primary"><RefreshIcon /></IconButton>
       </Paper>
 
       <Paper sx={{ px: 2, py: 1 }}>
