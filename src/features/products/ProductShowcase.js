@@ -89,7 +89,7 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
                 {!!brand.tagline && <Typography sx={{ fontSize: 10.5, letterSpacing: 1.5, color: 'primary.main' }}>{String(brand.tagline).toUpperCase()}</Typography>}
               </Box>
             </Stack>
-            <Typography sx={{ fontSize: 26, fontWeight: 800, lineHeight: 1.15, color: '#0f2a4a' }}>{String(product?.name || '').toUpperCase()}</Typography>
+            <Typography sx={{ fontSize: 26, fontWeight: 400, lineHeight: 1.15, color: '#0f2a4a' }}>{String(product?.name || '').toUpperCase()}</Typography>
             <Typography sx={{ fontSize: 17, color: 'primary.main', mt: 0.5, pb: 1.5, mb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>{product?.model || product?.productType || ''}</Typography>
             <Stack spacing={1.1}>
               {FACTS.filter(([k]) => facts[k]).map(([k, Icon, label]) => (
@@ -103,7 +103,7 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
                 <Typography sx={{ fontSize: 14.5 }}>Traceable product identity</Typography>
               </Stack>
             </Stack>
-            {onChange && <Button variant="contained" startIcon={<SwapHorizIcon />} onClick={onChange} sx={{ mt: 2.5, height: 44 }}>Change product</Button>}
+            {onChange && <Button variant="contained" fullWidth startIcon={<SwapHorizIcon />} onClick={onChange} sx={{ mt: 2.5, height: 44, maxWidth: 300 }}>Change product</Button>}
           </Box>
 
           {/* Four photos; < > move along one at a time (round the end). Each

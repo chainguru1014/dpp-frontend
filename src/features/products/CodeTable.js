@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Chip, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, Chip, Dialog, DialogContent, IconButton, Tooltip, Typography } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -34,7 +35,39 @@ export const ImageThumb = ({ src, icon: Icon, wide = false }) => (
 // Remove.
 //   rows: [{ key, thumb, code, sub, number, printed, onDelete, downloadUrl, downloadName, downloadQr }]
 //   downloadQr: the QR's content; Download makes its picture on click.
+// The big picture of a code (QR or barcode), with its text and Copy.
+function CodePreview({ open, onClose, qr, src, title, onCopy }) {
+  const [qrSrc, setQrSrc] = useState('');
+  useEffect(() => {
+    if (!open || !qr) return;
+    qrcode.toDataURL(String(qr), { margin: 2, width: 420 }).then(setQrSrc).catch(() => {});
+  }, [open, qr]);
+  const img = qr ? qrSrc : src;
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '20px' } }}>
+      <IconButton aria-label="Close" onClick={onClose} sx={{ position: 'absolute', top: 8, right: 8 }}><CloseIcon /></IconButton>
+      <DialogContent sx={{ pt: 5, textAlign: 'center' }}>
+        {img && <Box component="img" src={img} alt="" sx={{ width: '100%', maxWidth: qr ? 320 : 360, height: 'auto', imageRendering: 'pixelated', bgcolor: '#fff' }} />}
+        <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 }}>
+          <Typography sx={{ fontFamily: 'Consolas, monospace', fontSize: 13.5, wordBreak: 'break-all' }}>{title}</Typography>
+          <IconButton size="small" aria-label="Copy" onClick={onCopy}><ContentCopyIcon fontSize="small" /></IconButton>
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// A small copy button after a value.
+const CopyBtn = ({ text, label, onCopy }) => (
+  <Tooltip title={`Copy ${label}`}>
+    <IconButton size="small" aria-label={`Copy ${label}`} onClick={(e) => { e.stopPropagation(); onCopy(text); }} sx={{ ml: 0.25, p: 0.5 }}>
+      <ContentCopyIcon sx={{ fontSize: 16 }} />
+    </IconButton>
+  </Tooltip>
+);
+
 export default function CodeTable({ rows = [], codeLabel = 'Code', numberLabel = 'Number', copyNoun = 'code' }) {
+  const [preview, setPreview] = useState(null);
   if (!rows.length) return null;
   const copy = (text) => {
     try {
@@ -51,22 +84,30 @@ export default function CodeTable({ rows = [], codeLabel = 'Code', numberLabel =
       {rows.map((row) => (
         <Box key={row.key} sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: cols }, gap: 2, alignItems: 'center', px: 2, py: 1, borderTop: '1px solid #e8edf3' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-            {row.thumb}
+            {/* A QR or barcode picture opens big. */}
+            {(row.previewQr || row.previewSrc) ? (
+              <Box component="button" type="button" onClick={() => setPreview(row)} aria-label={`Show the code for ${row.code}`} sx={{ p: 0, border: 0, bgcolor: 'transparent', cursor: 'zoom-in', borderRadius: 1, '&:hover': { boxShadow: '0 0 0 2px #2f80c8' } }}>
+                {row.thumb}
+              </Box>
+            ) : row.thumb}
             <Box sx={{ minWidth: 0 }}>
-              <Typography noWrap sx={{ fontFamily: 'Consolas, monospace', fontSize: 14 }} title={row.code}>{row.code}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', minWidth: 0 }}>
+                <Typography noWrap sx={{ fontFamily: 'Consolas, monospace', fontSize: 14, minWidth: 0 }} title={row.code}>{row.code}</Typography>
+                <CopyBtn text={row.code} label={`the ${copyNoun}`} onCopy={copy} />
+              </Box>
               {!!row.sub && <Typography variant="body2" color="text.secondary" noWrap title={row.sub}>{row.sub}</Typography>}
             </Box>
           </Box>
-          <Typography sx={{ display: { xs: 'none', md: 'block' } }} color="text.secondary" noWrap>{row.number}</Typography>
+          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', minWidth: 0 }}>
+            <Typography color="text.secondary" noWrap>{row.number}</Typography>
+            {!!row.pmc && <CopyBtn text={row.pmc} label="the Passport ID" onCopy={copy} />}
+          </Box>
           <Box sx={{ display: { xs: 'none', md: 'block' } }}>
             {row.printed == null ? null : row.printed
               ? <Chip size="small" label="Printed" sx={{ bgcolor: '#eef5fd', color: '#1b4f72', fontWeight: 400 }} />
               : <Chip size="small" label="Not printed" sx={{ bgcolor: '#eef3f9', color: '#1b4f72', fontWeight: 400 }} />}
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-            <Tooltip title={`Copy the ${copyNoun}`}>
-              <IconButton aria-label={`Copy ${row.code}`} onClick={() => copy(row.code)}><ContentCopyIcon /></IconButton>
-            </Tooltip>
             {row.downloadUrl && (
               <Tooltip title="Download the picture">
                 <IconButton component="a" href={row.downloadUrl} download={row.downloadName || 'code.png'} aria-label={`Download the picture of ${row.code}`}><DownloadIcon /></IconButton>
@@ -85,6 +126,14 @@ export default function CodeTable({ rows = [], codeLabel = 'Code', numberLabel =
           </Box>
         </Box>
       ))}
+      <CodePreview
+        open={!!preview}
+        onClose={() => setPreview(null)}
+        qr={preview?.previewQr}
+        src={preview?.previewSrc}
+        title={preview?.code || ''}
+        onCopy={() => preview && copy(preview.code)}
+      />
     </Box>
   );
 }
