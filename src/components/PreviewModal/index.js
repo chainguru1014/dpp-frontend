@@ -1148,8 +1148,8 @@ export default function PreviewModal({ open, setOpen, productInfo, theme }) {
 
 
 // The shopper's product as the app shows it now (13 Nov 2026): first the
-// Product summary (3 x 3 framed photos, Brands, Product Information), then
-// the Brand page (Brands) or the Product Overview (Product Information),
+// Product summary (3 x 3 framed photos, Brand, Product Information), then
+// the Brand page (Brand) or the Product Overview (Product Information),
 // each with a back arrow to the summary. Used by every preview on the admin
 // site (preview dialog, product editor, Brand profile design tab).
 // The iPhone 16 at its real size (393 x 852 points plus the bezel), scaled
@@ -1265,7 +1265,7 @@ export function DppPhoneView({ productInfo, theme, onClose, device = false }) {
           </Box>
         ))}
       </Box>
-      {!!brand.name && pill('Brand details', () => setPage('brand'))}
+      {!!brand.name && pill('Brand', () => setPage('brand'))}
       <Box sx={{ display: 'flex', gap: 1 }}>
         {[['Like', ThumbUpOffAltIcon], ['Cart', AddShoppingCartIcon], ['Not for me', ThumbDownOffAltIcon]].map(([l, Icon]) => (
           <Box key={l} sx={{ flex: 1, minWidth: 0, height: 44, borderRadius: '14px', bgcolor: 'rgba(0,0,0,0.045)', color: C.text || '#33415c', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, px: 0.5, fontSize: 14, fontWeight: 400, whiteSpace: 'nowrap', boxShadow: '0 1px 3px rgba(0,0,0,0.06)' }}>
