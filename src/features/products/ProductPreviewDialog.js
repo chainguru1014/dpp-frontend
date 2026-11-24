@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Button, ButtonBase, Dialog, IconButton, Typography, useMediaQuery } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import PassportPhone from './PassportPhone';
+import AppDraftPhone from './AppDraftPhone';
 
 const APP_URL = (process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com').replace(/\/$/, '');
 
 // Summary = the shopper app's product summary; Details = its passport.
-const VIEWS = [['summary', 'Summary'], ['detail', 'Details']];
+// Product = the page Scan opens (photo, Like / Cart / Not for me, Product
+// Information); Summary = its product summary; Details = its passport.
+const VIEWS = [['product', 'Product'], ['summary', 'Summary'], ['detail', 'Details']];
 const NOTES = {
-  summary: 'Swipe or tap the photos, and tap Brand, Detail or Recommend, as a shopper would.',
+  product: 'The page shoppers see first after scanning: the photo, Like, Cart, Not for me and Product Information.',
+  summary: 'Tap the photos and videos, and Brand, Product Detail or Recommendations, as a shopper would.',
   detail: 'Overview, Materials, Journey, Impact and History, as shoppers read them.',
 };
 
@@ -40,10 +43,10 @@ function AppPhone({ productId, qrcodeId, view, width }) {
 // passport (PassportPhone) shows instead.
 // Same props as the old PreviewModal (open, setOpen, productInfo), plus onEdit.
 export default function ProductPreviewDialog({ open, setOpen, onClose, productInfo, onEdit, theme }) {
-  const [view, setView] = useState('summary');
+  const [view, setView] = useState('product');
   const small = useMediaQuery('(max-width:760px)');
   const short = useMediaQuery('(max-height:760px)');
-  useEffect(() => { if (open) setView('summary'); }, [open, productInfo?._id]);
+  useEffect(() => { if (open) setView('product'); }, [open, productInfo?._id]);
   const close = () => { if (setOpen) setOpen(false); if (onClose) onClose(); };
   const name = productInfo?.name || 'this product';
   const productId = productInfo?._id || productInfo?.id;
@@ -54,7 +57,7 @@ export default function ProductPreviewDialog({ open, setOpen, onClose, productIn
       <Box sx={{ display: 'flex', flexDirection: small ? 'column' : 'row', gap: 3, alignItems: small ? 'center' : 'stretch' }}>
         {productId
           ? <AppPhone productId={productId} qrcodeId={qrcodeId} view={view} width={phoneW} />
-          : <PassportPhone product={productInfo} view="passport" onView={() => {}} width={short ? 250 : 300} theme={theme} />}
+          : <AppDraftPhone product={productInfo} view={view} onView={setView} showViews={false} width={phoneW} />}
         <Box sx={{ width: small ? '100%' : 300, display: 'flex', flexDirection: 'column', position: 'relative' }}>
           <IconButton onClick={close} aria-label="Close the preview" sx={{ position: 'absolute', top: -4, right: -4, bgcolor: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', '&:hover': { bgcolor: '#fff' } }}>
             <CloseIcon />
