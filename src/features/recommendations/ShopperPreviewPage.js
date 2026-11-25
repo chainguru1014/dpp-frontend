@@ -45,7 +45,8 @@ const BUDGETS = [[0, 150, 'Under €150'], [150, 400, '€150–400'], [400, 700
 // Words that say nothing about the product.
 const STOP = new Set(['and', 'the', 'for', 'with', 'from', 'made', 'something', 'want', 'need', 'looking', 'show', 'like', 'some', 'what', 'this', 'that', 'under', 'over', 'less', 'than', 'about', 'euro', 'euros', 'please', 'have', 'does', 'into', 'your', 'mine']);
 
-const EMPTY = { category: [], colour: [], material: [], style: [], budget: [], words: [] };
+// max: a price said in words ("under 700"), one chip "Up to €700".
+const EMPTY = { category: [], colour: [], material: [], style: [], budget: [], words: [], max: [] };
 
 // The choices, from the products on hand.
 function optionsFrom(products) {
@@ -76,9 +77,10 @@ function scoreProduct(p, prefs) {
   prefs.material.forEach((m) => { if (txt.includes(m)) { score += 12; why.push(m); } });
   prefs.style.forEach((s) => { const st = STYLES.find(([k]) => k === s); if (st && st[2].test(txt)) { score += 9; why.push(st[1].toLowerCase()); } });
   prefs.words.forEach((w) => { if (txt.includes(w)) { score += 10; why.push(w); } });
-  if (prefs.budget.length) {
-    const fits = prefs.budget.some((b) => { const [lo, hi] = b.split('-').map(Number); return p.price >= lo && p.price < hi; });
-    if (fits) { score += 12; why.push('in budget'); } else score -= 15;
+  if (prefs.budget.length || prefs.max.length) {
+    const inBracket = !prefs.budget.length || prefs.budget.some((b) => { const [lo, hi] = b.split('-').map(Number); return p.price >= lo && p.price < hi; });
+    const underMax = !prefs.max.length || p.price <= Math.min(...prefs.max);
+    if (inBracket && underMax) { score += 12; why.push('in budget'); } else score -= 15;
   }
   return { score: Math.max(5, Math.min(98, score)), why: [...new Set(why)].slice(0, 3) };
 }
@@ -86,7 +88,7 @@ function scoreProduct(p, prefs) {
 // What a sentence asks for, as choices ("a warm wool coat under 700").
 function prefsFromText(text, groups, products) {
   const t = ` ${text.toLowerCase()} `;
-  const out = { ...EMPTY, category: [], colour: [], material: [], style: [], budget: [], words: [] };
+  const out = { category: [], colour: [], material: [], style: [], budget: [], words: [], max: [] };
   groups.forEach((g) => g.options.forEach(([k, label]) => {
     if (g.key === 'budget') return;
     if (g.key === 'colour') {
@@ -101,7 +103,7 @@ function prefsFromText(text, groups, products) {
   if (num && /under|below|less|max|up to|cheaper|budget/.test(t)) {
     let v = Number(num[1].replace(/,/g, ''));
     if (num[2]) v *= 1000;
-    BUDGETS.forEach(([lo, hi]) => { if (lo < v) out.budget.push(`${lo}-${hi}`); });
+    if (v > 0) out.max.push(v);
   }
   // Any other word the catalogue knows ("jacket", "scarf", "trench").
   const known = products.map(textOf).join(' ');
@@ -169,6 +171,7 @@ export default function ShopperPreviewPage({ company }) {
   const chosen = [
     ...groups.flatMap((g) => g.options.filter(([k]) => prefs[g.key].includes(k)).map(([k, label]) => ({ group: g.key, k, label }))),
     ...prefs.words.map((w) => ({ group: 'words', k: w, label: `“${w}”` })),
+    ...prefs.max.map((v) => ({ group: 'max', k: v, label: `Up to €${v.toLocaleString('en-IE')}` })),
   ];
 
   const toggle = (group, key) => setPrefs((cur) => {
@@ -184,7 +187,7 @@ export default function ShopperPreviewPage({ company }) {
     setInput('');
     const got = prefsFromText(text, groups, products);
     const added = Object.values(got).reduce((n, v) => n + v.length, 0);
-    if (added) setPrefs((cur) => Object.fromEntries(Object.keys(cur).map((k) => [k, [...new Set([...cur[k], ...got[k]])]])));
+    if (added) setPrefs((cur) => Object.fromEntries(Object.keys(cur).map((k) => [k, k === 'max' && got.max.length ? got.max : [...new Set([...cur[k], ...got[k]])]])));
     const history = messages.map((m) => ({ role: m.role, content: m.text }));
     setMessages((m) => [...m, { role: 'user', text }]);
     if (added && !isQuestion(text)) {
