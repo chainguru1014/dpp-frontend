@@ -19,7 +19,7 @@ const PAGE_HELP = {
   },
   brand: {
     title: 'Brand profile',
-    text: 'Your brand, set once for all your products. “Profile” is the name, tagline, description, website, logo and cover photo; every product page shows them, and a change reaches all of them when you save. “Product page design” is how your product pages look in the app, with a live preview. “Team and sign-in” shows the Supervisor email and staff email domain (Yometel sets those).',
+    text: 'Your brand, set once for all your products. “Profile” is the name, tagline, description, website, logo and cover photo; every product page shows them, and a change reaches all of them when you save. “Product page design” is how your product pages look in the app, with a live preview. “Team and sign-in” shows your company’s Supervisor email and staff email domain (Yometel sets those). “Workflows” are the steps your staff choose from in the app, for example “Receiving: Tokyo DC”.',
   },
   newProduct: {
     title: 'Product window',
@@ -59,8 +59,8 @@ const PAGE_HELP = {
     text: 'Each product’s Environmental (carbon footprint, impact figures), Social (certifications, known suppliers) and Governance (traceable codes, passport completeness) information. Click a product in the list to see it.',
   },
   companies: {
-    title: 'Brands',
-    text: 'Every company on Yometel is a brand, with one brand profile. “Add brand” creates the brand and its Supervisor account for the email you enter; the Supervisor then finishes the profile. Open a brand to see or change its profile, product page design and sign-in details.',
+    title: 'Companies',
+    text: 'Every company on Yometel. Each company has one brand, the name and look its shoppers see. “Add company” creates the company, its brand and its Supervisor account for the email you enter; the Supervisor then finishes the brand profile. Open a company to change its brand profile, sign-in details and workflows.',
   },
   employeeAuditLog: {
     title: 'Employees',
@@ -68,7 +68,7 @@ const PAGE_HELP = {
   },
   processSteps: {
     title: 'Workflows',
-    text: 'The steps staff choose from when they open the app (Select workflow), for example “Receiving: Tokyo DC”. Each has a place and a step type; you can have 1 to 18, in the order shown. The Yometel admin first picks the brand.',
+    text: 'The steps staff choose from when they open the app (Select workflow), for example “Receiving: Tokyo DC”. Each has a place and a step type; you can have 1 to 18, in the order shown. They are set on the Brand profile page; the Yometel admin opens the company first.',
   },
   shipmentInspection: {
     title: 'Shipments',

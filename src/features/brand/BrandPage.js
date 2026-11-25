@@ -17,6 +17,7 @@ import { notifyError, notifySuccess } from '../../utils/feedbackBus';
 import { normalizeDppTheme } from '../../utils/dppTheme';
 import { COMPANY_TYPES, companyTypeLabel } from '../../constants/companyTypes';
 import { BrandMark, profilePercent } from '../admin/CompanyManagementSection';
+import ProcessStepsPage from '../process-steps/ProcessStepsPage';
 
 // The same phone view the Preview dialog shows.
 const DppPhoneView = React.lazy(() => import('../../components/PreviewModal').then((m) => ({ default: m.DppPhoneView })));
@@ -51,6 +52,10 @@ const domainsText = (list) => (list || []).join(', ');
 // picker, and may also change Industry and the sign-in details.
 export default function BrandPage({
   token, isAdmin = false, products = [], account, companyId, onCompanyChange, onBack, onOpenProducts, onOpenEmployees, onBrandsChanged,
+  // The company's workflows (the app's Select workflow steps) are edited here
+  // since 2026-11-25 (no Workflows menu item): super admin, the company
+  // account and its Supervisors.
+  canManageWorkflows = false,
 }) {
   const [brands, setBrands] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -250,11 +255,11 @@ export default function BrandPage({
   return (
     <Box>
       {isAdmin && onBack && (
-        <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ mb: 1, px: 0 }}>All brands</Button>
+        <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ mb: 1, px: 0 }}>All companies</Button>
       )}
       <PageHeader
         title="Brand profile"
-        description={isAdmin ? 'A brand’s name, look and team. Every product of the brand uses them.' : 'Your brand’s name, look and team. Every product you add uses them.'}
+        description={isAdmin ? 'How the company’s brand looks to shoppers, plus its sign-in settings and workflows. Every product of the company uses this brand.' : 'How your brand looks to shoppers, plus your company’s sign-in settings and workflows. Every product you add uses this brand.'}
       />
 
       {showPicker ? (
@@ -316,7 +321,7 @@ export default function BrandPage({
                 </Box>
               </Box>
               {!canEdit && (
-                <Alert severity="info" sx={{ mb: 2.5 }}>Only a Supervisor or the brand account can change these.</Alert>
+                <Alert severity="info" sx={{ mb: 2.5 }}>Only a Supervisor or the company account can change these.</Alert>
               )}
               <Grid container spacing={3}>
               <Grid item xs={12} lg={6}>
@@ -336,7 +341,7 @@ export default function BrandPage({
                 </Stack>
                 <TextField label="Short tagline" fullWidth placeholder="e.g. Maison Européenne" value={details.tagline} disabled={!canEdit} onChange={setField('tagline')}
                   inputProps={{ maxLength: 120 }}
-                  helperText="A short line under the brand name. Staff see it when they scan your products." />
+                  helperText="A short line under the brand name. Shoppers and staff see it when they scan your products." />
                 <TextField label="About the brand" fullWidth multiline minRows={3} value={details.detail} disabled={!canEdit} onChange={setField('detail')}
                   helperText="A sentence or two. Shoppers see it on your products." />
                 <TextField label="Website" fullWidth placeholder="https://www.example.com" value={details.websiteUrl} disabled={!canEdit} onChange={setField('websiteUrl')} />
@@ -387,7 +392,7 @@ export default function BrandPage({
                 <Stack spacing={2}>
                   <TextField label="Supervisor email" fullWidth value={signIn.email} disabled={!isAdmin}
                     onChange={(e) => setSignIn((s) => ({ ...s, email: e.target.value }))}
-                    helperText="This person signs in as the brand’s Supervisor." />
+                    helperText="This person signs in as the company’s Supervisor." />
                   <TextField label="Staff email domain" fullWidth value={signIn.allowedEmailDomains} disabled={!isAdmin}
                     onChange={(e) => setSignIn((s) => ({ ...s, allowedEmailDomains: e.target.value }))}
                     helperText={`People with ${signIn.allowedEmailDomains ? `an @${signIn.allowedEmailDomains.split(',')[0].trim()}` : 'this'} email can sign in as staff. Separate several with commas.`} />
@@ -405,6 +410,16 @@ export default function BrandPage({
                   </Button>
                 </Stack>
               )}
+            </Box>
+          )}
+
+          {tab === 'profile' && canManageWorkflows && (
+            <Box sx={{ mt: 3, bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 } }}>
+              <Typography component="h2" sx={{ fontSize: 20, fontWeight: 400, color: '#16324a' }}>Workflows</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
+                The steps {isAdmin ? 'this company’s' : 'your company’s'} staff choose from in the app before they capture items, for example “Receiving: Tokyo DC”.
+              </Typography>
+              <ProcessStepsPage embedded token={token} isAdmin={isAdmin} companyId={String(brand.company_id || companyId || '')} />
             </Box>
           )}
 

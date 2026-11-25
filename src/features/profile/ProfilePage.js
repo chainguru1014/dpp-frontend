@@ -186,7 +186,7 @@ const ProfilePage = () => {
         title="My profile"
         description={isAppUser
           ? 'Your name, email and picture. You sign in with a code sent to this email.'
-          : 'Your company details, shown on your products and to your employees. You sign in with a code sent to this email.'}
+          : 'Your company account: its name and details, and the email you sign in with (a code is sent to it). What shoppers see is set on Brand profile.'}
       />
 
       {/* Header card. Companies: the cover photo is the background of the

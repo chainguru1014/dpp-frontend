@@ -181,7 +181,7 @@ export default function QuickStartCards({
     organizationOptions.length > 0 && {
       icon: GroupsIcon,
       title: 'Manage organization',
-      text: platform ? 'Brands and their teams' : 'Your team and their work steps',
+      text: platform ? 'Companies, their brands and teams' : 'Your team and their work steps',
       onClick: openOrGo('organization', organizationOptions),
     },
     onAnalyzeProduct && {

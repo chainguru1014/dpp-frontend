@@ -66,13 +66,13 @@ export const BrandMark = ({ brand, name, size = 44 }) => {
 const LoadingOverlay = () => (
   <Box sx={{ width: '100%', height: '100%', minHeight: 180, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(255,255,255,0.7)' }}>
     <CircularProgress />
-    <Typography color="text.secondary">Loading brands…</Typography>
+    <Typography color="text.secondary">Loading companies…</Typography>
   </Box>
 );
 
 const NoBrands = () => (
   <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', px: 3, textAlign: 'center' }}>
-    <Typography color="text.secondary">No brands yet. Press “Add brand” to add the first one.</Typography>
+    <Typography color="text.secondary">No companies yet. Press “Add company” to add the first one.</Typography>
   </Box>
 );
 
@@ -167,7 +167,7 @@ const BrandsTable = ({ rows, loading, onOpen, onEdit, onRemove }) => {
   );
 };
 
-// Add a brand: the super admin creates the brand company. Its admin email
+// Add a company: the super admin creates the brand company. Its admin email
 // becomes the brand's Supervisor, who fills in the rest of the profile.
 const AddBrandDialog = ({ open, onClose, onCreated }) => {
   const emptyForm = { name: '', companyType: '', email: '', title: '', allowedEmailDomains: '', logo: '' };
@@ -198,7 +198,7 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      notify("Please enter the Supervisor’s email address. They sign in with it and finish the brand profile.", 'warning');
+      notify("Please enter the Supervisor’s email address. They sign in with it and finish the company’s brand profile.", 'warning');
       return;
     }
     // A domain is what follows the @ ("hm.com"), never a whole address.
@@ -231,7 +231,7 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        Add a brand
+        Add a company
         <IconButton onClick={onClose} color="inherit" aria-label="Close" disabled={saving}><Close /></IconButton>
       </DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
@@ -269,7 +269,7 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
         <TextField
           label="Staff email domain"
           placeholder={form.email.includes('@') ? form.email.split('@')[1] : 'e.g. hm.com'}
-          helperText="People with this email domain can sign in as this brand’s staff. The Supervisor’s domain is added automatically; add more separated by commas."
+          helperText="People with this email domain can sign in as this company’s staff. The Supervisor’s domain is added automatically; add more separated by commas."
           value={form.allowedEmailDomains}
           onChange={(e) => setForm({ ...form, allowedEmailDomains: e.target.value })}
           fullWidth
@@ -281,7 +281,7 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onClose} disabled={saving}>Cancel</Button>
         <Button variant="contained" startIcon={<Add />} onClick={handleSave} disabled={saving || uploading}>
-          {saving ? 'Adding…' : 'Add brand'}
+          {saving ? 'Adding…' : 'Add company'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -334,21 +334,21 @@ const CompanyManagementSection = ({ token, onOpenBrand }) => {
     <Box>
       <PageHeader
         title="Brands"
-        description="Every company on Yometel is a brand. Open one to see or change its profile, product page design and team."
+        description="Every company on Yometel, each with its one brand. Open one to change its brand profile, workflows and team."
         actions={(
           <Button variant="contained" startIcon={<Add />} onClick={() => setAddOpen(true)}>
-            Add brand
+            Add company
           </Button>
         )}
       />
       <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', mb: 2 }}>
         <TextField
-          placeholder="Search by brand, email or domain"
+          placeholder="Search by company, brand, email or domain"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           InputProps={{ startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} /> }}
           sx={{ flex: '1 1 280px', maxWidth: 420, bgcolor: 'background.paper', borderRadius: 2 }}
-          inputProps={{ 'aria-label': 'Search brands' }}
+          inputProps={{ 'aria-label': 'Search companies' }}
         />
         <TextField select label="Industry" value={industry} onChange={(e) => setIndustry(e.target.value)} sx={{ width: 240, bgcolor: 'background.paper', borderRadius: 2 }}>
           <MenuItem value="">All industries</MenuItem>
@@ -366,13 +366,13 @@ const CompanyManagementSection = ({ token, onOpenBrand }) => {
         onRemove={async (row) => {
           const sure = await confirmAction({
             title: `Remove ${row.brand?.name || row.name}?`,
-            message: 'The brand account is removed and its staff can no longer sign in. This cannot be undone.',
-            confirmText: 'Remove brand',
+            message: 'The company account is removed and its staff can no longer sign in. This cannot be undone.',
+            confirmText: 'Remove company',
             danger: true,
           });
           if (!sure) return;
           await removeCompany(row._id);
-          notifySuccess('Brand removed.');
+          notifySuccess('Company removed.');
           reload();
         }}
       />

@@ -575,7 +575,7 @@ export function DppOverviewView({ productInfo, theme, onClose, onBack, device = 
     ),
     actions: () => (
       <Box sx={{ mx: 2, mt: 1, py: 1.1, borderRadius: buttonRadius, textAlign: 'center', fontSize: 13, fontWeight: 400, ...mainButton }}>
-        Brand Company
+        Brand
       </Box>
     ),
   };

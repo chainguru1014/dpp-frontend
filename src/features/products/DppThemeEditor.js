@@ -159,7 +159,7 @@ export default function DppThemeEditor({ theme, onChange, onSave, onReset, savin
       <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
         {canEdit
           ? 'How your product page looks in the app. It applies to every product of this brand; the preview changes as you edit.'
-          : 'How your company’s product page looks. Only a Supervisor or the company account can change it.'}
+          : 'How your brand’s product page looks. Only a Supervisor or the company account can change it.'}
       </Typography>
 
       <Tabs value={group} onChange={(e, v) => setGroup(v)} variant="scrollable" allowScrollButtonsMobile sx={{ mb: 2.5,  }}>

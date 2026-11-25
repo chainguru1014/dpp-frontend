@@ -140,7 +140,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField
           select
-          label="Brand"
+          label="Company"
           required
           value={selectedCompanyId}
           onChange={(e) => setSelectedCompanyId(e.target.value)}
@@ -362,7 +362,7 @@ const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restri
         ),
     },
     ...(showCompanyColumn
-      ? [{ field: 'companyName', headerName: 'Brand', width: 160, valueGetter: (p) => p.row.companyName || '—' }]
+      ? [{ field: 'companyName', headerName: 'Company', width: 160, valueGetter: (p) => p.row.companyName || '—' }]
       : []),
     { field: 'emailDomain', headerName: 'Domain', width: 140 },
     {
@@ -424,7 +424,7 @@ const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restri
       )}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mb: 2, alignItems: 'center' }}>
         <TextField
-          placeholder={showCompanyColumn ? 'Search by name, email, domain or brand' : 'Search by name, email or domain'}
+          placeholder={showCompanyColumn ? 'Search by name, email, domain or company' : 'Search by name, email or domain'}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           inputProps={{ 'aria-label': 'Search employees' }}

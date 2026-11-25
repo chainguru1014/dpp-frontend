@@ -40,7 +40,7 @@ export function BrandPickerGrid({ options = [], selectedId, onPick, title = 'Cho
       </Box>
       {shown.length === 0 ? (
         <Box sx={{ bgcolor: '#fff', borderRadius: 3, border: '1px dashed', borderColor: 'divider', p: 4, textAlign: 'center' }}>
-          <Typography color="text.secondary">{options.length ? 'No brand matches your search.' : 'No brands yet. Add one on the Brands page.'}</Typography>
+          <Typography color="text.secondary">{options.length ? 'No brand matches your search.' : 'No brands yet. Add a company on the Companies page.'}</Typography>
         </Box>
       ) : (
         <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' } }}>

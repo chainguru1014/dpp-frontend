@@ -139,8 +139,8 @@ export const registerCompany = async (data) => {
     try {
         const res = await axios.post(`${Backend_URL}company`, data);
         if (res.data.status === 'success') {
-            if (res.data.warning) notify(`Brand added. ${res.data.warning}`, 'warning');
-            else notifySuccess('Brand added. Its Supervisor gets an email to sign in.');
+            if (res.data.warning) notify(`Company added. ${res.data.warning}`, 'warning');
+            else notifySuccess('Company added. Its Supervisor gets an email to sign in.');
             // Return the company document from response
             return res.data.data.doc || res.data.data;
         } else {

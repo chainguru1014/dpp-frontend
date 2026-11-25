@@ -25,7 +25,9 @@ const emptyStep = () => ({ entity: '', type: 'general' });
 // The steps card has its own bar on top: how many steps and whether they are
 // saved, then Undo, Add step and Save — the buttons are always in the same
 // place, above the list, however long it gets.
-const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId = '' }) => {
+// embedded: shown inside the Brand profile page for one company (no page
+// title, no brand picker) — the Workflows menu item was removed 2026-11-25.
+const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId = '', embedded = false }) => {
   const [companyId, setCompanyId] = useState(initialCompanyId);
   const [picking, setPicking] = useState(false);
   const [brandOptions, setBrandOptions] = useState([]);
@@ -38,7 +40,7 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
 
   // Super admin: the brand companies to choose from.
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!isAdmin || embedded) return;
     Promise.all([getAdminUserData(), listBrands(token)]).then(([data, res]) => {
       const brandByCompany = new Map();
       (res?.brands || []).forEach((b) => { if (!brandByCompany.has(String(b.company_id))) brandByCompany.set(String(b.company_id), b); });
@@ -89,7 +91,7 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
   }, [dirty]);
 
   const pickBrand = async (id) => {
-    if (id !== companyId && dirty && !(await confirmAction({ title: 'Discard your changes?', message: 'This brand’s workflows have changes that are not saved yet.', confirmText: 'Discard changes', cancelText: 'Keep editing', danger: true }))) return;
+    if (id !== companyId && dirty && !(await confirmAction({ title: 'Discard your changes?', message: 'This company’s workflows have changes that are not saved yet.', confirmText: 'Discard changes', cancelText: 'Keep editing', danger: true }))) return;
     setPicking(false);
     setCompanyId(id);
   };
@@ -141,22 +143,24 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
   };
 
   const chosen = brandOptions.find((o) => o.id === companyId);
-  const showPicker = isAdmin && (!companyId || picking);
+  const showPicker = !embedded && isAdmin && (!companyId || picking);
+  // Embedded: follows the company the Brand page shows.
+  useEffect(() => { if (embedded) setCompanyId(initialCompanyId); }, [embedded, initialCompanyId]);
 
   return (
     <Box>
-      <PageHeader
+      {!embedded && <PageHeader
         title="Workflows"
         description={isAdmin
-          ? 'The steps a brand’s staff choose from when they open the app. Choose a brand, then add, order and name its steps.'
+          ? 'The steps a company’s staff choose from when they open the app. Choose a company, then add, order and name its steps.'
           : 'The steps your staff choose from when they open the app (Select workflow).'}
-      />
+      />}
 
       {showPicker ? (
         <BrandPickerGrid options={brandOptions} selectedId={companyId} onPick={pickBrand} title="Whose workflows?" />
       ) : (
         <>
-          {isAdmin && <BrandBar option={chosen || { name: 'Brand' }} onChange={() => setPicking(true)} />}
+          {isAdmin && !embedded && <BrandBar option={chosen || { name: 'Brand' }} onChange={() => setPicking(true)} />}
 
           {!!error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

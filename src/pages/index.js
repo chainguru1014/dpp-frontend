@@ -88,7 +88,6 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import StorefrontIcon from '@mui/icons-material/Storefront';
-import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import Webcam from 'react-webcam';
 import io from 'socket.io-client';
 
@@ -248,7 +247,7 @@ const NAV_LABELS = {
   dashboard: 'Dashboard', products: 'Products', generateCode: 'Generate Code', captureHistory: 'Work Records',
   shipmentInspection: 'Shipments', rfidScan: 'RFID Scan', history: 'Scans & Security', lca: 'Sustainability',
   serviceRequests: 'Service Requests', recommendations: 'Shopper Preview', notifications: 'Announcements',
-  companies: 'Brands', processSteps: 'Workflows', employeeAuditLog: 'Employees', users: 'App Users', brand: 'Brand profile',
+  companies: 'Companies', processSteps: 'Workflows', employeeAuditLog: 'Employees', users: 'App Users', brand: 'Brand profile',
 };
 const MOBILE_NAV_WIDTH = 260;
 
@@ -2094,7 +2093,7 @@ const InnerPage = () => {
         // Brands (super admin) / Brand profile (a brand): with the products
         // (client request, 2026-11-23).
         isAdmin
-          ? ['companies', 'Brands', StorefrontIcon, !isEmployeeActor]
+          ? ['companies', 'Companies', StorefrontIcon, !isEmployeeActor]
           : ['brand', 'Brand profile', PaletteIcon, canSeeItemSearch],
         ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
       ],
@@ -2132,15 +2131,13 @@ const InnerPage = () => {
       key: 'platform',
       title: 'Platform',
       items: [
-        ['processSteps', 'Workflows', AccountTreeIcon, true],
         ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
         ['users', 'App Users', PersonIcon, !isEmployeeActor],
       ],
     } : {
       key: 'brand',
-      title: 'Your brand',
+      title: 'Your company',
       items: [
-        ['processSteps', 'Workflows', AccountTreeIcon, isCompanyAccount || isSupervisor],
         ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
       ],
     },
@@ -2455,6 +2452,7 @@ const InnerPage = () => {
               onOpenProducts={isAdmin ? () => go('products') : undefined}
               onOpenEmployees={canSeeStaffManagement ? () => go('employeeAuditLog') : undefined}
               onBrandsChanged={setBrands}
+              canManageWorkflows={isAdmin || isCompanyAccount || isSupervisor}
             />
           )}
 
@@ -2645,7 +2643,7 @@ const InnerPage = () => {
                       </ButtonGroup>
                     )}
                     {isAdmin && (
-                      <Tooltip title="The item categories every brand chooses from">
+                      <Tooltip title="The item categories every company chooses from">
                         <Button variant="outlined" startIcon={<CategoryIcon />} onClick={() => setOpenManageCategories('page')} sx={{ height: 44, bgcolor: 'background.paper' }}>
                           Categories
                         </Button>

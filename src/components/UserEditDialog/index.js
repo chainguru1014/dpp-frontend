@@ -51,7 +51,7 @@ const UserEditDialog = ({ user, onChange, onClose, onSave }) => {
               fullWidth
             />
             <TextField
-              label={isCompany ? 'Company admin email' : 'Email'}
+              label={isCompany ? 'Supervisor email' : 'Email'}
               type="email"
               value={user.email || ''}
               onChange={(e) => onChange({ ...user, email: e.target.value })}
@@ -86,7 +86,7 @@ const UserEditDialog = ({ user, onChange, onClose, onSave }) => {
                   fullWidth
                 />
                 <TextField
-                  label="Company domain"
+                  label="Staff email domain"
                   placeholder="e.g. hm.com, hm.co.jp"
                   helperText="Employee emails must end with this domain. Separate several domains with commas."
                   value={(user.allowedEmailDomains || []).join(', ')}

@@ -109,7 +109,7 @@ const DashboardPage = ({
           onManageProducts={onNavigateToProducts}
           onGenerateCodes={onNavigateToGenerateCode}
           onManageStaff={canSeeStaffManagement ? () => onNavigate('employeeAuditLog') : undefined}
-          onManageWorkerSteps={canEditProcessSteps ? () => onNavigate('processSteps') : undefined}
+          onManageWorkerSteps={canEditProcessSteps ? () => onNavigate('brand') : undefined}
           onAnalyzeProduct={onAnalyzeProduct}
         />
       )}

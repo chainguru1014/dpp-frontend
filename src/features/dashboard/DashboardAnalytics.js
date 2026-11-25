@@ -327,7 +327,7 @@ const COUNTRY_CODES = (() => {
       }
     }
   } catch (e) { /* no Intl: names stay as they are */ }
-  Object.assign(map, { usa: 'US', 'united states of america': 'US', uk: 'GB', 'great britain': 'GB', uae: 'AE', 'south korea': 'KR', korea: 'KR', russia: 'RU', vietnam: 'VN', 'czech republic': 'CZ', turkey: 'TR' });
+  Object.assign(map, { 'hong kong': 'HK', macau: 'MO', macao: 'MO', taiwan: 'TW', usa: 'US', 'united states of america': 'US', uk: 'GB', 'great britain': 'GB', uae: 'AE', 'south korea': 'KR', korea: 'KR', russia: 'RU', vietnam: 'VN', 'czech republic': 'CZ', turkey: 'TR' });
   return map;
 })();
 const countryCode = (name) => COUNTRY_CODES[String(name || '').trim().toLowerCase()] || name;
@@ -420,8 +420,8 @@ export default function DashboardAnalytics({
     ];
 
   const set = (k) => (e) => setFilters((f) => ({ ...f, [k]: e.target.value }));
-  const sel = (label, k, options, all, render = (x) => x) => (
-    <TextField select size="small" label={label} value={filters[k]} onChange={set(k)} sx={{ minWidth: 120, flex: 1 }}>
+  const sel = (label, k, options, all, render = (x) => x, minWidth = 120) => (
+    <TextField select size="small" label={label} value={filters[k]} onChange={set(k)} sx={{ minWidth, flex: 1 }}>
       <MenuItem value="">{all}</MenuItem>
       {options.map((o) => <MenuItem key={o} value={o}>{render(o)}</MenuItem>)}
     </TextField>
@@ -436,7 +436,7 @@ export default function DashboardAnalytics({
       <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={filters.date_to} onChange={set('date_to')} sx={{ width: 150, flexShrink: 0 }} />
       {sel('Item Category', 'item_category', a.filterOptions?.itemCategories || [], 'All', (k) => categoryLabels[k] || k)}
       {sel('Origin Location', 'origin_country', a.filterOptions?.originCountries || [], 'All')}
-      {sel('Destination Country', 'destination_country', a.filterOptions?.destinationCountries || [], 'All')}
+      {sel('Destination Country', 'destination_country', a.filterOptions?.destinationCountries || [], 'All', undefined, 175)}
       {sel('City', 'city', a.filterOptions?.cities || [], 'All')}
       <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
         <Button variant="contained" onClick={() => setAppliedFilters(filters)} sx={{ minWidth: 88 }}>Apply</Button>

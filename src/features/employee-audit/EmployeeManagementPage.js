@@ -23,7 +23,7 @@ const EmployeeManagementPage = ({ token, isAdmin, companyId }) => {
         title="Employees"
         description={isAdmin
           ? 'Employee accounts for every company.'
-          : 'The people who can sign in for your brand.'}
+          : 'The people who can sign in for your company.'}
         actions={(
           <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => { setTab('roster'); setInviteSignal((n) => n + 1); }}>
             Invite employee
