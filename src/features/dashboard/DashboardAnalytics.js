@@ -414,7 +414,9 @@ export default function DashboardAnalytics({
       { key: 'scans', icon: QrCodeScannerIcon, label: 'Total Scans', value: t.scans ?? 0, delta: t.deltas?.scans, onClick: onNavigateToScanHistory },
       { key: 'items', icon: CheckroomIcon, label: 'Unique Items', value: t.uniqueItems ?? 0, delta: t.deltas?.uniqueItems, onClick: onNavigateToGenerateCode },
       { key: 'skus', icon: SellIcon, label: 'Unique SKUs', value: t.uniqueSkus ?? 0, delta: t.deltas?.uniqueSkus, onClick: onNavigateToProducts },
-      { key: 'stores', icon: StorefrontIcon, label: 'Retail Stores', value: t.retailStores ?? 0, delta: t.deltas?.retailStores },
+      // No 30-day-old store count to compare with yet: a short line instead
+      // (the same green note as Countries / Data Integrity).
+      { key: 'stores', icon: StorefrontIcon, label: 'Retail Stores', value: t.retailStores ?? 0, delta: t.deltas?.retailStores, sub: t.deltas?.retailStores == null ? 'Stores with scans' : undefined },
       { key: 'countries', icon: PublicIcon, label: 'Countries', value: t.countries ?? 0, sub: 'Where scanned' },
       { key: 'integrity', icon: VerifiedUserOutlinedIcon, label: 'Data Integrity', value: `${t.dataIntegrity ?? 100}%`, sub: 'Verified' },
     ];

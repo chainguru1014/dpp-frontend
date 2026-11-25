@@ -36,6 +36,10 @@ const hm = (d) => {
   return Number.isNaN(x.getTime()) ? '' : `${String(x.getHours()).padStart(2, '0')}:${String(x.getMinutes()).padStart(2, '0')}`;
 };
 
+// The ownership-transfer list under the product is hidden (client request
+// 2026-11-25); set to true to show it again.
+const SHOW_TRANSFERS = false;
+
 export default function ProductShowcase({ product, onEdit, onPreview, onCodes, onRemove, onChange }) {
   const images = useMemo(() => (Array.isArray(product?.images) ? product.images.filter(Boolean) : []), [product]);
   const [start, setStart] = useState(0);
@@ -60,7 +64,7 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
   const [method, setMethod] = useState('');
   const [q, setQ] = useState('');
   const load = async () => {
-    if (!product?._id) return;
+    if (!SHOW_TRANSFERS || !product?._id) return;
     setRows(null);
     const res = await getProductTransfers(product._id);
     setRows(res?.data || []);
@@ -142,6 +146,7 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
         </Box>
       </Paper>
 
+      {SHOW_TRANSFERS && (<>
       {/* The filters on one line. */}
       <Paper sx={{ p: 1.5, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: { xs: 'wrap', lg: 'nowrap' } }}>
         <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={from} onChange={(e) => setFrom(e.target.value)} sx={{ width: 160, flexShrink: 0 }} />
@@ -188,6 +193,7 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
           </TableBody>
         </Table>
       </Paper>
+      </>)}
     </Box>
   );
 }
