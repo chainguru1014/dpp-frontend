@@ -145,7 +145,7 @@ const AdminUsersPage = () => {
       <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
         <TextField
           placeholder="Search by name, email, country or phone"
-          inputProps={{ 'aria-label': 'Search app users' }}
+          inputProps={{ 'aria-label': 'Search shopper accounts' }}
           value={usernameFilter}
           onChange={(e) => setUsernameFilter(e.target.value)}
           sx={{ flex: '1 1 300px', maxWidth: 460, bgcolor: 'background.paper', borderRadius: 2 }}

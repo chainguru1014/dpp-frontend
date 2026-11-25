@@ -18,7 +18,7 @@ const PAGE_HELP = {
     appUser: 'The products you own. Click one to see its details and its ownership history.',
   },
   brand: {
-    title: 'Company profile',
+    title: 'Company Profile',
     text: 'Your company on Yometel. “Brand” is what shoppers see on every product: the name, tagline, description, website, logo and cover photo; a change reaches every product page when you save. “Company account” shows your industry, Supervisor email and staff email domain (Yometel sets those). The buttons at the top open your Workflows (the steps your staff choose from in the app, for example “Receiving: Tokyo DC”) and your Employees.',
     admin: 'One company. “Brand” is what its shoppers see on every product: the name, tagline, description, website, logo and cover photo. “Company account” is its industry, Supervisor email and staff email domain. The buttons at the top open its Products, Workflows and Employees; “Change company” goes back to all companies.',
   },
@@ -70,7 +70,7 @@ const PAGE_HELP = {
   },
   processSteps: {
     title: 'Workflows',
-    text: 'The steps staff choose from when they open the app (Select workflow), for example “Receiving: Tokyo DC”. Each has a place and a step type; you can have 1 to 18, in the order shown. Open them with the Workflows button on the Company profile page (the Yometel admin opens the company on Companies first).',
+    text: 'The steps staff choose from when they open the app (Select workflow), for example “Receiving: Tokyo DC”. Each has a place and a step type; you can have 1 to 18, in the order shown. Open them with the Workflows button on the Company Profile page (the Yometel admin opens the company on Companies first).',
   },
   shipmentInspection: {
     title: 'Shipments',
@@ -81,7 +81,7 @@ const PAGE_HELP = {
     text: 'Read RFID tags with a reader connected to this computer. Each tag read shows the product it belongs to. Only in the desktop app.',
   },
   users: {
-    title: 'App Users',
+    title: 'Shopper Accounts',
     text: 'People who use the Yometel DPP shopper app. Search for someone to correct their details or remove their account.',
   },
   notifications: {

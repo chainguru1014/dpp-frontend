@@ -277,7 +277,7 @@ export default function BrandPage({
   return (
     <Box>
       <PageHeader
-        title={isAdmin ? 'Company' : 'Company profile'}
+        title={isAdmin ? 'Company' : 'Company Profile'}
         description={isAdmin
           ? 'A company on Yometel: its brand (what shoppers see), its account details, workflows and team.'
           : 'Your company on Yometel: your brand (what shoppers see), your account details, workflows and team.'}

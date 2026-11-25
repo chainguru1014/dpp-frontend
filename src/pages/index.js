@@ -247,7 +247,7 @@ const NAV_LABELS = {
   dashboard: 'Dashboard', products: 'Products', generateCode: 'Generate Code', captureHistory: 'Work Records',
   shipmentInspection: 'Shipments', rfidScan: 'RFID Scan', history: 'Scans & Security', lca: 'Sustainability',
   serviceRequests: 'Service Requests', recommendations: 'Shopper Preview', notifications: 'Announcements',
-  companies: 'Companies', processSteps: 'Workflows', employeeAuditLog: 'Employees', users: 'App Users', brand: 'Company profile',
+  companies: 'Companies', processSteps: 'Workflows', employeeAuditLog: 'Employees', users: 'Shopper Accounts', brand: 'Company Profile',
 };
 const MOBILE_NAV_WIDTH = 260;
 
@@ -2059,9 +2059,8 @@ const InnerPage = () => {
     '& .nav-sub .MuiListItemIcon-root .MuiSvgIcon-root': { fontSize: 22 },
   };
 
-  // Menu: Dashboard, then sections named after the work, always open (no
-  // folding), in the order of the work: products and codes, daily work,
-  // results, shoppers, then the rarely used set-up last. Working employees
+  // Menu: Dashboard, then sections, always open (no folding): Products,
+  // Shoppers, Insights, Daily work, then Platform / Your company last. Working employees
   // and shoppers get a plain list. Notifications live on the bell.
   // Each entry: [page, label, Icon, visible, alsoActiveOn?].
   const flatMenu = isWorkingEmployee || isAppUser;
@@ -2080,31 +2079,29 @@ const InnerPage = () => {
         ['dashboard', 'Dashboard', DashboardIcon, true],
         ['products', 'Products', Inventory2Icon, true],
         ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
-        ['captureHistory', 'My work records', AssessmentIcon, canSeeCaptureHistory],
+        ['captureHistory', 'My Work Records', AssessmentIcon, canSeeCaptureHistory],
         ['rfidScan', 'RFID Scan', RfidIcon, canSeeRfidScan],
       ],
     },
   ] : [
     { title: null, items: [['dashboard', 'Dashboard', DashboardIcon, true]] },
+    // Order (client 2026-11-25): Products, Shoppers, Insights, Daily work,
+    // then Platform (super admin) / Your company.
     {
       key: 'products',
       title: 'Products',
       items: [
         ['products', 'Products', Inventory2Icon, true],
-        // Generate Code right after Products (client request 2026-11-25).
         ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
-        // Companies (super admin); a company's own profile is under Your company.
-        ['companies', 'Companies', StorefrontIcon, isAdmin && !isEmployeeActor, ['brand']],
       ],
     },
     {
-      key: 'daily',
-      title: 'Daily work',
+      key: 'shoppers',
+      title: 'Shoppers',
       items: [
-        ['captureHistory', 'Work Records', AssessmentIcon, canSeeCaptureHistory],
-        ['shipmentInspection', 'Shipments', LocalShippingIcon, canSeeShipmentInspection],
-        // Only in the desktop app (Windows, Mac or Linux): a web browser can't reach the reader.
-        ['rfidScan', 'RFID Scan', RfidIcon, canSeeRfidScan],
+        // What the company's shoppers get, as a preview, and what they ask for.
+        ['recommendations', 'Shopper Preview', AutoAwesomeIcon, true, ['chat']],
+        ['serviceRequests', 'Service Requests', HandymanIcon, canSeeItemSearch],
       ],
     },
     {
@@ -2117,27 +2114,31 @@ const InnerPage = () => {
       ],
     },
     {
-      key: 'shoppers',
-      title: 'Shoppers',
+      key: 'daily',
+      title: 'Daily work',
       items: [
-        ['serviceRequests', 'Service Requests', HandymanIcon, canSeeItemSearch],
-        // For a brand these two are previews of what its shoppers get.
-        ['recommendations', 'Shopper Preview', AutoAwesomeIcon, true, ['chat']],
-        ['notifications', 'Announcements', CampaignIcon, isAdmin],
+        ['captureHistory', 'Work Records', AssessmentIcon, canSeeCaptureHistory],
+        ['shipmentInspection', 'Shipments', LocalShippingIcon, canSeeShipmentInspection],
+        // Only in the desktop app (Windows, Mac or Linux): a web browser can't reach the reader.
+        ['rfidScan', 'RFID Scan', RfidIcon, canSeeRfidScan],
       ],
     },
     isAdmin ? {
       key: 'platform',
       title: 'Platform',
       items: [
+        // Running Yometel: the companies, their employees, shoppers' accounts
+        // and announcements to everyone.
+        ['companies', 'Companies', StorefrontIcon, !isEmployeeActor, ['brand']],
         ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
-        ['users', 'App Users', PersonIcon, !isEmployeeActor],
+        ['users', 'Shopper Accounts', PersonIcon, !isEmployeeActor],
+        ['notifications', 'Announcements', CampaignIcon, true],
       ],
     } : {
       key: 'brand',
       title: 'Your company',
       items: [
-        ['brand', 'Company profile', StorefrontIcon, canSeeItemSearch],
+        ['brand', 'Company Profile', StorefrontIcon, canSeeItemSearch],
         ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
       ],
     },
@@ -2492,7 +2493,7 @@ const InnerPage = () => {
           {activePage === 'users' && isAdmin && (
             <Box>
               <PageHeader
-                title="App Users"
+                title="Shopper Accounts"
                 description="People who use the Yometel DPP shopper app."
               />
               <Box>
@@ -3144,7 +3145,7 @@ const InnerPage = () => {
                                 {formBrand?.tagline ? <Typography component="span" color="text.secondary">{` · ${formBrand.tagline}`}</Typography> : null}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
-                                Brand name, logo, website and page design come from {isAdmin ? 'the company’s profile' : 'your Company profile'}.
+                                Brand name, logo, website and page design come from {isAdmin ? 'the company’s profile' : 'your Company Profile'}.
                               </Typography>
                             </>
                           )}
@@ -3159,7 +3160,7 @@ const InnerPage = () => {
                               }
                             }}
                           >
-                            {isAdmin ? 'Open company ›' : 'Company profile ›'}
+                            {isAdmin ? 'Open company ›' : 'Company Profile ›'}
                           </Button>
                         )}
                       </Box>

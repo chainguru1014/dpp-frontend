@@ -130,7 +130,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
     return (
       <Box>
         <PageHeader
-          title={selfEmployee ? 'My work records' : 'Work records'}
+          title={selfEmployee ? 'My Work Records' : 'Work Records'}
           description={selfEmployee
             ? 'Work steps you recorded with the mobile app.'
             : 'Work steps your employees recorded with the mobile app, per person.'}
@@ -166,7 +166,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
   return (
     <Box>
       <PageHeader
-        title={selfOnly ? 'My work records' : 'Work records'}
+        title={selfOnly ? 'My Work Records' : 'Work Records'}
         description={selfOnly
           ? 'Work steps you recorded with the mobile app.'
           : 'Work steps your employees recorded with the mobile app, per person.'}
