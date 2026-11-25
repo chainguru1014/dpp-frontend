@@ -2732,9 +2732,16 @@ const InnerPage = () => {
               </Box>
               {selectedProduct && products.some((p) => p._id === selectedProduct._id) && (
                 <Box ref={productCardRef} sx={{ scrollMarginTop: 16 }}>
-                  <ProductShowcase
+                  {/* The chosen product in one bar on top (as on Generate
+                      Code), with "Change product"; the card below has no
+                      button of its own (client request 2026-11-25). */}
+                  <ProductBar
                     product={products.find((p) => p._id === selectedProduct._id) || selectedProduct}
                     onChange={() => setSelectedProduct(null)}
+                    right={<Typography color="text.secondary">{(Number((products.find((p) => p._id === selectedProduct._id) || selectedProduct).total_minted_amount) || 0).toLocaleString()} codes</Typography>}
+                  />
+                  <ProductShowcase
+                    product={products.find((p) => p._id === selectedProduct._id) || selectedProduct}
                     onPreview={() => setOpenPreviewModal(true)}
                     onCodes={isAppUser ? undefined : () => {
                       keepGenerateSelectionRef.current = true;
