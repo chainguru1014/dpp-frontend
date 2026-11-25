@@ -18,8 +18,9 @@ const PAGE_HELP = {
     appUser: 'The products you own. Click one to see its details and its ownership history.',
   },
   brand: {
-    title: 'Brand profile',
-    text: 'Your brand, set once for all your products. “Profile” is the name, tagline, description, website, logo and cover photo; every product page shows them, and a change reaches all of them when you save. “Product page design” is how your product pages look in the app, with a live preview. “Team and sign-in” shows your company’s Supervisor email and staff email domain (Yometel sets those). “Workflows” are the steps your staff choose from in the app, for example “Receiving: Tokyo DC”.',
+    title: 'Company profile',
+    text: 'Your company on Yometel. “Brand” is what shoppers see on every product: the name, tagline, description, website, logo and cover photo; a change reaches every product page when you save. “Company account” shows your industry, Supervisor email and staff email domain (Yometel sets those). The buttons at the top open your Workflows (the steps your staff choose from in the app, for example “Receiving: Tokyo DC”) and your Employees.',
+    admin: 'One company. “Brand” is what its shoppers see on every product: the name, tagline, description, website, logo and cover photo. “Company account” is its industry, Supervisor email and staff email domain. The buttons at the top open its Products, Workflows and Employees; “Change company” goes back to all companies.',
   },
   newProduct: {
     title: 'Product window',
@@ -60,15 +61,16 @@ const PAGE_HELP = {
   },
   companies: {
     title: 'Companies',
-    text: 'Every company on Yometel. Each company has one brand, the name and look its shoppers see. “Add company” creates the company, its brand and its Supervisor account for the email you enter; the Supervisor then finishes the brand profile. Open a company to change its brand profile, sign-in details and workflows.',
+    text: 'Every company on Yometel, as cards. Each company has one brand: the name and look its shoppers see. “Add company” creates the company, its brand and its Supervisor account for the email you enter; the Supervisor then finishes the brand. Click a company to change its brand and account, and to open its workflows and employees.',
   },
   employeeAuditLog: {
     title: 'Employees',
     text: 'The people who can sign in for your company. Add someone with their work email; they sign in to the mobile app with a code sent to that address. "Sign-in history" shows who signed in and when.',
+    admin: 'Choose a company to see the people who can sign in for it. Add someone with their work email; they sign in to the mobile app with a code sent to that address. "Sign-in history" shows who signed in and when. "Change company" shows another company.',
   },
   processSteps: {
     title: 'Workflows',
-    text: 'The steps staff choose from when they open the app (Select workflow), for example “Receiving: Tokyo DC”. Each has a place and a step type; you can have 1 to 18, in the order shown. They are set on the Brand profile page; the Yometel admin opens the company first.',
+    text: 'The steps staff choose from when they open the app (Select workflow), for example “Receiving: Tokyo DC”. Each has a place and a step type; you can have 1 to 18, in the order shown. Open them with the Workflows button on the Company profile page (the Yometel admin opens the company on Companies first).',
   },
   shipmentInspection: {
     title: 'Shipments',
@@ -91,13 +93,13 @@ const PAGE_HELP = {
     text: 'Messages for you, such as ownership transfer requests. New ones are marked NEW; click one to open it.',
   },
   recommendations: {
-    title: 'Shopper Preview: recommendations',
-    text: 'How your products are suggested to shoppers, based on what they scan and like.',
+    title: 'Shopper Preview',
+    text: 'What your shoppers get, on one page. Type or say what a shopper wants (“A warm coat under €700”), or tap the choices: the picks below update at once, each with its match and why. Questions (“What is it made of?”) are answered by the product assistant in the same place.',
     appUser: 'Products picked for you, based on what you scan and like.',
   },
   chat: {
-    title: 'Shopper Preview: chat',
-    text: 'The product assistant your shoppers use. Ask it about a product’s materials, care or origin to see what they would be told. Answers come from an AI assistant.',
+    title: 'Shopper Preview',
+    text: 'What your shoppers get, on one page. Type or say what a shopper wants, or tap the choices: the picks update at once. Questions are answered by the product assistant in the same place.',
     appUser: 'Ask about a product: materials, care, where it was made, or where to buy. Answers come from an AI assistant.',
   },
   profile: {
@@ -109,11 +111,11 @@ const PAGE_HELP = {
 // The Help button in the top bar (it used to float over the bottom right
 // corner, where it covered buttons such as Save). Opens a short explanation
 // of the page you are on.
-export default function PageHelp({ page, isAppUser = false }) {
+export default function PageHelp({ page, isAppUser = false, isAdmin = false }) {
   const [anchor, setAnchor] = useState(null);
   const entry = PAGE_HELP[page];
   if (!entry) return null;
-  const text = (isAppUser && entry.appUser) || entry.text;
+  const text = (isAppUser && entry.appUser) || (isAdmin && entry.admin) || entry.text;
 
   return (
     <>

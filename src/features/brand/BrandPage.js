@@ -1,9 +1,11 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, CircularProgress, Grid, MenuItem, Stack, Tab, Tabs, TextField, Typography, LinearProgress,
+  Alert, Box, Button, CircularProgress, Dialog, DialogContent, DialogTitle, Grid, IconButton, MenuItem, Stack, TextField, Typography, LinearProgress,
 } from '@mui/material';
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import CloseIcon from '@mui/icons-material/Close';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SaveIcon from '@mui/icons-material/Save';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
@@ -12,8 +14,8 @@ import CoverCropDialog from '../../components/CoverCropDialog';
 import PageHeader from '../../components/PageHeader';
 import Loader from '../../components/Loader';
 import DppThemeEditor from '../products/DppThemeEditor';
-import { getAdminUserData, getFileUrl, listBrands, updateBrandById, updateCompany, uploadFile } from '../../helper';
-import { notifyError, notifySuccess } from '../../utils/feedbackBus';
+import { getAdminUserData, getFileUrl, listBrands, removeCompany, updateBrandById, updateCompany, uploadFile } from '../../helper';
+import { confirmAction, notifyError, notifySuccess } from '../../utils/feedbackBus';
 import { normalizeDppTheme } from '../../utils/dppTheme';
 import { COMPANY_TYPES, companyTypeLabel } from '../../constants/companyTypes';
 import { BrandMark, profilePercent } from '../admin/CompanyManagementSection';
@@ -61,7 +63,7 @@ export default function BrandPage({
   const [companies, setCompanies] = useState([]);
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('profile');
+  const tab = 'profile';
   const [details, setDetails] = useState(detailsOf(null));
   const [theme, setTheme] = useState(() => normalizeDppTheme(null));
   const [signIn, setSignIn] = useState({ email: '', allowedEmailDomains: '', companyType: '' });
@@ -69,6 +71,7 @@ export default function BrandPage({
   const [uploading, setUploading] = useState('');
   const [showErrors, setShowErrors] = useState(false);
   const [previewId, setPreviewId] = useState('');
+  const [workflowsOpen, setWorkflowsOpen] = useState(false);
 
   // The brand shown: the chosen company's (super admin) or the account's own.
   const brand = useMemo(() => {
@@ -95,10 +98,6 @@ export default function BrandPage({
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, isAdmin]);
-
-  // Super admin without a chosen brand: the first brand company.
-  // Super admin: choose a brand from the cards (Change brand reopens them).
-  const [picking, setPicking] = useState(false);
 
   useEffect(() => {
     setDetails(detailsOf(brand));
@@ -221,7 +220,7 @@ export default function BrandPage({
         }
         setCompanies((list) => list.map((c) => (c._id === companyRecord._id ? { ...c, email: signIn.email.trim(), allowedEmailDomains: domains, companyType: signIn.companyType } : c)));
       }
-      notifySuccess('Brand profile saved. Every product page shows it now.');
+      notifySuccess('Saved. Every product page shows the changes now.');
     } finally {
       setSaving('');
     }
@@ -238,7 +237,21 @@ export default function BrandPage({
   const previewProduct = brandProducts.find((p) => p._id === previewId) || brandProducts[0] || { ...SAMPLE_PRODUCT, brandInfo: details };
   const percent = profilePercent(details);
 
-  if (loading) return <Loader label="Loading the brand profile…" />;
+  // Super admin: remove the company (its account and staff sign-in).
+  const removeThisCompany = async () => {
+    const sure = await confirmAction({
+      title: `Remove ${details.name || brand?.name || 'this company'}?`,
+      message: 'The company account is removed and its staff can no longer sign in. This cannot be undone.',
+      confirmText: 'Remove company',
+      danger: true,
+    });
+    if (!sure) return;
+    await removeCompany(brand.company_id);
+    notifySuccess('Company removed.');
+    if (onBack) onBack();
+  };
+
+  if (loading) return <Loader label="Loading the company…" />;
 
   // Super admin: brands to choose from (one per brand company).
   const brandOptions = brands
@@ -250,178 +263,166 @@ export default function BrandPage({
       brand: b,
       companyType: companies.find((c) => String(c._id) === String(b.company_id))?.companyType,
     }));
-  const showPicker = isAdmin && (!brand || picking);
 
   return (
     <Box>
-      {isAdmin && onBack && (
-        <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ mb: 1, px: 0 }}>All companies</Button>
-      )}
       <PageHeader
-        title="Brand profile"
-        description={isAdmin ? 'How the company’s brand looks to shoppers, plus its sign-in settings and workflows. Every product of the company uses this brand.' : 'How your brand looks to shoppers, plus your company’s sign-in settings and workflows. Every product you add uses this brand.'}
+        title={isAdmin ? 'Company' : 'Company profile'}
+        description={isAdmin
+          ? 'A company on Yometel: its brand (what shoppers see), its account details, workflows and team.'
+          : 'Your company on Yometel: your brand (what shoppers see), your account details, workflows and team.'}
       />
 
-      {showPicker ? (
+      {isAdmin && !brand ? (
+        // Opened without a company: the same cards as the Companies page.
         <BrandPickerGrid
           options={brandOptions}
-          selectedId={brand ? String(brand.company_id) : ''}
-          onPick={(id) => { setPicking(false); if (onCompanyChange) onCompanyChange(id); }}
+          selectedId=""
+          onPick={(id) => { if (onCompanyChange) onCompanyChange(id); }}
         />
       ) : !brand ? (
-        <Alert severity="info">Your brand profile is being set up. Please reload this page in a moment.</Alert>
+        <Alert severity="info">Your company profile is being set up. Please reload this page in a moment.</Alert>
       ) : (
         <>
-          {/* Only the profile (the product page design tab was removed
-              2026-11-17; the design is set elsewhere). */}
+          {/* The company in one bar (as a chosen product is shown), with
+              everything to do with it: its products, workflows, employees,
+              Change company and Remove company. */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', p: 1.75, mb: 2.5, bgcolor: '#fff', border: '1px solid #dfe5ec', borderRadius: 4, boxShadow: '0 8px 24px rgba(31,51,97,0.08)' }}>
+            <BrandMark brand={details} name={brand.name} size={56} />
+            <Box sx={{ flex: '1 1 220px', minWidth: 0 }}>
+              <Typography noWrap sx={{ fontSize: 20, fontWeight: 400, color: '#16324a' }}>{details.name || brand.name}</Typography>
+              <Typography noWrap color="text.secondary">
+                {[companyRecord?.companyType ? companyTypeLabel(companyRecord.companyType) : '', `${brandProducts.length} ${brandProducts.length === 1 ? 'product' : 'products'}`].filter((v) => v && v !== '—').join(' · ')}
+              </Typography>
+            </Box>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mr: 1 }}>
+              <Typography variant="body2" color="text.secondary">Profile</Typography>
+              <LinearProgress variant="determinate" value={percent} sx={{ width: 90, height: 8, borderRadius: 4 }} color={percent >= 100 ? 'success' : 'warning'} aria-label={`Profile ${percent}% complete`} />
+              <Typography variant="body2">{percent}%</Typography>
+            </Stack>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {isAdmin && onOpenProducts && (
+                <Button variant="outlined" startIcon={<Inventory2Icon />} onClick={() => onOpenProducts(brand.company_id)}>Products</Button>
+              )}
+              {canManageWorkflows && (
+                <Button variant="outlined" startIcon={<AccountTreeIcon />} onClick={() => setWorkflowsOpen(true)}>Workflows</Button>
+              )}
+              {onOpenEmployees && (
+                <Button variant="outlined" startIcon={<GroupsIcon />} onClick={() => onOpenEmployees(brand.company_id)}>Employees</Button>
+              )}
+              {isAdmin && onBack && (
+                <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={onBack}>Change company</Button>
+              )}
+              {isAdmin && (
+                <Button color="error" startIcon={<DeleteOutlineIcon />} onClick={removeThisCompany}>Remove</Button>
+              )}
+            </Stack>
+          </Box>
 
           {tab === 'profile' && (
-            <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 } }}>
-              {/* The brand: its whole cover photo, logo, name, tagline, how
-                  complete the profile is, Its products and Change brand. */}
-              <Box sx={{
-                position: 'relative', borderRadius: 3, overflow: 'hidden', mb: 3,
-                // The cover photo is the background of the whole card (it is
-                // cut to this shape when uploaded), with a shade at the bottom
-                // so the white text reads.
-                aspectRatio: { md: '5 / 1' }, minHeight: 150, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
-                background: details.coverUrl
-                  ? `linear-gradient(180deg, rgba(10,25,40,0) 30%, rgba(10,25,40,0.78) 100%), url(${getFileUrl(details.coverUrl)}) center/cover no-repeat`
-                  : 'linear-gradient(120deg, #2b3a4d 0%, #4a6a8a 60%, #9fb8d6 100%)',
-              }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 2.5, py: 2, flexWrap: 'wrap', color: '#fff' }}>
-                  <Box sx={{ display: 'flex', lineHeight: 0, flex: 'none', border: '3px solid #fff', borderRadius: '50%', bgcolor: '#fff', boxShadow: 2 }}>
-                    <BrandMark brand={details} name={brand.name} size={68} />
-                  </Box>
-                  <Box sx={{ flex: 1, minWidth: 200 }}>
-                    <Typography sx={{ fontSize: 24, fontWeight: 400, color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{details.name || brand.name}</Typography>
-                    <Typography sx={{ color: 'rgba(255,255,255,0.92)', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-                      {[details.tagline, companyRecord?.companyType ? companyTypeLabel(companyRecord.companyType) : '', `${brandProducts.length} ${brandProducts.length === 1 ? 'product' : 'products'}`].filter((v) => v && v !== '—').join(' · ')}
-                    </Typography>
-                  </Box>
-                  <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap" useFlexGap
-                    sx={{ bgcolor: 'rgba(255,255,255,0.94)', borderRadius: 3, px: 1.5, py: 1, color: '#16324a' }}>
-                    <Typography variant="body2" color="text.secondary">Profile</Typography>
-                    <LinearProgress variant="determinate" value={percent} sx={{ width: 110, height: 8, borderRadius: 4 }} color={percent >= 100 ? 'success' : 'warning'} aria-label={`Profile ${percent}% complete`} />
-                    <Typography sx={{ fontWeight: 400 }}>{percent}%</Typography>
-                    {isAdmin && onOpenProducts && (
-                      <Button variant="outlined" startIcon={<Inventory2Icon />} onClick={() => onOpenProducts(brand.company_id)}>Its products</Button>
-                    )}
-                    {isAdmin && (
-                      <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={() => setPicking(true)}>Change company</Button>
-                    )}
-                    {canEdit && (
-                      <Button variant="contained" component="label" disabled={uploading === 'coverUrl'}>
-                        {uploading === 'coverUrl' ? 'Uploading…' : details.coverUrl ? 'Change cover' : 'Add a cover photo'}
-                        <input type="file" accept="image/*" hidden onChange={(e) => uploadImage('coverUrl', e)} />
-                      </Button>
-                    )}
-                  </Stack>
-                </Box>
-              </Box>
-              {!canEdit && (
-                <Alert severity="info" sx={{ mb: 2.5 }}>Only a Supervisor or the company account can change these.</Alert>
-              )}
-              <Grid container spacing={3}>
-              <Grid item xs={12} lg={6}>
-              <Stack spacing={2.5}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                  <TextField label="Brand name" required fullWidth value={details.name} disabled={!canEdit} onChange={setField('name')}
-                    error={showErrors && !details.name.trim()}
-                    helperText={showErrors && !details.name.trim() ? 'Please enter the brand name.' : undefined} />
-                  {isAdmin ? (
-                    <TextField select label="Industry" fullWidth value={signIn.companyType}
-                      onChange={(e) => setSignIn((s) => ({ ...s, companyType: e.target.value }))}>
-                      {COMPANY_TYPES.map((t) => <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>)}
-                    </TextField>
-                  ) : (
-                    <TextField label="Industry" fullWidth value={companyTypeLabel(companyRecord?.companyType)} disabled helperText="Set by Yometel." />
+            <Grid container spacing={2.5}>
+              {/* 1. The brand: everything shoppers see. */}
+              <Grid item xs={12} lg={7}>
+                <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 }, height: '100%' }}>
+                  <Typography component="h2" sx={{ fontSize: 20, fontWeight: 400, color: '#16324a' }}>Brand</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>What shoppers see on every product of {isAdmin ? 'this company' : 'your company'}.</Typography>
+                  {!canEdit && (
+                    <Alert severity="info" sx={{ mb: 2.5 }}>Only a Supervisor or the company account can change these.</Alert>
                   )}
-                </Stack>
-                <TextField label="Short tagline" fullWidth placeholder="e.g. Maison Européenne" value={details.tagline} disabled={!canEdit} onChange={setField('tagline')}
-                  inputProps={{ maxLength: 120 }}
-                  helperText="A short line under the brand name. Shoppers and staff see it when they scan your products." />
-                <TextField label="About the brand" fullWidth multiline minRows={3} value={details.detail} disabled={!canEdit} onChange={setField('detail')}
-                  helperText="A sentence or two. Shoppers see it on your products." />
-                <TextField label="Website" fullWidth placeholder="https://www.example.com" value={details.websiteUrl} disabled={!canEdit} onChange={setField('websiteUrl')} />
-              </Stack>
-              </Grid>
-              <Grid item xs={12} lg={6}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Logo</Typography>
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      <BrandMark brand={details} name={details.name} size={64} />
-                      {canEdit && (
-                        <Button variant="outlined" component="label" disabled={uploading === 'logoUrl'} sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                          {uploading === 'logoUrl' ? 'Uploading…' : details.logoUrl ? 'Change logo' : 'Upload logo'}
+                  {/* Cover photo, with the logo on it (as on the product pages). */}
+                  <Box sx={{
+                    position: 'relative', borderRadius: 3, overflow: 'hidden', mb: 2.5, aspectRatio: '5 / 1.4', minHeight: 120,
+                    background: details.coverUrl
+                      ? `url(${getFileUrl(details.coverUrl)}) center/cover no-repeat`
+                      : 'linear-gradient(120deg, #2b3a4d 0%, #4a6a8a 60%, #9fb8d6 100%)',
+                  }}
+                  >
+                    <Box sx={{ position: 'absolute', left: 16, bottom: 12, display: 'flex', lineHeight: 0, border: '3px solid #fff', borderRadius: '50%', bgcolor: '#fff', boxShadow: 2 }}>
+                      <BrandMark brand={details} name={details.name || brand.name} size={64} />
+                    </Box>
+                    {canEdit && (
+                      <Stack direction="row" spacing={1} sx={{ position: 'absolute', right: 12, bottom: 12 }}>
+                        <Button size="small" variant="contained" component="label" disabled={uploading === 'logoUrl'}>
+                          {uploading === 'logoUrl' ? 'Uploading…' : details.logoUrl ? 'Change logo' : 'Add a logo'}
                           <input type="file" accept="image/*" hidden onChange={(e) => uploadImage('logoUrl', e)} />
                         </Button>
-                      )}
-                    </Stack>
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>Cover photo</Typography>
-                    <Stack direction="row" spacing={1.5} alignItems="center">
-                      {details.coverUrl && (
-                        <Box component="img" src={getFileUrl(details.coverUrl)} alt="Brand cover"
-                          sx={{ display: 'block', width: 120, height: 64, flex: '0 1 120px', minWidth: 72, objectFit: 'cover', border: '1px solid', borderColor: 'divider', borderRadius: 2 }} />
-                      )}
-                      {canEdit && (
-                        <Button variant="outlined" component="label" disabled={uploading === 'coverUrl'} sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                        <Button size="small" variant="contained" component="label" disabled={uploading === 'coverUrl'}>
                           {uploading === 'coverUrl' ? 'Uploading…' : details.coverUrl ? 'Change cover' : 'Add a cover photo'}
                           <input type="file" accept="image/*" hidden onChange={(e) => uploadImage('coverUrl', e)} />
                         </Button>
-                      )}
-                    </Stack>
-                  </Grid>
-                </Grid>
-              {/* Team and sign-in (was its own tab): who signs in as the
-                  brand's Supervisor and which email domain its staff use. */}
-              <Box sx={{ mt: 3, pt: 2.5, borderTop: '1px solid #e8edf3' }}>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                  <Typography sx={{ fontSize: 18, fontWeight: 400, color: '#16324a', flex: 1 }}>Team and sign-in</Typography>
-                  {onOpenEmployees && (
-                    <Button startIcon={<GroupsIcon />} onClick={() => onOpenEmployees(brand.company_id)}>Open Employees</Button>
-                  )}
-                </Stack>
-                {!isAdmin && (
-                  <Alert severity="info" sx={{ mb: 2.5 }}>Yometel sets these. Ask your Yometel contact to change them.</Alert>
-                )}
-                <Stack spacing={2}>
-                  <TextField label="Supervisor email" fullWidth value={signIn.email} disabled={!isAdmin}
-                    onChange={(e) => setSignIn((s) => ({ ...s, email: e.target.value }))}
-                    helperText="This person signs in as the company’s Supervisor." />
-                  <TextField label="Staff email domain" fullWidth value={signIn.allowedEmailDomains} disabled={!isAdmin}
-                    onChange={(e) => setSignIn((s) => ({ ...s, allowedEmailDomains: e.target.value }))}
-                    helperText={`People with ${signIn.allowedEmailDomains ? `an @${signIn.allowedEmailDomains.split(',')[0].trim()}` : 'this'} email can sign in as staff. Separate several with commas.`} />
-                </Stack>
-              </Box>
+                      </Stack>
+                    )}
+                  </Box>
+                  <Stack spacing={2.25}>
+                    <TextField label="Brand name" required fullWidth value={details.name} disabled={!canEdit} onChange={setField('name')}
+                      error={showErrors && !details.name.trim()}
+                      helperText={showErrors && !details.name.trim() ? 'Please enter the brand name.' : 'The name shoppers see on your products.'} />
+                    <TextField label="Short tagline" fullWidth placeholder="e.g. Maison Européenne" value={details.tagline} disabled={!canEdit} onChange={setField('tagline')}
+                      inputProps={{ maxLength: 120 }}
+                      helperText="A short line under the brand name. Shoppers and staff see it when they scan your products." />
+                    <TextField label="About the brand" fullWidth multiline minRows={3} value={details.detail} disabled={!canEdit} onChange={setField('detail')}
+                      helperText="A sentence or two. Shoppers see it on your products." />
+                    <TextField label="Website" fullWidth placeholder="https://www.example.com" value={details.websiteUrl} disabled={!canEdit} onChange={setField('websiteUrl')} />
+                  </Stack>
+                </Box>
               </Grid>
+
+              {/* 2. The company account: who runs it and who may sign in. */}
+              <Grid item xs={12} lg={5}>
+                <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 }, height: '100%' }}>
+                  <Typography component="h2" sx={{ fontSize: 20, fontWeight: 400, color: '#16324a' }}>Company account</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>Who runs the account and who can sign in as staff.</Typography>
+                  {!isAdmin && (
+                    <Alert severity="info" sx={{ mb: 2.5 }}>Yometel sets these. Ask your Yometel contact to change them.</Alert>
+                  )}
+                  <Stack spacing={2.25}>
+                    {isAdmin ? (
+                      <TextField select label="Industry" fullWidth value={signIn.companyType}
+                        onChange={(e) => setSignIn((s) => ({ ...s, companyType: e.target.value }))}>
+                        {COMPANY_TYPES.map((t) => <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>)}
+                      </TextField>
+                    ) : (
+                      <TextField label="Industry" fullWidth value={companyTypeLabel(companyRecord?.companyType)} disabled />
+                    )}
+                    <TextField label="Supervisor email" fullWidth value={signIn.email} disabled={!isAdmin}
+                      onChange={(e) => setSignIn((s) => ({ ...s, email: e.target.value }))}
+                      helperText="This person signs in as the company’s Supervisor and manages its staff." />
+                    <TextField label="Staff email domain" fullWidth value={signIn.allowedEmailDomains} disabled={!isAdmin}
+                      onChange={(e) => setSignIn((s) => ({ ...s, allowedEmailDomains: e.target.value }))}
+                      helperText={`People with ${signIn.allowedEmailDomains ? `an @${signIn.allowedEmailDomains.split(',')[0].trim()}` : 'this'} email can sign in as staff. Separate several with commas.`} />
+                  </Stack>
+                </Box>
               </Grid>
 
               {(canEdit || isAdmin) && (
-                <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 3, borderTop: '1px solid #e8edf3', pt: 2 }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>Changes reach every product page as soon as you save.</Typography>
-                  {profileDirty && <Button onClick={undoProfile}>Undo changes</Button>}
-                  <Button variant="contained" startIcon={<SaveIcon />} onClick={saveProfile} disabled={saving === 'profile' || !profileDirty}>
-                    {saving === 'profile' ? 'Saving…' : profileDirty ? 'Save changes' : 'Saved'}
-                  </Button>
-                </Stack>
+                <Grid item xs={12}>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, px: 3, py: 1.75 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>Changes reach every product page as soon as you save.</Typography>
+                    {profileDirty && <Button onClick={undoProfile}>Undo changes</Button>}
+                    <Button variant="contained" startIcon={<SaveIcon />} onClick={saveProfile} disabled={saving === 'profile' || !profileDirty}>
+                      {saving === 'profile' ? 'Saving…' : profileDirty ? 'Save changes' : 'Saved'}
+                    </Button>
+                  </Stack>
+                </Grid>
               )}
-            </Box>
+            </Grid>
           )}
 
-          {tab === 'profile' && canManageWorkflows && (
-            <Box sx={{ mt: 3, bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 } }}>
-              <Typography component="h2" sx={{ fontSize: 20, fontWeight: 400, color: '#16324a' }}>Workflows</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
-                The steps {isAdmin ? 'this company’s' : 'your company’s'} staff choose from in the app before they capture items, for example “Receiving: Tokyo DC”.
-              </Typography>
+          {/* Workflows: in a dialog, opened from the company bar. */}
+          <Dialog open={workflowsOpen} onClose={() => setWorkflowsOpen(false)} maxWidth="md" fullWidth>
+            <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ flex: 1 }}>
+                Workflows
+                <Typography variant="body2" color="text.secondary">
+                  The steps {isAdmin ? 'this company’s' : 'your company’s'} staff choose from in the app before they capture items, for example “Receiving: Tokyo DC”.
+                </Typography>
+              </Box>
+              <IconButton onClick={() => setWorkflowsOpen(false)} aria-label="Close"><CloseIcon /></IconButton>
+            </DialogTitle>
+            <DialogContent dividers sx={{ bgcolor: '#f6f8fb' }}>
               <ProcessStepsPage embedded token={token} isAdmin={isAdmin} companyId={String(brand.company_id || companyId || '')} />
-            </Box>
-          )}
+            </DialogContent>
+          </Dialog>
 
           {tab === 'design' && (
             <Grid container spacing={4}>

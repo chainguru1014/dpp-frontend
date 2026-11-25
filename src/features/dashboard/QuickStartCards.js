@@ -93,7 +93,7 @@ function ProductPickerDialog({ open, products, onClose, onPick }) {
           <TextField
             fullWidth
             autoFocus
-            placeholder="Search by product or brand"
+            placeholder="Search by product or company"
             inputProps={{ 'aria-label': 'Search products' }}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -158,8 +158,8 @@ export default function QuickStartCards({
   ].filter(Boolean);
   const organizationOptions = [
     onManageCompanies && { icon: BusinessIcon, title: 'Manage companies', text: 'Add a company or change its details.', onClick: onManageCompanies },
-    onManageStaff && { icon: BadgeIcon, title: 'Manage staff', text: platform ? 'Every company’s employees and who has signed in.' : 'Add people and see who has signed in.', onClick: onManageStaff },
-    onManageWorkerSteps && { icon: FormatListNumberedIcon, title: 'Manage worker app steps', text: 'Set the work steps your employees record in the app.', onClick: onManageWorkerSteps },
+    onManageStaff && { icon: BadgeIcon, title: 'Manage employees', text: platform ? 'Choose a company to see its employees and who has signed in.' : 'Add people and see who has signed in.', onClick: onManageStaff },
+    onManageWorkerSteps && { icon: FormatListNumberedIcon, title: 'Manage workflows', text: 'The steps your employees choose from in the app.', onClick: onManageWorkerSteps },
   ].filter(Boolean);
 
   // One option: no need to ask. Several: ask.
@@ -181,7 +181,7 @@ export default function QuickStartCards({
     organizationOptions.length > 0 && {
       icon: GroupsIcon,
       title: 'Manage organization',
-      text: platform ? 'Companies, their brands and teams' : 'Your team and their work steps',
+      text: platform ? 'Companies, their workflows and employees' : 'Your employees and workflows',
       onClick: openOrGo('organization', organizationOptions),
     },
     onAnalyzeProduct && {

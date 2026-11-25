@@ -1,0 +1,410 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Avatar, Box, Button, CircularProgress, IconButton, TextField, Tooltip, Typography } from '@mui/material';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import MicIcon from '@mui/icons-material/Mic';
+import StopIcon from '@mui/icons-material/Stop';
+import SendIcon from '@mui/icons-material/Send';
+import CloseIcon from '@mui/icons-material/Close';
+import axios from 'axios';
+import { Backend_URL, getFileUrl, getProductsByUser } from '../../helper';
+import { notifyError } from '../../utils/feedbackBus';
+import PageHeader from '../../components/PageHeader';
+import ProductPreviewDialog from '../products/ProductPreviewDialog';
+
+// Shopper Preview (staff and super admin): what shoppers get, on one page.
+// The shopper says what they want in one box (typed, or recorded with the
+// microphone), or taps choices; the picks below update at once, each with a
+// match score and the reason, and questions get an answer from the product
+// assistant in the same place. The choices come from the real catalogue
+// (its categories, colours, materials and prices), so they always fit it.
+
+const cap = (s) => String(s || '').charAt(0).toUpperCase() + String(s || '').slice(1);
+const textOf = (p) => [p.name, p.model, p.detail, p.productType, p.color, p.itemCategory,
+  ...(p.materialSize?.materials || []).map((m) => m.material), p.detailFacts?.material].filter(Boolean).join(' ').toLowerCase();
+const priceText = (p) => (p.price ? new Intl.NumberFormat('en-IE', { style: 'currency', currency: p.currency || 'EUR', maximumFractionDigits: 0 }).format(p.price) : '');
+
+// Colours by family (the catalogue's colour names vary: "Honey beige", "Raw indigo").
+const COLOURS = [
+  ['black', 'Black', /black|charcoal/],
+  ['blue', 'Blue & navy', /blue|navy|indigo/],
+  ['beige', 'Beige & camel', /beige|camel|sand|honey|khaki|tan/],
+  ['white', 'White & cream', /white|cream|ivory|ecru/],
+  ['grey', 'Grey', /gr[ae]y/],
+  ['brown', 'Brown & rust', /brown|rust|chocolate|cognac/],
+  ['green', 'Green', /green|olive|khaki/],
+  ['red', 'Red & pink', /red|burgundy|pink/],
+];
+const MATERIALS = ['wool', 'cashmere', 'cotton', 'linen', 'denim', 'suede', 'leather', 'silk'];
+const STYLES = [
+  ['warm', 'Warm', /wool|cashmere|coat|sweater|knit|scarf|lambswool/],
+  ['light', 'Light', /linen|summer|cotton shirt|t-shirt/],
+  ['casual', 'Casual', /denim|jeans|sweater|shirt|bomber/],
+  ['smart', 'Smart', /blazer|trench|tweed|coat|tailored/],
+];
+const BUDGETS = [[0, 150, 'Under €150'], [150, 400, '€150–400'], [400, 700, '€400–700'], [700, 1e9, '€700+']];
+// Words that say nothing about the product.
+const STOP = new Set(['and', 'the', 'for', 'with', 'from', 'made', 'something', 'want', 'need', 'looking', 'show', 'like', 'some', 'what', 'this', 'that', 'under', 'over', 'less', 'than', 'about', 'euro', 'euros', 'please', 'have', 'does', 'into', 'your', 'mine']);
+
+const EMPTY = { category: [], colour: [], material: [], style: [], budget: [], words: [] };
+
+// The choices, from the products on hand.
+function optionsFrom(products) {
+  const texts = products.map((p) => ({ p, t: textOf(p) }));
+  const cats = [...new Set(products.map((p) => String(p.itemCategory || '').toLowerCase()).filter(Boolean))].sort();
+  return [
+    { key: 'category', label: 'Category', options: cats.map((c) => [c, cap(c)]) },
+    { key: 'colour', label: 'Colour', options: COLOURS.filter(([, , re]) => products.some((p) => re.test(String(p.color || '').toLowerCase()))).map(([k, l]) => [k, l]) },
+    { key: 'material', label: 'Material', options: MATERIALS.filter((m) => texts.some((x) => x.t.includes(m))).map((m) => [m, cap(m)]) },
+    { key: 'style', label: 'Style', options: STYLES.filter(([, , re]) => texts.some((x) => re.test(x.t))).map(([k, l]) => [k, l]) },
+    { key: 'budget', label: 'Budget', options: BUDGETS.filter(([lo, hi]) => products.some((p) => p.price >= lo && p.price < hi)).map(([lo, hi, l]) => [`${lo}-${hi}`, l]) },
+  ].filter((g) => g.options.length > 0);
+}
+
+// Score one product against the choices (0-100) and say why.
+function scoreProduct(p, prefs) {
+  const txt = textOf(p);
+  const colour = String(p.color || '').toLowerCase();
+  let score = 45;
+  const why = [];
+  if (prefs.category.length) {
+    if (prefs.category.includes(String(p.itemCategory || '').toLowerCase())) { score += 20; why.push(p.productType || cap(p.itemCategory)); } else score -= 25;
+  }
+  if (prefs.colour.length) {
+    const hit = COLOURS.find(([k, , re]) => prefs.colour.includes(k) && re.test(colour));
+    if (hit) { score += 14; why.push(String(p.color).toLowerCase()); } else score -= 10;
+  }
+  prefs.material.forEach((m) => { if (txt.includes(m)) { score += 12; why.push(m); } });
+  prefs.style.forEach((s) => { const st = STYLES.find(([k]) => k === s); if (st && st[2].test(txt)) { score += 9; why.push(st[1].toLowerCase()); } });
+  prefs.words.forEach((w) => { if (txt.includes(w)) { score += 10; why.push(w); } });
+  if (prefs.budget.length) {
+    const fits = prefs.budget.some((b) => { const [lo, hi] = b.split('-').map(Number); return p.price >= lo && p.price < hi; });
+    if (fits) { score += 12; why.push('in budget'); } else score -= 15;
+  }
+  return { score: Math.max(5, Math.min(98, score)), why: [...new Set(why)].slice(0, 3) };
+}
+
+// What a sentence asks for, as choices ("a warm wool coat under 700").
+function prefsFromText(text, groups, products) {
+  const t = ` ${text.toLowerCase()} `;
+  const out = { ...EMPTY, category: [], colour: [], material: [], style: [], budget: [], words: [] };
+  groups.forEach((g) => g.options.forEach(([k, label]) => {
+    if (g.key === 'budget') return;
+    if (g.key === 'colour') {
+      const re = COLOURS.find(([c]) => c === k)?.[2];
+      if (re && re.test(t)) out.colour.push(k);
+      return;
+    }
+    const word = label.toLowerCase();
+    if (t.includes(word) || t.includes(word.replace(/s$/, '')) || t.includes(k)) out[g.key].push(k);
+  }));
+  const num = t.match(/(?:€\s*)?(\d[\d,.]*)\s*(k|thousand)?/);
+  if (num && /under|below|less|max|up to|cheaper|budget/.test(t)) {
+    let v = Number(num[1].replace(/,/g, ''));
+    if (num[2]) v *= 1000;
+    BUDGETS.forEach(([lo, hi]) => { if (lo < v) out.budget.push(`${lo}-${hi}`); });
+  }
+  // Any other word the catalogue knows ("jacket", "scarf", "trench").
+  const known = products.map(textOf).join(' ');
+  // (words that are a choice themselves are handled above)
+  const taken = new Set(groups.flatMap((g) => g.options.flatMap(([k, label]) => [k, label.toLowerCase(), label.toLowerCase().replace(/s$/, '')])));
+  t.split(/[^a-zÀ-ɏ]+/).forEach((w) => {
+    const stem = w.replace(/(es|s)$/, '');
+    if (stem.length < 4 || STOP.has(w) || taken.has(w) || taken.has(stem) || COLOURS.some(([, , re]) => re.test(w))) return;
+    if (new RegExp(`\\b${stem}`).test(known)) out.words.push(stem);
+  });
+  out.words = [...new Set(out.words)];
+  return out;
+}
+
+// A question, rather than a wish (it goes to the assistant too).
+const isQuestion = (text) => /\?\s*$/.test(text) || /^(what|how|where|is|are|can|does|do|why|which|who|when)\b/i.test(text.trim());
+
+const EXAMPLES = ['A warm coat under €700', 'Something casual in denim', 'What is the tweed jacket made of?'];
+
+export default function ShopperPreviewPage({ company }) {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [prefs, setPrefs] = useState(EMPTY);
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [asking, setAsking] = useState(false);
+  const [viewing, setViewing] = useState(null);
+  const inputRef = useRef(null);
+  const threadRef = useRef(null);
+
+  // Voice: record with the microphone, then speech-to-text on the server
+  // (/chat/transcribe); the words are sent as if typed.
+  const [voice, setVoice] = useState('idle'); // idle | recording | transcribing
+  const recorderRef = useRef(null);
+  const voiceSupported = typeof window !== 'undefined' && !!window.MediaRecorder && !!navigator.mediaDevices?.getUserMedia;
+
+  useEffect(() => {
+    let alive = true;
+    getProductsByUser()
+      .then((list) => { if (alive) setProducts((Array.isArray(list) ? list : []).filter((p) => !p.is_deleted)); })
+      .catch(() => { if (alive) setProducts([]); })
+      .finally(() => { if (alive) setLoading(false); });
+    return () => { alive = false; };
+  }, []);
+
+  // Never leave the microphone on after leaving the page.
+  useEffect(() => () => {
+    const rec = recorderRef.current;
+    if (rec && rec.state !== 'inactive') {
+      rec.onstop = null;
+      rec.stop();
+      rec.stream.getTracks().forEach((track) => track.stop());
+    }
+  }, []);
+
+  useEffect(() => {
+    if (threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
+  }, [messages, asking]);
+
+  const groups = useMemo(() => optionsFrom(products), [products]);
+  const results = useMemo(() => products
+    .map((p) => ({ p, ...scoreProduct(p, prefs) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 9), [products, prefs]);
+  const chosen = [
+    ...groups.flatMap((g) => g.options.filter(([k]) => prefs[g.key].includes(k)).map(([k, label]) => ({ group: g.key, k, label }))),
+    ...prefs.words.map((w) => ({ group: 'words', k: w, label: `“${w}”` })),
+  ];
+
+  const toggle = (group, key) => setPrefs((cur) => {
+    const has = cur[group].includes(key);
+    return { ...cur, [group]: has ? cur[group].filter((k) => k !== key) : [...cur[group], key] };
+  });
+
+  // One box for everything: wishes become choices (the picks update), and
+  // questions also get an answer from the assistant.
+  const send = async (raw) => {
+    const text = String(raw ?? input).trim();
+    if (!text || asking) return;
+    setInput('');
+    const got = prefsFromText(text, groups, products);
+    const added = Object.values(got).reduce((n, v) => n + v.length, 0);
+    if (added) setPrefs((cur) => Object.fromEntries(Object.keys(cur).map((k) => [k, [...new Set([...cur[k], ...got[k]])]])));
+    const history = messages.map((m) => ({ role: m.role, content: m.text }));
+    setMessages((m) => [...m, { role: 'user', text }]);
+    if (added && !isQuestion(text)) {
+      setMessages((m) => [...m, { role: 'assistant', text: 'Here are the picks for that. Tap the choices on the left to fine-tune them.' }]);
+      return;
+    }
+    setAsking(true);
+    try {
+      const { data } = await axios.post(`${Backend_URL}chat`, { message: text, history, brandId: company?._id });
+      const reply = data?.reply || data?.message || data?.data?.reply;
+      setMessages((m) => [...m, { role: 'assistant', text: reply || 'Thanks for your question! Our team will get back to you shortly.' }]);
+    } catch (e) {
+      console.error('Chat request failed:', e?.response?.status, e?.response?.data?.message || e?.message);
+      setMessages((m) => [...m, { role: 'assistant', text: 'Sorry, the assistant is not available right now. Please try again in a few minutes.' }]);
+    } finally {
+      setAsking(false);
+    }
+  };
+
+  const transcribe = async (blob) => {
+    setVoice('transcribing');
+    try {
+      const body = new FormData();
+      const ext = blob.type.includes('mp4') ? 'mp4' : blob.type.includes('ogg') ? 'ogg' : 'webm';
+      body.append('audio', blob, `speech.${ext}`);
+      const lang = String(navigator.language || '').slice(0, 2).toLowerCase();
+      if (lang) body.append('language', lang);
+      const { data } = await axios.post(`${Backend_URL}chat/transcribe`, body);
+      const text = String(data?.text || '').trim();
+      if (!text) notifyError('We couldn’t hear anything. Please try again a little closer to the microphone.');
+      else send(text);
+    } catch (e) {
+      console.error('Transcription failed:', e?.response?.status, e?.response?.data?.message || e?.message);
+      notifyError('Voice isn’t available right now. Please type instead.');
+    } finally {
+      setVoice('idle');
+    }
+  };
+
+  const toggleVoice = async () => {
+    if (voice === 'recording') { recorderRef.current?.stop(); return; }
+    if (voice !== 'idle') return;
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+      notifyError('Please allow microphone access in your browser to use your voice.');
+      return;
+    }
+    const chunks = [];
+    const recorder = new MediaRecorder(stream);
+    recorder.ondataavailable = (e) => { if (e.data?.size) chunks.push(e.data); };
+    recorder.onstop = () => {
+      stream.getTracks().forEach((track) => track.stop());
+      const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+      if (blob.size) transcribe(blob);
+      else setVoice('idle');
+    };
+    recorderRef.current = recorder;
+    recorder.start();
+    setVoice('recording');
+  };
+
+  const pill = (on) => ({
+    borderRadius: '999px', minHeight: 36, px: 1.75, fontSize: '0.95rem', whiteSpace: 'nowrap',
+    bgcolor: on ? 'transparent' : 'rgba(120,120,128,0.12)',
+    backgroundImage: on ? 'linear-gradient(135deg,#2a78bd,#1b4f72)' : 'none',
+    color: on ? '#fff' : '#1c1c1e',
+    '&:hover': { bgcolor: on ? 'transparent' : 'rgba(120,120,128,0.2)' },
+  });
+  const card = { bgcolor: '#fff', borderRadius: '20px', boxShadow: '0 4px 18px rgba(31,51,97,0.06)' };
+
+  return (
+    <Box>
+      <PageHeader
+        title="Shopper Preview"
+        description="What your shoppers get: they say or tap what they like and get picks and answers."
+      />
+
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
+      ) : (
+        <>
+          {/* 1. One box: type or say what the shopper wants, or ask. */}
+          <Box sx={{ ...card, p: { xs: 2, md: 2.5 }, mb: 2.5 }}>
+            <Typography sx={{ fontSize: 19, color: '#16324a', mb: 1.25 }}>What is the shopper looking for?</Typography>
+            <Box sx={{ display: 'flex', gap: 1.25, alignItems: 'center' }}>
+              {voiceSupported && (
+                <Tooltip title={voice === 'recording' ? 'Stop and send' : 'Say it'}>
+                  <span>
+                    <IconButton
+                      onClick={toggleVoice}
+                      disabled={voice === 'transcribing' || asking}
+                      aria-label={voice === 'recording' ? 'Stop recording and send' : 'Say what the shopper wants'}
+                      sx={{
+                        width: 52, height: 52, color: '#fff',
+                        backgroundImage: voice === 'recording' ? 'none' : 'linear-gradient(135deg,#2a78bd,#1b4f72)',
+                        bgcolor: voice === 'recording' ? 'error.main' : 'transparent',
+                        boxShadow: voice === 'recording' ? '0 0 0 8px rgba(229,72,77,0.15)' : '0 6px 16px rgba(27,79,114,0.25)',
+                        '&:hover': { bgcolor: voice === 'recording' ? 'error.dark' : 'transparent' },
+                        '&.Mui-disabled': { color: '#fff', opacity: 0.7 },
+                      }}
+                    >
+                      {voice === 'transcribing' ? <CircularProgress size={22} sx={{ color: '#fff' }} /> : voice === 'recording' ? <StopIcon /> : <MicIcon />}
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              )}
+              <TextField
+                fullWidth
+                inputRef={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
+                placeholder={voice === 'recording' ? 'Listening… press stop when done.' : voice === 'transcribing' ? 'Turning the voice into text…' : 'Type a wish or a question, e.g. “A warm wool coat under €700”'}
+                inputProps={{ 'aria-label': 'What the shopper wants' }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '999px', bgcolor: '#f6f8fb' } }}
+              />
+              <Button variant="contained" endIcon={asking ? <CircularProgress size={16} color="inherit" /> : <SendIcon />} onClick={() => send()} disabled={!input.trim() || asking} sx={{ height: 48, px: 2.5, borderRadius: '999px', flex: 'none' }}>
+                Send
+              </Button>
+            </Box>
+            {messages.length === 0 ? (
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center', mt: 1.5 }}>
+                <Typography variant="body2" color="text.secondary">Try:</Typography>
+                {EXAMPLES.map((ex) => (
+                  <Button key={ex} size="small" onClick={() => send(ex)} sx={{ ...pill(false), minHeight: 30, fontSize: '0.88rem' }}>{ex}</Button>
+                ))}
+              </Box>
+            ) : (
+              // The conversation so far, right under the box.
+              <Box ref={threadRef} aria-live="polite" sx={{ mt: 2, maxHeight: 240, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 1, pr: 0.5 }}>
+                {messages.map((m, i) => {
+                  const mine = m.role === 'user';
+                  return (
+                    <Box key={i} sx={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', gap: 1 }}>
+                      {!mine && <Avatar sx={{ width: 28, height: 28, bgcolor: '#1b4f72' }}><AutoAwesomeIcon sx={{ fontSize: 16 }} /></Avatar>}
+                      <Box sx={{ maxWidth: '78%', px: 1.5, py: 0.9, borderRadius: '14px', bgcolor: mine ? '#1b4f72' : '#f1f4f8', color: mine ? '#fff' : 'text.primary', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.5 }}>
+                        {m.text}
+                      </Box>
+                    </Box>
+                  );
+                })}
+                {asking && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary', pl: 4.5 }}>
+                    <CircularProgress size={14} /><Typography variant="body2">The assistant is writing…</Typography>
+                  </Box>
+                )}
+              </Box>
+            )}
+          </Box>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '320px minmax(0, 1fr)' }, gap: 2.5, alignItems: 'start' }}>
+            {/* 2. The choices, as buttons. */}
+            <Box sx={{ ...card, p: 2.5, position: { lg: 'sticky' }, top: { lg: 12 } }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <Typography sx={{ fontSize: 18, color: '#16324a', flex: 1 }}>Choices</Typography>
+                {chosen.length > 0 && <Button size="small" onClick={() => setPrefs(EMPTY)}>Clear all</Button>}
+              </Box>
+              {groups.map((g) => (
+                <Box key={g.key} sx={{ mb: 2 }}>
+                  <Typography sx={{ fontSize: 13, color: '#5f6b78', textTransform: 'uppercase', letterSpacing: '0.04em', mb: 0.75 }}>{g.label}</Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                    {g.options.map(([k, label]) => {
+                      const on = prefs[g.key].includes(k);
+                      return <Button key={k} onClick={() => toggle(g.key, k)} aria-pressed={on} sx={pill(on)}>{label}</Button>;
+                    })}
+                  </Box>
+                </Box>
+              ))}
+              {groups.length === 0 && <Typography color="text.secondary">No products yet. Add products on the Products page first.</Typography>}
+            </Box>
+
+            {/* 3. The picks, updated with every choice. */}
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1.5, minHeight: 36 }}>
+                <Typography sx={{ fontSize: 18, color: '#16324a', mr: 1 }}>{chosen.length ? 'Best picks' : 'Best picks overall'}</Typography>
+                {chosen.map((c) => (
+                  <Button key={`${c.group}-${c.k}`} size="small" onClick={() => toggle(c.group, c.k)} aria-label={`Remove ${c.label}`}
+                    endIcon={<CloseIcon sx={{ fontSize: 15 }} />} sx={{ ...pill(true), minHeight: 30, fontSize: '0.88rem' }}>
+                    {c.label}
+                  </Button>
+                ))}
+              </Box>
+              {results.length === 0 ? (
+                <Typography color="text.secondary">No products yet. Add products on the Products page first.</Typography>
+              ) : (
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', md: 'repeat(3, minmax(0,1fr))' }, gap: 2 }}>
+                  {results.map(({ p, score, why }, i) => {
+                    const img = (p.images && p.images[0]) || p.image;
+                    return (
+                      <Box key={p._id || i} component="button" type="button" onClick={() => setViewing(p)} aria-label={`View ${p.name || 'product'}`}
+                        sx={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textAlign: 'left', border: 0, p: 0, cursor: 'pointer', font: 'inherit', '&:hover': { boxShadow: '0 10px 26px rgba(31,51,97,0.14)' } }}>
+                        <Box sx={{ position: 'relative', width: '100%', aspectRatio: '4 / 4.4', bgcolor: '#eef1f4' }}>
+                          {img && <Box component="img" src={getFileUrl(img)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                          <Box sx={{ position: 'absolute', top: 10, left: 10, px: 1.25, height: 28, borderRadius: '14px', display: 'flex', alignItems: 'center', bgcolor: 'rgba(255,255,255,0.9)', fontSize: 13.5, color: '#16324a' }}>
+                            {score}% match
+                          </Box>
+                        </Box>
+                        <Box sx={{ p: 1.75, width: '100%', boxSizing: 'border-box' }}>
+                          <Typography sx={{ fontSize: 12.5, color: '#5f6b78', textTransform: 'uppercase', letterSpacing: '0.04em' }} noWrap>{p.brandInfo?.name || ''}</Typography>
+                          <Typography sx={{ fontSize: 16.5, color: '#1c2430' }} noWrap title={p.name}>{p.name || 'Unnamed product'}</Typography>
+                          <Typography color="text.secondary" sx={{ fontSize: 15 }}>{priceText(p)}</Typography>
+                          {why.length > 0 && (
+                            <Typography sx={{ fontSize: 13.5, color: '#1b5b91', mt: 0.5, display: 'flex', gap: 0.5, alignItems: 'flex-start' }}>
+                              <AutoAwesomeIcon sx={{ fontSize: 15, mt: '2px' }} />{why.join(' · ')}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </>
+      )}
+
+      <ProductPreviewDialog open={!!viewing} onClose={() => setViewing(null)} productInfo={viewing} />
+    </Box>
+  );
+}

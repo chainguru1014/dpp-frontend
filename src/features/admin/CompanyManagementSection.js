@@ -11,31 +11,24 @@ import {
   MenuItem,
   IconButton,
   CircularProgress,
-  Tooltip,
-  Chip,
   Stack,
-  Alert,
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { Delete, Edit, Add, Close, ChevronRight, Search, Upload } from '@mui/icons-material';
-import UserEditDialog from '../../components/UserEditDialog';
+import { Add, Close, Upload } from '@mui/icons-material';
 import PageHeader from '../../components/PageHeader';
-import { confirmAction, notify, notifyError, notifySuccess } from '../../utils/feedbackBus';
+import { BrandPickerGrid } from '../../components/BrandPicker';
+import { notify, notifyError, notifySuccess } from '../../utils/feedbackBus';
 import {
   getAdminUserData,
-  updateCompany,
-  removeCompany,
   registerCompany,
   listBrands,
   uploadFile,
   getFileUrl,
 } from '../../helper';
-import { COMPANY_TYPES, companyTypeLabel } from '../../constants/companyTypes';
+import { COMPANY_TYPES } from '../../constants/companyTypes';
 
-// Brands page (super admin). Every company on the platform is a brand
-// company, with one brand profile (name, tagline, logo, page design). This
-// list replaces the old Companies page: open a brand to see or change its
-// profile, product page design and team (Brand profile page).
+// Companies page (super admin). Every company on Yometel has one brand
+// (what shoppers see: name, tagline, logo, cover). Open a company to change
+// its brand, its account, its workflows and its employees (Company page).
 
 // The built-in platform admin account lives in the Company collection too,
 // but it's not a brand and never shows up here — mirrors the isAdmin check
@@ -63,117 +56,31 @@ export const BrandMark = ({ brand, name, size = 44 }) => {
   );
 };
 
-const LoadingOverlay = () => (
-  <Box sx={{ width: '100%', height: '100%', minHeight: 180, display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(255,255,255,0.7)' }}>
-    <CircularProgress />
-    <Typography color="text.secondary">Loading companies…</Typography>
-  </Box>
-);
-
-const NoBrands = () => (
-  <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', px: 3, textAlign: 'center' }}>
-    <Typography color="text.secondary">No companies yet. Press “Add company” to add the first one.</Typography>
-  </Box>
-);
-
-const BrandsTable = ({ rows, loading, onOpen, onEdit, onRemove }) => {
-  const columns = [
-    {
-      field: 'name',
-      headerName: 'Company',
-      flex: 1.4,
-      minWidth: 220,
-      valueGetter: (p) => p.row.brand?.name || p.row.name,
-      renderCell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-          <BrandMark brand={row.brand} name={row.name} size={40} />
-          <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontWeight: 400, color: '#16324a' }} noWrap>{row.brand?.name || row.name}</Typography>
-            <Typography variant="body2" color="text.secondary" noWrap>{row.brand?.tagline || row.title || '—'}</Typography>
-          </Box>
-        </Box>
-      ),
-    },
-    {
-      field: 'companyType',
-      headerName: 'Industry',
-      flex: 1,
-      minWidth: 170,
-      valueGetter: (p) => companyTypeLabel(p.row.companyType),
-    },
-    {
-      field: 'email',
-      headerName: 'Supervisor',
-      flex: 1.3,
-      minWidth: 210,
-      renderCell: ({ row }) => (
-        <Box sx={{ minWidth: 0 }}>
-          <Typography noWrap>{row.email || '—'}</Typography>
-          <Typography variant="body2" color="text.secondary" noWrap>
-            {(row.allowedEmailDomains || []).length ? `Staff: @${row.allowedEmailDomains.join(', @')}` : 'No staff email domain'}
-          </Typography>
-        </Box>
-      ),
-    },
-    { field: 'productCount', headerName: 'Products', width: 100, type: 'number', valueGetter: (p) => p.row.productCount || 0 },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 140,
-      valueGetter: (p) => profilePercent(p.row.brand),
-      renderCell: ({ value }) => (value >= 100
-        ? <Chip size="small" label="Active" sx={{ bgcolor: '#eef5fd', color: '#1b4f72', fontWeight: 400 }} />
-        : <Chip size="small" label={`Profile ${value}%`} sx={{ bgcolor: '#eef5fd', color: '#1b4f72', fontWeight: 400 }} />),
-    },
-    {
-      field: 'actions',
-      headerName: '',
-      width: 150,
-      sortable: false,
-      renderCell: ({ row }) => (
-        <Box sx={{ display: 'flex', gap: 0.5 }} onClick={(e) => e.stopPropagation()}>
-          <Tooltip title="Sign-in details">
-            <IconButton aria-label={`Edit sign-in details of ${row.name}`} onClick={() => onEdit(row)}><Edit /></IconButton>
-          </Tooltip>
-          <Tooltip title="Remove">
-            <IconButton aria-label={`Remove ${row.name}`} color="error" onClick={() => onRemove(row)}><Delete /></IconButton>
-          </Tooltip>
-          <Tooltip title="Open company">
-            <IconButton aria-label={`Open ${row.name}`} onClick={() => onOpen(row)}><ChevronRight /></IconButton>
-          </Tooltip>
-        </Box>
-      ),
-    },
-  ];
-
-  return (
-    <Box sx={{ bgcolor: '#fff', borderRadius: 2, boxShadow: 1 }}>
-      <DataGrid
-        loading={loading}
-        slots={{ loadingOverlay: LoadingOverlay, noRowsOverlay: NoBrands }}
-        columns={columns}
-        rows={rows}
-        rowHeight={68}
-        initialState={{ pagination: { paginationModel: { page: 0, pageSize: 10 } } }}
-        pageSizeOptions={[10, 25, 50]}
-        autoHeight
-        disableRowSelectionOnClick
-        disableColumnMenu
-        onRowClick={({ row }) => onOpen(row)}
-        sx={{ border: 0, minHeight: 220, '& .MuiDataGrid-columnHeaders': { backgroundColor: '#eef1f6' }, '& .MuiDataGrid-row': { cursor: 'pointer' } }}
-        getRowId={(data) => data._id}
-      />
+// One titled part of the Add company form.
+const FormPart = ({ step, title, note, children }) => (
+  <Box sx={{ display: 'flex', gap: 2 }}>
+    <Box aria-hidden sx={{ width: 28, height: 28, borderRadius: '50%', bgcolor: '#eef5fd', color: '#1b4f72', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flex: 'none', mt: 0.25 }}>{step}</Box>
+    <Box sx={{ flex: 1, minWidth: 0 }}>
+      <Typography sx={{ fontSize: 17, color: '#16324a' }}>{title}</Typography>
+      {note && <Typography variant="body2" color="text.secondary" sx={{ mb: 1.75 }}>{note}</Typography>}
+      <Stack spacing={2}>{children}</Stack>
     </Box>
-  );
-};
+  </Box>
+);
 
-// Add a company: the super admin creates the brand company. Its admin email
-// becomes the brand's Supervisor, who fills in the rest of the profile.
+// Add a company (super admin), in three short parts: the company, who runs
+// it, and how its brand starts out. The Supervisor finishes the rest.
 const AddBrandDialog = ({ open, onClose, onCreated }) => {
   const emptyForm = { name: '', companyType: '', email: '', title: '', allowedEmailDomains: '', logo: '' };
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showErrors, setShowErrors] = useState(false);
+  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
+  const emailDomain = form.email.includes('@') ? form.email.split('@')[1].trim().toLowerCase() : '';
+
+  const close = () => { if (saving) return; setShowErrors(false); onClose(); };
 
   const uploadLogo = async (event) => {
     const file = event.target.files?.[0];
@@ -189,16 +96,8 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) {
-      notify('Please enter the company name.', 'warning');
-      return;
-    }
-    if (!form.companyType) {
-      notify('Please choose the industry.', 'warning');
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      notify("Please enter the Supervisor’s email address. They sign in with it and finish the company’s brand profile.", 'warning');
+    if (!form.name.trim() || !form.companyType || !emailOk) {
+      setShowErrors(true);
       return;
     }
     // A domain is what follows the @ ("hm.com"), never a whole address.
@@ -222,65 +121,66 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
     });
     setSaving(false);
     if (doc) {
+      notifySuccess(`${form.name.trim()} added. ${form.email.trim()} can sign in as its Supervisor.`);
       setForm(emptyForm);
+      setShowErrors(false);
       onCreated(doc);
       onClose();
     }
   };
 
   return (
-    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>
-        Add a company
-        <IconButton onClick={onClose} color="inherit" aria-label="Close" disabled={saving}><Close /></IconButton>
+    <Dialog open={open} onClose={close} fullWidth maxWidth="sm">
+      <DialogTitle sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+        <Box sx={{ flex: 1 }}>
+          Add a company
+          <Typography variant="body2" color="text.secondary">A business that uses Yometel for its products.</Typography>
+        </Box>
+        <IconButton onClick={close} aria-label="Close" disabled={saving}><Close /></IconButton>
       </DialogTitle>
-      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ pt: 1 }}>
-          <Button
-            component="label"
-            disabled={uploading}
-            aria-label={form.logo ? 'Replace the logo' : 'Upload a logo'}
-            sx={{ width: 88, height: 88, minWidth: 88, borderRadius: '50%', border: '1.5px dashed #9fb0c6', bgcolor: '#f8fafc', flexDirection: 'column', gap: 0.25, p: 0, overflow: 'hidden' }}
-          >
-            {uploading ? <CircularProgress size={24} /> : form.logo ? (
-              <Box component="img" alt="Logo" src={getFileUrl(form.logo)} sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-            ) : (
-              <><Upload /><Typography variant="caption">Logo</Typography></>
-            )}
-            <input type="file" accept="image/*" hidden onChange={uploadLogo} />
-          </Button>
-          <Stack spacing={2} sx={{ flex: 1 }}>
-            <TextField label="Company name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} fullWidth autoFocus helperText="Shoppers see it as the brand name. It can be changed later on Brand profile." />
-            <TextField select label="Industry" required value={form.companyType} onChange={(e) => setForm({ ...form, companyType: e.target.value })} fullWidth>
-              {COMPANY_TYPES.map((t) => <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>)}
-            </TextField>
+      <DialogContent dividers sx={{ display: 'flex', flexDirection: 'column', gap: 3, py: 3 }}>
+        <FormPart step={1} title="The company">
+          <TextField label="Company name" required value={form.name} onChange={set('name')} fullWidth autoFocus
+            error={showErrors && !form.name.trim()}
+            helperText={showErrors && !form.name.trim() ? 'Please enter the company name.' : 'For example “Nordic Outfitters”.'} />
+          <TextField select label="Industry" required value={form.companyType} onChange={set('companyType')} fullWidth
+            error={showErrors && !form.companyType}
+            helperText={showErrors && !form.companyType ? 'Please choose the industry.' : ' '}>
+            {COMPANY_TYPES.map((t) => <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>)}
+          </TextField>
+        </FormPart>
+
+        <FormPart step={2} title="Who runs it" note="The Supervisor manages the company’s staff and finishes its brand.">
+          <TextField label="Supervisor email" type="email" required value={form.email} onChange={set('email')} fullWidth
+            error={showErrors && !emailOk}
+            helperText={showErrors && !emailOk ? 'Please enter a valid email address.' : 'They get an email to sign in.'} />
+          <TextField label="Staff email domain (optional)" value={form.allowedEmailDomains} onChange={set('allowedEmailDomains')} fullWidth
+            placeholder={emailDomain || 'e.g. hm.com'}
+            helperText={`Staff with ${emailDomain ? `an @${emailDomain}` : 'the Supervisor’s'} email can always sign in. Add other domains here, separated by commas.`} />
+        </FormPart>
+
+        <FormPart step={3} title="Brand (optional)" note="What shoppers see. The brand takes the company name; the Supervisor can change it and add the rest later.">
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Button
+              component="label"
+              disabled={uploading}
+              aria-label={form.logo ? 'Replace the logo' : 'Upload a logo'}
+              sx={{ width: 72, height: 72, minWidth: 72, borderRadius: '50%', border: '1.5px dashed #9fb0c6', bgcolor: '#f8fafc', flexDirection: 'column', gap: 0.25, p: 0, overflow: 'hidden', flex: 'none' }}
+            >
+              {uploading ? <CircularProgress size={22} /> : form.logo ? (
+                <Box component="img" alt="Logo" src={getFileUrl(form.logo)} sx={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              ) : (
+                <><Upload fontSize="small" /><Typography variant="caption">Logo</Typography></>
+              )}
+              <input type="file" accept="image/*" hidden onChange={uploadLogo} />
+            </Button>
+            <TextField label="Short tagline" placeholder="e.g. Built for the far north" value={form.title} onChange={set('title')} fullWidth inputProps={{ maxLength: 120 }} />
           </Stack>
-        </Stack>
-        <TextField label="Short tagline" placeholder="e.g. Built for the far north" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} fullWidth />
-        <Typography sx={{ fontWeight: 400, color: '#16324a', borderTop: '1px solid #e8edf3', pt: 2 }}>Who runs it</Typography>
-        <TextField
-          label="Supervisor email"
-          type="email"
-          required
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-          fullWidth
-        />
-        <TextField
-          label="Staff email domain"
-          placeholder={form.email.includes('@') ? form.email.split('@')[1] : 'e.g. hm.com'}
-          helperText="People with this email domain can sign in as this company’s staff. The Supervisor’s domain is added automatically; add more separated by commas."
-          value={form.allowedEmailDomains}
-          onChange={(e) => setForm({ ...form, allowedEmailDomains: e.target.value })}
-          fullWidth
-        />
-        <Alert severity="info">
-          {form.email.trim() || 'The Supervisor'} gets an email to sign in, then fills in the rest of the brand profile: description, website, cover photo and page design.
-        </Alert>
+        </FormPart>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} disabled={saving}>Cancel</Button>
-        <Button variant="contained" startIcon={<Add />} onClick={handleSave} disabled={saving || uploading}>
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button onClick={close} disabled={saving}>Cancel</Button>
+        <Button variant="contained" startIcon={saving ? <CircularProgress size={16} color="inherit" /> : <Add />} onClick={handleSave} disabled={saving || uploading}>
           {saving ? 'Adding…' : 'Add company'}
         </Button>
       </DialogActions>
@@ -288,20 +188,20 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
   );
 };
 
+// Companies page (super admin): every company as a card, the same cards as
+// "Change company" everywhere. Click one to open it (its brand, account,
+// workflows and employees).
 const CompanyManagementSection = ({ token, onOpenBrand }) => {
   const [companies, setCompanies] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [editingCompany, setEditingCompany] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const [industry, setIndustry] = useState('');
 
   const reload = () => {
     setLoading(true);
     Promise.all([getAdminUserData(), listBrands(token)])
       .then(([data, brandRes]) => {
-        setCompanies((data.companies || []).filter((c) => !isAdminCompany(c)));
+        setCompanies((data?.companies || []).filter((c) => !isAdminCompany(c)));
         setBrands(brandRes?.brands || []);
       })
       .finally(() => setLoading(false));
@@ -311,77 +211,55 @@ const CompanyManagementSection = ({ token, onOpenBrand }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  // Each company with its brand (its first brand row).
-  const rows = useMemo(() => {
+  // Each company with its brand, as cards.
+  const options = useMemo(() => {
     const byCompany = new Map();
     brands.forEach((b) => { if (!byCompany.has(String(b.company_id))) byCompany.set(String(b.company_id), b); });
-    const q = query.trim().toLowerCase();
-    return companies
-      .map((c) => ({ ...c, brand: byCompany.get(String(c._id)) || null }))
-      .filter((r) => !industry || (r.companyType || '') === industry)
-      .filter((r) => !q || [r.name, r.brand?.name, r.email, ...(r.allowedEmailDomains || [])].some((v) => String(v || '').toLowerCase().includes(q)));
-  }, [companies, brands, query, industry]);
-
-  const handleEditSave = async () => {
-    if (!editingCompany) return;
-    const { _id, brand, ...payload } = editingCompany;
-    if (await updateCompany(_id, payload)) notifySuccess('Sign-in details saved.');
-    setEditingCompany(null);
-    reload();
-  };
+    return companies.map((c) => {
+      const brand = byCompany.get(String(c._id)) || null;
+      const count = c.productCount || 0;
+      const pct = profilePercent(brand);
+      return {
+        id: String(c._id),
+        name: brand?.name || c.name,
+        brand,
+        companyType: c.companyType,
+        info: `${count} ${count === 1 ? 'product' : 'products'} · ${pct >= 100 ? 'Profile complete' : `Profile ${pct}%`}`,
+        row: c,
+      };
+    });
+  }, [companies, brands]);
 
   return (
     <Box>
       <PageHeader
         title="Companies"
-        description="Every company on Yometel. Open one to change its Brand profile (what shoppers see), its workflows and its team."
-        actions={(
-          <Button variant="contained" startIcon={<Add />} onClick={() => setAddOpen(true)}>
-            Add company
-          </Button>
-        )}
+        description="Every business on Yometel. Open one to see its brand, account, workflows and employees."
       />
-      <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', mb: 2 }}>
-        <TextField
-          placeholder="Search by name, email or domain"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          InputProps={{ startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} /> }}
-          sx={{ flex: '1 1 280px', maxWidth: 420, bgcolor: 'background.paper', borderRadius: 2 }}
-          inputProps={{ 'aria-label': 'Search companies' }}
+      {loading ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, py: 8 }}>
+          <CircularProgress />
+          <Typography color="text.secondary">Loading companies…</Typography>
+        </Box>
+      ) : (
+        <BrandPickerGrid
+          title="Choose a company"
+          options={options}
+          selectedId=""
+          industryFilter
+          emptyText="No companies yet. Press “Add company” to add the first one."
+          onPick={(id) => {
+            const o = options.find((x) => x.id === id);
+            if (o && onOpenBrand) onOpenBrand(o.row);
+          }}
+          actions={(
+            <Button variant="contained" startIcon={<Add />} onClick={() => setAddOpen(true)}>
+              Add company
+            </Button>
+          )}
         />
-        <TextField select label="Industry" value={industry} onChange={(e) => setIndustry(e.target.value)} sx={{ width: 240, bgcolor: 'background.paper', borderRadius: 2 }}>
-          <MenuItem value="">All industries</MenuItem>
-          {COMPANY_TYPES.map((t) => <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>)}
-        </TextField>
-        <Typography color="text.secondary" sx={{ ml: 'auto' }}>{rows.length} {rows.length === 1 ? 'company' : 'companies'}</Typography>
-      </Box>
+      )}
       <AddBrandDialog open={addOpen} onClose={() => setAddOpen(false)} onCreated={reload} />
-      <BrandsTable
-        rows={rows}
-        loading={loading}
-        onOpen={(row) => onOpenBrand && onOpenBrand(row)}
-        // The pencil opens the brand profile, the same as a click on the row.
-        onEdit={(row) => (onOpenBrand ? onOpenBrand(row) : setEditingCompany(row))}
-        onRemove={async (row) => {
-          const sure = await confirmAction({
-            title: `Remove ${row.brand?.name || row.name}?`,
-            message: 'The company account is removed and its staff can no longer sign in. This cannot be undone.',
-            confirmText: 'Remove company',
-            danger: true,
-          });
-          if (!sure) return;
-          await removeCompany(row._id);
-          notifySuccess('Company removed.');
-          reload();
-        }}
-      />
-      <UserEditDialog
-        user={editingCompany}
-        onChange={setEditingCompany}
-        onClose={() => setEditingCompany(null)}
-        onSave={handleEditSave}
-      />
     </Box>
   );
 };

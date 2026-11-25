@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { reportBarTitle } from './barTitle';
-import { Box, IconButton, ListItemIcon, Menu, MenuItem, Tab, Tabs, Tooltip, Typography } from '@mui/material';
+import { Box, CircularProgress, IconButton, ListItemIcon, Menu, MenuItem, Tab, Tabs, Tooltip, Typography } from '@mui/material';
 import PageHeaderContext from './PageHeaderContext';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
@@ -16,6 +16,7 @@ import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 // (e.g. Security's figures, which belong to the page, not to one tab).
 const PageHeader = ({ title: ownTitle, description, actions, moreActions, icon, aboveTabs }) => {
   const [anchor, setAnchor] = useState(null);
+  const [busy, setBusy] = useState(false);
   const shared = useContext(PageHeaderContext);
   const title = shared?.title || ownTitle;
   const tabs = (shared?.tabs || []).filter(Boolean);
@@ -50,7 +51,28 @@ const PageHeader = ({ title: ownTitle, description, actions, moreActions, icon, 
       {(actions || more.length > 0) && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', flexShrink: 0 }}>
           {actions}
-          {more.length > 0 && (
+          {/* One extra action with an icon (e.g. Reload): the icon itself,
+              no "More actions" menu; it spins while the action runs. */}
+          {more.length === 1 && more[0].icon && (() => {
+            const only = more[0];
+            const Icon = only.icon;
+            const run = async () => {
+              if (busy) return;
+              setBusy(true);
+              try { await only.onClick(); } finally { setBusy(false); }
+            };
+            return (
+              <Tooltip title={only.label}>
+                <span>
+                  <IconButton aria-label={only.label} onClick={run} disabled={only.disabled || busy}
+                    sx={{ bgcolor: 'rgba(120,120,128,0.13)', width: 42, height: 42 }}>
+                    {busy ? <CircularProgress size={20} /> : <Icon />}
+                  </IconButton>
+                </span>
+              </Tooltip>
+            );
+          })()}
+          {(more.length > 1 || (more.length === 1 && !more[0].icon)) && (
             <>
               <Tooltip title="More actions">
                 <IconButton

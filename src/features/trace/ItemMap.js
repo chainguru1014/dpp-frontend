@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -65,7 +65,7 @@ function Controls({ onReset }) {
   const map = useMap();
   const btn = { width: 30, height: 30, borderRadius: 15, border: '1px solid #9aa3ad', background: '#fff', fontSize: 17, lineHeight: '26px', cursor: 'pointer', color: '#333', padding: 0 };
   return (
-    <div className="leaflet-top leaflet-left" style={{ pointerEvents: 'auto' }}>
+    <div className="leaflet-top leaflet-left dpp-map-ctl" style={{ pointerEvents: 'auto' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, margin: 10 }} onDoubleClick={(e) => e.stopPropagation()}>
         <button type="button" aria-label="Zoom in" style={btn} onClick={() => map.zoomIn()}>+</button>
         <button type="button" aria-label="Zoom out" style={btn} onClick={() => map.zoomOut()}>−</button>
@@ -78,7 +78,8 @@ function Controls({ onReset }) {
 function Legend() {
   const [open, setOpen] = useState(true);
   return (
-    <div className="leaflet-bottom leaflet-left" style={{ pointerEvents: 'auto' }}>
+    <div className="leaflet-bottom leaflet-left dpp-map-ctl" style={{ pointerEvents: 'auto' }}>
+      <style>{'.dpp-life-label{background:rgba(255,255,255,.95);border:0;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.25);padding:2px 8px;font:12px -apple-system,Segoe UI,Roboto,sans-serif;color:#1c2430;white-space:nowrap}.dpp-life-label:before{display:none}'}</style>
       <div style={{ margin: 10, background: 'rgba(255,255,255,0.95)', border: '1px solid #d5dbe3', borderRadius: 8, padding: open ? '8px 10px' : '4px 8px', font: '12px -apple-system,Segoe UI,Roboto,sans-serif', color: '#333', maxWidth: 260 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => setOpen((v) => !v)} role="button" aria-expanded={open}>
           <b>Legend</b><span>{open ? '×' : '+'}</span>
@@ -121,6 +122,94 @@ function Bubble({ group }) {
   );
 }
 
+const escHtml = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// The product lifecycle, as on the app's Journey map: one numbered circle
+// per place (steps in the same place share it), the place's name written
+// beside it, and dashed lines as goods move: each material to the factory,
+// then the factory onward. Names never cover each other: each takes the
+// first free spot of right / left / above / below its circle, else it is
+// hidden until zoomed in (the circle stays; a click shows it). A click on a
+// circle flies the map there and lists what happened there.
+function LifecycleLayer({ steps }) {
+  const map = useMap();
+  const signature = JSON.stringify(steps);
+  useEffect(() => {
+    if (!steps.length) return undefined;
+    const group = L.layerGroup().addTo(map);
+    const line = (a, b) => L.polyline([a, b], { color: LIFECYCLE_COLOR, weight: 3, opacity: 0.85, dashArray: '6 6' }).addTo(group);
+    const mats = steps.filter((p) => p.stage === 'materials');
+    const rest = steps.filter((p) => p.stage !== 'materials');
+    if (rest.length && mats.length) mats.forEach((m) => line([m.lat, m.lng], [rest[0].lat, rest[0].lng]));
+    const chain = rest.length ? rest : steps;
+    for (let i = 1; i < chain.length; i += 1) line([chain[i - 1].lat, chain[i - 1].lng], [chain[i].lat, chain[i].lng]);
+
+    const places = [];
+    const byKey = {};
+    steps.forEach((p) => {
+      const k = `${p.lat.toFixed(3)},${p.lng.toFixed(3)}`;
+      if (!byKey[k]) { byKey[k] = { lat: p.lat, lng: p.lng, n: places.length + 1, place: p.place, labels: [] }; places.push(byKey[k]); }
+      byKey[k].labels.push(p.label);
+    });
+    const markers = places.map((s) => {
+      const m = L.marker([s.lat, s.lng], {
+        zIndexOffset: 1000,
+        icon: L.divIcon({
+          className: '',
+          iconSize: [24, 24],
+          iconAnchor: [12, 12],
+          html: `<div style="width:24px;height:24px;border-radius:12px;background:${LIFECYCLE_COLOR};color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font:600 11px -apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.35);cursor:pointer">${s.n}</div>`,
+        }),
+      }).addTo(group);
+      if (s.place) m.bindTooltip(escHtml(s.place), { permanent: true, direction: 'right', offset: [12, 0], className: 'dpp-life-label' });
+      m.bindPopup(`<b>${s.n}. ${escHtml(s.place || '')}</b><br>${s.labels.map(escHtml).join('<br>')}`);
+      m.on('click', () => map.flyTo([s.lat, s.lng], Math.max(map.getZoom() + 3, 6), { duration: 0.8 }));
+      return m;
+    });
+
+    const DIRS = [['right', [12, 0]], ['left', [-12, 0]], ['top', [0, -14]], ['bottom', [0, 14]]];
+    const hit = (a, b) => !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
+    const shrink = (r, d) => ({ left: r.left + d, right: r.right - d, top: r.top + d, bottom: r.bottom - d });
+    const layout = () => {
+      const container = map.getContainer();
+      const box = container.getBoundingClientRect();
+      const placed = [];
+      // Every dot and bubble on the map, and the map's own buttons and legend.
+      container.querySelectorAll('.leaflet-marker-icon').forEach((e) => placed.push(shrink((e.firstChild || e).getBoundingClientRect(), 2)));
+      container.querySelectorAll('.leaflet-control, .dpp-map-ctl > div').forEach((c) => placed.push(c.getBoundingClientRect()));
+      markers.forEach((m) => {
+        const tt = m.getTooltip();
+        if (!tt) return;
+        let ok = false;
+        for (let i = 0; i < DIRS.length && !ok; i += 1) {
+          tt.options.direction = DIRS[i][0];
+          tt.options.offset = DIRS[i][1];
+          m.closeTooltip();
+          m.openTooltip();
+          const el = tt.getElement();
+          if (el) {
+            const r = el.getBoundingClientRect();
+            const inside = r.left >= box.left + 2 && r.right <= box.right - 2 && r.top >= box.top + 2 && r.bottom <= box.bottom - 2;
+            if (inside && !placed.some((q) => hit(r, q))) { placed.push(r); ok = true; }
+          }
+        }
+        if (!ok) m.closeTooltip();
+      });
+    };
+    let timer = null;
+    const relayout = () => { clearTimeout(timer); timer = setTimeout(layout, 80); };
+    map.on('zoomend moveend resize', relayout);
+    relayout();
+    return () => {
+      clearTimeout(timer);
+      map.off('zoomend moveend resize', relayout);
+      group.remove();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, signature]);
+  return null;
+}
+
 // Where a product's story happened (OpenStreetMap). Recorded activity is
 // grouped by place into bubbles (count inside, coloured by what happened,
 // • for GPS or IP for an internet-address position); the lifecycle the
@@ -143,25 +232,14 @@ export default function ItemMap({ points = [], lifecycle = [], height = 360 }) {
   }, [points]);
   const planned = lifecycle.map((p) => [p.lat, p.lng]);
   const all = [...planned, ...groups.map((g) => [g.lat, g.lng])];
-  const lifeIcon = (n) => L.divIcon({
-    className: '',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    html: `<div style="width:24px;height:24px;border-radius:12px;background:${LIFECYCLE_COLOR};color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font:600 11px -apple-system,Segoe UI,Roboto,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.35)">${n}</div>`,
-  });
   return (
     <MapContainer center={all[0] || [20, 150]} zoom={2} zoomControl={false} scrollWheelZoom={false} worldCopyJump style={{ height, width: '100%', borderRadius: 8 }}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      {planned.length > 1 && <Polyline positions={planned} pathOptions={{ color: LIFECYCLE_COLOR, weight: 3, dashArray: '6 6' }} />}
-      {lifecycle.map((p, i) => (
-        <Marker key={`l${i}`} position={[p.lat, p.lng]} icon={lifeIcon(i + 1)}>
-          <Popup><b>{i + 1}. {p.place}</b><br />{p.label}</Popup>
-        </Marker>
-      ))}
       {groups.map((g) => <Bubble key={key(g.lat, g.lng)} group={g} />)}
+      <LifecycleLayer steps={lifecycle} />
       <FitToPoints points={all} resetTick={resetTick} />
       <Controls onReset={() => setResetTick((n) => n + 1)} />
       <Legend />

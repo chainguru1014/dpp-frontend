@@ -354,7 +354,7 @@ export default function ProductsTable({
       <Box>
         <Box sx={{ bgcolor: '#fff', border: '1px solid #dfe5ec', borderRadius: 4, overflow: 'hidden', boxShadow: '0 8px 24px rgba(31,51,97,0.08)' }}>
           <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: cols, gap: 2, px: 2, py: 1.5, bgcolor: '#f2f5f9', fontWeight: 400, color: '#16324a' }}>
-            <span>Product</span>{showOwner && <span>Brand</span>}<span>Category</span><span>Passport</span><span>Codes</span><span>Updated</span>
+            <span>Product</span>{showOwner && <span>Company</span>}<span>Category</span><span>Passport</span><span>Codes</span><span>Updated</span>
           </Box>
           {shown.map((p) => {
             const thumb = Array.isArray(p.images) ? p.images[0] : null;

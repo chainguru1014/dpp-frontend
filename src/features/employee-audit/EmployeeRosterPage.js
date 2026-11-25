@@ -40,7 +40,7 @@ import { listEmployees, inviteEmployee, updateEmployee, deleteEmployee, getAdmin
 const isPlatformAdminCompany = (c) => c.role === 'super' || c.role === 'admin' || c.name === 'admin';
 const emailDomainOf = (value) => String(value || '').trim().toLowerCase().split('@')[1] || '';
 
-const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmployee, isAdmin, companyId }) => {
+const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmployee, isAdmin, companyId, fixedCompanyId }) => {
   const [companies, setCompanies] = useState([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState('');
   const [email, setEmail] = useState('');
@@ -63,7 +63,8 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
         const list = (data.companies || []).filter((c) => !isPlatformAdminCompany(c));
         if (!alive) return;
         setCompanies(list);
-        setSelectedCompanyId((prev) => (list.some((c) => c._id === prev) ? prev : (list.length === 1 ? list[0]._id : '')));
+        // The company chosen on the Employees page, else the last one picked.
+        setSelectedCompanyId((prev) => (fixedCompanyId && list.some((c) => String(c._id) === String(fixedCompanyId)) ? String(fixedCompanyId) : list.some((c) => c._id === prev) ? prev : (list.length === 1 ? list[0]._id : '')));
       } else {
         const own = await getCompanyById(companyId);
         if (!alive) return;
@@ -72,7 +73,7 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
       }
     })();
     return () => { alive = false; };
-  }, [open, isAdmin, companyId]);
+  }, [open, isAdmin, companyId, fixedCompanyId]);
 
   const selectedCompany = companies.find((c) => c._id === selectedCompanyId) || null;
   const companyDomains = (selectedCompany?.allowedEmailDomains || []).map((d) => String(d).toLowerCase());
@@ -144,9 +145,9 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
           required
           value={selectedCompanyId}
           onChange={(e) => setSelectedCompanyId(e.target.value)}
-          disabled={!isAdmin}
+          disabled={!isAdmin || !!fixedCompanyId}
           error={triedSave && !selectedCompany}
-          helperText={isAdmin
+          helperText={isAdmin && fixedCompanyId ? 'The company chosen on the Employees page.' : isAdmin
             ? (companies.length ? 'The company this person works for.' : 'No companies yet. Create one on the Companies page first.')
             : 'Employees you add here belong to your company.'}
           fullWidth
@@ -231,12 +232,18 @@ const InviteDialog = ({ open, onClose, onInvited, token, restrictToWorkingEmploy
   );
 };
 
-const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restrictToWorkingEmployee, companyId }) => {
+const EmployeeRosterPage = ({ inviteRequested = false, onInviteOpened, token, showCompanyColumn, restrictToWorkingEmployee, companyId, isAdmin = showCompanyColumn, filterCompanyId }) => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   // The page header's "Invite employee" button.
-  useEffect(() => { if (inviteSignal > 0) setInviteOpen(true); }, [inviteSignal]);
+  // (once per press, so it never reopens when the list is shown again).
+  useEffect(() => {
+    if (!inviteRequested) return;
+    setInviteOpen(true);
+    if (onInviteOpened) onInviteOpened();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inviteRequested]);
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState({
     email: '',
@@ -254,7 +261,7 @@ const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restri
 
   const reload = () => {
     setLoading(true);
-    listEmployees(token)
+    listEmployees(token, filterCompanyId)
       .then(setEmployees)
       .finally(() => setLoading(false));
   };
@@ -262,7 +269,7 @@ const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restri
   useEffect(() => {
     reload();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [token, filterCompanyId]);
 
   const filteredEmployees = useMemo(() => {
     const email = emailFilter.trim().toLowerCase();
@@ -464,8 +471,9 @@ const EmployeeRosterPage = ({ inviteSignal = 0, token, showCompanyColumn, restri
         onInvited={reload}
         token={token}
         restrictToWorkingEmployee={restrictToWorkingEmployee}
-        isAdmin={showCompanyColumn}
+        isAdmin={isAdmin}
         companyId={companyId}
+        fixedCompanyId={filterCompanyId}
       />
     </Box>
   );

@@ -245,7 +245,7 @@ export default function ItemTracePage({
   const lifecycle = (result && result.type !== 'list' && result.lifecycle) || [];
   const lifecyclePoints = lifecycle
     .filter((s) => typeof s.latitude === 'number' && typeof s.longitude === 'number')
-    .map((s) => ({ lat: s.latitude, lng: s.longitude, color: LIFECYCLE_COLOR, label: `${s.title}: ${s.detail}`, place: s.placeName || '' }));
+    .map((s) => ({ lat: s.latitude, lng: s.longitude, color: LIFECYCLE_COLOR, label: `${s.title}: ${s.detail}`, place: s.placeName || '', stage: s.stage || '' }));
 
   return (
     <Box>
@@ -267,7 +267,7 @@ export default function ItemTracePage({
       >
         <TextField
           id="activity-search"
-          placeholder="Search by product or brand, or enter a code"
+          placeholder="Search by product or company, or enter a code"
           inputProps={{ 'aria-label': 'Search products, or enter a code' }}
           value={input}
           onChange={(e) => { setInput(e.target.value); setError(''); }}

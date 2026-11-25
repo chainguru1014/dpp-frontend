@@ -14,7 +14,7 @@ import { getEmployeeAuditLog } from '../../helper';
 // Dashboard) — this component intentionally has no auth context of its own
 // so it can be reused from either tree without depending on which provider
 // happens to be mounted above it.
-const EmployeeAuditLogPage = ({ token, showCompanyColumn }) => {
+const EmployeeAuditLogPage = ({ token, showCompanyColumn, companyId }) => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -22,13 +22,13 @@ const EmployeeAuditLogPage = ({ token, showCompanyColumn }) => {
 
   useEffect(() => {
     setLoading(true);
-    getEmployeeAuditLog(token, { page: paginationModel.page + 1, limit: paginationModel.pageSize })
+    getEmployeeAuditLog(token, { page: paginationModel.page + 1, limit: paginationModel.pageSize, companyId })
       .then((res) => {
         setRows(res.data || []);
         setTotal(res.pagination?.total || 0);
       })
       .finally(() => setLoading(false));
-  }, [token, paginationModel]);
+  }, [token, paginationModel, companyId]);
 
   const columns = [
     {

@@ -71,7 +71,6 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import GppMaybeIcon from '@mui/icons-material/GppMaybe';
-import PaletteIcon from '@mui/icons-material/Palette';
 import InsightsIcon from '@mui/icons-material/Insights';
 import GroupsIcon from '@mui/icons-material/Groups';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
@@ -151,6 +150,7 @@ import BrandPage from '../features/brand/BrandPage';
 import PageHeaderContext from '../components/PageHeader/PageHeaderContext';
 import ProductBar from '../components/ProductBar';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
+import ShopperPreviewPage from '../features/recommendations/ShopperPreviewPage';
 import FavoritesPage from '../features/favorites/FavoritesPage';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import ChatPage from '../features/chat/ChatPage';
@@ -247,7 +247,7 @@ const NAV_LABELS = {
   dashboard: 'Dashboard', products: 'Products', generateCode: 'Generate Code', captureHistory: 'Work Records',
   shipmentInspection: 'Shipments', rfidScan: 'RFID Scan', history: 'Scans & Security', lca: 'Sustainability',
   serviceRequests: 'Service Requests', recommendations: 'Shopper Preview', notifications: 'Announcements',
-  companies: 'Companies', processSteps: 'Workflows', employeeAuditLog: 'Employees', users: 'App Users', brand: 'Brand profile',
+  companies: 'Companies', processSteps: 'Workflows', employeeAuditLog: 'Employees', users: 'App Users', brand: 'Company profile',
 };
 const MOBILE_NAV_WIDTH = 260;
 
@@ -666,6 +666,8 @@ const InnerPage = () => {
   // The brand the Brand page should open on ({ companyId, name }), when
   // another page sends the user there.
   const [brandPageTarget, setBrandPageTarget] = useState(null);
+  // Super admin: the company chosen on the Employees page.
+  const [employeesCompanyId, setEmployeesCompanyId] = useState('');
   // Super admin: the brand company a new product is added to.
   const [productCompanyId, setProductCompanyId] = useState('');
   // The product just added, while the "What next?" window is open.
@@ -759,9 +761,6 @@ const InnerPage = () => {
     }
     if (activePage === 'lca' || activePage === 'esg') {
       return { title: 'Sustainability', tabs: [['lca', 'Life cycle'], ['esg', 'ESG']], active: activePage, onChange: (p) => go(p) };
-    }
-    if ((activePage === 'recommendations' || activePage === 'chat') && !isAppUser) {
-      return { title: 'Shopper Preview', tabs: [['recommendations', 'Recommendations'], ['chat', 'Chat']], active: activePage, onChange: (p) => go(p) };
     }
     return null;
   })();
@@ -2090,12 +2089,10 @@ const InnerPage = () => {
       title: 'Products',
       items: [
         ['products', 'Products', Inventory2Icon, true],
-        // Brands (super admin) / Brand profile (a brand): with the products
-        // (client request, 2026-11-23).
-        isAdmin
-          ? ['companies', 'Companies', StorefrontIcon, !isEmployeeActor]
-          : ['brand', 'Brand profile', PaletteIcon, canSeeItemSearch],
+        // Generate Code right after Products (client request 2026-11-25).
         ['generateCode', 'Generate Code', QrCode2Icon, canSeeGenerateCode],
+        // Companies (super admin); a company's own profile is under Your company.
+        ['companies', 'Companies', StorefrontIcon, isAdmin && !isEmployeeActor, ['brand']],
       ],
     },
     {
@@ -2138,6 +2135,7 @@ const InnerPage = () => {
       key: 'brand',
       title: 'Your company',
       items: [
+        ['brand', 'Company profile', StorefrontIcon, canSeeItemSearch],
         ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
       ],
     },
@@ -2389,11 +2387,16 @@ const InnerPage = () => {
           {activePage === 'profile' && <ProfilePage />}
 
           <PageHeaderContext.Provider value={sharedHeader}>
-          {activePage === 'recommendations' && (
+          {/* Staff and super admin: Shopper Preview, one page (choices, typing,
+              voice and the assistant). Shoppers keep Recommendations and Chat. */}
+          {(activePage === 'recommendations' || activePage === 'chat') && !isAppUser && (
+            <ShopperPreviewPage company={company} />
+          )}
+          {activePage === 'recommendations' && isAppUser && (
             <RecommendationsPage company={company} isAdmin={isAdmin} isAppUser={isAppUser} />
           )}
 
-          {activePage === 'chat' && <ChatPage company={company} isAppUser={isAppUser} />}
+          {activePage === 'chat' && isAppUser && <ChatPage company={company} isAppUser={isAppUser} />}
           {activePage === 'favorites' && <FavoritesPage company={company} onOpenRecommendations={() => go('recommendations')} />}
 
 
@@ -2450,7 +2453,7 @@ const InnerPage = () => {
               onCompanyChange={(id) => setBrandPageTarget({ companyId: id })}
               onBack={isAdmin ? () => go('companies') : undefined}
               onOpenProducts={isAdmin ? () => go('products') : undefined}
-              onOpenEmployees={canSeeStaffManagement ? () => go('employeeAuditLog') : undefined}
+              onOpenEmployees={canSeeStaffManagement ? (id) => { if (isAdmin) setEmployeesCompanyId(id ? String(id) : ''); go('employeeAuditLog'); } : undefined}
               onBrandsChanged={setBrands}
               canManageWorkflows={isAdmin || isCompanyAccount || isSupervisor}
             />
@@ -2507,7 +2510,7 @@ const InnerPage = () => {
           )}
 
           {activePage === 'employeeAuditLog' && canSeeStaffManagement && (
-            <EmployeeManagementPage token={token} isAdmin={isAdmin} companyId={company?._id} />
+            <EmployeeManagementPage token={token} isAdmin={isAdmin} companyId={company?._id} chosenCompanyId={employeesCompanyId} onChooseCompany={setEmployeesCompanyId} />
           )}
 
           {activePage === 'processSteps' && !isAppUser && (isAdmin || !isEmployeeActor || company?.employeeType === 'supervisor') && (
@@ -2553,7 +2556,9 @@ const InnerPage = () => {
                     products={products}
                     loading={productsLoading}
                     selectedId={generateCodeProduct?._id}
-                    showOwner={false}
+                    // Grouped by company, as on the Products page.
+                    showOwner={isAdmin}
+                    groupByBrand
                     emptyText={canEditProducts ? 'You have no products yet. Add one on the Products page first.' : 'No products yet.'}
                     onSelectProduct={(prod) => {
                       selectGenerateCodeProduct(prod);
@@ -2685,7 +2690,7 @@ const InnerPage = () => {
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
                 <TextField
                   id="product-search"
-                  placeholder={isAdmin ? 'Search by product, brand or owner' : 'Search by product or brand'}
+                  placeholder={isAdmin ? 'Search by product, company or owner' : 'Search by product or company'}
                   inputProps={{ 'aria-label': 'Search products' }}
                   value={productNameFilter}
                   onChange={(e) => setProductNameFilter(e.target.value)}
@@ -2990,7 +2995,7 @@ const InnerPage = () => {
                               canEdit={canEditProducts}
                             />
                           ) : (
-                            <Typography color="text.secondary">Choose the product’s brand on step 1 to change its design.</Typography>
+                            <Typography color="text.secondary">Choose the product’s company on step 1 to change its design.</Typography>
                           )}
                         </Grid>
                       </Grid>
@@ -3126,7 +3131,7 @@ const InnerPage = () => {
                               value={productCompanyId}
                               onChange={(e) => setProductCompanyId(e.target.value)}
                               error={showFieldErrors && !productCompanyId}
-                              helperText={showFieldErrors && !productCompanyId ? 'Please choose the company this product belongs to.' : 'Its brand name, logo, website and page design come from the company’s Brand profile.'}
+                              helperText={showFieldErrors && !productCompanyId ? 'Please choose the company this product belongs to.' : 'Its brand (name, logo, website and page design) comes from the company’s profile.'}
                             >
                               {brandCompanies.map((b) => <MenuItem key={b.company_id} value={String(b.company_id)}>{b.name}</MenuItem>)}
                             </TextField>
@@ -3137,7 +3142,7 @@ const InnerPage = () => {
                                 {formBrand?.tagline ? <Typography component="span" color="text.secondary">{` · ${formBrand.tagline}`}</Typography> : null}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
-                                Brand name, logo, website and page design come from {isAdmin ? 'the company’s' : 'your'} Brand profile.
+                                Brand name, logo, website and page design come from {isAdmin ? 'the company’s profile' : 'your Company profile'}.
                               </Typography>
                             </>
                           )}
@@ -3152,7 +3157,7 @@ const InnerPage = () => {
                               }
                             }}
                           >
-                            Brand profile ›
+                            {isAdmin ? 'Open company ›' : 'Company profile ›'}
                           </Button>
                         )}
                       </Box>
