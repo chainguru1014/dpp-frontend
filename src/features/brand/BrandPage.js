@@ -419,7 +419,7 @@ export default function BrandPage({
           )}
 
           {/* Workflows: in a dialog, opened from the company bar. */}
-          <Dialog open={workflowsOpen} onClose={() => setWorkflowsOpen(false)} maxWidth="md" fullWidth>
+          <Dialog open={workflowsOpen} onClose={() => setWorkflowsOpen(false)} maxWidth="lg" fullWidth>
             <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Box sx={{ flex: 1 }}>
                 Workflows

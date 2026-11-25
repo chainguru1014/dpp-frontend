@@ -2007,6 +2007,8 @@ const InnerPage = () => {
   const go = (page) => {
     // Products opens on the list: choose a product first (client request).
     if (page === 'products') setSelectedProduct(null);
+    // Employees opens on the company cards (super admin): choose a company first.
+    if (page === 'employeeAuditLog') setEmployeesCompanyId('');
     setActivePage(page);
     setMobileNavOpen(false);
   };
@@ -2453,7 +2455,7 @@ const InnerPage = () => {
               onCompanyChange={(id) => setBrandPageTarget({ companyId: id })}
               onBack={isAdmin ? () => go('companies') : undefined}
               onOpenProducts={isAdmin ? () => go('products') : undefined}
-              onOpenEmployees={canSeeStaffManagement ? (id) => { if (isAdmin) setEmployeesCompanyId(id ? String(id) : ''); go('employeeAuditLog'); } : undefined}
+              onOpenEmployees={canSeeStaffManagement ? (id) => { go('employeeAuditLog'); if (isAdmin && id) setEmployeesCompanyId(String(id)); } : undefined}
               onBrandsChanged={setBrands}
               canManageWorkflows={isAdmin || isCompanyAccount || isSupervisor}
             />

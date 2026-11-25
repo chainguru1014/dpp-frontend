@@ -5,6 +5,8 @@ import MicIcon from '@mui/icons-material/Mic';
 import StopIcon from '@mui/icons-material/Stop';
 import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
+import TouchAppIcon from '@mui/icons-material/TouchApp';
+import KeyboardIcon from '@mui/icons-material/Keyboard';
 import axios from 'axios';
 import { Backend_URL, getFileUrl, getProductsByUser } from '../../helper';
 import { notifyError } from '../../utils/feedbackBus';
@@ -131,6 +133,9 @@ export default function ShopperPreviewPage({ company }) {
   const [messages, setMessages] = useState([]);
   const [asking, setAsking] = useState(false);
   const [viewing, setViewing] = useState(null);
+  // The picks show once the shopper has said what they want (a recording or a
+  // message sent, or choices confirmed with Show picks); a prompt until then.
+  const [shown, setShown] = useState(false);
   const inputRef = useRef(null);
   const threadRef = useRef(null);
 
@@ -186,12 +191,13 @@ export default function ShopperPreviewPage({ company }) {
     if (!text || asking) return;
     setInput('');
     const got = prefsFromText(text, groups, products);
+    setShown(true);
     const added = Object.values(got).reduce((n, v) => n + v.length, 0);
     if (added) setPrefs((cur) => Object.fromEntries(Object.keys(cur).map((k) => [k, k === 'max' && got.max.length ? got.max : [...new Set([...cur[k], ...got[k]])]])));
     const history = messages.map((m) => ({ role: m.role, content: m.text }));
     setMessages((m) => [...m, { role: 'user', text }]);
     if (added && !isQuestion(text)) {
-      setMessages((m) => [...m, { role: 'assistant', text: 'Here are the picks for that. Tap the choices on the left to fine-tune them.' }]);
+      setMessages((m) => [...m, { role: 'assistant', text: 'Here are the picks for that. Change the choices to fine-tune them.' }]);
       return;
     }
     setAsking(true);
@@ -340,12 +346,12 @@ export default function ShopperPreviewPage({ company }) {
             )}
           </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '320px minmax(0, 1fr)' }, gap: 2.5, alignItems: 'start' }}>
-            {/* 2. The choices, as buttons. */}
-            <Box sx={{ ...card, p: 2.5, position: { lg: 'sticky' }, top: { lg: 12 } }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(0, 1fr)' }, gap: 2.5, alignItems: 'start' }}>
+            {/* 2. The choices, as buttons; Show picks confirms them. */}
+            <Box sx={{ ...card, p: 2.5 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                 <Typography sx={{ fontSize: 18, color: '#16324a', flex: 1 }}>Choices</Typography>
-                {chosen.length > 0 && <Button size="small" onClick={() => setPrefs(EMPTY)}>Clear all</Button>}
+                {chosen.length > 0 && <Button size="small" onClick={() => { setPrefs(EMPTY); setShown(false); }}>Clear all</Button>}
               </Box>
               {groups.map((g) => (
                 <Box key={g.key} sx={{ mb: 2 }}>
@@ -358,49 +364,77 @@ export default function ShopperPreviewPage({ company }) {
                   </Box>
                 </Box>
               ))}
-              {groups.length === 0 && <Typography color="text.secondary">No products yet. Add products on the Products page first.</Typography>}
-            </Box>
-
-            {/* 3. The picks, updated with every choice. */}
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap', mb: 1.5, minHeight: 36 }}>
-                <Typography sx={{ fontSize: 18, color: '#16324a', mr: 1 }}>{chosen.length ? 'Best picks' : 'Best picks overall'}</Typography>
-                {chosen.map((c) => (
-                  <Button key={`${c.group}-${c.k}`} size="small" onClick={() => toggle(c.group, c.k)} aria-label={`Remove ${c.label}`}
-                    endIcon={<CloseIcon sx={{ fontSize: 15 }} />} sx={{ ...pill(true), minHeight: 30, fontSize: '0.88rem' }}>
-                    {c.label}
-                  </Button>
-                ))}
-              </Box>
-              {results.length === 0 ? (
+              {groups.length === 0 ? (
                 <Typography color="text.secondary">No products yet. Add products on the Products page first.</Typography>
               ) : (
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', md: 'repeat(3, minmax(0,1fr))' }, gap: 2 }}>
-                  {results.map(({ p, score, why }, i) => {
-                    const img = (p.images && p.images[0]) || p.image;
-                    return (
-                      <Box key={p._id || i} component="button" type="button" onClick={() => setViewing(p)} aria-label={`View ${p.name || 'product'}`}
-                        sx={{ ...card, overflow: 'hidden', display: 'flex', flexDirection: 'column', textAlign: 'left', border: 0, p: 0, cursor: 'pointer', font: 'inherit', '&:hover': { boxShadow: '0 10px 26px rgba(31,51,97,0.14)' } }}>
-                        <Box sx={{ position: 'relative', width: '100%', aspectRatio: '4 / 4.4', bgcolor: '#eef1f4' }}>
-                          {img && <Box component="img" src={getFileUrl(img)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
-                          <Box sx={{ position: 'absolute', top: 10, left: 10, px: 1.25, height: 28, borderRadius: '14px', display: 'flex', alignItems: 'center', bgcolor: 'rgba(255,255,255,0.9)', fontSize: 13.5, color: '#16324a' }}>
-                            {score}% match
-                          </Box>
-                        </Box>
-                        <Box sx={{ p: 1.75, width: '100%', boxSizing: 'border-box' }}>
-                          <Typography sx={{ fontSize: 12.5, color: '#5f6b78', textTransform: 'uppercase', letterSpacing: '0.04em' }} noWrap>{p.brandInfo?.name || ''}</Typography>
-                          <Typography sx={{ fontSize: 16.5, color: '#1c2430' }} noWrap title={p.name}>{p.name || 'Unnamed product'}</Typography>
-                          <Typography color="text.secondary" sx={{ fontSize: 15 }}>{priceText(p)}</Typography>
-                          {why.length > 0 && (
-                            <Typography sx={{ fontSize: 13.5, color: '#1b5b91', mt: 0.5, display: 'flex', gap: 0.5, alignItems: 'flex-start' }}>
-                              <AutoAwesomeIcon sx={{ fontSize: 15, mt: '2px' }} />{why.join(' · ')}
-                            </Typography>
-                          )}
-                        </Box>
+                <Button variant="contained" fullWidth startIcon={<AutoAwesomeIcon />} onClick={() => setShown(true)} sx={{ mt: 0.5, height: 46, borderRadius: '999px' }}>
+                  {shown ? 'Picks are shown' : chosen.length ? `Show picks (${chosen.length} chosen)` : 'Show picks'}
+                </Button>
+              )}
+            </Box>
+
+            {/* 3. The picks, once the shopper has finished; a prompt before. */}
+            <Box>
+              {!shown ? (
+                <Box sx={{ ...card, p: { xs: 2.5, md: 3.5 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+                    <AutoAwesomeIcon sx={{ color: '#2a78bd' }} />
+                    <Typography sx={{ fontSize: 20, color: '#16324a' }}>Picks appear here</Typography>
+                  </Box>
+                  <Typography color="text.secondary">Tell us what the shopper is looking for in any of three ways, and the best matching products show up here with the reason for each.</Typography>
+                  {[
+                    [MicIcon, 'Say it', 'Press the microphone, speak, then press stop.'],
+                    [KeyboardIcon, 'Type it', 'Write a wish or a question above and press Send.'],
+                    [TouchAppIcon, 'Tap it', 'Choose on the left, then press Show picks.'],
+                  ].map(([Icon, title, text]) => (
+                    <Box key={title} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', p: 1.5, borderRadius: '14px', bgcolor: '#f4f7fb' }}>
+                      <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: '#e3eef8', color: '#1b4f72', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon fontSize="small" /></Box>
+                      <Box>
+                        <Typography sx={{ color: '#16324a' }}>{title}</Typography>
+                        <Typography variant="body2" color="text.secondary">{text}</Typography>
                       </Box>
-                    );
-                  })}
+                    </Box>
+                  ))}
                 </Box>
+              ) : (
+                <>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mb: 1.25, minHeight: 32 }}>
+                    <Typography sx={{ fontSize: 18, color: '#16324a', mr: 1 }}>{chosen.length ? 'Best picks' : 'Best picks overall'}</Typography>
+                    {chosen.map((c) => (
+                      <Button key={`${c.group}-${c.k}`} size="small" onClick={() => toggle(c.group, c.k)} aria-label={`Remove ${c.label}`}
+                        endIcon={<CloseIcon sx={{ fontSize: 14 }} />} sx={{ ...pill(true), minHeight: 28, fontSize: '0.85rem', px: 1.25 }}>
+                        {c.label}
+                      </Button>
+                    ))}
+                  </Box>
+                  {results.length === 0 ? (
+                    <Typography color="text.secondary">No products yet. Add products on the Products page first.</Typography>
+                  ) : (
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0,1fr))', sm: 'repeat(3, minmax(0,1fr))' }, gap: 1 }}>
+                      {results.map(({ p, score, why }, i) => {
+                        const img = (p.images && p.images[0]) || p.image;
+                        return (
+                          <Box key={p._id || i} component="button" type="button" onClick={() => setViewing(p)} aria-label={`View ${p.name || 'product'}`}
+                            sx={{ bgcolor: '#fff', borderRadius: '14px', boxShadow: '0 2px 10px rgba(31,51,97,0.06)', overflow: 'hidden', display: 'flex', flexDirection: 'column', textAlign: 'left', border: 0, p: 0, cursor: 'pointer', font: 'inherit', '&:hover': { boxShadow: '0 8px 20px rgba(31,51,97,0.14)' } }}>
+                            <Box sx={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', bgcolor: '#eef1f4' }}>
+                              {img && <Box component="img" src={getFileUrl(img)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                              <Box sx={{ position: 'absolute', top: 6, left: 6, px: 0.9, height: 22, borderRadius: '11px', display: 'flex', alignItems: 'center', bgcolor: 'rgba(255,255,255,0.92)', fontSize: 12, color: '#16324a' }}>
+                                {score}%
+                              </Box>
+                            </Box>
+                            <Box sx={{ p: 1, width: '100%', boxSizing: 'border-box' }}>
+                              <Typography sx={{ fontSize: 14, color: '#1c2430' }} noWrap title={p.name}>{p.name || 'Unnamed product'}</Typography>
+                              <Typography color="text.secondary" sx={{ fontSize: 13 }}>{priceText(p)}</Typography>
+                              {why.length > 0 && (
+                                <Typography noWrap sx={{ fontSize: 12, color: '#1b5b91', mt: 0.25 }} title={why.join(' · ')}>{why.join(' · ')}</Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  )}
+                </>
               )}
             </Box>
           </Box>

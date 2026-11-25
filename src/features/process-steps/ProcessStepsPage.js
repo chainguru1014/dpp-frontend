@@ -259,7 +259,7 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
             </Paper>
 
             {/* What staff see in the app's Select workflow page (iPhone 16). */}
-            <Box sx={{ flex: '0 0 300px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, position: { lg: 'sticky' }, top: { lg: 84 } }}>
+            <Box sx={{ flex: '0 0 300px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, position: { lg: 'sticky' }, top: { lg: embedded ? 0 : 84 }, mx: 'auto' }}>
               <Typography sx={{ color: '#5f6b78', fontSize: 14 }}>What staff see in the app</Typography>
               <SelectWorkflowPhone steps={steps.filter((x) => x.entity.trim())} />
             </Box>

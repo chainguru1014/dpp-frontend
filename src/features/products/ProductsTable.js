@@ -292,10 +292,13 @@ export default function ProductsTable({
       .map((x) => x.p);
   }, [products, groupByBrand]);
   const [page, setPage] = useState(1);
+  // Grouped by company: each company has its own pages ({ company: page }).
+  const [groupPages, setGroupPages] = useState({});
   const pages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   // Back to the first page whenever the list itself changes (a search, a reload).
   useEffect(() => {
     setPage(1);
+    setGroupPages({});
   }, [rows.length]);
   const current = Math.min(page, pages);
   const shown = rows.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
@@ -317,17 +320,10 @@ export default function ProductsTable({
   }
 
   const range = `${(current - 1) * PAGE_SIZE + 1}–${Math.min(current * PAGE_SIZE, rows.length)} of ${rows.length}`;
-  // In the given slot (beside the search box): the range and page numbers on
-  // one line. Otherwise under the list.
-  const compactPager = (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
-      <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{range}</Typography>
-      <Pagination count={pages} page={current} onChange={(e, p) => setPage(p)} color="primary" shape="rounded" siblingCount={0} />
-    </Box>
-  );
-  // Grouped by brand: the page numbers on the right of the first brand's line.
-  const pagerInHeader = pages > 1 && !slotEl && groupByBrand;
-  const pager = pages > 1 && !pagerInHeader && (slotEl
+  // Grouped by company (cards): each company's own page numbers sit on the
+  // right of its line, so no list-wide pager.
+  const perGroup = groupByBrand && layout !== 'table';
+  const pager = pages > 1 && !perGroup && (slotEl
     ? createPortal(
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{range}</Typography>
@@ -397,7 +393,11 @@ export default function ProductsTable({
           Typography noWrap can't shrink below that) would end up wider than
           its neighbors. minmax(0, 1fr) forces every column to the same
           strict 1/N width regardless of content. */}
-      {(groupByBrand ? groupsOf(shown) : [{ brand: '', items: shown }]).map((g, gi) => (
+      {(perGroup ? groupsOf(rows) : [{ brand: '', items: shown }]).map((group) => {
+        const gPages = perGroup ? Math.max(1, Math.ceil(group.items.length / PAGE_SIZE)) : 1;
+        const gPage = perGroup ? Math.min(groupPages[group.brand] || 1, gPages) : 1;
+        const g = perGroup ? { ...group, total: group.items.length, items: group.items.slice((gPage - 1) * PAGE_SIZE, gPage * PAGE_SIZE) } : group;
+        return (
         <Box key={g.brand || 'all'} sx={{ mb: groupByBrand ? 2.5 : 0 }}>
           {groupByBrand && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 1.25 }}>
@@ -408,10 +408,15 @@ export default function ProductsTable({
               </Box>
               <Typography sx={{ fontSize: 18, fontWeight: 400, color: '#16324a' }}>{g.brand}</Typography>
               <Box sx={{ px: 1, py: 0.25, borderRadius: 999, bgcolor: '#e8f1fb', color: '#1b4f72', fontSize: 13, fontWeight: 400 }}>
-                {g.items.length} {g.items.length === 1 ? 'product' : 'products'}
+                {g.total} {g.total === 1 ? 'product' : 'products'}
               </Box>
               <Box sx={{ flex: 1, height: '1px', bgcolor: '#e3e8ef', ml: 1 }} />
-              {gi === 0 && pagerInHeader && compactPager}
+              {gPages > 1 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+                  <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{`${(gPage - 1) * PAGE_SIZE + 1}–${Math.min(gPage * PAGE_SIZE, g.total)} of ${g.total}`}</Typography>
+                  <Pagination count={gPages} page={gPage} onChange={(e, p) => setGroupPages((m) => ({ ...m, [group.brand]: p }))} color="primary" shape="rounded" siblingCount={0} />
+                </Box>
+              )}
             </Box>
           )}
           <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: `repeat(${Math.min(columns, 2)}, minmax(0, 1fr))`, md: `repeat(${columns}, minmax(0, 1fr))` } }}>
@@ -430,7 +435,8 @@ export default function ProductsTable({
             ))}
           </Box>
         </Box>
-      ))}
+        );
+      })}
       {pager}
     </Box>
   );

@@ -127,9 +127,11 @@ const escHtml = (s) => String(s || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;'
 // The product lifecycle, as on the app's Journey map: one numbered circle
 // per place (steps in the same place share it), the place's name written
 // beside it, and dashed lines as goods move: each material to the factory,
-// then the factory onward. Names never cover each other: each takes the
-// first free spot of right / left / above / below its circle, else it is
-// hidden until zoomed in (the circle stays; a click shows it). A click on a
+// then the factory onward. Every place's name is shown: each takes the
+// first spot (right / left / above / below its circle, then a little
+// further out) clear of other names, lifecycle circles and the map's
+// buttons; activity bubbles may sit under a name. With no clear spot it
+// goes to the right anyway. A click on a
 // circle flies the map there and lists what happened there.
 function LifecycleLayer({ steps }) {
   const map = useMap();
@@ -167,15 +169,15 @@ function LifecycleLayer({ steps }) {
       return m;
     });
 
-    const DIRS = [['right', [12, 0]], ['left', [-12, 0]], ['top', [0, -14]], ['bottom', [0, 14]]];
+    const DIRS = [['right', [12, 0]], ['left', [-12, 0]], ['top', [0, -14]], ['bottom', [0, 14]], ['right', [12, -18]], ['right', [12, 18]], ['left', [-12, -18]], ['left', [-12, 18]], ['top', [0, -34]], ['bottom', [0, 34]]];
     const hit = (a, b) => !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
     const shrink = (r, d) => ({ left: r.left + d, right: r.right - d, top: r.top + d, bottom: r.bottom - d });
     const layout = () => {
       const container = map.getContainer();
       const box = container.getBoundingClientRect();
       const placed = [];
-      // Every dot and bubble on the map, and the map's own buttons and legend.
-      container.querySelectorAll('.leaflet-marker-icon').forEach((e) => placed.push(shrink((e.firstChild || e).getBoundingClientRect(), 2)));
+      // The lifecycle circles, and the map's own buttons and legend.
+      markers.forEach((m) => { const e = m.getElement(); if (e) placed.push(shrink((e.firstChild || e).getBoundingClientRect(), 2)); });
       container.querySelectorAll('.leaflet-control, .dpp-map-ctl > div').forEach((c) => placed.push(c.getBoundingClientRect()));
       markers.forEach((m) => {
         const tt = m.getTooltip();
@@ -193,7 +195,15 @@ function LifecycleLayer({ steps }) {
             if (inside && !placed.some((q) => hit(r, q))) { placed.push(r); ok = true; }
           }
         }
-        if (!ok) m.closeTooltip();
+        if (!ok) {
+          // No clear spot: to the right anyway (a name is never left out).
+          tt.options.direction = 'right';
+          tt.options.offset = [12, 0];
+          m.closeTooltip();
+          m.openTooltip();
+          const el = tt.getElement();
+          if (el) placed.push(el.getBoundingClientRect());
+        }
       });
     };
     let timer = null;
