@@ -416,8 +416,8 @@ export default function ShopperPreviewPage({ company }) {
                         return (
                           <Box key={p._id || i} component="button" type="button" onClick={() => setViewing(p)} aria-label={`View ${p.name || 'product'}`}
                             sx={{ bgcolor: '#fff', borderRadius: '14px', boxShadow: '0 2px 10px rgba(31,51,97,0.06)', overflow: 'hidden', display: 'flex', flexDirection: 'column', textAlign: 'left', border: 0, p: 0, cursor: 'pointer', font: 'inherit', '&:hover': { boxShadow: '0 8px 20px rgba(31,51,97,0.14)' } }}>
-                            <Box sx={{ position: 'relative', width: '100%', aspectRatio: '1 / 1', bgcolor: '#eef1f4' }}>
-                              {img && <Box component="img" src={getFileUrl(img)} alt="" sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                            <Box sx={{ position: 'relative', width: '100%', height: 0, pt: '100%', overflow: 'hidden', bgcolor: '#eef1f4' }}>
+                              {img && <Box component="img" src={getFileUrl(img)} alt="" sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                               <Box sx={{ position: 'absolute', top: 6, left: 6, px: 0.9, height: 22, borderRadius: '11px', display: 'flex', alignItems: 'center', bgcolor: 'rgba(255,255,255,0.92)', fontSize: 12, color: '#16324a' }}>
                                 {score}%
                               </Box>
