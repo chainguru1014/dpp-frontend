@@ -304,6 +304,34 @@ const CountryRows = ({ items }) => {
   );
 };
 
+// Country name -> its two-letter ISO code ("Japan" -> "JP"), built once from
+// the browser's own region names (Intl), plus a few common spellings.
+const RETIRED_CODES = ['AN', 'BU', 'CS', 'DD', 'FX', 'NT', 'SU', 'TP', 'UK', 'YU', 'ZR'];
+const COUNTRY_CODES = (() => {
+  const map = {};
+  try {
+    const names = new Intl.DisplayNames(['en'], { type: 'region' });
+    for (let a = 65; a <= 90; a += 1) {
+      for (let b = 65; b <= 90; b += 1) {
+        const code = String.fromCharCode(a, b);
+        let name;
+        try { name = names.of(code); } catch (e) { name = null; }
+        // Retired / reserved codes the browser still names (DD = East Germany).
+        if (!name || name === code || RETIRED_CODES.includes(code)) continue;
+        // The first (standard) code wins: FR, not the old FX; GB, not UK.
+        const key = name.toLowerCase();
+        if (!map[key]) map[key] = code;
+        // "Hong Kong SAR China" -> also "Hong Kong".
+        const short = name.replace(/\s+SAR China$/, '').toLowerCase();
+        if (!map[short]) map[short] = code;
+      }
+    }
+  } catch (e) { /* no Intl: names stay as they are */ }
+  Object.assign(map, { usa: 'US', 'united states of america': 'US', uk: 'GB', 'great britain': 'GB', uae: 'AE', 'south korea': 'KR', korea: 'KR', russia: 'RU', vietnam: 'VN', 'czech republic': 'CZ', turkey: 'TR' });
+  return map;
+})();
+const countryCode = (name) => COUNTRY_CODES[String(name || '').trim().toLowerCase()] || name;
+
 const EMPTY_FILTERS = { date_from: '', date_to: '', item_category: '', origin_country: '', destination_country: '', city: '' };
 const activeFilterCount = (f) => Object.values(f).filter(Boolean).length;
 
@@ -393,25 +421,29 @@ export default function DashboardAnalytics({
 
   const set = (k) => (e) => setFilters((f) => ({ ...f, [k]: e.target.value }));
   const sel = (label, k, options, all, render = (x) => x) => (
-    <TextField select size="small" label={label} value={filters[k]} onChange={set(k)} sx={{ minWidth: 150, flex: 1 }}>
+    <TextField select size="small" label={label} value={filters[k]} onChange={set(k)} sx={{ minWidth: 120, flex: 1 }}>
       <MenuItem value="">{all}</MenuItem>
       {options.map((o) => <MenuItem key={o} value={o}>{render(o)}</MenuItem>)}
     </TextField>
   );
+  // Hidden until the header's Filters button opens it; everything on one
+  // line on wide screens (client request 2026-11-25).
   const filterBar = (
-    <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-      <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={filters.date_from} onChange={set('date_from')} sx={{ width: 160 }} />
+    <Collapse in={filtersOpen} unmountOnExit>
+    <Paper sx={{ px: 2, py: 1.5, mb: 2, display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: { xs: 'wrap', lg: 'nowrap' } }}>
+      <TextField size="small" type="date" label="From" InputLabelProps={{ shrink: true }} value={filters.date_from} onChange={set('date_from')} sx={{ width: 150, flexShrink: 0 }} />
       <Typography color="text.secondary">~</Typography>
-      <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={filters.date_to} onChange={set('date_to')} sx={{ width: 160 }} />
+      <TextField size="small" type="date" label="To" InputLabelProps={{ shrink: true }} value={filters.date_to} onChange={set('date_to')} sx={{ width: 150, flexShrink: 0 }} />
       {sel('Item Category', 'item_category', a.filterOptions?.itemCategories || [], 'All', (k) => categoryLabels[k] || k)}
-      {sel('Origin Country', 'origin_country', a.filterOptions?.originCountries || [], 'All')}
+      {sel('Origin Location', 'origin_country', a.filterOptions?.originCountries || [], 'All')}
       {sel('Destination Country', 'destination_country', a.filterOptions?.destinationCountries || [], 'All')}
       {sel('City', 'city', a.filterOptions?.cities || [], 'All')}
-      <Stack alignItems="center" spacing={0.25}>
-        <Button variant="contained" onClick={() => setAppliedFilters(filters)} sx={{ minWidth: 96 }}>Apply</Button>
-        <Button size="small" onClick={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); }} sx={{ minHeight: 0, py: 0 }}>Reset</Button>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ flexShrink: 0 }}>
+        <Button variant="contained" onClick={() => setAppliedFilters(filters)} sx={{ minWidth: 88 }}>Apply</Button>
+        <Button onClick={() => { setFilters(EMPTY_FILTERS); setAppliedFilters(EMPTY_FILTERS); }}>Reset</Button>
       </Stack>
     </Paper>
+    </Collapse>
   );
 
   return (
@@ -448,21 +480,20 @@ export default function DashboardAnalytics({
         <Paper sx={{ px: 2, py: 1.5 }}>
           <Typography variant="subtitle1" component="h2" sx={{ mb: 1 }}>Traceability Overview</Typography>
           <Box sx={{ overflowX: 'auto' }}>
-            <Table size="small" sx={{ '& th': { fontSize: 13, color: 'text.secondary', bgcolor: '#f6f8fb', whiteSpace: 'nowrap' }, '& td': { fontSize: 13.5 } }}>
+            <Table size="small" sx={{ '& th': { fontSize: 13, color: 'text.secondary', bgcolor: '#f6f8fb', whiteSpace: 'nowrap', py: 0.5, lineHeight: 1.3 }, '& td': { fontSize: 13.5 } }}>
               <TableHead>
                 <TableRow>
                   <TableCell rowSpan={2}>Item Category</TableCell>
                   <TableCell rowSpan={2}>SKU / Style No.</TableCell>
-                  <TableCell rowSpan={2}>Origin Country</TableCell>
-                  <TableCell rowSpan={2} align="center">Total Scanned<br />(PCS)</TableCell>
+                  <TableCell rowSpan={2} sx={{ minWidth: 190 }}>Origin Location</TableCell>
+                  <TableCell rowSpan={2} align="center">Total Scanned (PCS)</TableCell>
                   {traceabilityColumns.length > 0 && (
                     <TableCell align="center" colSpan={traceabilityColumns.length}>Destination (Country)</TableCell>
                   )}
-                  <TableCell rowSpan={2}>City (Top)</TableCell>
                   <TableCell rowSpan={2} align="center">Stores</TableCell>
                 </TableRow>
                 <TableRow>
-                  {traceabilityColumns.map((c) => <TableCell key={c} align="center">{c}</TableCell>)}
+                  {traceabilityColumns.map((c) => <TableCell key={c} align="center" title={c}>{countryCode(c)}</TableCell>)}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -477,19 +508,18 @@ export default function DashboardAnalytics({
                         </Box>
                       </TableCell>
                       <TableCell>{row.skuStyleNumber || '—'}</TableCell>
-                      <TableCell>{row.originCountry || '—'}</TableCell>
+                      <TableCell sx={{ whiteSpace: 'nowrap' }}>{row.originCountry || '—'}</TableCell>
                       <TableCell align="center" sx={{ fontWeight: 600 }}>{Number(row.totalScanned || 0).toLocaleString()}</TableCell>
                       {traceabilityColumns.map((c) => (
                         <TableCell key={c} align="center">{Number(row.destinationBreakdown?.[c] || 0).toLocaleString()}</TableCell>
                       ))}
-                      <TableCell>{(row.topCities || []).join(', ') || '—'}</TableCell>
                       <TableCell align="center">{row.stores ?? '—'}</TableCell>
                     </TableRow>
                   );
                 })}
                 {!(a.traceabilityOverview || []).length && (
                   <TableRow>
-                    <TableCell colSpan={6 + traceabilityColumns.length}>
+                    <TableCell colSpan={5 + traceabilityColumns.length}>
                       <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
                         No scans yet. Figures appear here once people scan your product codes.
                       </Typography>

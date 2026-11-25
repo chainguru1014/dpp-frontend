@@ -73,9 +73,9 @@ const DashboardPage = ({
       <PageHeader
         title={greetingName ? `Welcome, ${greetingName}` : 'Dashboard'}
         description={description}
-        // Filters belong to the detailed view; they also stay reachable
-        // while any filter is on, so it can always be cleared.
-        actions={<>{(moreOpen || activeFilters > 0) && filtersButton}{actions}</>}
+        // Filters: always in the header; the filter card is hidden until
+        // pressed (client request 2026-11-25).
+        actions={<>{filtersButton}{actions}</>}
       />
 
       {/* The jobs people come here to do, as large cards (brands and staff;
