@@ -81,7 +81,7 @@ export default function BrandPage({
   // A Supervisor signs in as an employee: their account is not the company,
   // so the company itself is read (its industry, Supervisor email, domains).
   const [ownCompany, setOwnCompany] = useState(null);
-  const ownCompanyId = !isAdmin && brand?.company_id && String(account?._id) !== String(brand.company_id) ? String(brand.company_id) : '';
+  const ownCompanyId = !isAdmin && brand?.company_id && (account?.actorKind === 'Employee' || String(account?._id) !== String(brand.company_id)) ? String(brand.company_id) : '';
   useEffect(() => {
     if (!ownCompanyId) return undefined;
     let alive = true;
