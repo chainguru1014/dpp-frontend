@@ -80,7 +80,7 @@ const BrandsTable = ({ rows, loading, onOpen, onEdit, onRemove }) => {
   const columns = [
     {
       field: 'name',
-      headerName: 'Brand',
+      headerName: 'Company',
       flex: 1.4,
       minWidth: 220,
       valueGetter: (p) => p.row.brand?.name || p.row.name,
@@ -138,7 +138,7 @@ const BrandsTable = ({ rows, loading, onOpen, onEdit, onRemove }) => {
           <Tooltip title="Remove">
             <IconButton aria-label={`Remove ${row.name}`} color="error" onClick={() => onRemove(row)}><Delete /></IconButton>
           </Tooltip>
-          <Tooltip title="Open brand">
+          <Tooltip title="Open company">
             <IconButton aria-label={`Open ${row.name}`} onClick={() => onOpen(row)}><ChevronRight /></IconButton>
           </Tooltip>
         </Box>
@@ -190,7 +190,7 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
 
   const handleSave = async () => {
     if (!form.name.trim()) {
-      notify('Please enter the brand name.', 'warning');
+      notify('Please enter the company name.', 'warning');
       return;
     }
     if (!form.companyType) {
@@ -250,7 +250,7 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
             <input type="file" accept="image/*" hidden onChange={uploadLogo} />
           </Button>
           <Stack spacing={2} sx={{ flex: 1 }}>
-            <TextField label="Brand name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} fullWidth autoFocus />
+            <TextField label="Company name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} fullWidth autoFocus helperText="Shoppers see it as the brand name. It can be changed later on Brand profile." />
             <TextField select label="Industry" required value={form.companyType} onChange={(e) => setForm({ ...form, companyType: e.target.value })} fullWidth>
               {COMPANY_TYPES.map((t) => <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>)}
             </TextField>
@@ -333,8 +333,8 @@ const CompanyManagementSection = ({ token, onOpenBrand }) => {
   return (
     <Box>
       <PageHeader
-        title="Brands"
-        description="Every company on Yometel, each with its one brand. Open one to change its brand profile, workflows and team."
+        title="Companies"
+        description="Every company on Yometel. Open one to change its Brand profile (what shoppers see), its workflows and its team."
         actions={(
           <Button variant="contained" startIcon={<Add />} onClick={() => setAddOpen(true)}>
             Add company
@@ -343,7 +343,7 @@ const CompanyManagementSection = ({ token, onOpenBrand }) => {
       />
       <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', mb: 2 }}>
         <TextField
-          placeholder="Search by company, brand, email or domain"
+          placeholder="Search by name, email or domain"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           InputProps={{ startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} /> }}
@@ -354,7 +354,7 @@ const CompanyManagementSection = ({ token, onOpenBrand }) => {
           <MenuItem value="">All industries</MenuItem>
           {COMPANY_TYPES.map((t) => <MenuItem key={t.key} value={t.key}>{t.label}</MenuItem>)}
         </TextField>
-        <Typography color="text.secondary" sx={{ ml: 'auto' }}>{rows.length} {rows.length === 1 ? 'brand' : 'brands'}</Typography>
+        <Typography color="text.secondary" sx={{ ml: 'auto' }}>{rows.length} {rows.length === 1 ? 'company' : 'companies'}</Typography>
       </Box>
       <AddBrandDialog open={addOpen} onClose={() => setAddOpen(false)} onCreated={reload} />
       <BrandsTable

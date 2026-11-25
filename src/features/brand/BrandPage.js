@@ -309,7 +309,7 @@ export default function BrandPage({
                       <Button variant="outlined" startIcon={<Inventory2Icon />} onClick={() => onOpenProducts(brand.company_id)}>Its products</Button>
                     )}
                     {isAdmin && (
-                      <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={() => setPicking(true)}>Change brand</Button>
+                      <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={() => setPicking(true)}>Change company</Button>
                     )}
                     {canEdit && (
                       <Button variant="contained" component="label" disabled={uploading === 'coverUrl'}>

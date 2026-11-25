@@ -16,7 +16,7 @@ const companyTypeLabel = (key) => {
 // Once chosen, the page shows that brand with "Change brand" (BrandBar).
 //
 // options: [{ id, name, brand, companyType }]
-export function BrandPickerGrid({ options = [], selectedId, onPick, title = 'Choose a brand' }) {
+export function BrandPickerGrid({ options = [], selectedId, onPick, title = 'Choose a company' }) {
   const [query, setQuery] = useState('');
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -29,18 +29,18 @@ export function BrandPickerGrid({ options = [], selectedId, onPick, title = 'Cho
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 2 }}>
         <Typography sx={{ fontSize: 18, fontWeight: 400, color: '#16324a' }}>{title}</Typography>
         <TextField
-          placeholder="Search by brand or industry"
-          inputProps={{ 'aria-label': 'Search brands' }}
+          placeholder="Search by name or industry"
+          inputProps={{ 'aria-label': 'Search companies' }}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           sx={{ flex: 1, maxWidth: 520, bgcolor: 'background.paper', borderRadius: 2 }}
           InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
         />
-        <Typography variant="body2" color="text.secondary">{shown.length} {shown.length === 1 ? 'brand' : 'brands'}</Typography>
+        <Typography variant="body2" color="text.secondary">{shown.length} {shown.length === 1 ? 'company' : 'companies'}</Typography>
       </Box>
       {shown.length === 0 ? (
         <Box sx={{ bgcolor: '#fff', borderRadius: 3, border: '1px dashed', borderColor: 'divider', p: 4, textAlign: 'center' }}>
-          <Typography color="text.secondary">{options.length ? 'No brand matches your search.' : 'No brands yet. Add a company on the Companies page.'}</Typography>
+          <Typography color="text.secondary">{options.length ? 'No company matches your search.' : 'No companies yet. Add one on the Companies page.'}</Typography>
         </Box>
       ) : (
         <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' } }}>
@@ -87,7 +87,7 @@ export function BrandBar({ option, onChange, right }) {
         </Typography>
       </Box>
       {right}
-      {onChange && <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={onChange}>Change brand</Button>}
+      {onChange && <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={onChange}>Change company</Button>}
     </Box>
   );
 }

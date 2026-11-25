@@ -3122,11 +3122,11 @@ const InnerPage = () => {
                               select
                               fullWidth
                               required
-                              label="Brand"
+                              label="Company"
                               value={productCompanyId}
                               onChange={(e) => setProductCompanyId(e.target.value)}
                               error={showFieldErrors && !productCompanyId}
-                              helperText={showFieldErrors && !productCompanyId ? 'Please choose the brand this product belongs to.' : 'Name, logo, website and page design come from the brand’s profile.'}
+                              helperText={showFieldErrors && !productCompanyId ? 'Please choose the company this product belongs to.' : 'Its brand name, logo, website and page design come from the company’s Brand profile.'}
                             >
                               {brandCompanies.map((b) => <MenuItem key={b.company_id} value={String(b.company_id)}>{b.name}</MenuItem>)}
                             </TextField>
@@ -3137,7 +3137,7 @@ const InnerPage = () => {
                                 {formBrand?.tagline ? <Typography component="span" color="text.secondary">{` · ${formBrand.tagline}`}</Typography> : null}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">
-                                Brand name, logo, website and page design come from {isAdmin ? 'the brand’s' : 'your'} brand profile.
+                                Brand name, logo, website and page design come from {isAdmin ? 'the company’s' : 'your'} Brand profile.
                               </Typography>
                             </>
                           )}
