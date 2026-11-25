@@ -14,7 +14,7 @@ import CoverCropDialog from '../../components/CoverCropDialog';
 import PageHeader from '../../components/PageHeader';
 import Loader from '../../components/Loader';
 import DppThemeEditor from '../products/DppThemeEditor';
-import { getAdminUserData, getFileUrl, listBrands, removeCompany, updateBrandById, updateCompany, uploadFile } from '../../helper';
+import { getAdminUserData, getCompanyById, getFileUrl, listBrands, removeCompany, updateBrandById, updateCompany, uploadFile } from '../../helper';
 import { confirmAction, notifyError, notifySuccess } from '../../utils/feedbackBus';
 import { normalizeDppTheme } from '../../utils/dppTheme';
 import { COMPANY_TYPES, companyTypeLabel } from '../../constants/companyTypes';
@@ -78,10 +78,20 @@ export default function BrandPage({
     if (isAdmin) return companyId ? brands.find((b) => String(b.company_id) === String(companyId)) || null : null;
     return brands[0] || null;
   }, [brands, isAdmin, companyId]);
+  // A Supervisor signs in as an employee: their account is not the company,
+  // so the company itself is read (its industry, Supervisor email, domains).
+  const [ownCompany, setOwnCompany] = useState(null);
+  const ownCompanyId = !isAdmin && brand?.company_id && String(account?._id) !== String(brand.company_id) ? String(brand.company_id) : '';
+  useEffect(() => {
+    if (!ownCompanyId) return undefined;
+    let alive = true;
+    getCompanyById(ownCompanyId).then((c) => { if (alive) setOwnCompany(c); });
+    return () => { alive = false; };
+  }, [ownCompanyId]);
   const companyRecord = useMemo(() => {
     if (isAdmin) return companies.find((c) => String(c._id) === String(brand?.company_id || companyId)) || null;
-    return account || null;
-  }, [isAdmin, companies, brand, companyId, account]);
+    return ownCompanyId ? ownCompany : (account || null);
+  }, [isAdmin, companies, brand, companyId, account, ownCompanyId, ownCompany]);
 
   useEffect(() => {
     let cancelled = false;
