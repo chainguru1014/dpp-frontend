@@ -6,6 +6,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
 import GlobalLoadingBar from './components/GlobalLoadingBar';
 import GlobalFeedback from './components/GlobalFeedback';
+import { ImageCropHost } from './components/ImageCrop';
 import Loader from './components/Loader';
 
 // Route-level code splitting. The consumer scan landing (PublicProductPage) is
@@ -53,6 +54,8 @@ function App() {
           <CssBaseline />
           <GlobalLoadingBar />
           <GlobalFeedback />
+          {/* Move / zoom / crop before any picture is uploaded. */}
+          <ImageCropHost />
           <BrowserRouter>
             <Suspense fallback={<RouteFallback />}>
               <Routes>

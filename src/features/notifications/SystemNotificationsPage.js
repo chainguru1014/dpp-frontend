@@ -43,6 +43,7 @@ import {
 } from '../../helper';
 import PageHeader from '../../components/PageHeader';
 import { confirmAction } from '../../utils/feedbackBus';
+import { CROP, cropFiles } from '../../components/ImageCrop';
 
 const LEVELS = [
   { value: 'info', label: 'Info', color: 'info' },
@@ -102,7 +103,9 @@ const SystemNotificationsPage = () => {
   };
 
   const handleUpload = async (e) => {
-    const files = e.target.files;
+    // Each picture cropped to 16:9 first.
+    const files = await cropFiles(e.target.files, CROP.announcement);
+    e.target.value = '';
     if (!files || !files.length) return;
     const fd = new FormData();
     Array.from(files).forEach((f) => fd.append('files', f));

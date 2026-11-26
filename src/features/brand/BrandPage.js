@@ -10,6 +10,7 @@ import Inventory2Icon from '@mui/icons-material/Inventory2';
 import GroupsIcon from '@mui/icons-material/Groups';
 import { BrandBar, BrandPickerGrid, companyInfo, companyOptionsFrom } from '../../components/BrandPicker';
 import CoverCropDialog from '../../components/CoverCropDialog';
+import { CROP, cropImage } from '../../components/ImageCrop';
 import PageHeader from '../../components/PageHeader';
 import Loader from '../../components/Loader';
 import DppThemeEditor from '../products/DppThemeEditor';
@@ -141,13 +142,16 @@ export default function BrandPage({
   // A cover is cut to the cover shape first (CoverCropDialog), then uploaded.
   const [coverFile, setCoverFile] = useState(null);
   const uploadImage = async (key, event) => {
-    const file = event.target.files?.[0];
+    let file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
     if (key === 'coverUrl') {
       setCoverFile(file);
       return;
     }
+    // The logo: cropped square first.
+    file = await cropImage(file, CROP.logo);
+    if (!file) return;
     await uploadPicked(key, file);
   };
   const uploadPicked = async (key, file) => {

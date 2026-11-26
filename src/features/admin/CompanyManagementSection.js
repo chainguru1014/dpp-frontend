@@ -25,6 +25,7 @@ import {
   getFileUrl,
 } from '../../helper';
 import { COMPANY_TYPES } from '../../constants/companyTypes';
+import { CROP, cropImage } from '../../components/ImageCrop';
 
 // Companies page (super admin). Every company on Yometel has one brand
 // (what shoppers see: name, tagline, logo, cover). Open a company to change
@@ -83,8 +84,10 @@ const AddBrandDialog = ({ open, onClose, onCreated }) => {
   const close = () => { if (saving) return; setShowErrors(false); onClose(); };
 
   const uploadLogo = async (event) => {
-    const file = event.target.files?.[0];
+    const picked = event.target.files?.[0];
     event.target.value = '';
+    // Cropped square first.
+    const file = await cropImage(picked, CROP.logo);
     if (!file) return;
     setUploading(true);
     const body = new FormData();

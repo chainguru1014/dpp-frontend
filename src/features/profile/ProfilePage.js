@@ -22,6 +22,7 @@ import { uploadFile, updateCompany, updateUserProfile, getFileUrl } from '../../
 import { useAuth } from '../auth/AuthContext';
 import PageHeader from '../../components/PageHeader';
 import CoverCropDialog from '../../components/CoverCropDialog';
+import { CROP, cropImage } from '../../components/ImageCrop';
 import { notify, notifyError, notifySuccess } from '../../utils/feedbackBus';
 
 const isValidEmail = (e) => !e || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(e).trim());
@@ -104,7 +105,10 @@ const ProfilePage = () => {
       setCoverFile(file);
       return;
     }
-    await uploadImage(kind, file);
+    // The profile picture: cropped in a circle first.
+    const cut = await cropImage(file, CROP.avatar);
+    if (!cut) return;
+    await uploadImage(kind, cut);
   };
   const uploadImage = async (kind, file) => {
     setUploading(kind);

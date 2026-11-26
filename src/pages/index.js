@@ -174,6 +174,7 @@ import { confirmAction, notify, notifyError, notifySuccess } from '../utils/feed
 // The passport shoppers see, in an iPhone: the studio's preview and the
 // Preview dialog.
 import AppDraftPhone from '../features/products/AppDraftPhone';
+import { CROP, cropFiles, cropImage } from '../components/ImageCrop';
 import ProductShowcase from '../features/products/ProductShowcase';
 import ProductPreviewDialog from '../features/products/ProductPreviewDialog';
 
@@ -1075,8 +1076,8 @@ const InnerPage = () => {
 
   const handleBrandLogoChange = async (event) => {
     event.stopPropagation();
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const file = await cropImage(event.target.files?.[0], CROP.logo);
+    if (!file) { event.target.value = ''; return; }
     try {
       setIsUploadingBrandLogo(true);
       const body = new FormData();
@@ -1098,8 +1099,8 @@ const InnerPage = () => {
 
   const handleBrandCoverChange = async (event) => {
     event.stopPropagation();
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const file = await cropImage(event.target.files?.[0], CROP.cover);
+    if (!file) { event.target.value = ''; return; }
     try {
       setIsUploadingBrandCover(true);
       const body = new FormData();
@@ -1120,9 +1121,12 @@ const InnerPage = () => {
   };
 
   // Generic small-icon upload for certification / material-origin / impact rows.
+  // Icons are cropped square first; certificate and document files (a PDF or
+  // a picture of the paper) are uploaded as they are.
   const uploadRowIcon = async (event, apply, key) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+    const isFile = /^(certFile|docFile)/.test(String(key || ''));
+    const file = await cropImage(event.target.files?.[0], isFile ? { skip: true } : CROP.icon);
+    if (!file) { event.target.value = ''; return; }
     if (key) setUploadingKey(key, true);
     try {
       const body = new FormData();
@@ -1857,8 +1861,9 @@ const InnerPage = () => {
   // "+ Add Image Group" and then "Choose Files").
   const handleAddProductPhotos = async (event) => {
     event.stopPropagation();
-    const picked = event.target.files;
-    if (!picked || !picked.length) return;
+    // Each photo cropped to the app's 4:5 first (one after another).
+    const picked = await cropFiles(event.target.files, CROP.productPhoto);
+    if (!picked || !picked.length) { event.target.value = ''; return; }
     const body = new FormData();
     for (const singleFile of picked) body.append('files', singleFile);
     setUploadingKey('photos', true);
