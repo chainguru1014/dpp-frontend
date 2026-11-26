@@ -22,7 +22,9 @@ const PAGE_SIZE = 8;
 //    below) — used by ProductsTable's grid below, where each card only gets
 //    ~1/4 (or 1/2) of the row and the wide layout would squeeze everything
 //    unreadably thin.
-export function ProductRow({ product, selected = false, onClick, onOwnerClick, isAppUser = false, showOwner = false, compact = false, dense = false }) {
+// cardInfo(product): the lines a page wants under the name instead of the
+// usual saves / owner / passport and codes (e.g. Sustainability).
+export function ProductRow({ product, selected = false, onClick, onOwnerClick, isAppUser = false, showOwner = false, compact = false, dense = false, cardInfo }) {
   const thumb = Array.isArray(product.images) ? product.images[0] : null;
   const owner = product.company_id;
   const subtitle = [product.model, product.brandInfo?.name || owner?.name].filter(Boolean).join(' · ');
@@ -91,7 +93,11 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
             {product.name || 'Untitled product'}
           </Typography>
           {subtitle && <Typography variant="caption" color="text.secondary" component="span" sx={{ display: 'block' }} noWrap>{subtitle}</Typography>}
-          {!isAppUser && saves > 0 && <Typography variant="caption" component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#1b5b91' }}><FavoriteIcon sx={{ fontSize: 14, color: '#2a78bd' }} />{saves} {saves === 1 ? 'shopper saved' : 'shoppers saved'} this</Typography>}
+          {/* A page's own lines (cardInfo) instead of the usual details. */}
+          {cardInfo ? cardInfo(product).filter(Boolean).map((line, i) => (
+            <Typography key={i} variant="caption" component="span" sx={{ display: 'block', color: i ? 'text.secondary' : '#16324a' }} noWrap>{line}</Typography>
+          )) : (<>
+          {!isAppUser && saves > 0 && <Typography variant="caption" component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#1b5b91' }}><FavoriteIcon sx={{ fontSize: 14, color: '#2a78bd' }} />{saves} {saves === 1 ? 'consumer saved' : 'consumers saved'} this</Typography>}
           {showOwner && owner && (
             <Link
               component="span"
@@ -119,6 +125,7 @@ export function ProductRow({ product, selected = false, onClick, onOwnerClick, i
               </Typography>
             </Box>
           )}
+          </>)}
         </Box>
       </Root>
     );
@@ -282,6 +289,7 @@ export default function ProductsTable({
   groupByBrand = false,
   // id of an element (e.g. beside the search box) to show the page numbers in.
   pagerSlot,
+  cardInfo,
 }) {
   const rows = useMemo(() => {
     const list = products || [];
@@ -431,6 +439,7 @@ export default function ProductsTable({
                 showOwner={showOwner}
                 compact
                 dense={dense}
+                cardInfo={cardInfo}
               />
             ))}
           </Box>

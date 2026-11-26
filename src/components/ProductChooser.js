@@ -31,6 +31,8 @@ export default function ProductChooser({
   actions = null,
   emptyText = 'No products yet.',
   title = 'Choose a product',
+  // Lines under each product's name, for the page (see ProductsTable).
+  cardInfo,
 }) {
   const [ownQuery, setOwnQuery] = useState('');
   const controlled = query !== undefined;
@@ -74,6 +76,7 @@ export default function ProductChooser({
         groupByBrand
         emptyText={q.trim() ? 'No products match your search.' : emptyText}
         onSelectProduct={onSelect}
+        cardInfo={cardInfo}
       />
     </Box>
   );

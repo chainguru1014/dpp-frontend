@@ -40,7 +40,7 @@ const PAGE_HELP = {
   },
   serviceRequests: {
     title: 'Service Requests',
-    text: 'Requests your shoppers sent from the app for repair, resale, rental or recycling. Press “Answer” to accept, decline or complete one and to write the shopper a message; they are notified each time. Shoppers can only send a request for a service you switched on in the product (step 4, “Repair & disposal”).',
+    text: 'Requests consumers sent from the app for repair, resale, rental or recycling. Press “Answer” to accept, decline or complete one and to write the consumer a message; they are notified each time. Consumers can only send a request for a service you switched on in the product (step 4, “Repair & disposal”).',
   },
   history: {
     title: 'Scans & Security',
@@ -81,8 +81,8 @@ const PAGE_HELP = {
     text: 'Read RFID tags with a reader connected to this computer. Each tag read shows the product it belongs to. Only in the desktop app.',
   },
   users: {
-    title: 'Shopper Accounts',
-    text: 'People who use the Yometel DPP shopper app. Search for someone to correct their details or remove their account.',
+    title: 'Consumer Accounts',
+    text: 'People who use the Yometel DPP consumer app. Search for someone to correct their details or remove their account.',
   },
   notifications: {
     title: 'Announcements',

@@ -19,16 +19,25 @@ const TABS = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 const OPEN = ['new', 'accepted', 'in_progress'];
+// List columns: photo, product and request, consumer, received, status, action.
+const GRID = '56px minmax(0, 2.4fr) minmax(0, 1.3fr) 150px 120px 120px';
 
+// "25 Nov 2026, 11:51": day first, no seconds (easier to read than 11/25/2026, 11:51:10 AM).
 const formatWhen = (d) => {
   if (!d) return '';
-  try { return new Date(d).toLocaleString(); } catch (e) { return ''; }
+  const x = new Date(d);
+  if (Number.isNaN(x.getTime())) return '';
+  return x.toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
+const productThumb = (r) => (Array.isArray(r?.product_id?.images) ? r.product_id.images[0] : null);
+const Label = ({ children }) => (
+  <Typography sx={{ fontSize: 13, letterSpacing: 0.4, textTransform: 'uppercase', color: 'text.secondary', mb: 0.5 }}>{children}</Typography>
+);
 
 // What the "move to" buttons say, from the brand's side.
 const ACTION_LABEL = { accepted: 'Accept', in_progress: 'Start work', completed: 'Mark as completed', declined: 'Decline' };
 
-// One request: what the shopper asked, who they are, and the brand's answer.
+// One request: what the consumer asked, who they are, and the brand's answer.
 function RequestDialog({ request, canWrite, onClose, onSaved, token }) {
   const [reply, setReply] = useState('');
   const [busy, setBusy] = useState(false);
@@ -40,7 +49,7 @@ function RequestDialog({ request, canWrite, onClose, onSaved, token }) {
 
   const save = async (nextStatus) => {
     if (nextStatus === 'declined' && !reply.trim()) {
-      notifyError('Please write a short reason, so the shopper knows why.');
+      notifyError('Please write a short reason, so the consumer knows why.');
       return;
     }
     setBusy(true);
@@ -50,7 +59,7 @@ function RequestDialog({ request, canWrite, onClose, onSaved, token }) {
       notifyError(res.message);
       return;
     }
-    notifySuccess(nextStatus ? 'Request updated. The shopper has been notified.' : 'Message sent to the shopper.');
+    notifySuccess(nextStatus ? 'Request updated. The consumer has been notified.' : 'Message sent to the consumer.');
     onSaved(res.data);
   };
 
@@ -61,47 +70,71 @@ function RequestDialog({ request, canWrite, onClose, onSaved, token }) {
         <IconButton onClick={onClose} color="inherit" aria-label="Close" disabled={busy}><CloseIcon /></IconButton>
       </DialogTitle>
       <DialogContent dividers>
-        <Stack spacing={2}>
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-            <Chip color={status.color} label={status.label} />
-            <Typography color="text.secondary">Sent {formatWhen(request.createdAt)}</Typography>
+        <Stack spacing={2.5}>
+          {/* What and which product */}
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box component="img" alt="" src={productThumb(request) ? getFileUrl(productThumb(request)) : undefined}
+              sx={{ width: 64, height: 64, borderRadius: 2, objectFit: 'cover', bgcolor: '#eef1f6', flexShrink: 0, visibility: productThumb(request) ? 'visible' : 'hidden' }} />
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontSize: 18, fontWeight: 600 }}>
+                {request.product_id?.name || request.productName || 'Product'}
+                {request.qrcode_id ? <Box component="span" sx={{ color: 'text.secondary', fontWeight: 400 }}>{` · item #${request.qrcode_id}`}</Box> : null}
+              </Typography>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 0.5 }} flexWrap="wrap" useFlexGap>
+                <Chip size="small" variant="outlined" label={meta.title} />
+                <Chip size="small" color={status.color} label={status.label} />
+                <Typography variant="body2" color="text.secondary">Received {formatWhen(request.createdAt)}</Typography>
+              </Stack>
+            </Box>
           </Stack>
+
+          {/* The consumer's words */}
           <Box>
-            <Typography variant="body2" color="text.secondary">Product</Typography>
-            <Typography sx={{ fontWeight: 400 }}>
-              {request.product_id?.name || request.productName || 'Product'}
-              {request.qrcode_id ? ` · item #${request.qrcode_id}` : ''}
-            </Typography>
+            <Label>Request</Label>
+            <Box sx={{ bgcolor: '#f5f7fa', borderRadius: 2, px: 2, py: 1.5 }}>
+              <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{request.message}</Typography>
+            </Box>
           </Box>
+
+          {/* Who sent it */}
           <Box>
-            <Typography variant="body2" color="text.secondary">What the shopper wrote</Typography>
-            <Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{request.message}</Typography>
-          </Box>
-          <Box>
-            <Typography variant="body2" color="text.secondary">Shopper</Typography>
+            <Label>Consumer</Label>
             <Typography>{request.contact?.name || 'No name given'}</Typography>
-            {request.contact?.email && <Typography><a href={`mailto:${request.contact.email}`}>{request.contact.email}</a></Typography>}
-            {request.contact?.phone && <Typography><a href={`tel:${request.contact.phone}`}>{request.contact.phone}</a></Typography>}
+            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+              {request.contact?.email && <Typography variant="body2"><a href={`mailto:${request.contact.email}`}>{request.contact.email}</a></Typography>}
+              {request.contact?.phone && <Typography variant="body2"><a href={`tel:${request.contact.phone}`}>{request.contact.phone}</a></Typography>}
+            </Stack>
           </Box>
-          <TextField
-            label="Your message to the shopper"
-            placeholder="e.g. We can repair this for €15. Please send the jacket to…"
-            helperText="Shown to the shopper in the app together with the status."
-            multiline minRows={3} fullWidth
-            value={reply}
-            onChange={(e) => setReply(e.target.value)}
-            disabled={!canWrite || busy}
-            inputProps={{ maxLength: 1500 }}
-          />
+
+          {/* The brand's answer */}
+          <Box>
+            <Label>Your answer</Label>
+            <TextField
+              placeholder="e.g. We can repair this for €15. Please send the jacket to…"
+              helperText="The consumer sees it in the app together with the status."
+              multiline minRows={3} fullWidth
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              disabled={!canWrite || busy}
+              inputProps={{ maxLength: 1500, 'aria-label': 'Your answer to the consumer' }}
+            />
+          </Box>
           {!canWrite && <Alert severity="info">Only a Supervisor or the company account can respond to requests.</Alert>}
+
           {(request.history || []).length > 1 && (
             <Box>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>History</Typography>
-              {request.history.map((h, i) => (
-                <Typography key={i} variant="body2">
-                  {formatWhen(h.at)} · {(REQUEST_STATUS[h.status] || {}).label || h.status}{h.by ? ` · ${h.by}` : ''}
-                </Typography>
-              ))}
+              <Label>History</Label>
+              <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0 }}>
+                {request.history.map((h, i) => (
+                  <Box component="li" key={i} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', pb: 1 }}>
+                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: i === request.history.length - 1 ? 'primary.main' : '#c7cfda', mt: '6px', flexShrink: 0 }} />
+                    <Typography variant="body2">
+                      <b>{(REQUEST_STATUS[h.status] || {}).label || h.status}</b>
+                      <Box component="span" sx={{ color: 'text.secondary' }}>{` · ${formatWhen(h.at)}${h.by ? ` · ${h.by}` : ''}`}</Box>
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
             </Box>
           )}
         </Stack>
@@ -123,9 +156,12 @@ function RequestDialog({ request, canWrite, onClose, onSaved, token }) {
   );
 }
 
-// Service Requests: what shoppers asked for from the app (repair, resale,
+// Service Requests: what consumers asked for from the app (repair, resale,
 // rental, recycling), for the brand to answer. Each answer and change of
-// status is sent to the shopper as a notification.
+// status is sent to the consumer as a notification.
+// Layout (2026-11-26): one list panel; each row = photo, product + service +
+// the request's first line, consumer + reference, date, status, one action;
+// new requests carry an amber marker on the left.
 export default function ServiceRequestsPage({ token, showCompany = false, onOpenProducts }) {
   const [tab, setTab] = useState('open');
   const [kind, setKind] = useState('');
@@ -163,7 +199,7 @@ export default function ServiceRequestsPage({ token, showCompany = false, onOpen
     <Box>
       <PageHeader
         title="Service Requests"
-        description="Repair, resale, rental and recycling requests your shoppers sent from the app."
+        description="Repair, resale, rental and recycling requests consumers sent from the app."
         actions={(
           <>
             <TextField select size="small" value={kind} onChange={(e) => setKind(e.target.value)} inputProps={{ 'aria-label': 'Service' }} sx={{ minWidth: 190, bgcolor: 'background.paper' }} SelectProps={{ displayEmpty: true }}>
@@ -188,7 +224,7 @@ export default function ServiceRequestsPage({ token, showCompany = false, onOpen
             <>
               <Typography variant="h6" component="p" sx={{ mb: 0.5 }}>No requests yet</Typography>
               <Typography color="text.secondary" sx={{ maxWidth: 560, mx: 'auto', mb: 2 }}>
-                Shoppers can send a request once a product offers a service with “Let shoppers send a request in the app” switched on. Open a product, go to step 4 “Repair & disposal”, and switch it on for repair, resale, rental or recycling.
+                Consumers can send a request once a product offers a service with “Let shoppers send a request in the app” switched on. Open a product, go to step 4 “Repair & disposal”, and switch it on for repair, resale, rental or recycling.
               </Typography>
               {onOpenProducts && <Button variant="contained" onClick={onOpenProducts}>Go to Products</Button>}
             </>
@@ -199,41 +235,58 @@ export default function ServiceRequestsPage({ token, showCompany = false, onOpen
       )}
 
       {!loading && rows.length > 0 && (
-        <Stack spacing={1.5}>
-          {rows.map((row) => {
+        <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: '0 1px 3px rgba(16,42,67,0.06)', overflow: 'hidden' }}>
+          {/* Column names (wide screens) */}
+          <Box sx={{ display: { xs: 'none', md: 'grid' }, gridTemplateColumns: GRID, gap: 2, px: 2.5, py: 1.25, bgcolor: '#f7f9fb', borderBottom: '1px solid', borderColor: 'divider' }}>
+            {['', 'Product and request', 'Consumer', 'Received', 'Status', ''].map((h, i) => (
+              <Typography key={i} sx={{ fontSize: 13, color: 'text.secondary' }}>{h}</Typography>
+            ))}
+          </Box>
+          {rows.map((row, i) => {
             const Icon = SERVICE_ICONS[row.kind];
             const status = REQUEST_STATUS[row.status] || REQUEST_STATUS.new;
-            const thumb = Array.isArray(row.product_id?.images) ? row.product_id.images[0] : null;
+            const thumb = productThumb(row);
+            const actionable = OPEN.includes(row.status) && canWrite;
             return (
               <Box
                 key={row._id}
-                sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', flexWrap: 'wrap', bgcolor: '#fff', border: '1px solid', borderColor: row.status === 'new' ? 'warning.main' : 'divider', borderRadius: 2, p: 1.5 }}
+                sx={{
+                  position: 'relative', display: 'grid', gridTemplateColumns: { xs: '56px 1fr', md: GRID }, gap: { xs: 1.5, md: 2 }, alignItems: 'center',
+                  px: 2.5, py: 1.75, borderTop: i ? '1px solid' : 0, borderColor: 'divider', '&:hover': { bgcolor: '#fafbfd' },
+                }}
               >
-                <Box
-                  component="img" alt=""
-                  src={thumb ? getFileUrl(thumb) : undefined}
-                  sx={{ width: 56, height: 56, borderRadius: 1.5, objectFit: 'cover', bgcolor: '#eef1f6', flexShrink: 0, visibility: thumb ? 'visible' : 'hidden' }}
-                />
-                <Box sx={{ flex: '1 1 320px', minWidth: 0 }}>
-                  <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-                    <Chip size="small" icon={<Icon />} label={SERVICE_META[row.kind].title} variant="outlined" />
-                    <Typography variant="subtitle1">{row.product_id?.name || row.productName || 'Product'}</Typography>
-                    <Chip size="small" color={status.color} label={status.label} />
+                {row.status === 'new' && <Box aria-hidden sx={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 4, borderRadius: '0 4px 4px 0', bgcolor: 'warning.main' }} />}
+                <Box component="img" alt="" src={thumb ? getFileUrl(thumb) : undefined}
+                  sx={{ width: 56, height: 56, borderRadius: 2, objectFit: 'cover', bgcolor: '#eef1f6', visibility: thumb ? 'visible' : 'hidden', gridRow: { xs: 'span 2', md: 'auto' } }} />
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 600, fontSize: 16 }} noWrap>{row.product_id?.name || row.productName || 'Product'}</Typography>
+                  <Stack direction="row" spacing={0.75} alignItems="center" sx={{ color: 'text.secondary', mt: 0.25 }}>
+                    {Icon && <Icon sx={{ fontSize: 17 }} />}
+                    <Typography variant="body2" sx={{ flexShrink: 0 }}>{SERVICE_META[row.kind].title}</Typography>
+                    {!!row.message && <Typography variant="body2" noWrap sx={{ minWidth: 0 }}>{`· “${String(row.message).split('\n')[0]}”`}</Typography>}
                   </Stack>
-                  <Typography variant="body2" color="text.secondary">
-                    {[row.ref, row.contact?.name, formatWhen(row.createdAt), showCompany && row.company_id?.name].filter(Boolean).join(' · ')}
-                  </Typography>
-                  <Typography sx={{ mt: 0.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', overflowWrap: 'anywhere' }}>
-                    {row.message}
+                </Box>
+                <Box sx={{ minWidth: 0, gridColumn: { xs: '2', md: 'auto' } }}>
+                  <Typography noWrap>{row.contact?.name || 'No name given'}</Typography>
+                  <Typography variant="body2" color="text.secondary" noWrap>
+                    {[row.ref, showCompany && row.company_id?.name].filter(Boolean).join(' · ')}
                   </Typography>
                 </Box>
-                <Button variant={OPEN.includes(row.status) && canWrite ? 'contained' : 'outlined'} onClick={() => setSelected(row)} sx={{ flexShrink: 0, alignSelf: 'center' }}>
-                  {OPEN.includes(row.status) && canWrite ? 'Review request' : 'View request'}
-                </Button>
+                <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' } }}>{formatWhen(row.createdAt)}</Typography>
+                <Box sx={{ display: { xs: 'none', md: 'block' } }}><Chip size="small" color={status.color} label={status.label} /></Box>
+                <Box sx={{ gridColumn: { xs: '1 / -1', md: 'auto' }, display: 'flex', justifyContent: 'flex-end', gap: 1, alignItems: 'center' }}>
+                  <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 1, alignItems: 'center', mr: 'auto' }}>
+                    <Chip size="small" color={status.color} label={status.label} />
+                    <Typography variant="body2" color="text.secondary">{formatWhen(row.createdAt)}</Typography>
+                  </Box>
+                  <Button variant={actionable ? 'contained' : 'outlined'} onClick={() => setSelected(row)} sx={{ minWidth: 104 }}>
+                    {actionable ? 'Answer' : 'View'}
+                  </Button>
+                </Box>
               </Box>
             );
           })}
-        </Stack>
+        </Box>
       )}
 
       <RequestDialog

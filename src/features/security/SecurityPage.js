@@ -6,6 +6,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import ReplayIcon from '@mui/icons-material/Replay';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import PublicIcon from '@mui/icons-material/Public';
 import PageHeader from '../../components/PageHeader';
 import Loader from '../../components/Loader';
 import { getFileUrl, getSecurityInsights, setItemBlocked } from '../../helper';
@@ -26,7 +27,7 @@ const LEVELS = {
 const formatWhen = (d) => {
   if (!d) return '';
   try {
-    return new Date(d).toLocaleString();
+    return new Date(d).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   } catch (e) {
     return '';
   }
@@ -45,53 +46,52 @@ function Kpi({ icon: Icon, label, value, sub, color = 'primary.main' }) {
   );
 }
 
-// The page's four figures (codes scanned, scanned more than once, warning
-// signs, Security QR checks). Shown above the Scans & Security tabs, so
-// both All scans and Suspected copies have them.
-export function SecurityFigures({ totals, data }) {
+// The figures above each Scans & Security tab, each tab its own
+// (2026-11-26: they used to be the same on both):
+//  - All scans ('scans'): how much and where — total scans, codes scanned,
+//    codes scanned more than once, countries; then scans by country.
+//  - Suspected copies ('security'): likely copies, worth a look, marked as
+//    copies, Security QR checks; then how many times each code was scanned
+//    (a long tail is the copy signal).
+export function SecurityFigures({ totals, data, view = 'security' }) {
   if (!totals) return null;
+  const grid = { display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' } };
+  const countries = data?.countries || [];
+  if (view === 'scans') {
+    return (
+      <Stack spacing={2}>
+        <Box sx={grid}>
+          <Kpi icon={QrCodeScannerIcon} value={totals.scans.toLocaleString()} label="Scans" sub="Last 90 days" />
+          <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Codes scanned" />
+          <Kpi icon={ReplayIcon} value={totals.repeatItems.toLocaleString()} label="Codes scanned more than once" />
+          <Kpi icon={PublicIcon} value={countries.length.toLocaleString()} label={countries.length === 1 ? 'Country' : 'Countries'} />
+        </Box>
+        {data && (
+          <Section title="Scans by country">
+            <Bars rows={countries.map((c) => ({ label: c.country, value: c.count }))} unit="scans" unitOne="scan" color="#1b4f72" emptyText="No located scans in this period." />
+          </Section>
+        )}
+      </Stack>
+    );
+  }
   return (
     <Stack spacing={2}>
-    <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' } }}>
-      <Kpi icon={QrCodeScannerIcon} value={totals.itemsScanned.toLocaleString()} label="Codes scanned" sub={`${totals.scans.toLocaleString()} ${totals.scans === 1 ? 'scan' : 'scans'} in total`} />
-      <Kpi icon={ReplayIcon} value={totals.repeatItems.toLocaleString()} label="Scanned more than once" />
-      <Kpi
-        icon={GppMaybeIcon}
-        value={(totals.highRisk + totals.mediumRisk).toLocaleString()}
-        label="Codes with warning signs"
-        sub={`${totals.highRisk} likely ${totals.highRisk === 1 ? 'copy' : 'copies'}, ${totals.mediumRisk} worth a look`}
-        color={totals.highRisk ? 'error.main' : totals.mediumRisk ? 'warning.main' : 'success.main'}
-      />
-      <Kpi
-        icon={VerifiedUserIcon}
-        value={totals.securityVerified.toLocaleString()}
-        label="Security QR checks passed"
-        sub={`${totals.securityFailed} failed · ${totals.blocked} marked as ${totals.blocked === 1 ? 'a copy' : 'copies'}`}
-        color={totals.securityFailed ? 'error.main' : 'success.main'}
-      />
-    </Box>
-    {/* How often codes are scanned and where: above the tabs too. */}
-    {data && (
-    <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
-      <Section title="How many times each code was scanned" description="Most codes are scanned once or a few times. A long tail on the right is worth a look.">
-        <Bars
-          rows={data.repeatHistogram.map((b) => ({ label: `${b.label} ${b.label === '1' ? 'scan' : 'scans'}`, value: b.items }))}
-          unit="codes"
-          unitOne="code"
-          emptyText="No scans in this period."
-        />
-      </Section>
-      <Section title="Scans by country">
-        <Bars
-          rows={data.countries.map((c) => ({ label: c.country, value: c.count }))}
-          unit="scans"
-          unitOne="scan"
-          color="#1b4f72"
-          emptyText="No located scans in this period."
-        />
-      </Section>
-    </Box>
-    )}
+      <Box sx={grid}>
+        <Kpi icon={GppMaybeIcon} value={totals.highRisk.toLocaleString()} label={totals.highRisk === 1 ? 'Likely copy' : 'Likely copies'} color={totals.highRisk ? 'error.main' : 'success.main'} />
+        <Kpi icon={GppMaybeIcon} value={totals.mediumRisk.toLocaleString()} label="Worth a look" color={totals.mediumRisk ? 'warning.main' : 'success.main'} />
+        <Kpi icon={BlockIcon} value={totals.blocked.toLocaleString()} label={`Marked as ${totals.blocked === 1 ? 'a copy' : 'copies'}`} color="text.secondary" />
+        <Kpi icon={VerifiedUserIcon} value={totals.securityVerified.toLocaleString()} label="Security QR checks passed" sub={`${totals.securityFailed} failed`} color={totals.securityFailed ? 'error.main' : 'success.main'} />
+      </Box>
+      {data && (
+        <Section title="How many times each code was scanned" description="Most codes are scanned once or a few times. Codes scanned many times, or in many places, are worth a look.">
+          <Bars
+            rows={data.repeatHistogram.map((b) => ({ label: `${b.label} ${b.label === '1' ? 'scan' : 'scans'}`, value: b.items }))}
+            unit="codes"
+            unitOne="code"
+            emptyText="No scans in this period."
+          />
+        </Section>
+      )}
     </Stack>
   );
 }
@@ -114,7 +114,7 @@ export function SecurityFiguresLive({ token, days = 90 }) {
     loadInsights(token, days).then((res) => { if (alive && res.ok) setData(res.data || null); });
     return () => { alive = false; };
   }, [token, days]);
-  return <SecurityFigures totals={data?.totals} data={data} />;
+  return <SecurityFigures totals={data?.totals} data={data} view="scans" />;
 }
 
 // Horizontal bars: [{ label, value }]. The longest bar fills the row.
@@ -219,7 +219,7 @@ export default function SecurityPage({ token, canBlock, onOpenItem }) {
         )}
         moreActions={[{ label: 'Reload', icon: RefreshIcon, onClick: () => load(days) }]}
         // The four figures sit above the tabs (they sum up the page).
-        aboveTabs={!loading && totals ? <SecurityFigures totals={totals} data={data} /> : null}
+        aboveTabs={!loading && totals ? <SecurityFigures totals={totals} data={data} view="security" /> : null}
       />
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

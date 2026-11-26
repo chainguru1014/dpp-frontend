@@ -247,7 +247,7 @@ const NAV_LABELS = {
   dashboard: 'Dashboard', products: 'Products', generateCode: 'Generate Code', captureHistory: 'Work Records',
   shipmentInspection: 'Shipments', rfidScan: 'RFID Scan', history: 'Scans & Security', lca: 'Sustainability',
   serviceRequests: 'Service Requests', recommendations: 'Shopper Preview', notifications: 'Announcements',
-  companies: 'Companies', processSteps: 'Workflows', employeeAuditLog: 'Employees', users: 'Shopper Accounts', brand: 'Company Profile',
+  companies: 'Companies', processSteps: 'Workflows', employeeAuditLog: 'Employees', users: 'Consumer Accounts', brand: 'Company Profile',
 };
 const MOBILE_NAV_WIDTH = 260;
 
@@ -2149,7 +2149,7 @@ const InnerPage = () => {
         // and announcements to everyone.
         ['companies', 'Companies', StorefrontIcon, !isEmployeeActor, ['brand']],
         ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
-        ['users', 'Shopper Accounts', PersonIcon, !isEmployeeActor],
+        ['users', 'Consumer Accounts', PersonIcon, !isEmployeeActor],
         ['notifications', 'Announcements', CampaignIcon, true],
       ],
     } : {
@@ -2521,8 +2521,8 @@ const InnerPage = () => {
           {activePage === 'users' && isAdmin && (
             <Box>
               <PageHeader
-                title="Shopper Accounts"
-                description="People who use the Yometel DPP shopper app."
+                title="Consumer Accounts"
+                description="People who use the Yometel DPP consumer app."
               />
               <Box>
                 <Admin />

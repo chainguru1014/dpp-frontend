@@ -199,6 +199,24 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
   const certified = rows.filter((r) => r.certs.length > 0).length;
   const circular = rows.filter((r) => r.endOfLife.length > 0).length;
   const avgCompleteness = rows.length ? Math.round(rows.reduce((s, r) => s + r.completeness, 0) / rows.length) : 0;
+  // Where the footprint comes from (products with both figures).
+  const split = rows.filter((r) => r.co2Production != null && r.co2Transport != null);
+  const prodKg = split.reduce((s, r) => s + r.co2Production, 0);
+  const transKg = split.reduce((s, r) => s + r.co2Transport, 0);
+  const prodShare = prodKg + transKg > 0 ? Math.round((prodKg / (prodKg + transKg)) * 100) : null;
+  const withImpact = rows.filter((r) => r.co2Total != null || r.impactItems.length || r.impact.co2Avoided || r.impact.waterSaved || r.impact.energySaved).length;
+  const withSuppliers = rows.filter((r) => r.origins.length > 0).length;
+  // Under each product in the chooser: what this page is about.
+  const byId = useMemo(() => new Map(rows.map((r) => [r.p._id, r])), [rows]);
+  const cardInfo = (p) => {
+    const r = byId.get(p._id);
+    if (!r) return [];
+    return isLca
+      ? [[r.co2Total != null ? `${formatKg(r.co2Total)}` : '', r.madeIn ? `made in ${r.madeIn}` : ''].filter(Boolean).join(' · ') || 'No footprint yet',
+        r.endOfLife.length ? `Second life: ${r.endOfLife.map((d) => d.label).join(', ')}` : 'No second-life services']
+      : [r.certs.length ? `${r.certs.length} ${r.certs.length === 1 ? 'certification' : 'certifications'} · ${r.origins.length} known suppliers` : 'No certifications yet',
+        `Passport ${r.completeness}% complete`];
+  };
 
   return (
     <Box>
@@ -221,17 +239,21 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
       ) : (
         <>
           <Grid container spacing={2} sx={{ mb: 2 }}>
+            {/* Life cycle: the footprint and where it comes from, where
+                products are made, and their second life. ESG: one figure
+                per pillar (no figure repeated from Life cycle). */}
             {isLca ? (
               <>
-                <Grid item xs={12} sm={6} md={4}><Kpi icon={Co2Icon} value={avgCo2 == null ? '—' : formatKg(avgCo2)} label="Carbon footprint (average)" /></Grid>
-                <Grid item xs={12} sm={6} md={4}><Kpi icon={PublicIcon} value={countries.size} label="Countries of manufacture" /></Grid>
-                <Grid item xs={12} sm={12} md={4}><Kpi icon={RecyclingIcon} value={`${circular} of ${rows.length}`} label="Can be repaired, reused or recycled" /></Grid>
+                <Grid item xs={12} sm={6} lg={3}><Kpi icon={Co2Icon} value={avgCo2 == null ? '—' : formatKg(avgCo2)} label="Average carbon footprint" /></Grid>
+                <Grid item xs={12} sm={6} lg={3}><Kpi icon={FactoryIcon} value={prodShare == null ? '—' : `${prodShare}% / ${100 - prodShare}%`} label="From production / transport" /></Grid>
+                <Grid item xs={12} sm={6} lg={3}><Kpi icon={PublicIcon} value={countries.size} label={countries.size === 1 ? 'Country of manufacture' : 'Countries of manufacture'} /></Grid>
+                <Grid item xs={12} sm={6} lg={3}><Kpi icon={RecyclingIcon} value={`${circular} of ${rows.length}`} label="Offer repair, resale or recycling" /></Grid>
               </>
             ) : (
               <>
-                <Grid item xs={12} sm={6} md={4}><Kpi icon={VerifiedIcon} value={`${certified} of ${rows.length}`} label="Have certifications" /></Grid>
-                <Grid item xs={12} sm={6} md={4}><Kpi icon={Co2Icon} value={avgCo2 == null ? '—' : formatKg(avgCo2)} label="Carbon footprint (average)" /></Grid>
-                <Grid item xs={12} sm={12} md={4}><Kpi icon={Inventory2Icon} value={`${avgCompleteness}%`} label="Passport complete (average)" /></Grid>
+                <Grid item xs={12} sm={6} md={4}><Kpi icon={EcoIcon} value={`${withImpact} of ${rows.length}`} label="Environmental · have impact figures" /></Grid>
+                <Grid item xs={12} sm={6} md={4}><Kpi icon={GroupsIcon} value={`${certified} of ${rows.length}`} label={`Social · certified (${withSuppliers} name suppliers)`} /></Grid>
+                <Grid item xs={12} sm={12} md={4}><Kpi icon={GavelIcon} value={`${avgCompleteness}%`} label="Governance · passports complete" /></Grid>
               </>
             )}
           </Grid>
@@ -244,6 +266,7 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
               showOwner={showOwner}
               isAppUser={isAppUser}
               onSelect={(p) => setSelectedId(p._id)}
+              cardInfo={cardInfo}
             />
           )}
           {current && (
@@ -258,11 +281,6 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
               ) : null}
             />
             <Paper sx={{ p: 2, mb: 2 }}>
-              {current.missing.length > 0 && (
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Not added yet: {current.missing.join(', ')}.
-                </Typography>
-              )}
 
               {/* LCA: the five life-cycle stages */}
               {isLca && (
@@ -377,6 +395,12 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
                 </Grid>
               </Grid>
               </>
+              )}
+              {/* What is still missing, under the figures. */}
+              {current.missing.length > 0 && (
+                <Box sx={{ mt: 2, px: 2, py: 1.25, borderRadius: 2, bgcolor: '#fff8e6', border: '1px solid #f3dfa8' }}>
+                  <Typography variant="body2"><b>Not added yet:</b> {current.missing.join(', ')}.</Typography>
+                </Box>
               )}
             </Paper>
             </>

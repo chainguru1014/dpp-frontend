@@ -106,8 +106,8 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
     setPaginationModel((p) => ({ ...p, page: 0 }));
   };
 
-  // userType is stored as 'client' (shopper) / 'agent' (business account).
-  const ACCOUNT_TYPE_LABEL = { client: 'Shopper', agent: 'Business', user: 'Shopper', guest: 'Guest' };
+  // userType is stored as 'client' (consumer) / 'agent' (business account).
+  const ACCOUNT_TYPE_LABEL = { client: 'Consumer', agent: 'Business', user: 'Consumer', guest: 'Guest' };
   const moreFilterCount = ['source', 'security', 'reaction', 'location'].filter((k) => filters[k] || (k === 'location' && locationInput)).length;
   const [showMore, setShowMore] = useState(false);
 
@@ -157,10 +157,9 @@ export default function HistoryPage({ ownerKind = null, ownerId = null, isAppUse
         renderCell: (p) => (
           <Box sx={{ py: 0.75, minWidth: 0 }}>
             <Typography variant="body1">{p.row.product?.name || '—'}</Typography>
-            {(p.row.product?.model || p.row.pmc_code) && (
-              <Typography variant="body2" color="text.secondary" noWrap>
-                {[p.row.product?.model, p.row.pmc_code].filter(Boolean).join(' · ')}
-              </Typography>
+            {/* The item's passport ID (the model line was long and cut off). */}
+            {!!p.row.pmc_code && (
+              <Typography variant="body2" color="text.secondary" noWrap>{p.row.pmc_code}</Typography>
             )}
           </Box>
         ),
