@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ProductBar from '../../components/ProductBar';
+import ProductChooser from '../../components/ProductChooser';
 import {
   Box,
   Button,
@@ -9,7 +10,6 @@ import {
   Grid,
   LinearProgress,
   Link,
-  MenuItem,
   Paper,
   Stack,
   Table,
@@ -17,7 +17,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material';
 import EcoIcon from '@mui/icons-material/Spa';
@@ -182,14 +181,15 @@ const VIEWS = {
 // this account can see. Both read the same product information; LCA shows
 // it stage by stage along the life cycle, ESG under Environmental, Social
 // and Governance. (They used to be one "Sustainability" page.)
-export default function SustainabilityPage({ view = 'lca', products = [], loading = false, canEdit = false, isAppUser = false, onEditProduct }) {
+export default function SustainabilityPage({ view = 'lca', products = [], loading = false, canEdit = false, isAppUser = false, showOwner = false, onEditProduct }) {
   const isLca = view !== 'esg';
   const v = VIEWS[isLca ? 'lca' : 'esg'];
   const rows = useMemo(() => products.map(summarise), [products]);
   const [selectedId, setSelectedId] = useState('');
   useEffect(() => {
     if (!rows.length) return;
-    if (!rows.some((r) => r.p._id === selectedId)) setSelectedId(rows[0].p._id);
+    if (selectedId && !rows.some((r) => r.p._id === selectedId)) setSelectedId('');
+    else if (!selectedId && rows.length === 1) setSelectedId(rows[0].p._id);
   }, [rows, selectedId]);
   const current = rows.find((r) => r.p._id === selectedId) || null;
 
@@ -236,36 +236,28 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
             )}
           </Grid>
 
+          {/* The same product chooser and product bar as on every page. */}
+          {!current && (
+            <ProductChooser
+              products={rows.map((r) => r.p)}
+              selectedId={selectedId}
+              showOwner={showOwner}
+              isAppUser={isAppUser}
+              onSelect={(p) => setSelectedId(p._id)}
+            />
+          )}
           {current && (
+            <>
+            <ProductBar
+              product={current.p}
+              onChange={rows.length > 1 ? () => setSelectedId('') : undefined}
+              right={canEdit && onEditProduct && current.missing.length > 0 ? (
+                <Button variant="outlined" startIcon={<EditIcon />} onClick={() => onEditProduct(current.p)}>
+                  Add missing information
+                </Button>
+              ) : null}
+            />
             <Paper sx={{ p: 2, mb: 2 }}>
-              <ProductBar
-                product={current.p}
-                right={(
-                  <>
-                    {canEdit && onEditProduct && current.missing.length > 0 && (
-                      <Button variant="outlined" startIcon={<EditIcon />} onClick={() => onEditProduct(current.p)}>
-                        Add missing information
-                      </Button>
-                    )}
-                    {rows.length > 1 && (
-                      <TextField
-                        select
-                        size="small"
-                        label="Change product"
-                        value={selectedId}
-                        onChange={(e) => setSelectedId(e.target.value)}
-                        sx={{ minWidth: 220 }}
-                      >
-                        {rows.map((r) => (
-                          <MenuItem key={r.p._id} value={r.p._id}>
-                            {r.p.name}{r.p.model ? ` — ${r.p.model}` : ''}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    )}
-                  </>
-                )}
-              />
               {current.missing.length > 0 && (
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Not added yet: {current.missing.join(', ')}.
@@ -387,9 +379,11 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
               </>
               )}
             </Paper>
+            </>
           )}
 
-          {/* All products at a glance */}
+          {/* All products at a glance (beside a chosen product). */}
+          {current && (
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" component="h2" sx={{ mb: 0.5 }}>All products</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -436,6 +430,7 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
               </Table>
             </Box>
           </Paper>
+          )}
 
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
             Figures come from the information entered for each product.{' '}

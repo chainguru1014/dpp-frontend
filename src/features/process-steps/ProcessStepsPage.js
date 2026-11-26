@@ -9,7 +9,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { getAdminUserData, getProcessSteps, listBrands, updateProcessSteps } from '../../helper';
 import { PROCESS_STEP_TYPES as TYPE_OPTIONS, processStepTypeLabel } from '../../utils/processStepTypes';
 import PageHeader from '../../components/PageHeader';
-import { BrandBar, BrandPickerGrid } from '../../components/BrandPicker';
+import { BrandBar, BrandPickerGrid, companyOptionsFrom } from '../../components/BrandPicker';
 import { confirmAction, notifySuccess } from '../../utils/feedbackBus';
 
 const MIN_STEPS = 1;
@@ -42,17 +42,7 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
   useEffect(() => {
     if (!isAdmin || embedded) return;
     Promise.all([getAdminUserData(), listBrands(token)]).then(([data, res]) => {
-      const brandByCompany = new Map();
-      (res?.brands || []).forEach((b) => { if (!brandByCompany.has(String(b.company_id))) brandByCompany.set(String(b.company_id), b); });
-      const options = (data.companies || [])
-        .filter((c) => c.role !== 'super' && c.name !== 'admin')
-        .map((c) => ({
-          id: String(c._id),
-          name: brandByCompany.get(String(c._id))?.name || c.name,
-          brand: brandByCompany.get(String(c._id)) || null,
-          companyType: c.companyType,
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name));
+      const options = companyOptionsFrom(data?.companies || [], res?.brands || []);
       setBrandOptions(options);
     });
   }, [isAdmin, token]);
@@ -157,10 +147,10 @@ const ProcessStepsPage = ({ token, isAdmin = false, companyId: initialCompanyId 
       />}
 
       {showPicker ? (
-        <BrandPickerGrid options={brandOptions} selectedId={companyId} onPick={pickBrand} title="Whose workflows?" />
+        <BrandPickerGrid options={brandOptions} selectedId={companyId} onPick={pickBrand} title="Choose a company" />
       ) : (
         <>
-          {isAdmin && !embedded && <BrandBar option={chosen || { name: 'Brand' }} onChange={() => setPicking(true)} />}
+          {isAdmin && !embedded && <BrandBar option={chosen || { name: 'Company' }} onChange={() => setPicking(true)} />}
 
           {!!error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 

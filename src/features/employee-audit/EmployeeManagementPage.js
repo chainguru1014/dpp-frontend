@@ -4,7 +4,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EmployeeRosterPage from './EmployeeRosterPage';
 import EmployeeAuditLogPage from './EmployeeAuditLogPage';
 import PageHeader from '../../components/PageHeader';
-import { BrandBar, BrandPickerGrid } from '../../components/BrandPicker';
+import { BrandBar, BrandPickerGrid, companyOptionsFrom } from '../../components/BrandPicker';
 import { getAdminUserData, listBrands } from '../../helper';
 
 const isPlatformAdminCompany = (c) => c.role === 'super' || c.role === 'admin' || c.name === 'admin';
@@ -46,10 +46,7 @@ const EmployeeManagementPage = ({ token, isAdmin, companyId, chosenCompanyId = '
     return () => { alive = false; };
   }, [isAdmin, token]);
 
-  const options = useMemo(() => companies.map((c) => {
-    const brand = brands.find((b) => String(b.company_id) === String(c._id)) || null;
-    return { id: String(c._id), name: brand?.name || c.name, brand, companyType: c.companyType };
-  }), [companies, brands]);
+  const options = useMemo(() => companyOptionsFrom(companies, brands), [companies, brands]);
   const option = options.find((o) => o.id === chosen) || null;
 
   const needsChoice = isAdmin && !option;
@@ -73,7 +70,7 @@ const EmployeeManagementPage = ({ token, isAdmin, companyId, chosenCompanyId = '
           <Typography color="text.secondary">Loading companies…</Typography>
         </Box>
       ) : needsChoice ? (
-        <BrandPickerGrid options={options} selectedId="" onPick={choose} industryFilter />
+        <BrandPickerGrid options={options} selectedId="" onPick={choose} />
       ) : (
         <>
           {isAdmin && <BrandBar option={option} onChange={() => choose('')} />}

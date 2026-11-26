@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { Add, Close, Upload } from '@mui/icons-material';
 import PageHeader from '../../components/PageHeader';
-import { BrandPickerGrid } from '../../components/BrandPicker';
+import { BrandPickerGrid, companyOptionsFrom } from '../../components/BrandPicker';
 import { notify, notifyError, notifySuccess } from '../../utils/feedbackBus';
 import {
   getAdminUserData,
@@ -211,24 +211,8 @@ const CompanyManagementSection = ({ token, onOpenBrand }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  // Each company with its brand, as cards.
-  const options = useMemo(() => {
-    const byCompany = new Map();
-    brands.forEach((b) => { if (!byCompany.has(String(b.company_id))) byCompany.set(String(b.company_id), b); });
-    return companies.map((c) => {
-      const brand = byCompany.get(String(c._id)) || null;
-      const count = c.productCount || 0;
-      const pct = profilePercent(brand);
-      return {
-        id: String(c._id),
-        name: brand?.name || c.name,
-        brand,
-        companyType: c.companyType,
-        info: `${count} ${count === 1 ? 'product' : 'products'} · ${pct >= 100 ? 'Profile complete' : `Profile ${pct}%`}`,
-        row: c,
-      };
-    });
-  }, [companies, brands]);
+  // Each company with its brand, as cards (the same on every page).
+  const options = useMemo(() => companyOptionsFrom(companies, brands), [companies, brands]);
 
   return (
     <Box>
@@ -246,7 +230,6 @@ const CompanyManagementSection = ({ token, onOpenBrand }) => {
           title="Choose a company"
           options={options}
           selectedId=""
-          industryFilter
           emptyText="No companies yet. Press “Add company” to add the first one."
           onPick={(id) => {
             const o = options.find((x) => x.id === id);

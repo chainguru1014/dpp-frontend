@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, CircularProgress, Dialog, DialogContent, DialogTitle, Grid, IconButton, MenuItem, Stack, TextField, Typography, LinearProgress,
+  Alert, Box, Button, CircularProgress, Dialog, DialogContent, DialogTitle, Grid, IconButton, MenuItem, Stack, TextField, Typography,
 } from '@mui/material';
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import CloseIcon from '@mui/icons-material/Close';
@@ -8,8 +8,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SaveIcon from '@mui/icons-material/Save';
 import Inventory2Icon from '@mui/icons-material/Inventory2';
 import GroupsIcon from '@mui/icons-material/Groups';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import { BrandPickerGrid } from '../../components/BrandPicker';
+import { BrandBar, BrandPickerGrid, companyInfo, companyOptionsFrom } from '../../components/BrandPicker';
 import CoverCropDialog from '../../components/CoverCropDialog';
 import PageHeader from '../../components/PageHeader';
 import Loader from '../../components/Loader';
@@ -18,7 +17,7 @@ import { getAdminUserData, getCompanyById, getFileUrl, listBrands, removeCompany
 import { confirmAction, notifyError, notifySuccess } from '../../utils/feedbackBus';
 import { normalizeDppTheme } from '../../utils/dppTheme';
 import { COMPANY_TYPES, companyTypeLabel } from '../../constants/companyTypes';
-import { BrandMark, profilePercent } from '../admin/CompanyManagementSection';
+import { BrandMark } from '../admin/CompanyManagementSection';
 import ProcessStepsPage from '../process-steps/ProcessStepsPage';
 
 // The same phone view the Preview dialog shows.
@@ -245,7 +244,6 @@ export default function BrandPage({
       || (key && String(p.brandInfo?.name || '').trim().toLowerCase() === key));
   }, [products, brand]);
   const previewProduct = brandProducts.find((p) => p._id === previewId) || brandProducts[0] || { ...SAMPLE_PRODUCT, brandInfo: details };
-  const percent = profilePercent(details);
 
   // Super admin: remove the company (its account and staff sign-in).
   const removeThisCompany = async () => {
@@ -264,15 +262,7 @@ export default function BrandPage({
   if (loading) return <Loader label="Loading the company…" />;
 
   // Super admin: brands to choose from (one per brand company).
-  const brandOptions = brands
-    .filter((b, i, all) => all.findIndex((x) => String(x.company_id) === String(b.company_id)) === i)
-    .filter((b) => companies.length === 0 || companies.some((c) => String(c._id) === String(b.company_id)))
-    .map((b) => ({
-      id: String(b.company_id),
-      name: b.name,
-      brand: b,
-      companyType: companies.find((c) => String(c._id) === String(b.company_id))?.companyType,
-    }));
+  const brandOptions = companyOptionsFrom(companies, brands);
 
   return (
     <Box>
@@ -297,37 +287,32 @@ export default function BrandPage({
           {/* The company in one bar (as a chosen product is shown), with
               everything to do with it: its products, workflows, employees,
               Change company and Remove company. */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', p: 1.75, mb: 2.5, bgcolor: '#fff', border: '1px solid #dfe5ec', borderRadius: 4, boxShadow: '0 8px 24px rgba(31,51,97,0.08)' }}>
-            <BrandMark brand={details} name={brand.name} size={56} />
-            <Box sx={{ flex: '1 1 220px', minWidth: 0 }}>
-              <Typography noWrap sx={{ fontSize: 20, fontWeight: 400, color: '#16324a' }}>{details.name || brand.name}</Typography>
-              <Typography noWrap color="text.secondary">
-                {[companyRecord?.companyType ? companyTypeLabel(companyRecord.companyType) : '', `${brandProducts.length} ${brandProducts.length === 1 ? 'product' : 'products'}`].filter((v) => v && v !== '—').join(' · ')}
-              </Typography>
-            </Box>
-            <Stack direction="row" spacing={1} alignItems="center" sx={{ mr: 1 }}>
-              <Typography variant="body2" color="text.secondary">Profile</Typography>
-              <LinearProgress variant="determinate" value={percent} sx={{ width: 90, height: 8, borderRadius: 4 }} color={percent >= 100 ? 'success' : 'warning'} aria-label={`Profile ${percent}% complete`} />
-              <Typography variant="body2">{percent}%</Typography>
-            </Stack>
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-              {isAdmin && onOpenProducts && (
-                <Button variant="outlined" startIcon={<Inventory2Icon />} onClick={() => onOpenProducts(brand.company_id)}>Products</Button>
-              )}
-              {canManageWorkflows && (
-                <Button variant="outlined" startIcon={<AccountTreeIcon />} onClick={() => setWorkflowsOpen(true)}>Workflows</Button>
-              )}
-              {onOpenEmployees && (
-                <Button variant="outlined" startIcon={<GroupsIcon />} onClick={() => onOpenEmployees(brand.company_id)}>Employees</Button>
-              )}
-              {isAdmin && onBack && (
-                <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={onBack}>Change company</Button>
-              )}
-              {isAdmin && (
-                <Button color="error" startIcon={<DeleteOutlineIcon />} onClick={removeThisCompany}>Remove</Button>
-              )}
-            </Stack>
-          </Box>
+          <BrandBar
+            option={{
+              id: String(brand.company_id),
+              name: details.name || brand.name,
+              brand: details,
+              companyType: companyRecord?.companyType,
+              info: companyInfo(brandProducts.length, details),
+            }}
+            onChange={isAdmin && onBack ? onBack : undefined}
+            right={(
+              <>
+                {isAdmin && onOpenProducts && (
+                  <Button variant="outlined" startIcon={<Inventory2Icon />} onClick={() => onOpenProducts(brand.company_id)}>Products</Button>
+                )}
+                {canManageWorkflows && (
+                  <Button variant="outlined" startIcon={<AccountTreeIcon />} onClick={() => setWorkflowsOpen(true)}>Workflows</Button>
+                )}
+                {onOpenEmployees && (
+                  <Button variant="outlined" startIcon={<GroupsIcon />} onClick={() => onOpenEmployees(brand.company_id)}>Employees</Button>
+                )}
+                {isAdmin && (
+                  <Button color="error" startIcon={<DeleteOutlineIcon />} onClick={removeThisCompany}>Remove</Button>
+                )}
+              </>
+            )}
+          />
 
           {tab === 'profile' && (
             <Grid container spacing={2.5}>

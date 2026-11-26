@@ -124,7 +124,6 @@ import ProfilePage from '../features/profile/ProfilePage';
 import EmployeeManagementPage from '../features/employee-audit/EmployeeManagementPage';
 import ProcessStepsPage from '../features/process-steps/ProcessStepsPage';
 import CaptureHistoryPage from '../features/capture-history/CaptureHistoryPage';
-import ProductsTable from '../features/products/ProductsTable';
 import ProductSidePanel from '../features/products/ProductSidePanel';
 import GenerateAndPrintPanel from '../features/products/GenerateAndPrintPanel';
 import ProductOwnerSection from '../features/products/ProductOwnerSection';
@@ -149,6 +148,7 @@ import { isDesktopApp } from '../features/rfid/rfidReader';
 import BrandPage from '../features/brand/BrandPage';
 import PageHeaderContext from '../components/PageHeader/PageHeaderContext';
 import ProductBar from '../components/ProductBar';
+import ProductChooser from '../components/ProductChooser';
 import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ShopperPreviewPage from '../features/recommendations/ShopperPreviewPage';
 import FavoritesPage from '../features/favorites/FavoritesPage';
@@ -2422,6 +2422,7 @@ const InnerPage = () => {
               loading={productsLoading}
               canEdit={canEditProducts}
               isAppUser={isAppUser}
+              showOwner={isAdmin}
               onEditProduct={(prod) => {
                 const index = products.findIndex((p) => p._id === prod._id);
                 if (index < 0) return;
@@ -2548,29 +2549,18 @@ const InnerPage = () => {
                   right={<Typography color="text.secondary">{(Number(generateCodeProduct.total_minted_amount) || 0).toLocaleString()} codes</Typography>}
                 />
               ) : (
-                <Box sx={{ mb: 3.5 }}>
-                  {/* The list's page numbers sit on the right of this line. */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5, flexWrap: 'wrap' }}>
-                    <Typography variant="h6" component="h2" sx={{ flex: 1 }}>Choose a product</Typography>
-                    <Box id="generate-pager" sx={{ display: 'flex', alignItems: 'center' }} />
-                  </Box>
-                  <ProductsTable
-                    pagerSlot="generate-pager"
-                    products={products}
-                    loading={productsLoading}
-                    selectedId={generateCodeProduct?._id}
-                    // Grouped by company, as on the Products page.
-                    showOwner={isAdmin}
-                    groupByBrand
-                    emptyText={canEditProducts ? 'You have no products yet. Add one on the Products page first.' : 'No products yet.'}
-                    onSelectProduct={(prod) => {
-                      selectGenerateCodeProduct(prod);
-                      setPickingCodeProduct(false);
-                    }}
-                    columns={4}
-                    dense
-                  />
-                </Box>
+                // The same product chooser as on every page.
+                <ProductChooser
+                  products={products}
+                  loading={productsLoading}
+                  selectedId={generateCodeProduct?._id}
+                  showOwner={isAdmin}
+                  emptyText={canEditProducts ? 'You have no products yet. Add one on the Products page first.' : 'No products yet.'}
+                  onSelect={(prod) => {
+                    selectGenerateCodeProduct(prod);
+                    setPickingCodeProduct(false);
+                  }}
+                />
               )}
               {generateCodeProduct && !pickingCodeProduct && (
                 <Box sx={{ mb: 2 }}>
@@ -2689,36 +2679,19 @@ const InnerPage = () => {
               })()}
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: { xs: 'wrap', lg: 'nowrap' } }}>
                 <Box sx={{ flex: '999 1 560px', minWidth: 0 }}>
+              {/* Choosing a product (the same chooser as on every page); once
+                  one is chosen the list makes way for its card. */}
               {!(selectedProduct && products.some((p) => p._id === selectedProduct._id)) && (
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 2 }}>
-                <TextField
-                  id="product-search"
-                  placeholder={isAdmin ? 'Search by product, company or owner' : 'Search by product or company'}
-                  inputProps={{ 'aria-label': 'Search products' }}
-                  value={productNameFilter}
-                  onChange={(e) => setProductNameFilter(e.target.value)}
-                  sx={{ flex: 1, maxWidth: 520, bgcolor: 'background.paper', borderRadius: 2 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start"><SearchIcon /></InputAdornment>
-                    ),
-                  }}
-                />
-              </Stack>
-              )}
-
-              {/* Choosing a product (as on Product Journey): the list; once one
-                  is chosen the list makes way for its card. */}
-              {!(selectedProduct && products.some((p) => p._id === selectedProduct._id)) && (
-              <ProductsTable
+              <ProductChooser
+                searchId="product-search"
+                query={productNameFilter}
+                onQueryChange={setProductNameFilter}
+                placeholder={isAdmin ? 'Search by product, company or owner' : 'Search by product or company'}
                 products={filteredProducts}
                 loading={productsLoading}
                 selectedId={selectedProduct?._id}
                 isAppUser={isAppUser}
                 showOwner={isAdmin}
-                columns={4}
-                dense
-                groupByBrand
                 emptyText={productNameFilter.trim()
                   ? 'No products match your search.'
                   : isAppUser
@@ -2726,7 +2699,7 @@ const InnerPage = () => {
                     : canEditProducts
                       ? 'No products yet. Click “New product” to add your first one.'
                       : 'Your company has no products yet.'}
-                onSelectProduct={(row) => {
+                onSelect={(row) => {
                   productSelectHandler(row);
                   setTimeout(() => { if (window.innerWidth < 1200) productCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
                 }}

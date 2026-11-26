@@ -1,8 +1,5 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { PassportScore } from '../products/PassportReadinessPanel';
-import { Alert, Box, Button, Chip, IconButton, InputAdornment, Link, Stack, TextField, Tooltip, Typography } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import RefreshIcon from '@mui/icons-material/Refresh';
+import { Alert, Box, Button, Chip, Link, Stack, Tooltip, Typography } from '@mui/material';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import GppBadIcon from '@mui/icons-material/GppBad';
@@ -14,10 +11,11 @@ import SpaIcon from '@mui/icons-material/Spa';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import PageHeader from '../../components/PageHeader';
+import ProductBar from '../../components/ProductBar';
+import ProductChooser from '../../components/ProductChooser';
 import Loader from '../../components/Loader';
 import CopyIconButton from '../../components/CopyIconButton';
-import ProductsTable from '../products/ProductsTable';
-import { getFileUrl, getTraceItem, getTraceProduct, searchTrace } from '../../helper';
+import { getTraceItem, getTraceProduct, searchTrace } from '../../helper';
 import { processStepTypeLabel } from '../../utils/processStepTypes';
 import { METHOD_LABELS } from './TracePage';
 
@@ -69,30 +67,6 @@ const eventDetail = (e) => {
   if (e.kind === 'scan' || e.kind === 'security_pass' || e.kind === 'security_fail') return e.byAppUser ? 'by a signed-in app user' : 'by a visitor';
   return '';
 };
-
-function ProductCard({ product, children, right }) {
-  return (
-    <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start', flexWrap: { xs: 'wrap', md: 'nowrap' }, bgcolor: '#fff', borderRadius: 2, boxShadow: 1, p: 2, mb: 2 }}>
-      <Box
-        component="img"
-        alt=""
-        src={product.image ? getFileUrl(product.image) : undefined}
-        sx={{ width: 84, height: 84, borderRadius: 1.5, objectFit: 'cover', bgcolor: '#eef1f6', flexShrink: 0, visibility: product.image ? 'visible' : 'hidden' }}
-      />
-      <Box sx={{ minWidth: 0, flex: 1 }}>
-        {product.brandName && (
-          <Typography variant="caption" sx={{ fontWeight: 400, letterSpacing: 0.5, textTransform: 'uppercase' }}>{product.brandName}</Typography>
-        )}
-        <Typography variant="h6" component="h2">{product.name || 'Untitled product'}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {[product.model, product.color, product.size, product.skuStyleNumber && `Style ${product.skuStyleNumber}`].filter(Boolean).join(' · ')}
-        </Typography>
-        {children}
-      </Box>
-      {right && <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', alignSelf: 'center' }}>{right}</Box>}
-    </Box>
-  );
-}
 
 function CodeLine({ label, value }) {
   if (!value) return null;
@@ -254,49 +228,29 @@ export default function ItemTracePage({
         description="Click a product to see where and when it was scanned, handled by your employees or changed owner."
       />
 
-      <Stack
-        component="form"
-        direction="row"
-        spacing={1}
-        alignItems="center"
-        sx={{ mb: 2 }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          findCode(input);
-        }}
-      >
-        <TextField
-          id="activity-search"
-          placeholder="Search by product or company, or enter a code"
-          inputProps={{ 'aria-label': 'Search products, or enter a code' }}
-          value={input}
-          onChange={(e) => { setInput(e.target.value); setError(''); }}
-          sx={{ flex: 1, maxWidth: 520, bgcolor: 'background.paper', borderRadius: 2 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
-        />
-        <Tooltip title="Look this text up as a code: passport ID, QR link, serial number, RFID or NFC tag, barcode">
-          <span>
-            <Button type="submit" variant="outlined" disabled={loading || input.trim().length < 2}>Find code</Button>
-          </span>
-        </Tooltip>
-      </Stack>
-
-      {/* A product chosen: the list hides; its card below has Passport and
-          Change product. */}
+      {/* The same product chooser as on every page; its box also looks a
+          code up (Find code). Hidden once a product is chosen. */}
       {selectedId && !pickingProduct ? null : (
-      <ProductsTable
-        products={filteredProducts}
-        loading={productsLoading}
-        selectedId={selectedId}
-        showOwner={showOwner}
-        columns={4}
-        dense
-        groupByBrand
-        emptyText={input.trim()
-          ? 'No product matches. If you typed a code from a label or tag, press “Find code”.'
-          : 'No products yet.'}
-        onSelectProduct={(row) => { setPickingProduct(false); openProduct(row._id); }}
-      />
+        <ProductChooser
+          searchId="activity-search"
+          query={input}
+          onQueryChange={(v) => { setInput(v); setError(''); }}
+          placeholder="Search by product or company, or enter a code"
+          onSubmit={() => findCode(input)}
+          actions={(
+            <Tooltip title="Look this text up as a code: passport ID, QR link, serial number, RFID or NFC tag, barcode">
+              <span>
+                <Button type="submit" variant="outlined" disabled={loading || input.trim().length < 2}>Find code</Button>
+              </span>
+            </Tooltip>
+          )}
+          products={filteredProducts}
+          loading={productsLoading}
+          selectedId={selectedId}
+          showOwner={showOwner}
+          emptyText="No products yet."
+          onSelect={(row) => { setPickingProduct(false); openProduct(row._id); }}
+        />
       )}
 
       <Box ref={resultRef} sx={{ mt: 2.5, scrollMarginTop: 16 }}>
@@ -318,21 +272,13 @@ export default function ItemTracePage({
                 Back to all items of {parent.product.name || 'the product'}
               </Button>
             )}
-            <ProductCard
-              product={result.product}
-              right={selectedId && !pickingProduct ? (
-                <>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="body2" color="text.secondary">Passport</Typography>
-                    <PassportScore product={(products || []).find((p) => p._id === selectedId) || result.product} width={110} />
-                  </Box>
-                  <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={() => {
-                    setPickingProduct(true);
-                    // Up to the search box and the products to choose from.
-                    setTimeout(() => document.getElementById('activity-search')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
-                  }}>Change product</Button>
-                </>
-              ) : null}
+            <ProductBar
+              product={{ ...((products || []).find((p) => p._id === result.product?._id) || {}), ...result.product }}
+              onChange={selectedId && !pickingProduct ? () => {
+                setPickingProduct(true);
+                // Up to the search box and the products to choose from.
+                setTimeout(() => document.getElementById('activity-search')?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+              } : undefined}
             >
               <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 0.75 }}>
                 <Chip size="small" color="primary" label={result.type === 'item' ? `Item #${result.item.qrcodeId}` : `All items (${result.product.totalCodes} codes)`} />
@@ -352,7 +298,7 @@ export default function ItemTracePage({
                   ))}
                 </Box>
               )}
-            </ProductCard>
+            </ProductBar>
 
             {/* Lists take a third of the width, the map two thirds. */}
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(0, 2fr)' }, gap: 2, alignItems: 'start' }}>

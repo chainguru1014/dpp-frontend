@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Box, Button, ButtonBase, InputAdornment, MenuItem, TextField, Typography } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import { BrandMark } from '../features/admin/CompanyManagementSection';
+import { BrandMark, profilePercent } from '../features/admin/CompanyManagementSection';
 import { companyTypeLabel as typeLabel } from '../constants/companyTypes';
 
 // The industry's name, or nothing when it is not set.
@@ -16,10 +16,27 @@ const companyTypeLabel = (key) => {
 // page shows that company with "Change company" (BrandBar). The same cards
 // are the Companies page, the Employees page and every company choice.
 //
-// options: [{ id, name, brand, companyType, info? }]
+// options: [{ id, name, brand, companyType, info? }] -- build them with
+// companyOptionsFrom so every page shows the same details.
+const isPlatformAdmin = (c) => c.role === 'super' || c.role === 'admin' || c.name === 'admin';
+export const companyInfo = (count, brand) => {
+  const pct = profilePercent(brand);
+  return `${count} ${count === 1 ? 'product' : 'products'} · ${pct >= 100 ? 'Profile complete' : `Profile ${pct}%`}`;
+};
+export function companyOptionsFrom(companies = [], brands = []) {
+  const byCompany = new Map();
+  brands.forEach((b) => { if (!byCompany.has(String(b.company_id))) byCompany.set(String(b.company_id), b); });
+  return companies
+    .filter((c) => !isPlatformAdmin(c))
+    .map((c) => {
+      const brand = byCompany.get(String(c._id)) || null;
+      return { id: String(c._id), name: brand?.name || c.name, brand, companyType: c.companyType, info: companyInfo(c.productCount || 0, brand), row: c };
+    })
+    .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+}
 // actions: buttons at the right of the header (e.g. Add company).
 // industryFilter: show the Industry filter next to the search.
-export function BrandPickerGrid({ options = [], selectedId, onPick, title = 'Choose a company', actions = null, industryFilter = false, emptyText }) {
+export function BrandPickerGrid({ options = [], selectedId, onPick, title = 'Choose a company', actions = null, industryFilter = true, emptyText }) {
   const [query, setQuery] = useState('');
   const [industry, setIndustry] = useState('');
   const industries = useMemo(() => [...new Set(options.map((o) => o.companyType).filter((k) => companyTypeLabel(k)))]
@@ -90,7 +107,8 @@ export function BrandPickerGrid({ options = [], selectedId, onPick, title = 'Cho
   );
 }
 
-// The chosen company in one bar: logo, name, industry, and Change company.
+// The chosen company in one bar, the same on every page: logo, name, the
+// card's lines, the page's own buttons (`right`) and Change company.
 export function BrandBar({ option, onChange, right }) {
   if (!option) return null;
   return (
@@ -101,8 +119,9 @@ export function BrandBar({ option, onChange, right }) {
         <Typography noWrap color="text.secondary">
           {[option.brand?.tagline, option.companyType ? companyTypeLabel(option.companyType) : ''].filter(Boolean).join(' · ') || 'Company'}
         </Typography>
+        {option.info && <Typography noWrap variant="body2" sx={{ color: '#5b6b7c' }}>{option.info}</Typography>}
       </Box>
-      {right}
+      {right && <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>{right}</Box>}
       {onChange && <Button variant="outlined" startIcon={<SwapHorizIcon />} onClick={onChange}>Change company</Button>}
     </Box>
   );
