@@ -15,6 +15,7 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { getFileUrl, getProductTransfers, getYoutubeVideoId, isVideoFileUrl } from '../../helper';
+import MediaLightbox from '../../components/MediaLightbox';
 import { METHOD_LABELS, StatusChip } from '../trace/TracePage';
 
 // Products page, a product chosen (client design 2026-11-24):
@@ -46,20 +47,25 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
   // Photos, then videos (as in the app); each tile says which it is with an
   // icon at its bottom right (client 2026-11-26).
   const images = useMemo(() => {
+    // slide: what the full-screen viewer (MediaLightbox) shows for it.
     const photos = (Array.isArray(product?.images) ? product.images : []).filter((x) => typeof x === 'string' && x.trim())
-      .map((x) => ({ kind: 'image', src: getFileUrl(x) }));
+      .map((x) => ({ kind: 'image', src: getFileUrl(x), slide: { type: 'image', src: x } }));
     const videos = (Array.isArray(product?.videos) ? product.videos : []).map((v) => {
       const url = typeof v === 'string' ? v : v?.url || '';
+      const description = (typeof v === 'object' && v?.description) || '';
       const poster = typeof v === 'object' && v?.poster ? getFileUrl(v.poster) : '';
       const yt = getYoutubeVideoId(url);
-      if (yt) return { kind: 'video', src: poster || `https://img.youtube.com/vi/${yt}/hqdefault.jpg` };
-      if (isVideoFileUrl(url)) return { kind: 'video', src: poster, file: getFileUrl(url) };
+      if (yt) return { kind: 'video', src: poster || `https://img.youtube.com/vi/${yt}/hqdefault.jpg`, slide: { type: 'video', video: { url, description, videoId: yt, fileUrl: '' } } };
+      if (isVideoFileUrl(url)) return { kind: 'video', src: poster, file: getFileUrl(url), slide: { type: 'video', video: { url, description, videoId: '', fileUrl: url } } };
       return null;
     }).filter(Boolean);
     return [...photos, ...videos];
   }, [product]);
   const [start, setStart] = useState(0);
   useEffect(() => { setStart(0); }, [product?._id]);
+  // A photo or video clicked: shown on the whole screen (close with X).
+  const [viewAt, setViewAt] = useState(-1);
+  const slides = useMemo(() => images.map((m) => m.slide), [images]);
   const shown = [0, 1, 2, 3].map((k) => (images.length ? images[(start + k) % images.length] : null)).slice(0, Math.min(4, Math.max(1, images.length)));
   const step = (d) => setStart((s) => (images.length ? (s + d + images.length) % images.length : 0));
 
@@ -132,7 +138,12 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 1.5 }}>
               {shown.map((img, k) => (
                 <Box key={`${start}-${k}`}>
-                  <Box sx={{ position: 'relative', aspectRatio: '3 / 4.4', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', bgcolor: '#eef1f4' }}>
+                  <Box
+                    component={img ? 'button' : 'div'}
+                    type={img ? 'button' : undefined}
+                    onClick={img ? () => setViewAt((start + k) % images.length) : undefined}
+                    aria-label={img ? `Show ${img.kind === 'video' ? 'video' : 'photo'} ${((start + k) % images.length) + 1} full screen` : undefined}
+                    sx={{ position: 'relative', width: '100%', p: 0, font: 'inherit', cursor: img ? 'zoom-in' : 'default', aspectRatio: '3 / 4.4', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', bgcolor: '#eef1f4', display: 'block' }}>
                     {img && img.src && <Box component="img" src={img.src} alt={`${product?.name || ''} ${k + 1}`} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                     {img && !img.src && img.file && <Box component="video" src={img.file} muted preload="metadata" playsInline sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', bgcolor: '#000' }} />}
                     {img && (
@@ -168,6 +179,8 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
           </Box>
         </Box>
       </Paper>
+
+      <MediaLightbox open={viewAt >= 0} slides={slides} index={Math.max(0, viewAt)} onClose={() => setViewAt(-1)} />
 
       {SHOW_TRANSFERS && (<>
       {/* The filters on one line. */}

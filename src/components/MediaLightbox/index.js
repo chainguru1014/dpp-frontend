@@ -6,13 +6,27 @@ import Typography from '@mui/material/Typography';
 import CloseIcon from '@mui/icons-material/Close';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import VolumeUpIcon from '@mui/icons-material/VolumeUp';
+import VolumeOffIcon from '@mui/icons-material/VolumeOff';
 import { getFileUrl } from '../../helper';
 import { attachYoutubeSound, youtubeEmbedUrl } from '../../utils/youtubeSound';
 
-// A YouTube video that plays with sound (see utils/youtubeSound).
-function YoutubeEmbed({ videoId, title }) {
+// A YouTube video that plays with sound (see utils/youtubeSound); once the
+// viewer uses the sound button, `muted` is sent to the player instead.
+function YoutubeEmbed({ videoId, title, muted, touched }) {
   const ref = useRef(null);
-  useEffect(() => attachYoutubeSound(ref.current), [videoId]);
+  const stopAuto = useRef(() => {});
+  useEffect(() => {
+    stopAuto.current = attachYoutubeSound(ref.current);
+    return () => stopAuto.current();
+  }, [videoId]);
+  useEffect(() => {
+    if (!touched) return;
+    stopAuto.current();
+    try {
+      ref.current?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func: muted ? 'mute' : 'unMute', args: [] }), '*');
+    } catch (e) { /* not loaded yet */ }
+  }, [muted, touched]);
   return (
     <Box
       ref={ref}
@@ -45,6 +59,26 @@ export default function MediaLightbox({ open, slides, index = 0, onClose }) {
   useEffect(() => {
     if (open) setCurrent(index);
   }, [open, index]);
+  // Videos play at once, with sound when the browser allows it (else muted);
+  // the button at the bottom right turns the sound on / off.
+  const [muted, setMuted] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const videoRef = useRef(null);
+  useEffect(() => { setMuted(false); setTouched(false); }, [current, open]);
+  const playFile = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    const p = v.play();
+    if (p && p.catch) p.catch(() => { v.muted = true; setMuted(true); v.play().catch(() => {}); });
+  };
+  const toggleSound = () => {
+    setTouched(true);
+    setMuted((m) => {
+      const next = !m;
+      if (videoRef.current) { videoRef.current.muted = next; if (!next) videoRef.current.play().catch(() => {}); }
+      return next;
+    });
+  };
 
   const count = slides?.length || 0;
   const go = (dir) => setCurrent((i) => (i + dir + count) % count);
@@ -85,20 +119,35 @@ export default function MediaLightbox({ open, slides, index = 0, onClose }) {
             key={slide.video.videoId}
             videoId={slide.video.videoId}
             title={slide.video.description || 'Product video'}
+            muted={muted}
+            touched={touched}
           />
         )}
         {slide?.type === 'video' && !slide.video.videoId && slide.video.fileUrl && (
           <Box
             key={slide.video.fileUrl}
             component="video"
+            ref={videoRef}
             src={getFileUrl(slide.video.fileUrl)}
-            controls
             autoPlay
+            loop
             playsInline
-            sx={{ maxWidth: '100%', maxHeight: '100%', bgcolor: '#000' }}
+            muted={muted}
+            onLoadedMetadata={playFile}
+            onClick={() => { const v = videoRef.current; if (v) { if (v.paused) v.play().catch(() => {}); else v.pause(); } }}
+            sx={{ maxWidth: '100%', maxHeight: '100%', bgcolor: '#000', cursor: 'pointer' }}
           />
         )}
       </Box>
+      {slide?.type === 'video' && (
+        <IconButton
+          onClick={toggleSound}
+          aria-label={muted ? 'Sound on' : 'Sound off'}
+          sx={{ position: 'absolute', right: 16, bottom: 16, zIndex: 3, width: 48, height: 48, color: '#fff', bgcolor: 'rgba(0,0,0,0.55)', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}
+        >
+          {muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+        </IconButton>
+      )}
       {count > 1 && (
         <>
           <IconButton aria-label="Previous" onClick={() => go(-1)} sx={{ ...navButtonSx, left: 12 }}>
