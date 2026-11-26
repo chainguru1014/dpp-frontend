@@ -415,6 +415,8 @@ const InnerPage = () => {
   const [isUploadingBrandCover, setIsUploadingBrandCover] = useState(false);
   // Lifecycle extras (app: Product Lifecycle screen). All optional.
   const [certifications, setCertifications] = useState([]);
+  // The brand's own papers for this product (the app's Documents and certificates page).
+  const [productDocuments, setProductDocuments] = useState([]);
   const [sustainabilityImpact, setSustainabilityImpact] = useState({ co2Avoided: '', waterSaved: '', energySaved: '', items: [] });
   // selectedProduct is initialized above with localStorage
   const [mintAmount, setMintAmount] = useState(10);
@@ -627,7 +629,7 @@ const InnerPage = () => {
     productName, productModel, aboutProduct, productType, color, size, manufactureDate,
     warrantyStatus, warrantyValidYears, itemCategory, skuStyleNumber, gtin, gs1DigitalLink, price, currency, purchaseUrl, detailFacts, brandInfo,
     productImages, productFiles, productVideos, tabVideos, materialSize, maintenance, disposal, circularity,
-    traceabilityEsg, certifications, sustainabilityImpact, parentProduct, parentProductCount,
+    traceabilityEsg, certifications, productDocuments, sustainabilityImpact, parentProduct, parentProductCount,
   ]);
   const productFormSnapshotRef = useRef(null);
   useEffect(() => {
@@ -657,6 +659,7 @@ const InnerPage = () => {
     circularity,
     traceabilityEsg,
     certifications,
+    documents: productDocuments,
     sustainabilityImpact,
   };
   // The brands this account can see (Brand page), each with its details and
@@ -1013,6 +1016,7 @@ const InnerPage = () => {
     setIsUploadingBrandLogo(false);
     setIsUploadingBrandCover(false);
     setCertifications([]);
+    setProductDocuments([]);
     setSustainabilityImpact({ co2Avoided: '', waterSaved: '', energySaved: '', items: [] });
     setProductImages([]);
     setWGImages([]);
@@ -1213,6 +1217,7 @@ const InnerPage = () => {
       circularity: normalizeCircularity(circularity, disposal),
       traceabilityEsg,
       certifications,
+      documents: cleanDocuments(productDocuments),
       sustainabilityImpact,
       warrantyAndGuarantee: {
         images: wgImages,
@@ -1286,6 +1291,7 @@ const InnerPage = () => {
       circularity: normalizeCircularity(circularity, disposal),
       traceabilityEsg,
       certifications,
+      documents: cleanDocuments(productDocuments),
       sustainabilityImpact,
       warrantyAndGuarantee: {
         images: wgImages,
@@ -1393,6 +1399,13 @@ const InnerPage = () => {
               icon: c.icon || '', title: c.title || '', content: c.content || '',
               issuer: c.issuer || '', number: c.number || '', validUntil: c.validUntil || '', fileUrl: c.fileUrl || '',
             }))
+        : []
+    );
+    setProductDocuments(
+      Array.isArray(prod.documents)
+        ? prod.documents.filter((d) => d && typeof d === 'object').map((d) => ({
+            title: d.title || '', kind: d.kind || 'other', issuer: d.issuer || '', date: d.date || '', fileUrl: d.fileUrl || '', note: d.note || '',
+          }))
         : []
     );
     setSustainabilityImpact({
@@ -3475,6 +3488,49 @@ const InnerPage = () => {
                         Add a certification
                       </Button>
                     </Box>
+
+                    <Box component="section">
+                      <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>Documents</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Your own papers for this product, shown with the certificates on the app's “Documents and certificates”
+                        page — for example the care guide, product safety information or a test report. Each needs a name and a file.
+                      </Typography>
+                      <Stack spacing={1.5}>
+                        {productDocuments.map((d, i) => {
+                          const setDoc = (patch) => setProductDocuments((prev) => { const next = [...prev]; next[i] = { ...next[i], ...patch }; return next; });
+                          const missingFile = !!(d.title || '').trim() && !d.fileUrl;
+                          return (
+                            <Box key={i} sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap', p: 1.5, border: '1px solid', borderColor: missingFile ? 'warning.main' : 'divider', borderRadius: 2 }}>
+                              <TextField select label="Type" sx={{ width: 230 }} value={d.kind || 'other'} onChange={(e) => setDoc({ kind: e.target.value })}>
+                                {DOCUMENT_KINDS.map((k) => <MenuItem key={k.value} value={k.value}>{k.label}</MenuItem>)}
+                              </TextField>
+                              <TextField required label="Name" placeholder="e.g. Care and repair guide" sx={{ flex: '1 1 220px' }} value={d.title || ''}
+                                onChange={(e) => setDoc({ title: e.target.value })} />
+                              <IconButton aria-label={`Remove document ${i + 1}`} sx={{ mt: 0.5 }}
+                                onClick={() => setProductDocuments((prev) => prev.filter((_, x) => x !== i))}>
+                                <DeleteIcon color="error" />
+                              </IconButton>
+                              <Box sx={{ flexBasis: '100%', height: 0 }} />
+                              <TextField label="Issued by" placeholder="e.g. your company" sx={{ flex: '1 1 180px' }} value={d.issuer || ''}
+                                onChange={(e) => setDoc({ issuer: e.target.value })} />
+                              <TextField label="Date" type="date" sx={{ width: 180 }} value={d.date || ''} InputLabelProps={{ shrink: true }}
+                                onChange={(e) => setDoc({ date: e.target.value })} />
+                              <TextField label="Short note (optional)" placeholder="e.g. Washing, drying and storage" sx={{ flex: '2 1 240px' }} value={d.note || ''}
+                                onChange={(e) => setDoc({ note: e.target.value })} />
+                              <Button variant="outlined" component="label" sx={{ mt: 0.5 }} color={missingFile ? 'warning' : 'primary'} disabled={!!uploadingKeys[`docFile${i}`]}>
+                                {uploadingKeys[`docFile${i}`] ? 'Uploading…' : d.fileUrl ? 'File added ✓' : 'Add file (PDF or image)'}
+                                <input type="file" accept=".pdf,application/pdf,image/*" hidden onChange={(e) => uploadRowIcon(e, (url) => setDoc({ fileUrl: url }), `docFile${i}`)} />
+                              </Button>
+                              {missingFile && <Typography variant="body2" color="warning.main" sx={{ flexBasis: '100%' }}>Add the file — shoppers only see documents they can open.</Typography>}
+                            </Box>
+                          );
+                        })}
+                      </Stack>
+                      <Button startIcon={<AddIcon />} sx={{ mt: 1 }}
+                        onClick={() => setProductDocuments((prev) => [...prev, { title: '', kind: 'care-guide', issuer: brandInfo?.name || '', date: '', fileUrl: '', note: '' }])}>
+                        Add a document
+                      </Button>
+                    </Box>
                     <VideoListEditor
                       title="Videos"
                       hint="Optional. A YouTube link or a video file you upload, shown on the app's Materials tab."
@@ -3965,6 +4021,7 @@ const InnerPage = () => {
                   disposal,
                   traceabilityEsg,
                   certifications,
+                  documents: productDocuments,
                   sustainabilityImpact,
                   warrantyAndGuarantee: {
                     images: wgImages,
@@ -4005,6 +4062,22 @@ const Page = () => {
     </AuthProvider>
   );
 };
+
+// The app's Documents and certificates page: the kinds of papers a brand
+// adds for a product. Only documents with a name and a file are saved.
+const DOCUMENT_KINDS = [
+  { value: 'care-guide', label: 'Care and repair guide' },
+  { value: 'safety', label: 'Product safety information' },
+  { value: 'composition', label: 'Fibre composition statement' },
+  { value: 'conformity', label: 'Declaration of conformity' },
+  { value: 'test-report', label: 'Test report' },
+  { value: 'warranty', label: 'Warranty' },
+  { value: 'recycling', label: 'Recycling and take-back' },
+  { value: 'other', label: 'Other' },
+];
+const cleanDocuments = (list) => (Array.isArray(list) ? list : [])
+  .map((d) => ({ title: String(d?.title || '').trim(), kind: d?.kind || 'other', issuer: String(d?.issuer || '').trim(), date: d?.date || '', fileUrl: d?.fileUrl || '', note: String(d?.note || '').trim() }))
+  .filter((d) => d.title && d.fileUrl);
 
 export default Page;
 
