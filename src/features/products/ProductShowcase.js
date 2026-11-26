@@ -12,7 +12,9 @@ import PhoneIphoneIcon from '@mui/icons-material/PhoneIphone';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import { getFileUrl, getProductTransfers } from '../../helper';
+import ImageOutlinedIcon from '@mui/icons-material/ImageOutlined';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import { getFileUrl, getProductTransfers, getYoutubeVideoId, isVideoFileUrl } from '../../helper';
 import { METHOD_LABELS, StatusChip } from '../trace/TracePage';
 
 // Products page, a product chosen (client design 2026-11-24):
@@ -41,7 +43,21 @@ const hm = (d) => {
 const SHOW_TRANSFERS = false;
 
 export default function ProductShowcase({ product, onEdit, onPreview, onCodes, onRemove, onChange }) {
-  const images = useMemo(() => (Array.isArray(product?.images) ? product.images.filter(Boolean) : []), [product]);
+  // Photos, then videos (as in the app); each tile says which it is with an
+  // icon at its bottom right (client 2026-11-26).
+  const images = useMemo(() => {
+    const photos = (Array.isArray(product?.images) ? product.images : []).filter((x) => typeof x === 'string' && x.trim())
+      .map((x) => ({ kind: 'image', src: getFileUrl(x) }));
+    const videos = (Array.isArray(product?.videos) ? product.videos : []).map((v) => {
+      const url = typeof v === 'string' ? v : v?.url || '';
+      const poster = typeof v === 'object' && v?.poster ? getFileUrl(v.poster) : '';
+      const yt = getYoutubeVideoId(url);
+      if (yt) return { kind: 'video', src: poster || `https://img.youtube.com/vi/${yt}/hqdefault.jpg` };
+      if (isVideoFileUrl(url)) return { kind: 'video', src: poster, file: getFileUrl(url) };
+      return null;
+    }).filter(Boolean);
+    return [...photos, ...videos];
+  }, [product]);
   const [start, setStart] = useState(0);
   useEffect(() => { setStart(0); }, [product?._id]);
   const shown = [0, 1, 2, 3].map((k) => (images.length ? images[(start + k) % images.length] : null)).slice(0, Math.min(4, Math.max(1, images.length)));
@@ -116,8 +132,15 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 1.5 }}>
               {shown.map((img, k) => (
                 <Box key={`${start}-${k}`}>
-                  <Box sx={{ aspectRatio: '3 / 4.4', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', bgcolor: '#eef1f4' }}>
-                    {img && <Box component="img" src={getFileUrl(img)} alt={`${product?.name || ''} ${k + 1}`} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                  <Box sx={{ position: 'relative', aspectRatio: '3 / 4.4', borderRadius: 2, overflow: 'hidden', border: '1px solid', borderColor: 'divider', bgcolor: '#eef1f4' }}>
+                    {img && img.src && <Box component="img" src={img.src} alt={`${product?.name || ''} ${k + 1}`} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
+                    {img && !img.src && img.file && <Box component="video" src={img.file} muted preload="metadata" playsInline sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', bgcolor: '#000' }} />}
+                    {img && (
+                      <Box aria-label={img.kind === 'video' ? 'Video' : 'Photo'} title={img.kind === 'video' ? 'Video' : 'Photo'}
+                        sx={{ position: 'absolute', right: 8, bottom: 8, width: 30, height: 30, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.92)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.15)' }}>
+                        {img.kind === 'video' ? <PlayArrowIcon sx={{ fontSize: 20, color: '#1c1c1e' }} /> : <ImageOutlinedIcon sx={{ fontSize: 18, color: '#1c1c1e' }} />}
+                      </Box>
+                    )}
                   </Box>
                   {buttons[k] && (buttons[k].primary ? (
                     // The New product button's gradient.
