@@ -205,17 +205,19 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
   const transKg = split.reduce((s, r) => s + r.co2Transport, 0);
   const prodShare = prodKg + transKg > 0 ? Math.round((prodKg / (prodKg + transKg)) * 100) : null;
   const withImpact = rows.filter((r) => r.co2Total != null || r.impactItems.length || r.impact.co2Avoided || r.impact.waterSaved || r.impact.energySaved).length;
-  const withSuppliers = rows.filter((r) => r.origins.length > 0).length;
   // Under each product in the chooser: what this page is about.
   const byId = useMemo(() => new Map(rows.map((r) => [r.p._id, r])), [rows]);
   const cardInfo = (p) => {
     const r = byId.get(p._id);
     if (!r) return [];
+    // Short lines, so a card never cuts them off.
+    const country = String(r.madeIn || '').split(',').pop().trim();
+    const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
     return isLca
-      ? [[r.co2Total != null ? `${formatKg(r.co2Total)}` : '', r.madeIn ? `made in ${r.madeIn}` : ''].filter(Boolean).join(' · ') || 'No footprint yet',
-        r.endOfLife.length ? `Second life: ${r.endOfLife.map((d) => d.label).join(', ')}` : 'No second-life services']
-      : [r.certs.length ? `${r.certs.length} ${r.certs.length === 1 ? 'certification' : 'certifications'} · ${r.origins.length} known suppliers` : 'No certifications yet',
-        `Passport ${r.completeness}% complete`];
+      ? [[r.co2Total != null ? formatKg(r.co2Total) : '', country].filter(Boolean).join(' · ') || 'No footprint yet',
+        r.endOfLife.length ? n(r.endOfLife.length, 'second-life service', 'second-life services') : 'No second-life services']
+      : [r.certs.length ? `${n(r.certs.length, 'certificate', 'certificates')} · ${n(r.origins.length, 'supplier', 'suppliers')}` : 'No certificates yet',
+        `Passport ${r.completeness}%`];
   };
 
   return (
@@ -252,7 +254,7 @@ export default function SustainabilityPage({ view = 'lca', products = [], loadin
             ) : (
               <>
                 <Grid item xs={12} sm={6} md={4}><Kpi icon={EcoIcon} value={`${withImpact} of ${rows.length}`} label="Environmental · have impact figures" /></Grid>
-                <Grid item xs={12} sm={6} md={4}><Kpi icon={GroupsIcon} value={`${certified} of ${rows.length}`} label={`Social · certified (${withSuppliers} name suppliers)`} /></Grid>
+                <Grid item xs={12} sm={6} md={4}><Kpi icon={GroupsIcon} value={`${certified} of ${rows.length}`} label="Social · certified" /></Grid>
                 <Grid item xs={12} sm={12} md={4}><Kpi icon={GavelIcon} value={`${avgCompleteness}%`} label="Governance · passports complete" /></Grid>
               </>
             )}
