@@ -472,6 +472,8 @@ const InnerPage = () => {
   const [startAmount, setStartAmount] = useState(0);
   const [mintingProgress, setMintingProgress] = useState(0);
 
+  // Shopper Preview chose a product: Products shows it selected (once).
+  const keepProductOnOpenRef = useRef(false);
   const productImageInputRefs = useRef([]);
   const productFileInputRefs = useRef([]);
   const wgImageInputRefs = useRef([]);
@@ -2018,8 +2020,11 @@ const InnerPage = () => {
   };
 
   const go = (page) => {
-    // Products opens on the list: choose a product first (client request).
-    if (page === 'products') setSelectedProduct(null);
+    // Products opens on the list: choose a product first (client request),
+    // except right after a pick was chosen in Shopper Preview: then that
+    // product shows selected.
+    if (page === 'products' && !keepProductOnOpenRef.current) setSelectedProduct(null);
+    if (page === 'products') keepProductOnOpenRef.current = false;
     // Employees opens on the company cards (super admin): choose a company first.
     if (page === 'employeeAuditLog') setEmployeesCompanyId('');
     setActivePage(page);
@@ -2406,7 +2411,16 @@ const InnerPage = () => {
           {/* Staff and super admin: Shopper Preview, one page (choices, typing,
               voice and the assistant). Shoppers keep Recommendations and Chat. */}
           {(activePage === 'recommendations' || activePage === 'chat') && !isAppUser && (
-            <ShopperPreviewPage company={company} />
+            <ShopperPreviewPage
+              company={company}
+              selectedId={selectedProduct?._id}
+              // A pick chosen there is the product selected on Products.
+              onSelectProduct={(p) => {
+                const known = products.find((x) => String(x._id) === String(p._id)) || p;
+                productSelectHandler(known);
+                keepProductOnOpenRef.current = true;
+              }}
+            />
           )}
           {activePage === 'recommendations' && isAppUser && (
             <RecommendationsPage company={company} isAdmin={isAdmin} isAppUser={isAppUser} />
