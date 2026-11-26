@@ -1,22 +1,25 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, ToggleButton, ToggleButtonGroup } from '@mui/material';
-
-const APP_URL = (process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com').replace(/\/$/, '');
-
-export const APP_VIEWS = [['product', 'Product'], ['summary', 'Summary'], ['detail', 'Details']];
+import { Box } from '@mui/material';
+import { APP_URL, previewQuery, usePreviewPages } from './previewPages';
+import PreviewPageTabs from './PreviewPageTabs';
 
 // The real shopper app in a phone frame, showing the product being edited
 // (not saved yet) as shoppers will see it: the app opens /preview/draft and
 // this sends it the product on every change (window.postMessage).
-// `view`: product (photo + Like / Cart / Not for me), summary or detail.
-export default function AppDraftPhone({ product, width = 300, view: viewProp, onView, showViews = true }) {
+// `view` / `section`: the app page (and Details tab) shown; the buttons for
+// them come from the app itself (previewPages.js), so they follow its pages.
+export default function AppDraftPhone({ product, width = 300, view: viewProp, onView, section: sectionProp, onSection, showViews = true }) {
+  const pages = usePreviewPages();
+  const [ownSection, setOwnSection] = useState('');
+  const section = sectionProp ?? ownSection;
+  const setSection = onSection || setOwnSection;
   const frame = useRef(null);
   const [own, setOwn] = useState('product');
   const view = viewProp || own;
   const setView = onView || setOwn;
   const inner = width - 20;
   const scale = inner / 390;
-  const src = `${APP_URL}/preview/draft?page=${view}`;
+  const src = `${APP_URL}/preview/draft${previewQuery(view, view === 'detail' ? section : '')}`;
 
   const send = useCallback(() => {
     try {
@@ -38,9 +41,7 @@ export default function AppDraftPhone({ product, width = 300, view: viewProp, on
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
       {showViews && (
-        <ToggleButtonGroup size="small" exclusive value={view} onChange={(_e, v) => v && setView(v)} aria-label="Which app page to show">
-          {APP_VIEWS.map(([k, label]) => <ToggleButton key={k} value={k} sx={{ px: 1.5, textTransform: 'none' }}>{label}</ToggleButton>)}
-        </ToggleButtonGroup>
+        <PreviewPageTabs pages={pages} view={view} section={section} onView={(v) => { setView(v); setSection(''); }} onSection={setSection} small center />
       )}
       <Box sx={{ width, height: Math.round(844 * scale) + 20, flexShrink: 0, borderRadius: '44px', bgcolor: '#111', p: '10px', boxShadow: '0 18px 40px rgba(18,58,86,0.25)' }}>
         <Box sx={{ width: inner, height: Math.round(844 * scale), borderRadius: '34px', overflow: 'hidden', bgcolor: '#fff', position: 'relative' }}>

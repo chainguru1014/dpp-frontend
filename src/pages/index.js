@@ -4065,15 +4065,16 @@ const Page = () => {
 
 // The app's Documents and certificates page: the kinds of papers a brand
 // adds for a product. Only documents with a name and a file are saved.
+// Each kind shows on the app's passport tab about it (app ProductDetailScreen).
 const DOCUMENT_KINDS = [
-  { value: 'care-guide', label: 'Care and repair guide' },
-  { value: 'safety', label: 'Product safety information' },
-  { value: 'composition', label: 'Fibre composition statement' },
-  { value: 'conformity', label: 'Declaration of conformity' },
-  { value: 'test-report', label: 'Test report' },
-  { value: 'warranty', label: 'Warranty' },
-  { value: 'recycling', label: 'Recycling and take-back' },
-  { value: 'other', label: 'Other' },
+  { value: 'care-guide', label: 'Care and repair guide (app: Lifecycle)' },
+  { value: 'safety', label: 'Product safety information (app: Impact)' },
+  { value: 'composition', label: 'Fibre composition statement (app: Materials)' },
+  { value: 'conformity', label: 'Declaration of conformity (app: Impact)' },
+  { value: 'test-report', label: 'Test report (app: Impact)' },
+  { value: 'warranty', label: 'Warranty (app: Lifecycle)' },
+  { value: 'recycling', label: 'Recycling and take-back (app: Lifecycle)' },
+  { value: 'other', label: 'Other (app: Impact)' },
 ];
 const cleanDocuments = (list) => (Array.isArray(list) ? list : [])
   .map((d) => ({ title: String(d?.title || '').trim(), kind: d?.kind || 'other', issuer: String(d?.issuer || '').trim(), date: d?.date || '', fileUrl: d?.fileUrl || '', note: String(d?.note || '').trim() }))
