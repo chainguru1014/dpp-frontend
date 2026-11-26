@@ -85,7 +85,6 @@ import DownloadIcon from '@mui/icons-material/Download';
 import CategoryIcon from '@mui/icons-material/Category';
 import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import Webcam from 'react-webcam';
 import io from 'socket.io-client';
@@ -2083,7 +2082,7 @@ const InnerPage = () => {
   };
 
   // Menu: Dashboard, then sections, always open (no folding): Products,
-  // Shoppers, Insights, Daily work, then Platform / Your company last. Working employees
+  // Shoppers, Insights, then Platform / Your company last (with Work Records). Working employees
   // and shoppers get a plain list. Notifications live on the bell.
   // Each entry: [page, label, Icon, visible, alsoActiveOn?].
   const flatMenu = isWorkingEmployee || isAppUser;
@@ -2136,16 +2135,8 @@ const InnerPage = () => {
         ['lca', 'Sustainability', SpaIcon, true, ['esg']],
       ],
     },
-    {
-      key: 'daily',
-      title: 'Daily work',
-      items: [
-        ['captureHistory', 'Work Records', AssessmentIcon, canSeeCaptureHistory],
-        ['shipmentInspection', 'Shipments', LocalShippingIcon, canSeeShipmentInspection],
-        // Only in the desktop app (Windows, Mac or Linux): a web browser can't reach the reader.
-        ['rfidScan', 'RFID Scan', RfidIcon, canSeeRfidScan],
-      ],
-    },
+    // (2026-11-26: no "Daily work" group any more — Work Records and RFID
+    // Scan are under Platform / Your company; Shipments is hidden.)
     isAdmin ? {
       key: 'platform',
       title: 'Platform',
@@ -2156,6 +2147,9 @@ const InnerPage = () => {
         ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
         ['users', 'Consumer Accounts', PersonIcon, !isEmployeeActor],
         ['notifications', 'Announcements', CampaignIcon, true],
+        ['captureHistory', 'Work Records', AssessmentIcon, canSeeCaptureHistory],
+        // Only in the desktop app (Windows, Mac or Linux): a web browser can't reach the reader.
+        ['rfidScan', 'RFID Scan', RfidIcon, canSeeRfidScan],
       ],
     } : {
       key: 'brand',
@@ -2163,6 +2157,8 @@ const InnerPage = () => {
       items: [
         ['brand', 'Company Profile', StorefrontIcon, canSeeItemSearch],
         ['employeeAuditLog', 'Employees', BadgeIcon, canSeeStaffManagement],
+        ['captureHistory', 'Work Records', AssessmentIcon, canSeeCaptureHistory],
+        ['rfidScan', 'RFID Scan', RfidIcon, canSeeRfidScan],
       ],
     },
   ];
