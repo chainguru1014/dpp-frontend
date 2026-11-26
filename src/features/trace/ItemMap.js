@@ -75,7 +75,7 @@ function Controls({ onReset }) {
   );
 }
 
-function Legend() {
+function Legend({ showLifecycle = true }) {
   const [open, setOpen] = useState(true);
   return (
     <div className="leaflet-bottom leaflet-left dpp-map-ctl" style={{ pointerEvents: 'auto' }}>
@@ -86,7 +86,7 @@ function Legend() {
         </div>
         {open && (
           <div style={{ marginTop: 6, display: 'grid', gap: 4 }}>
-            {Object.values(MAP_KINDS).map((k) => (
+            {Object.entries(MAP_KINDS).filter(([key]) => showLifecycle || key !== 'lifecycle').map(([, k]) => (
               <div key={k.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 12, height: 12, borderRadius: 6, background: `${k.color}55`, border: `2px solid ${k.color}`, display: 'inline-block' }} />{k.label}
               </div>
@@ -252,7 +252,7 @@ export default function ItemMap({ points = [], lifecycle = [], height = 360 }) {
       <LifecycleLayer steps={lifecycle} />
       <FitToPoints points={all} resetTick={resetTick} />
       <Controls onReset={() => setResetTick((n) => n + 1)} />
-      <Legend />
+      <Legend showLifecycle={lifecycle.length > 0} />
     </MapContainer>
   );
 }

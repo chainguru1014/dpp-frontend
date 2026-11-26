@@ -1,5 +1,7 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Box, Button, Chip, Link, Stack, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Button, Chip, Link, MenuItem, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import GppBadIcon from '@mui/icons-material/GppBad';
@@ -68,6 +70,22 @@ const eventDetail = (e) => {
   return '';
 };
 
+// The filters over the map and the activity list (client 2026-11-26): a
+// date range, who it was and what came of it. Everything shows by default.
+const WHO = [['all', 'All user types'], ['consumer', 'Consumers (signed in)'], ['visitor', 'Visitors (not signed in)'], ['staff', 'Staff (work steps)']];
+const OUTCOME = [['all', 'All results'], ['genuine', 'Genuine scans'], ['failed', 'Security check failed'], ['work', 'Work steps'], ['transfer', 'Ownership transfers']];
+const NO_FILTER = { from: '', to: '', who: 'all', outcome: 'all' };
+const whoOf = (e) => (e.kind === 'capture' ? 'staff' : e.kind === 'transfer' ? 'consumer' : e.kind === 'created' ? '' : e.byAppUser ? 'consumer' : 'visitor');
+const outcomeOf = (e) => ({ scan: 'genuine', security_pass: 'genuine', security_fail: 'failed', capture: 'work', transfer: 'transfer' }[e.kind] || '');
+const passes = (e, flt) => {
+  const t = new Date(e.at).getTime();
+  if (flt.from && !(t >= new Date(`${flt.from}T00:00:00`).getTime())) return false;
+  if (flt.to && !(t <= new Date(`${flt.to}T23:59:59.999`).getTime())) return false;
+  if (flt.who !== 'all' && whoOf(e) !== flt.who) return false;
+  if (flt.outcome !== 'all' && outcomeOf(e) !== flt.outcome) return false;
+  return true;
+};
+
 function CodeLine({ label, value }) {
   if (!value) return null;
   return (
@@ -79,9 +97,9 @@ function CodeLine({ label, value }) {
   );
 }
 
-function Timeline({ events, showItem, onOpenItem }) {
+function Timeline({ events, showItem, onOpenItem, emptyText }) {
   if (!events.length) {
-    return <Typography color="text.secondary">Nothing has been recorded yet. Scans, recorded work steps and ownership transfers appear here as they happen.</Typography>;
+    return <Typography color="text.secondary">{emptyText || <>Nothing has been recorded yet. Scans, recorded work steps and ownership transfers appear here as they happen.</>}</Typography>;
   }
   return (
     <Box component="ol" sx={{ listStyle: 'none', m: 0, p: 0 }}>
@@ -132,6 +150,9 @@ export default function ItemTracePage({
   const [parent, setParent] = useState(null);
   const resultRef = useRef(null);
 
+  // How the open view was loaded, so Refresh can load it again.
+  const lastLoad = useRef(null);
+  const load = (factory, opts) => { lastLoad.current = factory; return show(factory(), opts); };
   const show = async (request, { keepParent = false, scroll = true } = {}) => {
     setLoading(true);
     setError('');
@@ -153,10 +174,10 @@ export default function ItemTracePage({
       return;
     }
     setInput(value);
-    show(searchTrace(token, value));
+    load(() => searchTrace(token, value));
   };
 
-  const openProduct = (id) => show(getTraceProduct(token, id));
+  const openProduct = (id) => load(() => getTraceProduct(token, id));
 
   // A code typed into the top bar arrives through `query`; a product picked
   // elsewhere (the dashboard's "Analyze products") through `productId`.
@@ -179,13 +200,13 @@ export default function ItemTracePage({
   useEffect(() => {
     if (autoOpened.current || productsLoading || products.length !== 1 || query || productId || result || loading) return;
     autoOpened.current = true;
-    show(getTraceProduct(token, products[0]._id), { scroll: false });
+    load(() => getTraceProduct(token, products[0]._id), { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products, productsLoading]);
 
   const openItem = (id, itemId) => {
     if (result?.type === 'product') setParent(result);
-    show(getTraceItem(token, id, itemId), { keepParent: true });
+    load(() => getTraceItem(token, id, itemId), { keepParent: true });
   };
 
   // The box narrows the list by product name, model, brand or style number.
@@ -196,7 +217,11 @@ export default function ItemTracePage({
       .some((v) => String(v || '').toLowerCase().includes(q)));
   }, [products, input]);
 
-  const events = result?.timeline || [];
+  const allEvents = result?.timeline || [];
+  const [flt, setFlt] = useState(NO_FILTER);
+  const filtered = flt.from || flt.to || flt.who !== 'all' || flt.outcome !== 'all';
+  const events = useMemo(() => (filtered ? allEvents.filter((e) => passes(e, flt)) : allEvents), [allEvents, flt, filtered]);
+  const refresh = () => { if (lastLoad.current) show(lastLoad.current(), { keepParent: true, scroll: false }); };
   // Oldest first, so the line on the map follows the item's journey.
   const mapPoints = [...events]
     .reverse()
@@ -300,6 +325,24 @@ export default function ItemTracePage({
               )}
             </ProductBar>
 
+            {/* Filters for the activity list and the map (all by default). */}
+            <Box sx={{ bgcolor: '#fff', borderRadius: '20px', boxShadow: '0 1px 2px rgba(18,58,86,0.06)', px: 2, py: 1.5, mb: 2, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+              <TextField type="date" size="small" label="From" value={flt.from} onChange={(e) => setFlt((v) => ({ ...v, from: e.target.value }))} InputLabelProps={{ shrink: true }} sx={{ width: 170 }} inputProps={{ max: flt.to || undefined }} />
+              <Typography color="text.secondary">~</Typography>
+              <TextField type="date" size="small" label="To" value={flt.to} onChange={(e) => setFlt((v) => ({ ...v, to: e.target.value }))} InputLabelProps={{ shrink: true }} sx={{ width: 170 }} inputProps={{ min: flt.from || undefined }} />
+              <TextField select size="small" value={flt.who} onChange={(e) => setFlt((v) => ({ ...v, who: e.target.value }))} sx={{ minWidth: 210 }} inputProps={{ 'aria-label': 'User type' }}>
+                {WHO.map(([k, l]) => <MenuItem key={k} value={k}>{l}</MenuItem>)}
+              </TextField>
+              <TextField select size="small" value={flt.outcome} onChange={(e) => setFlt((v) => ({ ...v, outcome: e.target.value }))} sx={{ minWidth: 210 }} inputProps={{ 'aria-label': 'Result' }}>
+                {OUTCOME.map(([k, l]) => <MenuItem key={k} value={k}>{l}</MenuItem>)}
+              </TextField>
+              <Button variant="outlined" startIcon={<RefreshIcon />} onClick={refresh} disabled={loading}>Refresh</Button>
+              <Button startIcon={<RestartAltIcon />} onClick={() => setFlt(NO_FILTER)} disabled={!filtered}>Reset</Button>
+              <Typography variant="body2" color="text.secondary" sx={{ ml: 'auto' }}>
+                {filtered ? `Showing ${events.length} of ${allEvents.length} activities` : `${allEvents.length} ${allEvents.length === 1 ? 'activity' : 'activities'}`}
+              </Typography>
+            </Box>
+
             {/* Lists take a third of the width, the map two thirds. */}
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(0, 2fr)' }, gap: 2, alignItems: 'start' }}>
               <Stack spacing={2}>
@@ -337,36 +380,37 @@ export default function ItemTracePage({
               </Box>
               <Box sx={{ bgcolor: '#fff', borderRadius: '24px', boxShadow: '0 1px 2px rgba(18,58,86,0.06)', p: 2 }}>
                 <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>
-                  {result.type === 'item' ? 'History of this item' : 'Latest activity across all items'}
+                  {result.type === 'item' ? `History of item #${result.item.qrcodeId}` : `Activity for ${result.product?.name || 'this product'}`}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>Newest first.</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  {result.type === 'item' ? 'This item only, newest first.' : `Only this product: all its ${result.product?.totalCodes ?? ''} codes, newest first.`.replace('all its  codes', 'all its codes')}
+                </Typography>
                 <Timeline
                   events={events}
                   showItem={result.type === 'product'}
                   onOpenItem={(itemId) => openItem(result.product._id, itemId)}
+                  emptyText={filtered ? 'No activity matches these filters.' : undefined}
                 />
               </Box>
               </Stack>
               <Box sx={{ bgcolor: '#fff', borderRadius: '24px', boxShadow: '0 1px 2px rgba(18,58,86,0.06)', p: 2, position: { lg: 'sticky' }, top: { lg: 0 } }}>
                 <Typography variant="h6" component="h3" sx={{ mb: 0.5 }}>On the map</Typography>
-                {mapPoints.length || lifecyclePoints.length ? (
+                {/* Only this product's own activity, as circles (client 2026-11-26):
+                    the lifecycle has its own panel on the left. */}
+                {mapPoints.length ? (
                   <>
                     <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap sx={{ mb: 1.5 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                        <Box sx={{ width: 22, height: 4, borderRadius: 2, bgcolor: LIFECYCLE_COLOR }} />
-                        <Typography variant="body2" color="text.secondary">Product lifecycle ({lifecyclePoints.length} place{lifecyclePoints.length === 1 ? '' : 's'})</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
                         <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: '#2f80c8', border: '2px solid #fff', boxShadow: '0 0 0 1px #c5cbd6' }} />
-                        <Typography variant="body2" color="text.secondary">Recorded activity ({mapPoints.length} of {events.length} with a place)</Typography>
+                        <Typography variant="body2" color="text.secondary">Recorded activity ({mapPoints.length} of {events.length} with a place{filtered ? ', filtered' : ''})</Typography>
                       </Box>
                     </Stack>
                     <Suspense fallback={<Loader label="Loading the map…" />}>
-                      <ItemMap points={mapPoints} lifecycle={lifecyclePoints} height={520} />
+                      <ItemMap points={mapPoints} height={520} />
                     </Suspense>
                   </>
                 ) : (
-                  <Typography color="text.secondary">Nothing has a place yet. Lifecycle places and located scans appear here.</Typography>
+                  <Typography color="text.secondary">{filtered ? 'No activity with a place matches these filters.' : 'No activity with a place yet. Located scans, work steps and transfers of this product appear here.'}</Typography>
                 )}
               </Box>
             </Box>
