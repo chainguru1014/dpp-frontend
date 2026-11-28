@@ -181,11 +181,16 @@ const VIEWS = {
 // this account can see. Both read the same product information; LCA shows
 // it stage by stage along the life cycle, ESG under Environmental, Social
 // and Governance. (They used to be one "Sustainability" page.)
-export default function SustainabilityPage({ view = 'lca', products = [], loading = false, canEdit = false, isAppUser = false, showOwner = false, onEditProduct }) {
+// selectedProductId / onSelectProduct: the chosen product kept by the page
+// around it, so switching Life cycle <-> ESG keeps it (client 2026-11-28).
+export default function SustainabilityPage({ view = 'lca', products = [], loading = false, canEdit = false, isAppUser = false, showOwner = false, onEditProduct, selectedProductId, onSelectProduct }) {
   const isLca = view !== 'esg';
   const v = VIEWS[isLca ? 'lca' : 'esg'];
   const rows = useMemo(() => products.map(summarise), [products]);
-  const [selectedId, setSelectedId] = useState('');
+  const [ownSelectedId, setOwnSelectedId] = useState('');
+  const controlled = selectedProductId !== undefined;
+  const selectedId = controlled ? (selectedProductId || '') : ownSelectedId;
+  const setSelectedId = (id) => (controlled ? onSelectProduct?.(id) : setOwnSelectedId(id));
   useEffect(() => {
     if (!rows.length) return;
     if (selectedId && !rows.some((r) => r.p._id === selectedId)) setSelectedId('');

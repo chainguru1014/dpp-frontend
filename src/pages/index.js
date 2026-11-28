@@ -614,6 +614,8 @@ const InnerPage = () => {
   }, [company, isAdmin, isEmployeeActor, isWorkingEmployee, isAppUser, activePage]);
   const [previousPage, setPreviousPage] = useState(() => loadStateFromStorage('previousPage', 'dashboard'));
   const [selectedProduct, setSelectedProduct] = useState(() => loadStateFromStorage('selectedProduct', null));
+  // Sustainability: the product chosen there, kept across Life cycle / ESG.
+  const [sustainProductId, setSustainProductId] = useState('');
   // Shoppers: the product opened from Favorites or Recommendations.
   const [shopperView, setShopperView] = useState(null);
   useEffect(() => {
@@ -2479,6 +2481,8 @@ const InnerPage = () => {
               key={activePage}
               view={activePage}
               products={isAppUser && shopperView ? [shopperView.product] : products}
+              selectedProductId={sustainProductId}
+              onSelectProduct={setSustainProductId}
               loading={isAppUser && shopperView ? false : productsLoading}
               canEdit={canEditProducts}
               isAppUser={isAppUser}

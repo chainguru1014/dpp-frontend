@@ -18,15 +18,12 @@ const Pill = ({ items, value, onChange, label, small }) => (
   </Box>
 );
 
-export default function PreviewPageTabs({ pages, view, section, onView, onSection, small, center }) {
-  const page = pages.find((p) => p.key === view);
-  const sections = page?.sections || [];
+export default function PreviewPageTabs({ pages, view, onView, small, center }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: center ? 'center' : 'flex-start' }}>
       <Pill items={pages} value={view} onChange={onView} label="Page" small={small} />
-      {sections.length > 0 && (
-        <Pill items={sections} value={section || sections[0].key} onChange={onSection} label="Tab" small />
-      )}
+      {/* The Details tabs (Overview, Materials, ...) are not repeated here
+          (client 2026-11-28): they are tapped in the phone, as in the app. */}
     </Box>
   );
 }
