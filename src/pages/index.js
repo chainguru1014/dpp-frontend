@@ -65,7 +65,6 @@ import CampaignIcon from '@mui/icons-material/Campaign';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import HandymanIcon from '@mui/icons-material/Handyman';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import CloseIcon from '@mui/icons-material/Close';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
@@ -148,11 +147,9 @@ import BrandPage from '../features/brand/BrandPage';
 import PageHeaderContext from '../components/PageHeader/PageHeaderContext';
 import ProductBar from '../components/ProductBar';
 import ProductChooser from '../components/ProductChooser';
-import RecommendationsPage from '../features/recommendations/RecommendationsPage';
 import ShopperPreviewPage from '../features/recommendations/ShopperPreviewPage';
 import FavoritesPage from '../features/favorites/FavoritesPage';
 import FavoriteIcon from '@mui/icons-material/Favorite';
-import ChatPage from '../features/chat/ChatPage';
 import NotificationBell from '../features/notifications/NotificationBell';
 import SystemNotificationsPage from '../features/notifications/SystemNotificationsPage';
 import AllNotificationsPage from '../features/notifications/AllNotificationsPage';
@@ -187,7 +184,7 @@ const PrintModal = React.lazy(() => import('../components/printModal'));
 const KNOWN_PAGES = [
   'dashboard', 'rfidScan', 'products', 'newProduct', 'generateCode', 'shipmentInspection', 'users', 'companies', 'employeeAuditLog',
   'processSteps', 'captureHistory', 'history', 'lca', 'esg', 'notifications',
-  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security', 'serviceRequests', 'brand', 'favorites',
+  'allNotifications', 'recommendations', 'chat', 'profile', 'itemSearch', 'security', 'serviceRequests', 'brand', 'favorites', 'productView',
 ];
 const pageFromPath = (pathname) => {
   const match = String(pathname || '').match(/^\/admin\/([^/?#]+)/);
@@ -308,7 +305,7 @@ const InnerPage = () => {
   const WORKING_EMPLOYEE_ALLOWED_PAGES = ['dashboard', 'rfidScan', 'products', 'profile', 'allNotifications', 'generateCode', 'captureHistory'];
   // A normal DPP (app) user: the common pages (Products read-only), plus
   // Scan History.
-  const APP_USER_ALLOWED_PAGES = [...COMMON_PAGES, 'history', 'favorites'];
+  const APP_USER_ALLOWED_PAGES = [...COMMON_PAGES, 'history', 'favorites', 'productView'];
   // Create/edit/delete products — never a working employee or an app user.
   const canEditProducts = canManageProducts && !isWorkingEmployee;
   // A company login (its admin email) acts as that company's Supervisor.
@@ -617,6 +614,11 @@ const InnerPage = () => {
   }, [company, isAdmin, isEmployeeActor, isWorkingEmployee, isAppUser, activePage]);
   const [previousPage, setPreviousPage] = useState(() => loadStateFromStorage('previousPage', 'dashboard'));
   const [selectedProduct, setSelectedProduct] = useState(() => loadStateFromStorage('selectedProduct', null));
+  // Shoppers: the product opened from Favorites or Recommendations.
+  const [shopperView, setShopperView] = useState(null);
+  useEffect(() => {
+    if (activePage === 'productView' && !shopperView) setActivePage('favorites');
+  }, [activePage, shopperView]);
   const [detailTab, setDetailTab] = useState(0);
   // Which product panel to show: 'edit' (product form), 'experience' (the
   // shopper's page preview + passport readiness) or 'print' (QR generate/print).
@@ -2023,6 +2025,15 @@ const InnerPage = () => {
     return true;
   };
 
+  // Shoppers: the product opened from Favorites or Recommendations (the
+  // page it came from: Change product goes back there).
+  const openShopperProduct = async (p, from) => {
+    const full = await getSelectedProductData(p._id).catch(() => null);
+    setShopperView({ product: full || p, from });
+    setActivePage('productView');
+    setMobileNavOpen(false);
+  };
+
   const go = (page) => {
     // Products opens on the list: choose a product first (client request),
     // except right after a pick was chosen in Shopper Preview: then that
@@ -2091,12 +2102,12 @@ const InnerPage = () => {
       title: null,
       items: isAppUser ? [
         ['dashboard', 'Dashboard', DashboardIcon, true],
-        ['favorites', 'Favorites', FavoriteIcon, true],
-        ['products', 'My Products', Inventory2Icon, true],
+        // (2026-11-28: no My Products, Sustainability or Chat here — a
+        // product opens from Favorites or Recommendations, with its
+        // Sustainability button.)
+        ['favorites', 'Favorites', FavoriteIcon, true, ['productView']],
         ['history', 'My Scans', HistoryIcon, true],
-        ['lca', 'Sustainability', SpaIcon, true, ['esg']],
         ['recommendations', 'Recommendations', AutoAwesomeIcon, true],
-        ['chat', 'Chat', ChatBubbleOutlineIcon, true],
       ] : [
         ['dashboard', 'Dashboard', DashboardIcon, true],
         ['products', 'Products', Inventory2Icon, true],
@@ -2423,12 +2434,33 @@ const InnerPage = () => {
               }}
             />
           )}
+          {/* Shoppers: the same Shopper Preview page (client 2026-11-28); a
+              pick opens the product's page. */}
           {activePage === 'recommendations' && isAppUser && (
-            <RecommendationsPage company={company} isAdmin={isAdmin} isAppUser={isAppUser} />
+            <ShopperPreviewPage company={company} onViewProduct={(p) => openShopperProduct(p, 'recommendations')} />
           )}
-
-          {activePage === 'chat' && isAppUser && <ChatPage company={company} isAppUser={isAppUser} />}
-          {activePage === 'favorites' && <FavoritesPage company={company} onOpenRecommendations={() => go('recommendations')} />}
+          {activePage === 'favorites' && (
+            <FavoritesPage
+              company={company}
+              onOpenRecommendations={() => go('recommendations')}
+              onOpenProduct={isAppUser ? (p) => openShopperProduct(p, 'favorites') : undefined}
+            />
+          )}
+          {activePage === 'productView' && isAppUser && shopperView && (
+            <Box>
+              <PageHeader title={shopperView.product?.name || 'Product'} description="Its photos and facts, a preview of its passport and its sustainability." />
+              <ProductBar
+                product={shopperView.product}
+                onChange={() => go(shopperView.from || 'favorites')}
+              />
+              <ProductShowcase
+                product={shopperView.product}
+                actionsLeft
+                onPreview={() => setOpenPreviewModal(true)}
+                onSustainability={() => go('lca')}
+              />
+            </Box>
+          )}
 
 
           {/* Scan History and Ownership Transfers: super admin sees everything;
@@ -2446,8 +2478,8 @@ const InnerPage = () => {
               // key: switching between the two pages starts each one fresh.
               key={activePage}
               view={activePage}
-              products={products}
-              loading={productsLoading}
+              products={isAppUser && shopperView ? [shopperView.product] : products}
+              loading={isAppUser && shopperView ? false : productsLoading}
               canEdit={canEditProducts}
               isAppUser={isAppUser}
               showOwner={isAdmin}
@@ -2714,7 +2746,7 @@ const InnerPage = () => {
                 searchId="product-search"
                 query={productNameFilter}
                 onQueryChange={setProductNameFilter}
-                placeholder={isAdmin ? 'Search by product, company or owner' : 'Search by product or company'}
+                placeholder={isAdmin ? 'Search by product, company or owner' : 'Search by product name or model'}
                 products={filteredProducts}
                 loading={productsLoading}
                 selectedId={selectedProduct?._id}
@@ -4014,7 +4046,9 @@ const InnerPage = () => {
           productInfo={
             // If selectedProduct exists and we're viewing from products page, use it
             // Otherwise use form data
-            selectedProduct && activePage === 'products'
+            activePage === 'productView' && shopperView
+              ? shopperView.product
+              : selectedProduct && activePage === 'products'
               ? selectedProduct
               : {
                   name: productName,

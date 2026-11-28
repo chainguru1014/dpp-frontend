@@ -368,7 +368,21 @@ export default function BrandPage({
 
               {/* 2. The company account: who runs it and who may sign in. */}
               <Grid item xs={12} lg={5}>
-                <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 }, height: '100%' }}>
+                <Stack spacing={2.5} sx={{ height: '100%' }}>
+                {/* Save at the top of this column (client 2026-11-28), in
+                    view while editing either card. */}
+                {(canEdit || isAdmin) && (
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, px: 3, py: 1.75 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+                      {profileDirty ? 'You have unsaved changes.' : 'All changes are saved.'} Saved changes reach every product page at once.
+                    </Typography>
+                    {profileDirty && <Button onClick={undoProfile}>Undo</Button>}
+                    <Button variant="contained" startIcon={<SaveIcon />} onClick={saveProfile} disabled={saving === 'profile' || !profileDirty} sx={{ flexShrink: 0 }}>
+                      {saving === 'profile' ? 'Saving…' : profileDirty ? 'Save changes' : 'Saved'}
+                    </Button>
+                  </Stack>
+                )}
+                <Box sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, p: { xs: 2, md: 3 }, flex: 1 }}>
                   <Typography component="h2" sx={{ fontSize: 20, fontWeight: 400, color: '#16324a' }}>Company account</Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>Who runs the account and who can sign in as staff.</Typography>
                   {!isAdmin && (
@@ -391,19 +405,9 @@ export default function BrandPage({
                       helperText={`People with ${signIn.allowedEmailDomains ? `an @${signIn.allowedEmailDomains.split(',')[0].trim()}` : 'this'} email can sign in as staff. Separate several with commas.`} />
                   </Stack>
                 </Box>
+                </Stack>
               </Grid>
 
-              {(canEdit || isAdmin) && (
-                <Grid item xs={12}>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ bgcolor: '#fff', borderRadius: 3, boxShadow: 1, px: 3, py: 1.75 }}>
-                    <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>Changes reach every product page as soon as you save.</Typography>
-                    {profileDirty && <Button onClick={undoProfile}>Undo changes</Button>}
-                    <Button variant="contained" startIcon={<SaveIcon />} onClick={saveProfile} disabled={saving === 'profile' || !profileDirty}>
-                      {saving === 'profile' ? 'Saving…' : profileDirty ? 'Save changes' : 'Saved'}
-                    </Button>
-                  </Stack>
-                </Grid>
-              )}
             </Grid>
           )}
 

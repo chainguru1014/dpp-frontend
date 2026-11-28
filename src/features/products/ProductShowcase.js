@@ -43,7 +43,9 @@ const hm = (d) => {
 // 2026-11-25); set to true to show it again.
 const SHOW_TRANSFERS = false;
 
-export default function ProductShowcase({ product, onEdit, onPreview, onCodes, onRemove, onChange }) {
+// actionsLeft: the buttons in the left column under the facts, two a row
+// (shoppers, client 2026-11-28) instead of under the photos.
+export default function ProductShowcase({ product, onEdit, onPreview, onCodes, onRemove, onChange, onSustainability, actionsLeft = false }) {
   // Photos, then videos (as in the app); each tile says which it is with an
   // icon at its bottom right (client 2026-11-26).
   const images = useMemo(() => {
@@ -75,6 +77,7 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
     onEdit && { label: 'Edit Product', icon: <EditIcon fontSize="small" />, onClick: onEdit, primary: true },
     onPreview && { label: 'Preview Product', icon: <PhoneIphoneIcon fontSize="small" />, onClick: onPreview },
     onCodes && { label: 'Generate Code', icon: <QrCodeIcon fontSize="small" />, onClick: onCodes },
+    onSustainability && { label: 'Sustainability', icon: <SpaIcon fontSize="small" />, onClick: onSustainability },
     onRemove && { label: 'Remove', icon: <DeleteOutlineIcon fontSize="small" />, onClick: onRemove, danger: true },
   ].filter(Boolean);
 
@@ -129,6 +132,16 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
                 <Typography sx={{ fontSize: 14.5 }}>Traceable product identity</Typography>
               </Stack>
             </Stack>
+            {actionsLeft && buttons.length > 0 && (
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1.25, mt: 2.5 }}>
+                {buttons.map((b) => (
+                  <ButtonBase key={b.label} onClick={b.onClick}
+                    sx={{ height: 40, borderRadius: '20px', gap: 0.75, fontSize: 14, border: '1px solid', borderColor: 'primary.main', color: 'primary.main', '&:hover': { bgcolor: '#eef5fd' } }}>
+                    {b.icon}{b.label}
+                  </ButtonBase>
+                ))}
+              </Box>
+            )}
             {onChange && <Button variant="contained" fullWidth startIcon={<SwapHorizIcon />} onClick={onChange} sx={{ mt: 2.5, height: 44, maxWidth: 300 }}>Change product</Button>}
           </Box>
 
@@ -153,7 +166,7 @@ export default function ProductShowcase({ product, onEdit, onPreview, onCodes, o
                       </Box>
                     )}
                   </Box>
-                  {buttons[k] && (buttons[k].primary ? (
+                  {!actionsLeft && buttons[k] && (buttons[k].primary ? (
                     // The New product button's gradient.
                     <Button variant="contained" fullWidth startIcon={buttons[k].icon} onClick={buttons[k].onClick} sx={{ mt: 1, height: 38 }}>{buttons[k].label}</Button>
                   ) : (

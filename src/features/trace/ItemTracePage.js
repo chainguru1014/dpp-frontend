@@ -260,7 +260,7 @@ export default function ItemTracePage({
           searchId="activity-search"
           query={input}
           onQueryChange={(v) => { setInput(v); setError(''); }}
-          placeholder="Search by product or company, or enter a code"
+          placeholder={showOwner ? 'Search by product or company, or enter a code' : 'Search by product, or enter a code'}
           onSubmit={() => findCode(input)}
           actions={(
             <Tooltip title="Look this text up as a code: passport ID, QR link, serial number, RFID or NFC tag, barcode">

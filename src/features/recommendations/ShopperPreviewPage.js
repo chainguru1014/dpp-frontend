@@ -127,7 +127,11 @@ const EXAMPLES = ['A warm coat under €700', 'Something casual in denim', 'What
 
 // onSelectProduct: a pick chosen here becomes the product selected on the
 // Products page (client 2026-11-26); selectedId marks it in the picks.
-export default function ShopperPreviewPage({ company, onSelectProduct, selectedId }) {
+// onViewProduct: shoppers — a pick opens the product's own page (as My
+// Products) instead of the passport preview window.
+export default function ShopperPreviewPage({ company, onSelectProduct, selectedId, onViewProduct }) {
+  // Opened by a shopper (Recommendations): "you" instead of "the shopper".
+  const forShopper = !!onViewProduct;
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [prefs, setPrefs] = useState(EMPTY);
@@ -149,12 +153,14 @@ export default function ShopperPreviewPage({ company, onSelectProduct, selectedI
 
   useEffect(() => {
     let alive = true;
-    getProductsByUser()
+    (forShopper
+      ? axios.get(`${Backend_URL}product/catalog`).then((r) => r.data?.data || [])
+      : getProductsByUser())
       .then((list) => { if (alive) setProducts((Array.isArray(list) ? list : []).filter((p) => !p.is_deleted)); })
       .catch(() => { if (alive) setProducts([]); })
       .finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, []);
+  }, [forShopper]);
 
   // Never leave the microphone on after leaving the page.
   useEffect(() => () => {
@@ -268,28 +274,59 @@ export default function ShopperPreviewPage({ company, onSelectProduct, selectedI
   });
   const card = { bgcolor: '#fff', borderRadius: '20px', boxShadow: '0 4px 18px rgba(31,51,97,0.06)' };
 
+  // Numbered step badge.
+  const step = (n) => (
+    <Box sx={{ width: 30, height: 30, borderRadius: '50%', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 15, backgroundImage: 'linear-gradient(135deg,#2a78bd,#1b4f72)' }}>{n}</Box>
+  );
+  const who = forShopper ? 'you' : 'the shopper';
+
   return (
     <Box>
       <PageHeader
-        title="Shopper Preview"
-        description="What your shoppers get: they say or tap what they like and get picks and answers."
+        title={forShopper ? 'Recommendations' : 'Shopper Preview'}
+        description={forShopper
+          ? 'Find products that suit you: describe what you are looking for, or choose your preferences.'
+          : 'See the products the AI suggests to a shopper: describe a wish or choose preferences, as shoppers do in the app.'}
       />
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}><CircularProgress /></Box>
       ) : (
         <>
-          {/* 1. One box: type or say what the shopper wants, or ask. */}
-          <Box sx={{ ...card, p: { xs: 2, md: 2.5 }, mb: 2.5 }}>
-            <Typography sx={{ fontSize: 19, color: '#16324a', mb: 1.25 }}>What is the shopper looking for?</Typography>
+          {/* How it works, in one calm line of three steps. */}
+          <Box sx={{ ...card, p: { xs: 2, md: 2.25 }, mb: 2.5, display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0,1fr))' }, gap: { xs: 1.5, md: 2.5 } }}>
+            {[
+              [KeyboardIcon, 'Describe or choose', forShopper ? 'Say or type what you want, or tap your preferences.' : 'Say or type what the shopper wants, or tap their preferences.'],
+              [AutoAwesomeIcon, 'See the best matches', 'Each product shows how well it matches and why.'],
+              [TouchAppIcon, 'Open a product', forShopper ? 'See its details, passport and sustainability.' : 'See its page exactly as the shopper sees it.'],
+            ].map(([Icon, title, text]) => (
+              <Box key={title} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                <Box sx={{ width: 40, height: 40, borderRadius: '12px', bgcolor: '#e8f1fa', color: '#1b4f72', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon fontSize="small" /></Box>
+                <Box>
+                  <Typography sx={{ color: '#16324a', fontSize: 16 }}>{title}</Typography>
+                  <Typography variant="body2" color="text.secondary">{text}</Typography>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+
+          {/* 1. Describe it: one box, typed or said; questions answered too. */}
+          <Box sx={{ ...card, p: { xs: 2, md: 2.75 }, mb: 2.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 0.5 }}>
+              {step(1)}
+              <Typography sx={{ fontSize: 19, color: '#16324a' }}>{forShopper ? 'Describe what you are looking for' : 'Describe what the shopper is looking for'}</Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 5.25, mb: 1.75 }}>
+              Type it or press the microphone and speak. You can also ask a question about a product.
+            </Typography>
             <Box sx={{ display: 'flex', gap: 1.25, alignItems: 'center' }}>
               {voiceSupported && (
-                <Tooltip title={voice === 'recording' ? 'Stop and send' : 'Say it'}>
+                <Tooltip title={voice === 'recording' ? 'Stop and send' : 'Speak'}>
                   <span>
                     <IconButton
                       onClick={toggleVoice}
                       disabled={voice === 'transcribing' || asking}
-                      aria-label={voice === 'recording' ? 'Stop recording and send' : 'Say what the shopper wants'}
+                      aria-label={voice === 'recording' ? 'Stop recording and send' : `Say what ${who} want${forShopper ? '' : 's'}`}
                       sx={{
                         width: 52, height: 52, color: '#fff',
                         backgroundImage: voice === 'recording' ? 'none' : 'linear-gradient(135deg,#2a78bd,#1b4f72)',
@@ -310,8 +347,8 @@ export default function ShopperPreviewPage({ company, onSelectProduct, selectedI
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-                placeholder={voice === 'recording' ? 'Listening… press stop when done.' : voice === 'transcribing' ? 'Turning the voice into text…' : 'Type a wish or a question, e.g. “A warm wool coat under €700”'}
-                inputProps={{ 'aria-label': 'What the shopper wants' }}
+                placeholder={voice === 'recording' ? 'Listening… press stop when you are done.' : voice === 'transcribing' ? 'Turning your words into text…' : 'For example: “A warm wool coat under €700”'}
+                inputProps={{ 'aria-label': forShopper ? 'What you are looking for' : 'What the shopper is looking for' }}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '999px', bgcolor: '#f6f8fb' } }}
               />
               <Button variant="contained" endIcon={asking ? <CircularProgress size={16} color="inherit" /> : <SendIcon />} onClick={() => send()} disabled={!input.trim() || asking} sx={{ height: 48, px: 2.5, borderRadius: '999px', flex: 'none' }}>
@@ -319,8 +356,8 @@ export default function ShopperPreviewPage({ company, onSelectProduct, selectedI
               </Button>
             </Box>
             {messages.length === 0 ? (
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center', mt: 1.5 }}>
-                <Typography variant="body2" color="text.secondary">Try:</Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center', mt: 1.5, ml: { md: voiceSupported ? 8 : 0 } }}>
+                <Typography variant="body2" color="text.secondary">Examples:</Typography>
                 {EXAMPLES.map((ex) => (
                   <Button key={ex} size="small" onClick={() => send(ex)} sx={{ ...pill(false), minHeight: 30, fontSize: '0.88rem' }}>{ex}</Button>
                 ))}
@@ -341,61 +378,50 @@ export default function ShopperPreviewPage({ company, onSelectProduct, selectedI
                 })}
                 {asking && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary', pl: 4.5 }}>
-                    <CircularProgress size={14} /><Typography variant="body2">The assistant is writing…</Typography>
+                    <CircularProgress size={14} /><Typography variant="body2">Finding the best answer…</Typography>
                   </Box>
                 )}
               </Box>
             )}
           </Box>
 
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(0, 1fr)' }, gap: 2.5, alignItems: 'start' }}>
-            {/* 2. The choices, as buttons; Show picks confirms them. */}
-            <Box sx={{ ...card, p: 2.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <Typography sx={{ fontSize: 18, color: '#16324a', flex: 1 }}>Choices</Typography>
-                {chosen.length > 0 && <Button size="small" onClick={() => setPrefs(EMPTY)}>Clear all</Button>}
-              </Box>
-              {groups.map((g) => (
-                <Box key={g.key} sx={{ mb: 2 }}>
-                  <Typography sx={{ fontSize: 13, color: '#5f6b78', textTransform: 'uppercase', letterSpacing: '0.04em', mb: 0.75 }}>{g.label}</Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
-                    {g.options.map(([k, label]) => {
-                      const on = prefs[g.key].includes(k);
-                      return <Button key={k} onClick={() => toggle(g.key, k)} aria-pressed={on} sx={pill(on)}>{label}</Button>;
-                    })}
-                  </Box>
-                </Box>
-              ))}
-              {groups.length === 0 ? (
-                <Typography color="text.secondary">No products yet. Add products on the Products page first.</Typography>
-              ) : (
-                <Button variant="contained" fullWidth startIcon={<AutoAwesomeIcon />} onClick={() => setShown(true)} sx={{ mt: 0.5, height: 46, borderRadius: '999px' }}>
-                  {chosen.length ? `Show picks (${chosen.length} chosen)` : 'Show picks'}
-                </Button>
-              )}
+          {/* 2. Or choose preferences: groups side by side, then one button. */}
+          <Box sx={{ ...card, p: { xs: 2, md: 2.75 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 0.5 }}>
+              {step(2)}
+              <Typography sx={{ fontSize: 19, color: '#16324a', flex: 1 }}>{forShopper ? 'Or choose your preferences' : 'Or choose the shopper’s preferences'}</Typography>
             </Box>
-
-            {/* 3. How to get picks (they open in a window). */}
-            <Box sx={{ ...card, p: { xs: 2.5, md: 3.5 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                <AutoAwesomeIcon sx={{ color: '#2a78bd' }} />
-                <Typography sx={{ fontSize: 20, color: '#16324a' }}>Three ways to find picks</Typography>
-              </Box>
-              <Typography color="text.secondary">Tell us what the shopper is looking for. The best matching products open in a window, each with its match and the reason.</Typography>
-              {[
-                [MicIcon, 'Say it', 'Press the microphone, speak, then press stop.'],
-                [KeyboardIcon, 'Type it', 'Write a wish above, for example “A warm coat under €700”, and press Send. Questions are answered here too.'],
-                [TouchAppIcon, 'Tap it', 'Choose on the left, then press Show picks.'],
-              ].map(([Icon, title, text]) => (
-                <Box key={title} sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start', p: 1.5, borderRadius: '14px', bgcolor: '#f4f7fb' }}>
-                  <Box sx={{ width: 36, height: 36, borderRadius: '50%', bgcolor: '#e3eef8', color: '#1b4f72', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}><Icon fontSize="small" /></Box>
-                  <Box>
-                    <Typography sx={{ color: '#16324a' }}>{title}</Typography>
-                    <Typography variant="body2" color="text.secondary">{text}</Typography>
-                  </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 5.25, mb: 2 }}>
+              Tap as many as you like. Nothing chosen shows the best products overall.
+            </Typography>
+            {groups.length === 0 ? (
+              <Typography color="text.secondary">No products yet. Add products on the Products page first.</Typography>
+            ) : (
+              <>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0,1fr))' }, columnGap: 4, rowGap: 2 }}>
+                  {groups.map((g) => (
+                    <Box key={g.key}>
+                      <Typography sx={{ fontSize: 13, color: '#5f6b78', textTransform: 'uppercase', letterSpacing: '0.04em', mb: 0.75 }}>{g.label}</Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                        {g.options.map(([k, label]) => {
+                          const on = prefs[g.key].includes(k);
+                          return <Button key={k} onClick={() => toggle(g.key, k)} aria-pressed={on} sx={pill(on)}>{label}</Button>;
+                        })}
+                      </Box>
+                    </Box>
+                  ))}
                 </Box>
-              ))}
-            </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', mt: 2.5, pt: 2, borderTop: '1px solid #eef0f3' }}>
+                  <Typography color="text.secondary" sx={{ flex: '1 1 240px' }}>
+                    {chosen.length ? `Chosen: ${chosen.map((c) => c.label).join(', ')}` : 'Nothing chosen yet.'}
+                  </Typography>
+                  {chosen.length > 0 && <Button onClick={() => setPrefs(EMPTY)}>Clear all</Button>}
+                  <Button variant="contained" startIcon={<AutoAwesomeIcon />} onClick={() => setShown(true)} sx={{ height: 46, px: 3, borderRadius: '999px' }}>
+                    {chosen.length ? 'Show matching products' : 'Show the best products'}
+                  </Button>
+                </Box>
+              </>
+            )}
           </Box>
         </>
       )}
@@ -407,7 +433,7 @@ export default function ShopperPreviewPage({ company, onSelectProduct, selectedI
           <Box sx={{ flex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <AutoAwesomeIcon sx={{ color: '#2a78bd' }} />
-              {chosen.length ? 'Picks for this shopper' : 'Best picks overall'}
+              {chosen.length ? (forShopper ? 'Best matches for you' : 'Best matches for these preferences') : 'The best products overall'}
             </Box>
             {chosen.length > 0 && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', mt: 1 }}>
@@ -430,7 +456,7 @@ export default function ShopperPreviewPage({ company, onSelectProduct, selectedI
               {results.map(({ p, score, why }, i) => {
                 const img = (p.images && p.images[0]) || p.image;
                 return (
-                  <Box key={p._id || i} component="button" type="button" onClick={() => { setViewing(p); if (onSelectProduct) onSelectProduct(p); }} aria-label={`View ${p.name || 'product'}`} aria-pressed={!!selectedId && String(p._id) === String(selectedId)}
+                  <Box key={p._id || i} component="button" type="button" onClick={() => { if (onViewProduct) { onViewProduct(p); return; } setViewing(p); if (onSelectProduct) onSelectProduct(p); }} aria-label={`View ${p.name || 'product'}`} aria-pressed={!!selectedId && String(p._id) === String(selectedId)}
                     sx={{ bgcolor: '#fff', borderRadius: '14px', boxShadow: '0 2px 10px rgba(31,51,97,0.06)', overflow: 'hidden', display: 'flex', flexDirection: 'column', textAlign: 'left', border: 0, outline: selectedId && String(p._id) === String(selectedId) ? '3px solid #1b4f72' : 'none', outlineOffset: '-3px', p: 0, cursor: 'pointer', font: 'inherit', '&:hover': { boxShadow: '0 8px 20px rgba(31,51,97,0.14)' } }}>
                     <Box sx={{ position: 'relative', width: '100%', height: 0, pt: '100%', overflow: 'hidden', bgcolor: '#eef1f4' }}>
                       {img && <Box component="img" src={getFileUrl(img)} alt="" sx={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
@@ -452,8 +478,8 @@ export default function ShopperPreviewPage({ company, onSelectProduct, selectedI
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 1.5 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>Click a product to see its page as the shopper does.</Typography>
-          <Button variant="outlined" onClick={() => setShown(false)}>Change choices</Button>
+          <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>{forShopper ? 'Click a product to see its details.' : 'Click a product to see its page as the shopper sees it.'}</Typography>
+          <Button variant="outlined" onClick={() => setShown(false)}>Change preferences</Button>
         </DialogActions>
       </Dialog>
 

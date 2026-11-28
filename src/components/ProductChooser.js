@@ -25,7 +25,7 @@ export default function ProductChooser({
   isAppUser = false,
   query,
   onQueryChange,
-  placeholder = 'Search by product or company',
+  placeholder,
   searchId,
   onSubmit,
   actions = null,
@@ -34,6 +34,9 @@ export default function ProductChooser({
   // Lines under each product's name, for the page (see ProductsTable).
   cardInfo,
 }) {
+  // Supervisors and staff see only their own company's products: no company
+  // headings and no "company" in the search hint (client 2026-11-28).
+  const hint = placeholder || (showOwner ? 'Search by product or company' : 'Search by product name or model');
   const [ownQuery, setOwnQuery] = useState('');
   const controlled = query !== undefined;
   const q = controlled ? query : ownQuery;
@@ -53,8 +56,8 @@ export default function ProductChooser({
         <Typography variant="h6" component="h2" sx={{ fontSize: 18, fontWeight: 400, color: '#16324a' }}>{title}</Typography>
         <TextField
           id={searchId}
-          placeholder={placeholder}
-          inputProps={{ 'aria-label': placeholder }}
+          placeholder={hint}
+          inputProps={{ 'aria-label': hint }}
           value={q}
           onChange={(e) => (controlled ? onQueryChange?.(e.target.value) : setOwnQuery(e.target.value))}
           sx={{ flex: 1, minWidth: 240, maxWidth: 520, bgcolor: 'background.paper', borderRadius: 2 }}
@@ -73,7 +76,7 @@ export default function ProductChooser({
         showOwner={showOwner}
         columns={4}
         dense
-        groupByBrand
+        groupByBrand={showOwner}
         emptyText={q.trim() ? 'No products match your search.' : emptyText}
         onSelectProduct={onSelect}
         cardInfo={cardInfo}

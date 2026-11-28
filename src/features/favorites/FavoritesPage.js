@@ -9,7 +9,8 @@ import PageHeader from '../../components/PageHeader';
 
 // A shopper's Favorites (design WEB_ConsumerFavorites): photo cards with a
 // heart to take a product out, a search box, and a way to recommendations.
-export default function FavoritesPage({ company, onOpenRecommendations }) {
+// onOpenProduct: a card opens the product's page here (client 2026-11-28).
+export default function FavoritesPage({ company, onOpenRecommendations, onOpenProduct }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
@@ -75,8 +76,12 @@ export default function FavoritesPage({ company, onOpenRecommendations }) {
           {shown.map((it) => {
             const v = view(it);
             return (
-              <Box key={it._id} component="a" href={`${(process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com').replace(/\/$/, '')}/product/${v.productId}/${v.tokenId ?? ''}`} target="_blank" rel="noreferrer"
-                sx={{ bgcolor: '#fff', borderRadius: '24px', overflow: 'hidden', color: 'inherit', textDecoration: 'none', display: 'flex', flexDirection: 'column' }}>
+              <Box key={it._id} component={onOpenProduct ? 'button' : 'a'} type={onOpenProduct ? 'button' : undefined}
+                onClick={onOpenProduct ? () => onOpenProduct({ ...(it.productSnapshot || {}), ...(it.product || {}), _id: v.productId }) : undefined}
+                href={onOpenProduct ? undefined : `${(process.env.REACT_APP_WEB_BASE_URL || 'https://dpp.innosynch.com').replace(/\/$/, '')}/product/${v.productId}/${v.tokenId ?? ''}`}
+                target={onOpenProduct ? undefined : '_blank'} rel={onOpenProduct ? undefined : 'noreferrer'}
+                aria-label={onOpenProduct ? `Open ${v.name || 'product'}` : undefined}
+                sx={{ border: 0, p: 0, font: 'inherit', textAlign: 'left', cursor: 'pointer', bgcolor: '#fff', borderRadius: '24px', overflow: 'hidden', color: 'inherit', textDecoration: 'none', display: 'flex', flexDirection: 'column' }}>
                 <Box sx={{ position: 'relative', height: 220, bgcolor: '#eef1f4' }}>
                   {v.image && <Box component="img" src={getFileUrl(v.image)} alt={v.name} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
                   <IconButton

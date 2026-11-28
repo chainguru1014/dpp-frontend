@@ -18,7 +18,8 @@ import {
   Button,
   ButtonBase,
 } from '@mui/material';
-import { getCaptures, listEmployees } from '../../helper';
+import { getAdminUserData, getCaptures, listBrands, listEmployees } from '../../helper';
+import { BrandBar, BrandPickerGrid, companyOptionsFrom } from '../../components/BrandPicker';
 import PageHeader from '../../components/PageHeader';
 import { processStepTypeLabel } from '../../utils/processStepTypes';
 
@@ -31,7 +32,8 @@ const employeeLabel = (e) => e.name || e.employeeCode || (e.email ? e.email.spli
 
 // Capture activity dashboard + full history list. A Supervisor / Company
 // account sees its own company (GET /captures is scoped server-side); the
-// super admin (isAdmin) sees every company, with a company filter/column.
+// super admin (isAdmin) first chooses a company (cards, as on Companies;
+// client 2026-11-28), then sees that company's records only.
 // The per-employee list is the company's normal staff (working employees,
 // never Supervisors) — including anyone with zero captures so far.
 // selfEmployee ({ _id, name, company_id }) — set for a working employee,
@@ -43,7 +45,15 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
   const [supervisorIds, setSupervisorIds] = useState(() => new Set());
   const [loading, setLoading] = useState(true);
   const [workerFilter, setWorkerFilter] = useState('all');
-  const [companyFilter, setCompanyFilter] = useState('all');
+  // Super admin: '' until a company is chosen. Others: their own ('all' = what the server returns).
+  const [companyFilter, setCompanyFilter] = useState(isAdmin ? '' : 'all');
+  const [pickOptions, setPickOptions] = useState([]);
+  useEffect(() => {
+    if (!isAdmin) return;
+    Promise.all([listBrands(token), getAdminUserData()]).then(([res, admin]) => {
+      setPickOptions(companyOptionsFrom(admin?.companies || [], res?.brands || []));
+    }).catch(() => {});
+  }, [isAdmin, token]);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [tablePage, setTablePage] = useState(0);
@@ -67,12 +77,6 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
 
   const todayKey = dateKeyForToday();
 
-  const companyOptions = useMemo(() => {
-    const map = new Map();
-    employees.forEach((e) => { if (e.company_id) map.set(String(e.company_id), e.companyName || 'Unknown'); });
-    docs.forEach((d) => { if (d.company_id && !map.has(String(d.company_id))) map.set(String(d.company_id), d.companyName || 'Unknown'); });
-    return Array.from(map.entries()).map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
-  }, [employees, docs]);
 
   const inCompany = (companyId) => companyFilter === 'all' || String(companyId) === companyFilter;
   const companyDocs = useMemo(() => docs.filter((d) => inCompany(d.company_id)),
@@ -142,7 +146,7 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
     );
   }
 
-  const colCount = isAdmin ? 7 : 6;
+  const colCount = 6;
   const selfOnly = !!selfEmployee;
 
   // Date range + paging for the history table (it used to list every
@@ -170,20 +174,29 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
         description={selfOnly
           ? 'Work steps you recorded with the mobile app.'
           : 'Work steps your employees recorded with the mobile app, per person.'}
-        actions={isAdmin ? (
-          <Select
-            value={companyFilter}
-            onChange={(e) => { setCompanyFilter(e.target.value); setWorkerFilter('all'); setTablePage(0); }}
-            inputProps={{ 'aria-label': 'Company' }}
-            sx={{ minWidth: 240, bgcolor: 'background.paper' }}
-          >
-            <MenuItem value="all">All companies</MenuItem>
-            {companyOptions.map((c) => (
-              <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-            ))}
-          </Select>
-        ) : null}
       />
+
+      {isAdmin && !companyFilter ? (
+        <BrandPickerGrid
+          title="Choose a company to see its work records"
+          options={pickOptions.map((o) => {
+            const n = docs.filter((d) => String(d.company_id) === o.id).length;
+            return { ...o, info: `${n} ${n === 1 ? 'work record' : 'work records'}` };
+          })}
+          selectedId=""
+          onPick={(id) => { setCompanyFilter(String(id)); setWorkerFilter('all'); setTablePage(0); }}
+        />
+      ) : (
+      <>
+      {isAdmin && (() => {
+        const o = pickOptions.find((x) => x.id === companyFilter);
+        return o ? (
+          <BrandBar
+            option={{ ...o, info: `${companyDocs.length} ${companyDocs.length === 1 ? 'work record' : 'work records'}` }}
+            right={<Button variant="outlined" onClick={() => { setCompanyFilter(''); setWorkerFilter('all'); }}>Change company</Button>}
+          />
+        ) : null;
+      })()}
 
       {/* Captures per person on the left (click a person to see only their
           recorded steps below; click again for everyone), the four figures
@@ -277,7 +290,6 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
           <TableHead>
             <TableRow>
               <TableCell>Reference</TableCell>
-              {isAdmin && <TableCell>Company</TableCell>}
               <TableCell>Person</TableCell>
               <TableCell>Step</TableCell>
               <TableCell>Device</TableCell>
@@ -300,7 +312,6 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
               pageDocs.map((doc) => (
                 <TableRow key={doc._id} hover>
                   <TableCell>{doc.refNumber}</TableCell>
-                  {isAdmin && <TableCell>{doc.companyName || '—'}</TableCell>}
                   <TableCell>{doc.workerLabel || '—'}</TableCell>
                   <TableCell>{[doc.stepEntity, processStepTypeLabel(doc.stepType)].filter(Boolean).join(' · ') || '—'}</TableCell>
                   <TableCell>{doc.terminalId ? `No. ${doc.terminalId}` : '—'}</TableCell>
@@ -322,6 +333,8 @@ const CaptureHistoryPage = ({ token, isAdmin = false, selfEmployee = null }) => 
           labelRowsPerPage="Rows per page"
         />
       </Paper>
+      </>
+      )}
     </Box>
   );
 };
