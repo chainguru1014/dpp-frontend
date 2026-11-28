@@ -18,7 +18,9 @@ import CloseIcon from '@mui/icons-material/Close';
 // Shapes used by the admin site (keep in step with the app's pictures):
 export const CROP = {
   productPhoto: { aspect: 4 / 5, title: 'Fit the product photo', note: 'Product photos are shown 4:5 (portrait) in the app.' },
-  logo: { aspect: 1, title: 'Fit the logo', note: 'Logos are shown square.' },
+  // Brand logos: one wide shape everywhere (client 2026-11-28), about 2.2 : 1
+  // like the Yometel logo — the app fits it whole in its tiles and circles.
+  logo: { aspect: 2.2, title: 'Fit the logo', note: 'Logos are shown wide (about 2.2 : 1). Leave a little space around the logo.' },
   // Same shape as CoverCropDialog (Brand and Profile pages): COVER_ASPECT 5.
   cover: { aspect: 5, title: 'Fit the cover picture', note: 'Covers are shown as a wide strip (5:1).' },
   icon: { aspect: 1, title: 'Fit the icon', note: 'Icons are shown square, small.' },
